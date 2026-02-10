@@ -1,0 +1,56 @@
+.challenge-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.challenge-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.challenge-card h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.challenge-meta {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.status {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+.status.published {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+}
+
+.btn-secondary {
+    display: inline-block;
+    text-align: center;
+    background-color: transparent;
+    border: 1px solid var(--accent-primary);
+    color: var(--accent-primary);
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: var(--accent-primary);
+    color: white;
+}

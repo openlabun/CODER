@@ -1,0 +1,45 @@
+/* LeaderboardTable.css */
+
+.leaderboard-table-wrapper {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+    overflow-x: auto;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text-primary);
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.leaderboard-table th {
+    background: rgba(255, 255, 255, 0.12);
+    font-weight: 600;
+}
+
+.leaderboard-table tr:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.leaderboard-table td {
+    font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+}

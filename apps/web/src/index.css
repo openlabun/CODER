@@ -1,0 +1,42 @@
+:root {
+  --primary-color: #00f0ff;
+  /* Neon Cyan */
+  --secondary-color: #7000ff;
+  /* Neon Purple */
+  --background-color: #0a0a12;
+  /* Deep Dark Blue/Black */
+  --surface-color: #161625;
+  /* Slightly lighter dark */
+  --text-color: #e0e0e0;
+  --text-muted: #a0a0a0;
+  --success-color: #00ff9d;
+  --error-color: #ff0055;
+  --warning-color: #ffcc00;
+  --border-color: #2a2a40;
+  --font-family: 'Inter', system-ui, sans-serif;
+  --glass-bg: rgba(22, 22, 37, 0.7);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --shadow-glow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: var(--font-family);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}

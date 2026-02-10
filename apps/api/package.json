@@ -1,0 +1,40 @@
+{
+    "name": "api",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "startw": "ts-node src/main.ts",
+        "worker": "ts-node src/workers/submission.worker.ts",
+        "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
+        "worker:submissions": "ts-node-dev --transpile-only src/workers/submission.worker.ts",
+        "build": "tsc -p .",
+        "start": "node dist/main.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "dependencies": {
+        "@google/generative-ai": "^0.24.1",
+        "@nestjs/common": "^11.1.6",
+        "@nestjs/core": "^11.1.6",
+        "@nestjs/platform-express": "^11.1.6",
+        "@nestjs/swagger": "^11.2.3",
+        "bcrypt": "^6.0.0",
+        "ioredis": "^5.8.1",
+        "jsonwebtoken": "^9.0.2",
+        "pg": "^8.16.3",
+        "reflect-metadata": "^0.2.2",
+        "rxjs": "^7.8.2",
+        "swagger-ui-express": "^5.0.1"
+    },
+    "devDependencies": {
+        "@types/bcrypt": "^6.0.0",
+        "@types/jsonwebtoken": "^9.0.10",
+        "@types/node": "^24.7.1",
+        "@types/pg": "^8.15.5",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.9.3"
+    }
+}

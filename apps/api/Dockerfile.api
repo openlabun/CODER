@@ -1,0 +1,17 @@
+FROM node:20-slim
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN apt-get update && \
+    npm install -g ts-node typescript ts-node-dev && \
+    npm install && \
+    chmod -R +x ./node_modules/.bin && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+RUN chmod -R +x /usr/src/app
+
+CMD ["npm", "run", "dev"]

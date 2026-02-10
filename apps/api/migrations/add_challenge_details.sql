@@ -1,0 +1,4 @@
+ALTER TABLE public.challenges 
+ADD COLUMN IF NOT EXISTS input_format TEXT,
+ADD COLUMN IF NOT EXISTS output_format TEXT,
+ADD COLUMN IF NOT EXISTS constraints TEXT;

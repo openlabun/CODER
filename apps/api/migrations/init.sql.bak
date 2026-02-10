@@ -1,0 +1,11 @@
+\i /docker-entrypoint-initdb.d/001_create_challenges.sql
+\i /docker-entrypoint-initdb.d/002_create_submissions.sql
+\i /docker-entrypoint-initdb.d/003_create_users.sql
+\i /docker-entrypoint-initdb.d/004_create_test_cases.sql
+\i /docker-entrypoint-initdb.d/005_add_challenge_limits.sql
+\i /docker-entrypoint-initdb.d/006_create_courses.sql
+\i /docker-entrypoint-initdb.d/007_add_enrollment_code_to_courses.sql
+\i /docker-entrypoint-initdb.d/007_add_submission_score.sql
+\i /docker-entrypoint-initdb.d/008_create_exams.sql
+\i /docker-entrypoint-initdb.d/add_challenge_details.sql
+\i /docker-entrypoint-initdb.d/fix_enrollment_codes.sql

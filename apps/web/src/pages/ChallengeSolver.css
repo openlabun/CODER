@@ -1,0 +1,63 @@
+.solver-container {
+    display: flex;
+    height: calc(100vh - 64px);
+    /* Minus navbar */
+}
+
+.problem-description {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    border-right: 1px solid var(--border-color);
+}
+
+.problem-description.full-width {
+    flex: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    border-right: none;
+}
+
+.editor-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-header {
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.output-panel {
+    height: 200px;
+    background-color: #000;
+    color: #fff;
+    padding: 1rem;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-color);
+}
+
+.professor-message {
+    margin-top: 2rem;
+    padding: 2rem;
+    background-color: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid var(--primary-color);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.professor-message h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.professor-message p {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}

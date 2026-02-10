@@ -1,0 +1,25 @@
+FROM node:20-slim
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+# Install docker CLI (docker.io) so the worker can spawn docker containers,
+# plus dos2unix and node tooling. Keep cleaning apt lists to keep image small.
+# Install dependencies and Docker CLI
+RUN apt-get update && apt-get install -y dos2unix curl && \
+    curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-25.0.3.tgz -o docker.tgz && \
+    tar xzvf docker.tgz --strip 1 -C /usr/local/bin docker/docker && \
+    rm docker.tgz && \
+    npm install -g ts-node typescript && \
+    npm install && \
+    dos2unix ./node_modules/.bin/ts-node && \
+    chmod 755 ./node_modules/.bin/ts-node && \
+    chmod -R 755 ./node_modules/.bin && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+RUN chmod -R 755 /usr/src/app
+
+CMD ["npx", "ts-node", "src/workers/submission.worker.ts"]

@@ -1,0 +1,4 @@
+FROM codellama:7b
+
+PARAMETER temperature 0.5
+PARAMETER num_ctx 8192

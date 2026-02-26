@@ -1,0 +1,4 @@
+FROM mistral:7b-instruct
+
+PARAMETER temperature 0.6
+PARAMETER num_ctx 8192

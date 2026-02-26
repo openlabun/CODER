@@ -18,10 +18,12 @@ Se deberá diseñar, desarrollar y desplegar en producción una plataforma web q
 
 - **Sistema de CRUD de Usuarios y JWT:** [Documentación ROBLE](https://roble.openlab.uninorte.edu.co/docs)
 
-- **Proyecto Anterior desarrollado en clase de Backend:** [GitHub - davidmosquera03/proyecto-final-backend](https://github.com/davidmosquera03/proyecto-final-backend?fbclid=PAT01DUAQGripleHRuA2FlbQIxMABzcnRjBmFwcF9pZA81NjcwNjczNDMzNTI0MjcAAaefOJSHfDGMc1OKRUGyiSnVE2h1eeUwjnV7FsZi0guQ9ccLSzFz8AAe7PW3yw_aem_2fcN8wO0zb067AhiZCjC6Q)
+- **Proyecto Anterior desarrollado en clase de Backend:** [GitHub - DerekPz/juez-online](https://github.com/DerekPz/juez-online.git)
 
 ## Código de Prueba
 
 - Backend: apps\api
 
 - Frontend: apps\web
+
+el trabajo seleccionado ya presenta una base funcional adecuada para la implementacion de los requerimientos nescesarios para el desarrollo del proyecto, como los runners en Python, Java, C++ y Javascript, la cola en redis que llama al worker y como tal, es una base solida para la realizacion del proyecto.

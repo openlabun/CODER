@@ -158,14 +158,11 @@ requirementDiagram
 
 requirement Escalabilidad {
   id: R1
-  text: El sistema debe ser escalable para soportar múltiples usuarios y ejecuciones concurrentes de código.
-  risk: medium
   verifymethod: test
 }
 
 requirement Anticheat {
   id: R2
-  text: El sistema debe analizar similitud de código para detectar posibles casos de plagio o comportamiento sospechoso.
   risk: medium
   verifymethod: analysis
 }

@@ -242,7 +242,7 @@ Anticheat - refines -> CalificacionAutomatica
 
 ## Plan de trabajo
 
-![WhatsApp Image 2026-02-26 at 3.48.45 PM.jpeg](C:\Users\Maldonado\Downloads\WhatsApp%20Image%202026-02-26%20at%203.48.45%20PM.jpeg)
+![WhatsApp Image 2026-02-26 at 3 48 45 PM](https://github.com/user-attachments/assets/5f28a062-86d0-4def-adc4-c633733fd801)
 
 **Gráfico 3:** Plan de trabajo para desarrollo del proyecto
 

@@ -16,3 +16,10 @@ Para detectar plagio entre envíos y uso de código generado por IA, se utilizar
 ### Alcance práctico del proyecto
 
 La implementación priorizará tokenización + n-grams y normalización para plagio, y un clasificador existente para IA. La comparación por AST se añadirá en una segunda fase si el tiemp lo permite.
+
+### Documentación 
+Schleimer, S., Wilkerson, D. S., & Aiken, A. (2003). "Winnowing: Local Algorithms for Document Fingerprinting". SIGMOD.
+Prechelt, L., Malpohl, G., & Philippsen, M. (2002). "Finding Plagiarisms among Source Code Programs with JPlag". Journal of Universal Computer Science.
+Sadasivan, V. S., et al. (2023). "Can AI-Generated Text be Reliably Detected?". ArXiv/University of Maryland.
+Lau, S. (2023). "The End of Programming (As We Know It)". Communications of the ACM.
+

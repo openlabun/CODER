@@ -1,7 +1,12 @@
-FROM debian:bullseye-slim
+FROM eclipse-temurin:17-jdk-jammy
 
-# Instala OpenJDK 17 y Python (para scripts del runner)
-RUN apt-get update && apt-get install -y openjdk-17-jdk python3 && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install Python and other utilities
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /runner
 COPY runner.sh /runner/

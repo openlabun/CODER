@@ -1,5 +1,14 @@
-FROM debian:bullseye-slim
-RUN apt-get update && apt-get install -y g++ python3 coreutils && apt-get clean
+FROM ubuntu:22.04
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    g++ \
+    build-essential \
+    python3 \
+    coreutils \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /runner
 COPY runner.sh /runner/
 # Fix line endings (CRLF -> LF) for Windows compatibility

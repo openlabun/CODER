@@ -1,3 +1,5 @@
+# DEVELOPMENT ENVIRONMENT
+# Use: docker-compose -f docker-compose.dev.yml up
 version: "3.9"
 
 services:
@@ -16,6 +18,7 @@ services:
             - postgres
             - redis
         environment:
+            - NODE_ENV=development
             - POSTGRES_HOST=postgres
             - POSTGRES_PORT=5432
             - POSTGRES_USER=juez
@@ -23,9 +26,27 @@ services:
             - POSTGRES_DB=juez_db
             - REDIS_HOST=redis
             - REDIS_PORT=6379
-            - GEMINI_API_KEY=[YOUR_GEMINI_API_KEY]
+            - GEMINI_API_KEY=${GEMINI_API_KEY}
         networks:
             - judge_net
+    
+    web:
+        build:
+            context: ./apps/web
+            dockerfile: Dockerfile.dev
+        command: npm run dev -- --host
+        ports:
+            - "5173:5173"
+        volumes:
+            - ./apps/web:/usr/src/app
+            - /usr/src/app/node_modules
+        environment:
+            - NODE_ENV=development
+            - VITE_API_URL=http://localhost:3000
+        networks:
+            - judge_net
+        depends_on:
+            - api
     postgres:
         image: postgres:16-alpine
         environment:
@@ -42,7 +63,7 @@ services:
 
     redis:
         image: redis:7-alpine
-        container_name: juez_redis
+        container_name: juez_redis_dev
         restart: unless-stopped
         ports:
             - "${REDIS_PORT:-6379}:6379"
@@ -53,30 +74,32 @@ services:
             retries: 30
         networks:
             - judge_net
+    
     runner-python:
         build:
             context: ./apps/api/src/runners/python
-        image: juez_runner_python:local
+        image: juez_runner_python:dev
 
     runner-node:
         build:
             context: ./apps/api/src/runners/node
-        image: juez_runner_node:local
+        image: juez_runner_node:dev
 
     runner-cpp:
         build:
             context: ./apps/api/src/runners/cpp
-        image: juez_runner_cpp:local
+        image: juez_runner_cpp:dev
 
     runner-java:
         build:
             context: ./apps/api/src/runners/java
-        image: juez_runner_java:local
+        image: juez_runner_java:dev
+    
     worker:
         build:
             context: ./apps/api
             dockerfile: Dockerfile.worker
-        command: npm run worker
+        command: npm run worker:dev
         volumes:
             - ./apps/api:/usr/src/app
             - /var/run/docker.sock:/var/run/docker.sock
@@ -85,7 +108,12 @@ services:
         depends_on:
             - postgres
             - redis
+            - runner-python
+            - runner-node
+            - runner-cpp
+            - runner-java
         environment:
+            - NODE_ENV=development
             - POSTGRES_HOST=postgres
             - POSTGRES_PORT=5432
             - POSTGRES_USER=juez
@@ -93,7 +121,7 @@ services:
             - POSTGRES_DB=juez_db
             - REDIS_HOST=redis
             - REDIS_PORT=6379
-            - HOST_SUBMISSIONS_DIR=/home/azkalagon/2025_2_Proyects/Backend/juez-online/apps/api/src/core/Submission
+            - HOST_SUBMISSIONS_DIR=${PWD}/apps/api/data/submissions
         networks:
             - judge_net
 

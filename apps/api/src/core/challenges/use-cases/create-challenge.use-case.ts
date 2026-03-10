@@ -1,5 +1,5 @@
 import { IChallengeRepo } from '../interfaces/challenge.repo';
-import { Challenge } from '../entities/challenge.entity';
+import { Challenge, ChallengeDifficulty } from '../entities/challenge.entity';
 
 export class CreateChallengeUseCase {
   constructor(private readonly repo: IChallengeRepo) { }
@@ -7,7 +7,7 @@ export class CreateChallengeUseCase {
     id: string;
     title: string;
     description: string;
-    difficulty?: string;
+    difficulty?: ChallengeDifficulty;
     timeLimit?: number;
     memoryLimit?: number;
     tags?: string[];

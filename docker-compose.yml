@@ -1,105 +1,177 @@
+# PRODUCTION ENVIRONMENT
+# Use: docker-compose -f docker-compose.prod.yml up -d
 version: "3.9"
 
 services:
     api:
         build:
             context: ./apps/api
-            dockerfile: Dockerfile.api
-        command: npm run dev
+            dockerfile: Dockerfile.prod
+        command: node dist/main.js
+        restart: always
         ports:
-            - "3000:3000"
-        volumes:
-            - ./apps/api:/usr/src/app
-            - ./apps/api/data:/usr/src/app/data
-            - /usr/src/app/node_modules
+            - "${API_PORT:-3000}:3000"
         depends_on:
             - postgres
             - redis
         environment:
-            - POSTGRES_HOST=postgres
-            - POSTGRES_PORT=5432
-            - POSTGRES_USER=juez
-            - POSTGRES_PASSWORD=juez
-            - POSTGRES_DB=juez_db
-            - REDIS_HOST=redis
-            - REDIS_PORT=6379
-            - GEMINI_API_KEY=[YOUR_GEMINI_API_KEY]
+            - NODE_ENV=${NODE_ENV}
+            - PORT=${PORT}
+            - POSTGRES_HOST=${POSTGRES_HOST}
+            - POSTGRES_PORT=${POSTGRES_PORT}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=${POSTGRES_DB}
+            - REDIS_HOST=${REDIS_HOST}
+            - REDIS_PORT=${REDIS_PORT}
+            - REDIS_PASSWORD=${REDIS_PASSWORD}
+            - GEMINI_API_KEY=${GEMINI_API_KEY}
         networks:
             - judge_net
+        healthcheck:
+            test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) process.exit(1)})\""]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+    
+    web:
+        build:
+            context: ./apps/web
+            dockerfile: Dockerfile.prod
+            args:
+                - VITE_API_URL=${VITE_API_URL}
+        restart: always
+        ports:
+            - "${WEB_PORT:-80}:80"
+        networks:
+            - judge_net
+        healthcheck:
+            test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80/health"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 20s
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 512M
+
     postgres:
         image: postgres:16-alpine
+        restart: always
         environment:
-            POSTGRES_USER: juez
-            POSTGRES_PASSWORD: juez
-            POSTGRES_DB: juez_db
-        ports:
-            - "${POSTGRES_PORT:-5432}:5432"
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
         volumes:
-            - pgdata:/var/lib/postgresql/data
-            - ./apps/api/migrations:/docker-entrypoint-initdb.d
+            - pgdata_prod:/var/lib/postgresql/data
+            - ./apps/api/migrations:/docker-entrypoint-initdb.d:ro
         networks:
             - judge_net
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 15
+            start_period: 40s
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
 
     redis:
         image: redis:7-alpine
-        container_name: juez_redis
-        restart: unless-stopped
-        ports:
-            - "${REDIS_PORT:-6379}:6379"
-        healthcheck:
-            test: [ "CMD", "redis-cli", "ping" ]
-            interval: 5s
-            timeout: 3s
-            retries: 30
+        container_name: juez_redis_prod
+        restart: always
+        volumes:
+            - redis_data:/data
         networks:
             - judge_net
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 15
+            start_period: 30s
+    
     runner-python:
+        profiles: ["judge"]
         build:
             context: ./apps/api/src/runners/python
-        image: juez_runner_python:local
+        image: juez_runner_python:prod
+        restart: "no"
 
     runner-node:
+        profiles: ["judge"]
         build:
             context: ./apps/api/src/runners/node
-        image: juez_runner_node:local
+        image: juez_runner_node:prod
+        restart: "no"
 
     runner-cpp:
+        profiles: ["judge"]
         build:
             context: ./apps/api/src/runners/cpp
-        image: juez_runner_cpp:local
+        image: juez_runner_cpp:prod
+        restart: "no"
 
     runner-java:
+        profiles: ["judge"]
         build:
             context: ./apps/api/src/runners/java
-        image: juez_runner_java:local
+        image: juez_runner_java:prod
+        restart: "no"
+    
     worker:
+        profiles: ["judge"]
         build:
             context: ./apps/api
             dockerfile: Dockerfile.worker
+            args:
+                - NODE_ENV=production
         command: npm run worker
+        restart: always
         volumes:
-            - ./apps/api:/usr/src/app
-            - /var/run/docker.sock:/var/run/docker.sock
-            - ./apps/api/data:/usr/src/app/data
-            - /usr/src/app/node_modules
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - submissions_data:/usr/src/app/data
         depends_on:
+            - runner-python
+            - runner-node
+            - runner-cpp
+            - runner-java
             - postgres
             - redis
         environment:
-            - POSTGRES_HOST=postgres
-            - POSTGRES_PORT=5432
-            - POSTGRES_USER=juez
-            - POSTGRES_PASSWORD=juez
-            - POSTGRES_DB=juez_db
-            - REDIS_HOST=redis
-            - REDIS_PORT=6379
-            - HOST_SUBMISSIONS_DIR=/home/azkalagon/2025_2_Proyects/Backend/juez-online/apps/api/src/core/Submission
+            - NODE_ENV=${NODE_ENV}
+            - POSTGRES_HOST=${POSTGRES_HOST}
+            - POSTGRES_PORT=${POSTGRES_PORT}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=${POSTGRES_DB}
+            - REDIS_HOST=${REDIS_HOST}
+            - REDIS_PORT=${REDIS_PORT}
+            - REDIS_PASSWORD=${REDIS_PASSWORD}
+            - HOST_SUBMISSIONS_DIR=${HOST_SUBMISSIONS_DIR}
         networks:
             - judge_net
+        deploy:
+            resources:
+                limits:
+                    cpus: '2'
+                    memory: 2G
 
 volumes:
-    pgdata:
-
+    pgdata_prod:
+    redis_data:
+    submissions_data:
 
 networks:
     judge_net:

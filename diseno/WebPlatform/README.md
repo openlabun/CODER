@@ -28,6 +28,45 @@ Se deberá diseñar, desarrollar y desplegar en producción una plataforma web q
 
 el trabajo seleccionado ya presenta una base funcional adecuada para la implementacion de los requerimientos nescesarios para el desarrollo del proyecto, como los runners en Python, Java, C++ y Javascript, la cola en redis que llama al worker y como tal, es una base solida para la realizacion del proyecto.
 
+## Comandos de Ejecución:
+
+- Ejecución en desarrollo: 
+  
+  ```
+  docker-compose -f docker-compose.dev.yml up --build
+  ```
+
+- Ejecución en producción (con archivo `.env.production`):
+  
+  ```
+  docker-compose -f docker-compose.yml --env-file .env.production up -d
+  ```
+
+- Ejecución en producción (variables de entorno):
+  
+  ```
+  docker-compose -f docker-compose.yml up -d
+  ```
+
+- Ejecución en producción (con workers):
+  
+  ```
+  # Con archivo .env.production
+  docker-compose -f docker-compose.yml --env-file .env.prodution --profile judge up -d
+  
+  # Con variables de entorno
+  docker-compose -f docker-compose.yml --profile judge up -d
+  ```
+
+## Ports Configuration
+
+| Service  | Ports       |
+| -------- | ----------- |
+| Frontend | `5173:5173`     |
+| API      | `3000:3000` |
+| REDIS    | `6379:6379` |
+| DB       | `5432:5432` |
+
 ## Analisis de la plataforma (proyecto) anterior
 
 La plataforma analizada corresponde a un sistema de evaluación automática de algoritmos, comúnmente conocido como juez online. Este tipo de aplicaciones permite a los usuarios enviar soluciones en distintos lenguajes de programación para resolver retos algorítmicos, mientras el sistema se encarga de compilar el código, ejecutarlo en un entorno controlado y verificar los resultados contra casos de prueba predefinidos. El proyecto está diseñado para ser escalable, seguro y modular, integrando diversas tecnologías modernas para gestionar tanto la lógica del sistema como la ejecución de código de forma aislada.

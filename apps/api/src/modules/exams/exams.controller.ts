@@ -27,7 +27,7 @@ export class ExamsController {
     async create(@Body() body: CreateExamDto) {
         return this.createExamUseCase.execute({
             title: body.title,
-            description: body.description,
+            description: body.description ?? '',
             courseId: body.courseId,
             startTime: new Date(body.startTime),
             endTime: new Date(body.endTime),

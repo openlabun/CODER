@@ -1,0 +1,42 @@
+# Build stage
+FROM node:20-slim as builder
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN apt-get update && \
+    npm install -g typescript ts-node && \
+    npm install && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+# Build TypeScript to JavaScript
+RUN npm run build
+
+# Production stage
+FROM node:20-slim
+
+WORKDIR /usr/src/app
+
+# Copy only production dependencies
+COPY package*.json ./
+
+RUN npm install --only=production && \
+    npm cache clean --force
+
+# Copy built application from builder
+COPY --from=builder /usr/src/app/dist ./dist
+
+# Use the existing non-root user from the base image
+RUN id -u 1000 &>/dev/null 2>&1 || useradd -m -u 1000 node && \
+    chown -R node:node /usr/src/app
+USER node
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200 && r.statusCode !== 404) throw new Error(r.statusCode)})" || exit 1
+
+CMD ["node", "dist/main.js"]

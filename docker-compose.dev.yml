@@ -9,7 +9,7 @@ services:
             dockerfile: Dockerfile.api
         command: npm run dev
         ports:
-            - "3000:3000"
+            - "${API_PORT:-3000}:3000"
         volumes:
             - ./apps/api:/usr/src/app
             - ./apps/api/data:/usr/src/app/data
@@ -17,16 +17,8 @@ services:
         depends_on:
             - postgres
             - redis
-        environment:
-            - NODE_ENV=development
-            - POSTGRES_HOST=postgres
-            - POSTGRES_PORT=5432
-            - POSTGRES_USER=juez
-            - POSTGRES_PASSWORD=juez
-            - POSTGRES_DB=juez_db
-            - REDIS_HOST=redis
-            - REDIS_PORT=6379
-            - GEMINI_API_KEY=${GEMINI_API_KEY}
+        env_file:
+            - .env.dev
         networks:
             - judge_net
     
@@ -36,23 +28,20 @@ services:
             dockerfile: Dockerfile.dev
         command: npm run dev -- --host
         ports:
-            - "5173:5173"
+            - "${WEB_PORT:-5173}:5173"
         volumes:
             - ./apps/web:/usr/src/app
             - /usr/src/app/node_modules
-        environment:
-            - NODE_ENV=development
-            - VITE_API_URL=http://localhost:3000
+        env_file:
+            - .env.dev
         networks:
             - judge_net
         depends_on:
             - api
     postgres:
         image: postgres:16-alpine
-        environment:
-            POSTGRES_USER: juez
-            POSTGRES_PASSWORD: juez
-            POSTGRES_DB: juez_db
+        env_file:
+            - .env.dev
         ports:
             - "${POSTGRES_PORT:-5432}:5432"
         volumes:
@@ -112,15 +101,9 @@ services:
             - runner-node
             - runner-cpp
             - runner-java
+        env_file:
+            - .env.dev
         environment:
-            - NODE_ENV=development
-            - POSTGRES_HOST=postgres
-            - POSTGRES_PORT=5432
-            - POSTGRES_USER=juez
-            - POSTGRES_PASSWORD=juez
-            - POSTGRES_DB=juez_db
-            - REDIS_HOST=redis
-            - REDIS_PORT=6379
             - HOST_SUBMISSIONS_DIR=${PWD}/apps/api/data/submissions
         networks:
             - judge_net

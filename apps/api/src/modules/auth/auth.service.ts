@@ -12,7 +12,7 @@ export class AuthService {
     @Inject('UsersRepo') private readonly usersRepo: IUsersRepo,
   ) { }
 
-  async register(username: string, password: string, role: 'student' | 'professor') {
+  async register(username: string, password: string, role: 'student' | 'professor' | 'admin') {
     // Check if user already exists
     const existing = await this.usersRepo.findByUsername(username);
     if (existing) {

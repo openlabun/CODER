@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-export type UserRole = 'student' | 'professor';
+export type UserRole = 'student' | 'professor' | 'admin';
 
 export class User {
     constructor(

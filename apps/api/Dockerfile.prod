@@ -29,9 +29,10 @@ RUN npm install --only=production && \
 # Copy built application from builder
 COPY --from=builder /usr/src/app/dist ./dist
 
-# Create a non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /usr/src/app
-USER appuser
+# Use the existing non-root user from the base image
+RUN id -u 1000 &>/dev/null 2>&1 || useradd -m -u 1000 node && \
+    chown -R node:node /usr/src/app
+USER node
 
 EXPOSE 3000
 

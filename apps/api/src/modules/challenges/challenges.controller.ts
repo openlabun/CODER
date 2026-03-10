@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Patch, NotFoundException, Inject } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ChallengesService } from './challenges.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { CreateTestCaseUseCase } from '../../core/challenges/use-cases/create-test-case.use-case';
@@ -8,6 +9,7 @@ import { randomUUID } from 'crypto';
 import { PG_POOL } from '../../infrastructure/database/postgres.provider';
 import { Pool } from 'pg';
 
+@ApiTags('challenges')
 @Controller('challenges')
 export class ChallengesController {
   constructor(
@@ -18,6 +20,8 @@ export class ChallengesController {
   ) { }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new challenge with optional test cases' })
+  @ApiResponse({ status: 201, description: 'Challenge created successfully' })
   async create(@Body() dto: CreateChallengeDto) {
     const id = randomUUID();
     const c = await this.svc.create({
@@ -56,6 +60,8 @@ export class ChallengesController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'List all public challenges (excludes course-assigned)' })
+  @ApiResponse({ status: 200, description: 'Returns list of public challenges' })
   async list() {
     const items = await this.svc.list();
 
@@ -77,6 +83,10 @@ export class ChallengesController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get challenge details by ID with test cases' })
+  @ApiParam({ name: 'id', description: 'Challenge UUID' })
+  @ApiResponse({ status: 200, description: 'Challenge details with public and hidden test cases' })
+  @ApiResponse({ status: 404, description: 'Challenge not found' })
   async getById(@Param('id') id: string) {
     const c = await this.svc.get(id);
     if (!c) throw new NotFoundException('Challenge not found');
@@ -110,6 +120,9 @@ export class ChallengesController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a challenge (not yet implemented)' })
+  @ApiParam({ name: 'id', description: 'Challenge UUID' })
+  @ApiResponse({ status: 200, description: 'Challenge updated' })
   async update(@Param('id') id: string, @Body() dto: CreateChallengeDto) {
     // For now, we'll just re-create the challenge logic or update fields
     // Ideally we should have a proper UpdateChallengeUseCase
@@ -123,6 +136,10 @@ export class ChallengesController {
   }
 
   @Post(':id/publish')
+  @ApiOperation({ summary: 'Publish a draft challenge' })
+  @ApiParam({ name: 'id', description: 'Challenge UUID' })
+  @ApiResponse({ status: 200, description: 'Challenge published' })
+  @ApiResponse({ status: 404, description: 'Challenge not found' })
   async publish(@Param('id') id: string) {
     try {
       const c = await this.svc.publish(id);
@@ -133,6 +150,10 @@ export class ChallengesController {
   }
 
   @Post(':id/archive')
+  @ApiOperation({ summary: 'Archive a published challenge' })
+  @ApiParam({ name: 'id', description: 'Challenge UUID' })
+  @ApiResponse({ status: 200, description: 'Challenge archived' })
+  @ApiResponse({ status: 404, description: 'Challenge not found' })
   async archive(@Param('id') id: string) {
     try {
       const c = await this.svc.archive(id);

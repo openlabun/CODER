@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Post, UseGuards, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { CreateCourseDto, EnrollStudentDto, AssignChallengeDto } from './dto/course.dto';
+import { CreateCourseDto, EnrollByCodeDto, EnrollStudentDto, AssignChallengeDto } from './dto/course.dto';
 import { CreateCourseUseCase } from '../../core/courses/use-cases/create-course.use-case';
 import { ListCoursesUseCase } from '../../core/courses/use-cases/list-courses.use-case';
 import { EnrollStudentUseCase } from '../../core/courses/use-cases/enroll-student.use-case';
@@ -11,6 +12,7 @@ import { Inject } from '@nestjs/common';
 import { PG_POOL } from '../../infrastructure/database/postgres.provider';
 import { Pool } from 'pg';
 
+@ApiTags('courses')
 @Controller('courses')
 export class CoursesController {
     constructor(
@@ -23,8 +25,13 @@ export class CoursesController {
     ) { }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Post('enroll')
-    async enrollByCode(@Body() dto: { enrollmentCode: string }, @CurrentUser() user: any) {
+    @ApiOperation({ summary: 'Enroll in a course using an enrollment code (students only)' })
+    @ApiResponse({ status: 200, description: 'Successfully enrolled' })
+    @ApiResponse({ status: 404, description: 'Invalid enrollment code' })
+    @ApiResponse({ status: 401, description: 'Only students can enroll' })
+    async enrollByCode(@Body() dto: EnrollByCodeDto, @CurrentUser() user: any) {
         // Only students can enroll via code
         if (user.role !== 'student') {
             throw new UnauthorizedException('Only students can enroll in courses');
@@ -49,7 +56,11 @@ export class CoursesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Post()
+    @ApiOperation({ summary: 'Create a new course (professor/admin only)' })
+    @ApiResponse({ status: 201, description: 'Course created with auto-generated enrollment code' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async create(@Body() dto: CreateCourseDto, @CurrentUser() user: any) {
         // Only professors and admins can create courses
         if (user.role !== 'professor' && user.role !== 'admin') {
@@ -77,7 +88,10 @@ export class CoursesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Get('browse')
+    @ApiOperation({ summary: 'Browse all available courses' })
+    @ApiResponse({ status: 200, description: 'List of all courses' })
     async browse(@CurrentUser() user: any) {
         const courses = await this.courseRepo.findAll();
         return courses.map((c) => ({
@@ -92,7 +106,10 @@ export class CoursesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Get()
+    @ApiOperation({ summary: 'List courses for current user (by role: student enrolled, professor owned)' })
+    @ApiResponse({ status: 200, description: 'List of user courses' })
     async list(@CurrentUser() user: any) {
         const courses = await this.listCourses.execute({
             userId: user.sub,
@@ -112,7 +129,12 @@ export class CoursesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Get(':id')
+    @ApiOperation({ summary: 'Get course details by ID' })
+    @ApiParam({ name: 'id', description: 'Course UUID' })
+    @ApiResponse({ status: 200, description: 'Course details' })
+    @ApiResponse({ status: 404, description: 'Course not found' })
     async getOne(@Param('id') id: string, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {
@@ -142,7 +164,13 @@ export class CoursesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Post(':id')
+    @ApiOperation({ summary: 'Update course information (professor owner or admin)' })
+    @ApiParam({ name: 'id', description: 'Course UUID' })
+    @ApiResponse({ status: 200, description: 'Course updated' })
+    @ApiResponse({ status: 404, description: 'Course not found' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async update(@Param('id') id: string, @Body() dto: CreateCourseDto, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {
@@ -173,7 +201,13 @@ export class CoursesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Post(':id/students')
+    @ApiOperation({ summary: 'Enroll a student in a course (professor/admin)' })
+    @ApiParam({ name: 'id', description: 'Course UUID' })
+    @ApiResponse({ status: 200, description: 'Student enrolled' })
+    @ApiResponse({ status: 404, description: 'Course not found' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async enroll(@Param('id') id: string, @Body() dto: EnrollStudentDto, @CurrentUser() user: any) {
         // Only professor of the course or admin can enroll students
         const course = await this.courseRepo.findById(id);
@@ -194,7 +228,14 @@ export class CoursesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Delete(':id/students/:studentId')
+    @ApiOperation({ summary: 'Remove a student from a course (professor/admin)' })
+    @ApiParam({ name: 'id', description: 'Course UUID' })
+    @ApiParam({ name: 'studentId', description: 'Student UUID to remove' })
+    @ApiResponse({ status: 200, description: 'Student removed' })
+    @ApiResponse({ status: 404, description: 'Course not found' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async unenroll(@Param('id') id: string, @Param('studentId') studentId: string, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {
@@ -214,7 +255,13 @@ export class CoursesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Post(':id/challenges')
+    @ApiOperation({ summary: 'Assign a challenge to a course (professor/admin)' })
+    @ApiParam({ name: 'id', description: 'Course UUID' })
+    @ApiResponse({ status: 200, description: 'Challenge assigned' })
+    @ApiResponse({ status: 404, description: 'Course not found' })
+    @ApiResponse({ status: 401, description: 'Unauthorized' })
     async assignChallengeToourse(@Param('id') id: string, @Body() dto: AssignChallengeDto, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {
@@ -234,7 +281,12 @@ export class CoursesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Get(':id/students')
+    @ApiOperation({ summary: 'List students enrolled in a course' })
+    @ApiParam({ name: 'id', description: 'Course UUID' })
+    @ApiResponse({ status: 200, description: 'List of enrolled students' })
+    @ApiResponse({ status: 404, description: 'Course not found' })
     async getStudents(@Param('id') id: string, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {
@@ -269,7 +321,12 @@ export class CoursesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth')
     @Get(':id/challenges')
+    @ApiOperation({ summary: 'List challenges assigned to a course' })
+    @ApiParam({ name: 'id', description: 'Course UUID' })
+    @ApiResponse({ status: 200, description: 'List of course challenges' })
+    @ApiResponse({ status: 404, description: 'Course not found' })
     async getChallenges(@Param('id') id: string, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {

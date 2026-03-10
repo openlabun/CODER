@@ -1,0 +1,40 @@
+Actúa como profesor universitario experto en Algoritmia.
+
+Genera un ejercicio sencillo de nivel Algoritmia I a partir de la siguiente descripción:
+Dado un arreglo de números enteros y un valor X, determine cuántos números del arreglo son estrictamente mayores que X.
+
+El ejercicio debe incluir OBLIGATORIAMENTE:
+
+1. Enunciado del problema.
+2. Especificación clara de entradas.
+3. Especificación clara de salidas.
+4. Restricciones formales (límites de tamaño, rangos, etc).
+5. Exactamente 5 casos de prueba.
+6. Implementación del código para ejecutarse con casos de prueba.
+7. Para cada caso de prueba:
+   - Entrada
+   - Salida esperada
+
+El ejercicio debe ser coherente, resoluble y no ambiguo.
+
+Entrega la respuesta EXCLUSIVAMENTE en el siguiente formato JSON válido:
+
+{
+  "titulo": "",
+  "enunciado": "",
+  "entradas": "",
+  "salidas": "",
+  "restricciones": "",
+  "algoritmo_referencia": {
+    "lenguaje": "",
+    "codigo": ""
+    },
+  "casos_de_prueba": [
+    {
+      "entrada": "",
+      "salida_esperada": ""
+    }
+  ]
+}
+
+No agregues texto fuera del JSON.

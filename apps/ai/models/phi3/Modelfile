@@ -1,0 +1,4 @@
+FROM phi3:mini
+
+PARAMETER temperature 0.5
+PARAMETER num_ctx 8192

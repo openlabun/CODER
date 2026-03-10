@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { HealthController } from './modules/health/health.controller';
 import { DbController } from './modules/database/db.controller';
-import { PG_POOL, createPgPool } from './infrastructure/database/postgres.provider';
 import { CacheController } from './modules/cache/cache.controller';
 import { REDIS_CLIENT, createRedisClient } from './infrastructure/cache/redis.provider';
 import { AuthModule } from './modules/auth/auth.module';
@@ -25,7 +24,6 @@ import { AIModule } from './modules/ai/ai.module';
     ChallengesModule,
     SubmissionsModule,
     CoursesModule,
-    LeaderboardModule,
     LeaderboardModule,
     MetricsModule,
     ExamsModule,

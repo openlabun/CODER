@@ -23,8 +23,11 @@ async function bootstrap() {
     .addTag('test-cases', 'Test cases for challenges')
     .addTag('submissions', 'Code submissions')
     .addTag('courses', 'Course management')
+    .addTag('exams', 'Exam management')
     .addTag('leaderboard', 'Rankings and leaderboards')
+    .addTag('ai', 'AI-powered content generation')
     .addTag('metrics', 'System metrics and observability')
+    .addTag('health', 'Health check endpoints')
     .addBearerAuth(
       {
         type: 'http',
@@ -39,13 +42,13 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('docs', app, document);
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
   // eslint-disable-next-line no-console
   console.log(`API listening on http://localhost:${port}`);
-  console.log(`Swagger docs available at http://localhost:${port}/api/docs`);
+  console.log(`Swagger docs available at http://localhost:${port}/docs`);
 }
 bootstrap();
 

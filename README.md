@@ -310,7 +310,8 @@ Anticheat - refines -> CalificacionAutomatica
 
 ## Diagramas 
 ### Diagrama de arquitectura
-<img width="2749" height="2168" alt="Diagrama de arquitectura" src="https://github.com/user-attachments/assets/4495cb08-afb9-4777-a64b-136350b1d029" />
+<img width="2749" height="2168" alt="Diagrama de arquitectura" src="https://github.com/user-attachments/assets/b2d9672b-29dc-4787-9a78-5f4728702a3f" />
+
 
 
 ## Referencias

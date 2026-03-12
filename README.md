@@ -308,6 +308,10 @@ Anticheat - refines -> CalificacionAutomatica
 *   *Actividades:* Refactorización final de código, consolidación de la documentación técnica exhaustiva (API Docs) y despliegue oficial de la versión estable optimizada.
 *   *Hito:* Lanzamiento de la Versión V2.0.
 
+## Diagramas 
+### Diagrama de arquitectura
+
+
 ## Referencias
 
 - [1] GitHub - DerekPz/juez-online · GitHub. https://github.com/DerekPz/juez-online.git

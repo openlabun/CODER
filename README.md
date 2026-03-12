@@ -278,6 +278,36 @@ Anticheat - refines -> CalificacionAutomatica
 
 **Gráfico 3:** Plan de trabajo para desarrollo del proyecto
 
+## Cronograma
+
+### Fase 1: Análisis y Diagnóstico (Semana 7)
+*   *Actividades:* Auditoría detallada del sistema actual, identificación de vacíos funcionales y priorización de requisitos para los módulos de IA y Antifraude.
+*   *Hito:* Entrega del Plan de Mejoras Estratégico.
+
+### Fase 2: Diseño Arquitectónico (Semana 8)
+*   *Actividades:* Extensión del esquema de base de datos en PostgreSQL, definición de objetos de transferencia de datos (DTOs) en NestJS y diseño detallado de la comunicación entre microservicios.
+*   *Hito:* Documento de Diseño Técnico de Arquitectura.
+
+### Fase 3: Módulo de Gestión de Exámenes (Semanas 9 – 10)
+*   *Actividades:* Desarrollo del sistema de evaluaciones, incluyendo agrupación lógica de problemas, implementación de temporizadores de sesión y controles de acceso por cohortes académicas.
+*   *Hito:* Entrega del Prototipo I: Sistema de Evaluaciones.
+
+### Fase 4: Engine de Integridad Académica (Semanas 11 – 12)
+*   *Actividades:* Construcción de telemetría para detección de cambios de pestañas, análisis avanzado de tiempos de envío y algoritmos de similitud estructural de código.
+*   *Hito:* Entrega del Prototipo II: Motor de Detección Antifraude.
+
+### Fase 5: Inteligencia Artificial Local (Semanas 13 – 14)
+*   *Actividades:* Integración de un modelo de lenguaje (LLM) de ejecución local para análisis predictivo de errores de compilación y generación de retroalimentación pedagógica.
+*   *Hito:* Entrega del Prototipo III: Asistente Inteligente.
+
+### Fase 6: Aseguramiento de Calidad e Integración (Semana 15)
+*   *Actividades:* Ejecución de pruebas de carga sobre contenedores Docker, optimización de latencia en procesos de ejecución y validación de estabilidad integral (end-to-end).
+*   *Hito:* Validación del Sistema Integrado.
+
+### Fase 7: Cierre y Despliegue Final (Semana 16)
+*   *Actividades:* Refactorización final de código, consolidación de la documentación técnica exhaustiva (API Docs) y despliegue oficial de la versión estable optimizada.
+*   *Hito:* Lanzamiento de la Versión V2.0.
+
 ## Referencias
 
 - [1] GitHub - DerekPz/juez-online · GitHub. https://github.com/DerekPz/juez-online.git

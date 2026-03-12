@@ -314,10 +314,13 @@ Anticheat - refines -> CalificacionAutomatica
 
 ### Diagrama de Interacción entre Módulos
 <img width="1321" height="726" alt="Interaccion" src="https://github.com/user-attachments/assets/62a461fc-52f4-4692-8b61-0cb1230f077d" />
+
 ### Diagrama de Secuencia — Envío y Evaluación de Código
 <img width="1224" height="627" alt="image" src="https://github.com/user-attachments/assets/a1502c67-3b8d-4fd3-9399-28704bdfaf3a" />
+
 ### Diagrama de Secuencia — Creación de un Examen
 <img width="831" height="569" alt="image" src="https://github.com/user-attachments/assets/cc15f5e5-9fa7-4c47-b533-e12d6051bb83" />
+
 ### Diagrama de despliegue
 <img width="1015" height="882" alt="image" src="https://github.com/user-attachments/assets/bf860f1b-7700-47aa-8d3f-a15c2415208f" />
 

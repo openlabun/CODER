@@ -278,7 +278,7 @@ Anticheat - refines -> CalificacionAutomatica
 
 **Gráfico 3:** Plan de trabajo para desarrollo del proyecto
 
-## Cronograma
+## Cronograma de Prototipos
 
 ### Fase 1: Análisis y Diagnóstico (Semana 7)
 *   *Actividades:* Auditoría detallada del sistema actual, identificación de vacíos funcionales y priorización de requisitos para los módulos de IA y Antifraude.

@@ -13,7 +13,7 @@ const Sidebar = () => {
         <aside className="sidebar">
             <div className="sidebar-header">
                 <Link to={user ? "/dashboard" : "/"} className="logo-link">
-                    <div className="logo">Juez<span className="neon-text">Online</span></div>
+                    <div className="logo">Uninorte<span className="neon-text" style={{ color: 'var(--secondary-color)' }}>Coder</span></div>
                 </Link>
             </div>
 

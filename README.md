@@ -310,7 +310,20 @@ Anticheat - refines -> CalificacionAutomatica
 
 ## Diagramas 
 ### Diagrama de arquitectura
-<img width="2749" height="2168" alt="Diagrama de arquitectura" src="https://github.com/user-attachments/assets/b2d9672b-29dc-4787-9a78-5f4728702a3f" />
+<img width="1310" height="807" alt="RLDDRjiy4Dth50EllY08lXiKiHsta96cRbmWcsn6uYHcGf4AVuoqHG_J0tJL8_XY7P6MAIdPMEJZUs-6pyDBvz7wqAZ2Iwy8vlObI4-r3nP1a8AjT9uQX0lOAFJuO2nlre5-m1UjfAQYmDeR2oldWv2eFHs1ZJKFv8mj2ijsg1_PVVRH6cPeCOEV1K1jcjPeqXvcTrJ1l6tlzN-tnFgp6 (1)" src="https://github.com/user-attachments/assets/8cf34131-bcc9-4299-b6ce-6870602be87b" />
+
+### Diagrama de Interacción entre Módulos
+<img width="1321" height="726" alt="Interaccion" src="https://github.com/user-attachments/assets/62a461fc-52f4-4692-8b61-0cb1230f077d" />
+### Diagrama de Secuencia — Envío y Evaluación de Código
+<img width="1224" height="627" alt="image" src="https://github.com/user-attachments/assets/a1502c67-3b8d-4fd3-9399-28704bdfaf3a" />
+### Diagrama de Secuencia — Creación de un Examen
+<img width="831" height="569" alt="image" src="https://github.com/user-attachments/assets/cc15f5e5-9fa7-4c47-b533-e12d6051bb83" />
+## Diagrama de despliegue
+<img width="1015" height="882" alt="image" src="https://github.com/user-attachments/assets/bf860f1b-7700-47aa-8d3f-a15c2415208f" />
+
+
+
+
 
 
 

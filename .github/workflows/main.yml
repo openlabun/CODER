@@ -27,4 +27,4 @@ jobs:
                       git pull origin release
                       git status
                       docker compose down
-                      docker-compose -f docker-compose.yml --env-file .env.production up -d --build
+                      docker compose -f docker-compose.yml --env-file .env.production up -d --build

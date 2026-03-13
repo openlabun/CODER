@@ -9,7 +9,7 @@ services:
             dockerfile: Dockerfile.prod
         command: node dist/main.js
         restart: always
-        ports:
+        expose:
             - "${API_PORT:-3000}:3000"
         depends_on:
             - postgres

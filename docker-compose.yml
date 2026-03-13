@@ -10,7 +10,7 @@ services:
         command: node dist/main.js
         restart: always
         expose:
-            - "${API_PORT:-3000}:3000"
+            - "${API_PORT:-3000}"
         depends_on:
             - postgres
             - redis

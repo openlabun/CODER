@@ -17,6 +17,7 @@ services:
         environment:
             - NODE_ENV=${NODE_ENV}
             - PORT=${PORT}
+            - CORS_ORIGIN=${CORS_ORIGIN}
             - POSTGRES_HOST=${POSTGRES_HOST}
             - POSTGRES_PORT=${POSTGRES_PORT}
             - POSTGRES_USER=${POSTGRES_USER}

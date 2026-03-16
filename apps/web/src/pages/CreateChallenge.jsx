@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import client from '../api/client';
 import AIAssistantModal from '../components/AIAssistantModal';
 import './CreateChallenge.css';
+import './Challenges.css'; // Imported to style the Card Preview correctly
 
 const CreateChallenge = () => {
     const navigate = useNavigate();
@@ -35,6 +36,20 @@ const CreateChallenge = () => {
     const [newTag, setNewTag] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+    const [courses, setCourses] = useState([]);
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const { data } = await client.get('/courses');
+                setCourses(data.items || data);
+            } catch (err) {
+                console.error('Error fetching courses:', err);
+            }
+        };
+        fetchCourses();
+    }, []);
 
     const predefinedTags = [
         'arrays', 'strings', 'math', 'hashing', 'greedy', 'dynamic-programming',
@@ -100,6 +115,7 @@ const CreateChallenge = () => {
 
     const handleSubmit = async (status) => {
         setError('');
+        setSuccessMessage('');
         if (status === 'published' && !validateForm()) {
             return;
         }
@@ -120,10 +136,30 @@ const CreateChallenge = () => {
                 await client.post(`/courses/${formData.courseId}/challenges`, {
                     challengeId: response.data.id
                 });
-                navigate(`/courses/${formData.courseId}`);
-            } else {
-                navigate('/challenges');
             }
+            
+            setSuccessMessage(`¡Reto publicado exitosamente!`);
+            window.scrollTo(0, 0);
+
+            // Optional: Reset form here to allow creating another one freely
+            setFormData({
+                title: '',
+                description: '',
+                difficulty: 'medium',
+                timeLimit: 1000,
+                memoryLimit: 256,
+                tags: [],
+                inputFormat: '',
+                outputFormat: '',
+                constraints: '',
+                status: 'draft',
+                assignedCourses: [],
+                courseId: courseId || null
+            });
+            setPublicTestCases([]);
+            setHiddenTestCases([]);
+            setShowPreview(false);
+            
         } catch (err) {
             setError('Failed to create challenge. Please try again.');
             console.error(err);
@@ -187,6 +223,7 @@ const CreateChallenge = () => {
             )}
 
             {error && <div className="error-message">{error}</div>}
+            {successMessage && <div className="success-message" style={{ background: 'rgba(40, 167, 69, 0.1)', border: '1px solid var(--success-color)', color: 'var(--success-color)', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>{successMessage}</div>}
 
             {!showPreview ? (
                 <>
@@ -470,10 +507,23 @@ const CreateChallenge = () => {
                                     </div>
                                 </div>
 
-                                <div className="info-box">
-                                    <h3>📚 Course Assignment</h3>
-                                    <p>Course assignment will be available after creating the challenge.</p>
-                                    <p>You'll be able to assign this challenge to specific courses from the challenge details page.</p>
+                                <div className="info-box" style={{ background: 'rgba(200, 16, 46, 0.05)', border: '1px solid var(--primary-color)' }}>
+                                    <h3 style={{ color: 'var(--primary-color)' }}>📚 Asignar a Curso</h3>
+                                    <p>Selecciona un curso al que quieres asignar este reto (Opcional).</p>
+                                    <div className="form-group" style={{ marginTop: '15px' }}>
+                                        <select
+                                            name="courseId"
+                                            value={formData.courseId || ''}
+                                            onChange={handleChange}
+                                        >
+                                            <option value="">-- No asignar a ningún curso por ahora --</option>
+                                            {courses.map(course => (
+                                                <option key={course.id} value={course.id}>
+                                                    {course.title}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -499,6 +549,31 @@ const CreateChallenge = () => {
                     <div className="preview-header">
                         <h2>Preview</h2>
                         <button onClick={() => setShowPreview(false)} className="btn-secondary">← Back to Edit</button>
+                    </div>
+
+                    <div className="preview-section-title" style={{ marginTop: '20px', marginBottom: '15px', color: 'var(--text-muted)' }}>
+                        <h3>Card Preview (How it looks in the list)</h3>
+                    </div>
+
+                    <div className="challenge-card" style={{ maxWidth: '400px', marginBottom: '40px' }}>
+                        <div className="challenge-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                            <h3 className="challenge-title" style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-color)', margin: 0 }}>
+                                {formData.title || 'Untitled Challenge'}
+                            </h3>
+                            <span className={`difficulty-badge ${(formData.difficulty || 'medium').toLowerCase()}`}>
+                                {formData.difficulty || 'Medium'}
+                            </span>
+                        </div>
+                        <p className="challenge-desc" style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {formData.description || 'No description provided'}
+                        </p>
+                        <div className="btn-solve" style={{ display: 'inline-block', width: '100%', padding: '12px', textAlign: 'center', background: 'transparent', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', borderRadius: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Solve Challenge
+                        </div>
+                    </div>
+
+                    <div className="preview-section-title" style={{ marginBottom: '15px', color: 'var(--text-muted)' }}>
+                        <h3>Detailed Preview (How it looks to the student)</h3>
                     </div>
 
                     <div className="challenge-preview">

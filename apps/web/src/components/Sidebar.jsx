@@ -21,11 +21,7 @@ const Sidebar = () => {
                 <ul>
                     {user?.role === 'student' && (
                         <>
-                            <li>
-                                <Link to="/" className={isActive('/') && location.pathname === '/' ? 'active' : ''}>
-                                    🏠 Inicio
-                                </Link>
-                            </li>
+
                             <li>
                                 <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>
                                     📊 Panel principal
@@ -56,11 +52,7 @@ const Sidebar = () => {
 
                     {(user?.role === 'professor' || user?.role === 'admin') && (
                         <>
-                            <li>
-                                <Link to="/" className={isActive('/') && location.pathname === '/' ? 'active' : ''}>
-                                    🏠 Inicio
-                                </Link>
-                            </li>
+
                             <li>
                                 <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>
                                     📊 Panel principal

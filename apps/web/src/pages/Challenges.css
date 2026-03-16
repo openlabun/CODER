@@ -25,13 +25,14 @@
 }
 
 .challenge-card {
-    background: var(--surface-color);
-    border: var(--glass-border);
-    border-radius: 12px;
-    padding: 20px;
-    transition: all 0.3s ease;
+    background: #ffffff;
+    border: 1px solid #c4c4c4; /* Darker more visible border */
+    border-radius: 8px;
+    padding: 25px;
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* More pronounced initial shadow */
 }
 
 .challenge-card::before {
@@ -39,16 +40,17 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    width: 4px;
+    height: 100%;
+    background-color: var(--primary-color);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
 }
 
 .challenge-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(200, 16, 46, 0.08); /* Uninorte red shadow */
+    border-color: var(--primary-color);
 }
 
 .challenge-card:hover::before {
@@ -70,26 +72,31 @@
 }
 
 .difficulty-badge {
-    padding: 4px 8px;
+    padding: 4px 10px;
     border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
 }
 
 .difficulty-badge.easy {
-    background: rgba(0, 255, 157, 0.1);
-    color: var(--success-color);
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-color: #c8e6c9;
 }
 
 .difficulty-badge.medium {
-    background: rgba(255, 204, 0, 0.1);
-    color: var(--warning-color);
+    background: #fff8e1;
+    color: #f57f17;
+    border-color: #ffecb3;
 }
 
 .difficulty-badge.hard {
-    background: rgba(255, 0, 85, 0.1);
-    color: var(--error-color);
+    background: #ffebee;
+    color: #c62828;
+    border-color: #ffcdd2;
 }
 
 .challenge-desc {
@@ -106,34 +113,36 @@
 .btn-solve {
     display: inline-block;
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     text-align: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
     text-decoration: none;
-    border-radius: 6px;
-    transition: all 0.3s ease;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .btn-solve:hover {
     background: var(--primary-color);
-    color: black;
-    border-color: var(--primary-color);
-    font-weight: bold;
+    color: white;
 }
 
 .empty-state {
-    background: var(--surface-color);
-    border: var(--glass-border);
-    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     padding: 60px 40px;
     text-align: center;
     margin-top: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
 }
 
 .empty-state h3 {
-    color: var(--text-color);
+    color: var(--primary-color);
     font-size: 1.8rem;
     margin-bottom: 15px;
 }

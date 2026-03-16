@@ -24,14 +24,14 @@ const Register = () => {
     return (
         <div className="auth-container">
             <div className="auth-card">
-                <h2 className="auth-title">Join the Elite</h2>
-                <p className="auth-subtitle">Create your account to start coding</p>
+                <h2 className="auth-title">Regístrate</h2>
+                <p className="auth-subtitle">Crea tu cuenta para comenzar a programar</p>
 
                 {error && <div className="auth-error">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
-                        <label>Username</label>
+                        <label>Usuario</label>
                         <input
                             type="text"
                             value={username}
@@ -41,7 +41,7 @@ const Register = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>Password</label>
+                        <label>Contraseña</label>
                         <input
                             type="password"
                             value={password}
@@ -51,23 +51,23 @@ const Register = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>Role</label>
+                        <label>Rol</label>
                         <select
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
                             className="role-select"
                             required
                         >
-                            <option value="">Select your role</option>
-                            <option value="student">Student</option>
-                            <option value="professor">Professor</option>
+                            <option value="">Selecciona tu rol</option>
+                            <option value="student">Estudiante</option>
+                            <option value="professor">Profesor</option>
                         </select>
                     </div>
-                    <button type="submit" className="btn-auth">Register</button>
+                    <button type="submit" className="btn-auth">Registrarse</button>
                 </form>
 
                 <p className="auth-footer">
-                    Already have an account? <Link to="/login">Login here</Link>
+                    ¿Ya tienes una cuenta? <Link to="/login">Ingresa aquí</Link>
                 </p>
             </div>
         </div>

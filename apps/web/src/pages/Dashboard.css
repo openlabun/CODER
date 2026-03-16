@@ -39,7 +39,7 @@
 
 .stat-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 240, 255, 0.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
 .stat-icon {
@@ -58,7 +58,6 @@
     font-size: 2rem;
     font-weight: 800;
     color: var(--primary-color);
-    text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
 }
 
 .dashboard-content {
@@ -93,7 +92,7 @@
 .action-card:hover {
     transform: translateY(-5px);
     border-color: var(--primary-color);
-    box-shadow: 0 5px 20px rgba(0, 240, 255, 0.2);
+    box-shadow: 0 5px 20px rgba(200, 16, 46, 0.15); /* subtle primary color shadow */
 }
 
 .action-icon {
@@ -169,19 +168,25 @@
 }
 
 .btn-primary {
-    display: inline-block;
+    display: inline-flex;
     padding: 12px 30px;
     background: var(--primary-color);
-    color: #000;
+    color: white;
+    border: 1px solid var(--primary-color);
     text-decoration: none;
-    border-radius: 8px;
-    font-weight: bold;
-    transition: all 0.3s ease;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-primary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    background: #a00d24; /* Darker red */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {

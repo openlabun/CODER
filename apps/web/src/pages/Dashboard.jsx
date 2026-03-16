@@ -38,42 +38,42 @@ const Dashboard = () => {
     }, []);
 
     if (loading) {
-        return <div className="loading">Loading dashboard...</div>;
+        return <div className="loading">Cargando panel...</div>;
     }
 
     return (
         <div className="dashboard-page">
             <div className="page-header">
-                <h1>Dashboard</h1>
-                <p className="welcome-text">Welcome back, {user?.username}!</p>
+                <h1>Panel Principal</h1>
+                <p className="welcome-text">¡Bienvenido de nuevo, {user?.username}!</p>
             </div>
 
             <div className="stats-grid">
                 <div className="stat-card">
                     <div className="stat-icon">📝</div>
                     <div className="stat-content">
-                        <h3>Total Submissions</h3>
+                        <h3>Envíos Totales</h3>
                         <div className="stat-value">{stats.totalSubmissions}</div>
                     </div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon">✅</div>
                     <div className="stat-content">
-                        <h3>Accepted</h3>
+                        <h3>Aceptados</h3>
                         <div className="stat-value">{stats.acceptedSubmissions}</div>
                     </div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon">🎯</div>
                     <div className="stat-content">
-                        <h3>Active Challenges</h3>
+                        <h3>Retos Activos</h3>
                         <div className="stat-value">{stats.activeChallenges}</div>
                     </div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon">📊</div>
                     <div className="stat-content">
-                        <h3>Success Rate</h3>
+                        <h3>Tasa de Éxito</h3>
                         <div className="stat-value">
                             {stats.totalSubmissions > 0
                                 ? Math.round((stats.acceptedSubmissions / stats.totalSubmissions) * 100)
@@ -85,34 +85,34 @@ const Dashboard = () => {
 
             <div className="dashboard-content">
                 <div className="quick-actions-section">
-                    <h2>Quick Actions</h2>
+                    <h2>Acciones Rápidas</h2>
                     <div className="actions-grid">
                         <Link to="/challenges" className="action-card">
                             <span className="action-icon">🚀</span>
-                            <h3>Browse Challenges</h3>
-                            <p>Explore and solve coding challenges</p>
+                            <h3>Explorar Retos</h3>
+                            <p>Explora y resuelve retos de programación</p>
                         </Link>
                         <Link to="/courses" className="action-card">
                             <span className="action-icon">📚</span>
-                            <h3>My Courses</h3>
-                            <p>View your enrolled courses</p>
+                            <h3>Mis Cursos</h3>
+                            <p>Mira tus cursos inscritos</p>
                         </Link>
                         <Link to="/leaderboard" className="action-card">
                             <span className="action-icon">🏆</span>
-                            <h3>Leaderboard</h3>
-                            <p>Check your ranking</p>
+                            <h3>Clasificación</h3>
+                            <p>Revisa tu posición en el ranking</p>
                         </Link>
                         <Link to="/submissions" className="action-card">
                             <span className="action-icon">📋</span>
-                            <h3>My Submissions</h3>
-                            <p>Review your submission history</p>
+                            <h3>Mis Envíos</h3>
+                            <p>Revisa tu historial de envíos</p>
                         </Link>
                     </div>
                 </div>
 
                 {stats.recentSubmissions.length > 0 && (
                     <div className="recent-activity-section">
-                        <h2>Recent Submissions</h2>
+                        <h2>Envíos Recientes</h2>
                         <div className="submissions-list">
                             {stats.recentSubmissions.map(sub => (
                                 <div key={sub.id} className="submission-item">
@@ -130,9 +130,9 @@ const Dashboard = () => {
 
                 {stats.totalSubmissions === 0 && (
                     <div className="empty-state">
-                        <h3>🎯 Ready to start?</h3>
-                        <p>You haven't submitted any solutions yet. Browse challenges and start coding!</p>
-                        <Link to="/challenges" className="btn-primary">Browse Challenges</Link>
+                        <h3>🎯 ¿Listo para empezar?</h3>
+                        <p>Aún no has enviado ninguna solución. ¡Explora los retos y empieza a programar!</p>
+                        <Link to="/challenges" className="btn-primary">Explorar Retos</Link>
                     </div>
                 )}
             </div>

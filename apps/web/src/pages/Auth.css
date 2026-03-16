@@ -3,29 +3,18 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
-}
-
-.auth-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(10, 10, 18, 0.85);
-    backdrop-filter: blur(5px);
+    background-color: var(--background-color);
 }
 
 .auth-card {
     position: relative;
-    background: var(--glass-bg);
-    border: var(--glass-border);
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
     padding: 40px;
-    border-radius: 20px;
+    border-radius: 8px;
     width: 100%;
     max-width: 400px;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); /* Lighter shadow */
     text-align: center;
 }
 
@@ -51,60 +40,61 @@
     margin-bottom: 20px;
 }
 
-.form-group {
+.auth-card .form-group {
     margin-bottom: 20px;
     text-align: left;
 }
 
-.form-group label {
+.auth-card .form-group label {
     display: block;
     color: var(--text-color);
     margin-bottom: 8px;
     font-size: 0.9rem;
 }
 
-.form-group input,
-.form-group select {
+.auth-card .form-group input,
+.auth-card .form-group select {
     width: 100%;
     padding: 12px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: white;
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    color: #333333;
     font-size: 1rem;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.auth-card .form-group input:focus,
+.auth-card .form-group select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    box-shadow: 0 0 0 2px rgba(200, 16, 46, 0.2);
 }
 
-.form-group select option {
-    background: var(--surface-color);
-    color: var(--text-color);
+.auth-card .form-group select option {
+    background: #ffffff;
+    color: #333333;
 }
 
 .btn-auth {
     width: 100%;
     padding: 14px;
-    background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
-    border: none;
-    border-radius: 8px;
+    background: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
     color: white;
-    font-weight: bold;
+    font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
-    transition: transform 0.2s ease;
+    transition: all 0.2s ease;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .btn-auth:hover {
-    transform: scale(1.02);
-    box-shadow: 0 0 20px rgba(112, 0, 255, 0.4);
+    background: #a00d24; /* Darker red */
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
 }
 
 .auth-footer {

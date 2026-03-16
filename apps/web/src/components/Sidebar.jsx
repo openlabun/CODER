@@ -13,7 +13,7 @@ const Sidebar = () => {
         <aside className="sidebar">
             <div className="sidebar-header">
                 <Link to={user ? "/dashboard" : "/"} className="logo-link">
-                    <div className="logo">Uninorte<span className="neon-text" style={{ color: 'var(--secondary-color)' }}>Coder</span></div>
+                    <div className="logo">Uninorte<span style={{ color: 'var(--secondary-color)' }}>Coder</span></div>
                 </Link>
             </div>
 
@@ -23,32 +23,32 @@ const Sidebar = () => {
                         <>
                             <li>
                                 <Link to="/" className={isActive('/') && location.pathname === '/' ? 'active' : ''}>
-                                    🏠 Home
+                                    🏠 Inicio
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>
-                                    📊 Dashboard
+                                    📊 Panel principal
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/challenges" className={isActive('/challenges') ? 'active' : ''}>
-                                    🚀 Challenges
+                                    🚀 Retos
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/courses" className={isActive('/courses') ? 'active' : ''}>
-                                    📚 My Courses
+                                    📚 Mis Cursos
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/submissions" className={isActive('/submissions') ? 'active' : ''}>
-                                    📝 Submissions
+                                    📝 Envíos
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/leaderboard" className={isActive('/leaderboard') ? 'active' : ''}>
-                                    🏆 Leaderboard
+                                    🏆 Clasificación
                                 </Link>
                             </li>
                         </>
@@ -58,42 +58,42 @@ const Sidebar = () => {
                         <>
                             <li>
                                 <Link to="/" className={isActive('/') && location.pathname === '/' ? 'active' : ''}>
-                                    🏠 Home
+                                    🏠 Inicio
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>
-                                    📊 Dashboard
+                                    📊 Panel principal
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/challenges" className={isActive('/challenges') ? 'active' : ''}>
-                                    🚀 Challenges
+                                    🚀 Retos
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/challenges/create" className={isActive('/challenges/create') ? 'active' : ''}>
-                                    ➕ Create Challenge
+                                    ➕ Crear Reto
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/courses" className={isActive('/courses') ? 'active' : ''}>
-                                    📚 Courses
+                                    📚 Cursos
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/courses/create" className={isActive('/courses/create') ? 'active' : ''}>
-                                    ➕ Create Course
+                                    ➕ Crear Curso
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/submissions" className={isActive('/submissions') ? 'active' : ''}>
-                                    📝 Submissions
+                                    📝 Envíos
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/leaderboard" className={isActive('/leaderboard') ? 'active' : ''}>
-                                    🏆 Leaderboard
+                                    🏆 Clasificación
                                 </Link>
                             </li>
                         </>
@@ -112,7 +112,7 @@ const Sidebar = () => {
                     </div>
                 </div>
                 <button onClick={logout} className="btn-logout">
-                    <span>🚪</span> Logout
+                    <span>🚪</span> Cerrar Sesión
                 </button>
             </div>
         </aside>

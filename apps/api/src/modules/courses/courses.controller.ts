@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, UseGuards, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiUnauthorizedResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { CreateCourseDto, EnrollByCodeDto, EnrollStudentDto, AssignChallengeDto } from './dto/course.dto';
@@ -29,8 +29,8 @@ export class CoursesController {
     @Post('enroll')
     @ApiOperation({ summary: 'Enroll in a course using an enrollment code (students only)' })
     @ApiResponse({ status: 200, description: 'Successfully enrolled' })
-    @ApiResponse({ status: 404, description: 'Invalid enrollment code' })
-    @ApiResponse({ status: 401, description: 'Only students can enroll' })
+    @ApiNotFoundResponse({ description: 'Invalid enrollment code' })
+    @ApiUnauthorizedResponse({ description: 'Only students can enroll' })
     async enrollByCode(@Body() dto: EnrollByCodeDto, @CurrentUser() user: any) {
         // Only students can enroll via code
         if (user.role !== 'student') {
@@ -60,7 +60,7 @@ export class CoursesController {
     @Post()
     @ApiOperation({ summary: 'Create a new course (professor/admin only)' })
     @ApiResponse({ status: 201, description: 'Course created with auto-generated enrollment code' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiUnauthorizedResponse({ description: 'Only professors and admins can create courses' })
     async create(@Body() dto: CreateCourseDto, @CurrentUser() user: any) {
         // Only professors and admins can create courses
         if (user.role !== 'professor' && user.role !== 'admin') {
@@ -134,7 +134,8 @@ export class CoursesController {
     @ApiOperation({ summary: 'Get course details by ID' })
     @ApiParam({ name: 'id', description: 'Course UUID' })
     @ApiResponse({ status: 200, description: 'Course details' })
-    @ApiResponse({ status: 404, description: 'Course not found' })
+    @ApiNotFoundResponse({ description: 'Course not found' })
+    @ApiUnauthorizedResponse({ description: 'Not enrolled or not owner of the course' })
     async getOne(@Param('id') id: string, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {
@@ -169,8 +170,8 @@ export class CoursesController {
     @ApiOperation({ summary: 'Update course information (professor owner or admin)' })
     @ApiParam({ name: 'id', description: 'Course UUID' })
     @ApiResponse({ status: 200, description: 'Course updated' })
-    @ApiResponse({ status: 404, description: 'Course not found' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiNotFoundResponse({ description: 'Course not found' })
+    @ApiUnauthorizedResponse({ description: 'Unauthorized' })
     async update(@Param('id') id: string, @Body() dto: CreateCourseDto, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {
@@ -206,8 +207,8 @@ export class CoursesController {
     @ApiOperation({ summary: 'Enroll a student in a course (professor/admin)' })
     @ApiParam({ name: 'id', description: 'Course UUID' })
     @ApiResponse({ status: 200, description: 'Student enrolled' })
-    @ApiResponse({ status: 404, description: 'Course not found' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiNotFoundResponse({ description: 'Course not found' })
+    @ApiUnauthorizedResponse({ description: 'Unauthorized' })
     async enroll(@Param('id') id: string, @Body() dto: EnrollStudentDto, @CurrentUser() user: any) {
         // Only professor of the course or admin can enroll students
         const course = await this.courseRepo.findById(id);
@@ -234,8 +235,8 @@ export class CoursesController {
     @ApiParam({ name: 'id', description: 'Course UUID' })
     @ApiParam({ name: 'studentId', description: 'Student UUID to remove' })
     @ApiResponse({ status: 200, description: 'Student removed' })
-    @ApiResponse({ status: 404, description: 'Course not found' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiNotFoundResponse({ description: 'Course not found' })
+    @ApiUnauthorizedResponse({ description: 'Unauthorized' })
     async unenroll(@Param('id') id: string, @Param('studentId') studentId: string, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {
@@ -260,8 +261,8 @@ export class CoursesController {
     @ApiOperation({ summary: 'Assign a challenge to a course (professor/admin)' })
     @ApiParam({ name: 'id', description: 'Course UUID' })
     @ApiResponse({ status: 200, description: 'Challenge assigned' })
-    @ApiResponse({ status: 404, description: 'Course not found' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiNotFoundResponse({ description: 'Course not found' })
+    @ApiUnauthorizedResponse({ description: 'Unauthorized' })
     async assignChallengeToourse(@Param('id') id: string, @Body() dto: AssignChallengeDto, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {
@@ -286,7 +287,7 @@ export class CoursesController {
     @ApiOperation({ summary: 'List students enrolled in a course' })
     @ApiParam({ name: 'id', description: 'Course UUID' })
     @ApiResponse({ status: 200, description: 'List of enrolled students' })
-    @ApiResponse({ status: 404, description: 'Course not found' })
+    @ApiNotFoundResponse({ description: 'Course not found' })
     async getStudents(@Param('id') id: string, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {
@@ -326,7 +327,7 @@ export class CoursesController {
     @ApiOperation({ summary: 'List challenges assigned to a course' })
     @ApiParam({ name: 'id', description: 'Course UUID' })
     @ApiResponse({ status: 200, description: 'List of course challenges' })
-    @ApiResponse({ status: 404, description: 'Course not found' })
+    @ApiNotFoundResponse({ description: 'Course not found' })
     async getChallenges(@Param('id') id: string, @CurrentUser() user: any) {
         const course = await this.courseRepo.findById(id);
         if (!course) {

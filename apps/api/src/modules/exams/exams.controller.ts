@@ -24,6 +24,7 @@ export class ExamsController {
     @ApiOperation({ summary: 'Create a new exam with challenges (professor/admin only)' })
     @ApiResponse({ status: 201, description: 'Exam created' })
     @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({ status: 403, description: 'Forbidden by role guard' })
     async create(@Body() body: CreateExamDto) {
         return this.createExamUseCase.execute({
             title: body.title,

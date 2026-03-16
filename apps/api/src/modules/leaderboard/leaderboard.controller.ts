@@ -12,7 +12,7 @@ export class LeaderboardController {
     ) { }
 
     @Get('challenge/:id')
-    @ApiOperation({ summary: 'Get leaderboard for a specific challenge' })
+    @ApiOperation({ summary: 'Get leaderboard for a specific challenge (currently public endpoint)' })
     @ApiParam({ name: 'id', description: 'Challenge ID' })
     @ApiResponse({ status: 200, description: 'Returns challenge leaderboard with rankings' })
     async getChallenge(@Param('id') id: string) {
@@ -24,7 +24,7 @@ export class LeaderboardController {
     }
 
     @Get('course/:id')
-    @ApiOperation({ summary: 'Get leaderboard for a specific course' })
+    @ApiOperation({ summary: 'Get leaderboard for a specific course (currently public endpoint)' })
     @ApiParam({ name: 'id', description: 'Course ID' })
     @ApiResponse({ status: 200, description: 'Returns course leaderboard with total scores' })
     async getCourse(@Param('id') id: string) {

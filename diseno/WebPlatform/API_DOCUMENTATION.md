@@ -32,6 +32,18 @@ API backend construida con **NestJS** (TypeScript) que implementa un **juez onli
 - Ejecución: Docker containers aislados
 - IA: Google Generative AI (Gemini Flash)
 
+### Flujo actual de procesamiento de submissions
+
+1. Cliente envía código a `POST /submissions`.
+2. API guarda submission en PostgreSQL con estado `queued`.
+3. API encola el `submissionId` en Redis (`queue:submissions`).
+4. Worker consume de Redis, ejecuta runner por lenguaje en contenedor aislado y calcula veredicto/score.
+5. Worker actualiza estado final y métricas en PostgreSQL.
+
+### Nota de comportamiento actual
+
+Algunos endpoints mantienen políticas de seguridad en transición. Este documento y OpenAPI reflejan el comportamiento real actual de la API para facilitar pruebas y validación del sistema existente.
+
 ---
 
 ## Endpoints
@@ -48,12 +60,12 @@ API backend construida con **NestJS** (TypeScript) que implementa un **juez onli
 
 | Método  | Ruta                      | Auth | Rol            | Descripción                    |
 | ------- | ------------------------- |:----:| -------------- | ------------------------------ |
-| `POST`  | `/challenges`             | ✅    | profesor/admin | Crear challenge con test cases |
-| `GET`   | `/challenges`             | ✅    | cualquiera     | Listar challenges públicos     |
-| `GET`   | `/challenges/:id`         | ✅    | cualquiera     | Obtener detalle de challenge   |
-| `PATCH` | `/challenges/:id`         | ✅    | profesor/admin | Actualizar challenge           |
-| `POST`  | `/challenges/:id/publish` | ✅    | profesor/admin | Publicar challenge             |
-| `POST`  | `/challenges/:id/archive` | ✅    | profesor/admin | Archivar challenge             |
+| `POST`  | `/challenges`             | ❌    | —              | Crear challenge con test cases |
+| `GET`   | `/challenges`             | ❌    | —              | Listar challenges públicos     |
+| `GET`   | `/challenges/:id`         | ❌    | —              | Obtener detalle de challenge   |
+| `PATCH` | `/challenges/:id`         | ❌    | —              | Actualizar challenge (placeholder actual) |
+| `POST`  | `/challenges/:id/publish` | ❌    | —              | Publicar challenge             |
+| `POST`  | `/challenges/:id/archive` | ❌    | —              | Archivar challenge             |
 
 ### Test Cases
 
@@ -68,7 +80,7 @@ API backend construida con **NestJS** (TypeScript) que implementa un **juez onli
 | Método | Ruta               | Auth | Rol        | Descripción                    |
 | ------ | ------------------ |:----:| ---------- | ------------------------------ |
 | `POST` | `/submissions`     | ✅    | estudiante | Enviar código                  |
-| `GET`  | `/submissions/:id` | ✅    | cualquiera | Obtener detalle de submission  |
+| `GET`  | `/submissions/:id` | ❌    | —          | Obtener detalle de submission  |
 | `GET`  | `/submissions`     | ✅    | cualquiera | Listar submissions del usuario |
 
 ### Courses
@@ -99,8 +111,8 @@ API backend construida con **NestJS** (TypeScript) que implementa un **juez onli
 
 | Método | Ruta                         | Auth | Rol        | Descripción           |
 | ------ | ---------------------------- |:----:| ---------- | --------------------- |
-| `GET`  | `/leaderboard/challenge/:id` | ✅    | cualquiera | Ranking por challenge |
-| `GET`  | `/leaderboard/course/:id`    | ✅    | cualquiera | Ranking por curso     |
+| `GET`  | `/leaderboard/challenge/:id` | ❌    | —          | Ranking por challenge |
+| `GET`  | `/leaderboard/course/:id`    | ❌    | —          | Ranking por curso     |
 
 ### AI
 

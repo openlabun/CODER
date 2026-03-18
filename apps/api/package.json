@@ -9,7 +9,10 @@
         "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
         "worker:submissions": "ts-node-dev --transpile-only src/workers/submission.worker.ts",
         "build": "tsc -p .",
-        "start": "node dist/main.js"
+        "start": "node dist/main.js",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage"
     },
     "keywords": [],
     "author": "",
@@ -31,9 +34,12 @@
     },
     "devDependencies": {
         "@types/bcrypt": "^6.0.0",
+        "@types/jest": "^30.0.0",
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^24.7.1",
         "@types/pg": "^8.15.5",
+        "jest": "^30.2.0",
+        "ts-jest": "^29.4.5",
         "ts-node-dev": "^2.0.0",
         "typescript": "^5.9.3"
     }

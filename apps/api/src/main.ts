@@ -16,7 +16,9 @@ async function bootstrap() {
   // Swagger/OpenAPI configuration
   const config = new DocumentBuilder()
     .setTitle('Juez Online API')
-    .setDescription('API documentation for the Online Judge platform')
+    .setDescription(
+      'API documentation for the Online Judge platform. Current submission flow: client sends code to /submissions, API persists and enqueues submission ID in Redis (queue:submissions), worker consumes jobs, executes language runner containers, and persists final verdict and score.',
+    )
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints')
     .addTag('challenges', 'Challenge management')

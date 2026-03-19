@@ -17,6 +17,12 @@
   --glass-bg: rgba(255, 255, 255, 0.95);
   --glass-border: 1px solid rgba(0, 0, 0, 0.1);
   --shadow-glow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  /* Missing semantic variables */
+  --bg-secondary: var(--surface-color);
+  --text-primary: var(--text-color);
+  --text-secondary: var(--text-muted);
+  --accent-primary: var(--primary-color);
+  --error: var(--error-color);
 }
 
 body {
@@ -33,7 +39,7 @@ body {
 }
 
 a {
-  color: var(--accent-primary);
+  color: var(--primary-color);
   text-decoration: none;
 }
 

@@ -23,24 +23,24 @@ const Login = () => {
     return (
         <div className="auth-container">
             <div className="auth-card">
-                <h2 className="auth-title">Welcome Back</h2>
-                <p className="auth-subtitle">Login to access the mainframe</p>
+                <h2 className="auth-title">Bienvenido</h2>
+                <p className="auth-subtitle">Ingresa para acceder a la plataforma</p>
 
                 {error && <div className="auth-error">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
-                        <label>Username</label>
+                        <label>Usuario</label>
                         <input
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            placeholder="username"
+                            placeholder="usuario"
                             required
                         />
                     </div>
                     <div className="form-group">
-                        <label>Password</label>
+                        <label>Contraseña</label>
                         <input
                             type="password"
                             value={password}
@@ -49,11 +49,11 @@ const Login = () => {
                             required
                         />
                     </div>
-                    <button type="submit" className="btn-auth">Login</button>
+                    <button type="submit" className="btn-auth">Ingresar</button>
                 </form>
 
                 <p className="auth-footer">
-                    Don't have an account? <Link to="/register">Register here</Link>
+                    ¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link>
                 </p>
             </div>
         </div>

@@ -1,5 +1,5 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { GeminiService } from '../../core/ai/gemini.service';
@@ -18,8 +18,24 @@ export class AIController {
     @ApiBearerAuth('JWT-auth')
     @Post('generate-challenge-ideas')
     @ApiOperation({ summary: 'Generate challenge ideas using AI (professor/admin only)' })
-    @ApiResponse({ status: 200, description: 'AI-generated challenge ideas' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({
+        status: 200,
+        description: 'AI-generated challenge ideas',
+        schema: {
+            example: {
+                ideas: [
+                    {
+                        title: 'Two Sum',
+                        description: 'Given an array and a target, return indices of two numbers that sum to target.',
+                        difficulty: 'easy',
+                        tags: ['arrays', 'hashing'],
+                    },
+                ],
+            },
+        },
+    })
+    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid JWT)' })
+    @ApiResponse({ status: 500, description: 'Role validation currently throws generic Error in controller' })
     async generateChallengeIdeas(
         @Body() dto: GenerateChallengeIdeasDto,
         @CurrentUser() user: any
@@ -42,8 +58,22 @@ export class AIController {
     @ApiBearerAuth('JWT-auth')
     @Post('generate-test-cases')
     @ApiOperation({ summary: 'Generate test cases using AI (professor/admin only)' })
-    @ApiResponse({ status: 200, description: 'AI-generated test cases (public and hidden)' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
+    @ApiResponse({
+        status: 200,
+        description: 'AI-generated test cases (public and hidden)',
+        schema: {
+            example: {
+                publicTestCases: [
+                    { name: 'Example 1', input: '2\n1 2\n3', output: '0 1' },
+                ],
+                hiddenTestCases: [
+                    { name: 'Edge Case 1', input: '1\n5\n5', output: '0 0' },
+                ],
+            },
+        },
+    })
+    @ApiUnauthorizedResponse({ description: 'Unauthorized (missing/invalid JWT)' })
+    @ApiResponse({ status: 500, description: 'Role validation currently throws generic Error in controller' })
     async generateTestCases(
         @Body() dto: GenerateTestCasesDto,
         @CurrentUser() user: any

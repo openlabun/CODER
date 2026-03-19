@@ -9,7 +9,7 @@ const EditCourse = () => {
     const [formData, setFormData] = useState({
         name: '',
         code: '',
-        period: '',
+        period: `${new Date().getFullYear()}-1`,
         groupNumber: '',
     });
     const [loading, setLoading] = useState(true);
@@ -65,14 +65,14 @@ const EditCourse = () => {
     return (
         <div className="create-course-page">
             <div className="page-header">
-                <h1>Edit Course</h1>
+                <h1>Editar Curso</h1>
             </div>
 
             <form onSubmit={handleSubmit} className="create-course-form">
                 {error && <div className="error-message">{error}</div>}
 
                 <div className="form-group">
-                    <label htmlFor="name">Course Name</label>
+                    <label htmlFor="name">Nombre del Curso</label>
                     <input
                         type="text"
                         id="name"
@@ -86,7 +86,7 @@ const EditCourse = () => {
 
                 <div className="form-row">
                     <div className="form-group">
-                        <label htmlFor="code">Course Code</label>
+                        <label htmlFor="code">Código del Curso</label>
                         <input
                             type="text"
                             id="code"
@@ -99,21 +99,40 @@ const EditCourse = () => {
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="period">Period</label>
-                        <input
-                            type="text"
-                            id="period"
-                            name="period"
-                            value={formData.period}
-                            onChange={handleChange}
-                            placeholder="e.g. 2025-1"
-                            required
-                            minLength={4}
-                        />
+                        <label>Periodo Académico</label>
+                        <div className="period-selectors" style={{ display: 'flex', gap: '10px' }}>
+                            <select
+                                value={formData.period ? formData.period.split('-')[0] : new Date().getFullYear()}
+                                onChange={(e) => {
+                                    const currentTerm = (formData.period && formData.period.includes('-')) ? formData.period.split('-')[1] : '1';
+                                    handleChange({ target: { name: 'period', value: `${e.target.value}-${currentTerm}` } });
+                                }}
+                                className="year-select"
+                                style={{ flex: 1, padding: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
+                            >
+                                {[...Array(6)].map((_, i) => {
+                                    const year = new Date().getFullYear() - 1 + i;
+                                    return <option key={year} value={year}>{year}</option>;
+                                })}
+                            </select>
+                            <select
+                                value={formData.period ? formData.period.split('-')[1] : '1'}
+                                onChange={(e) => {
+                                    const currentYear = formData.period ? formData.period.split('-')[0] : new Date().getFullYear();
+                                    handleChange({ target: { name: 'period', value: `${currentYear}-${e.target.value}` } });
+                                }}
+                                className="term-select"
+                                style={{ flex: 2, padding: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
+                            >
+                                <option value="1">Primer Semestre (10)</option>
+                                <option value="2">Segundo Semestre (30)</option>
+                                <option value="3">Verano (20)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="groupNumber">Group Number</label>
+                        <label htmlFor="groupNumber">Número de Grupo</label>
                         <input
                             type="number"
                             id="groupNumber"
@@ -128,10 +147,10 @@ const EditCourse = () => {
 
                 <div className="form-actions">
                     <button type="button" onClick={() => navigate('/courses')} className="btn-secondary">
-                        Cancel
+                        Cancelar
                     </button>
                     <button type="submit" className="btn-primary" disabled={saving}>
-                        {saving ? 'Saving...' : 'Save Changes'}
+                        {saving ? 'Guardando...' : 'Guardar Cambios'}
                     </button>
                 </div>
             </form>

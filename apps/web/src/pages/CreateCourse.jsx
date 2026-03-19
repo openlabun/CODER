@@ -5,10 +5,11 @@ import './CreateCourse.css';
 
 const CreateCourse = () => {
     const navigate = useNavigate();
+    const currentYear = new Date().getFullYear().toString();
     const [formData, setFormData] = useState({
         name: '',
         code: '',
-        period: '',
+        period: `${currentYear}-1`, // Default period
         groupNumber: 1,
         description: '',
         color: '#00f0ff',
@@ -52,8 +53,8 @@ const CreateCourse = () => {
         }
 
         // Period validation (YYYY-X format)
-        if (!/^\d{4}-[12]$/.test(formData.period)) {
-            errors.period = 'Period must be in format YYYY-1 or YYYY-2 (e.g., 2025-1)';
+        if (!/^\d{4}-[123]$/.test(formData.period)) {
+            errors.period = 'El periodo debe tener el formato YYYY-X';
         }
 
         // Group number validation
@@ -148,21 +149,38 @@ const CreateCourse = () => {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="period">Period *</label>
-                            <input
-                                type="text"
-                                id="period"
-                                name="period"
-                                value={formData.period}
-                                onChange={handleChange}
-                                placeholder="e.g., 2025-1"
-                                required
-                                className={validationErrors.period ? 'error' : ''}
-                            />
+                            <label>Periodo Académico *</label>
+                            <div className="period-selectors">
+                                <select
+                                    value={formData.period ? formData.period.split('-')[0] : new Date().getFullYear()}
+                                    onChange={(e) => {
+                                        const currentTerm = (formData.period && formData.period.includes('-')) ? formData.period.split('-')[1] : '1';
+                                        handleChange({ target: { name: 'period', value: `${e.target.value}-${currentTerm}` }});
+                                    }}
+                                    className="year-select"
+                                >
+                                    {[...Array(6)].map((_, i) => {
+                                        const year = new Date().getFullYear() - 1 + i;
+                                        return <option key={year} value={year}>{year}</option>;
+                                    })}
+                                </select>
+                                <select
+                                    value={formData.period ? formData.period.split('-')[1] : '1'}
+                                    onChange={(e) => {
+                                        const currentYear = formData.period ? formData.period.split('-')[0] : new Date().getFullYear();
+                                        handleChange({ target: { name: 'period', value: `${currentYear}-${e.target.value}` }});
+                                    }}
+                                    className="term-select"
+                                >
+                                    <option value="1">Primer Semestre (10)</option>
+                                    <option value="2">Segundo Semestre (30)</option>
+                                    <option value="3">Verano (20)</option>
+                                </select>
+                            </div>
                             {validationErrors.period ? (
                                 <small className="error-text">{validationErrors.period}</small>
                             ) : (
-                                <small>Format: YYYY-1 or YYYY-2 (e.g., 2025-1)</small>
+                                <small>Seleccione el año y ciclo académico (Formato Interno: {formData.period})</small>
                             )}
                         </div>
 

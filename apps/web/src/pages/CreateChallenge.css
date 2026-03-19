@@ -109,11 +109,11 @@
 }
 
 .form-section h2 {
-    color: var(--text-color);
+    color: var(--primary-color);
     font-size: 1.5rem;
     margin-bottom: 25px;
     padding-bottom: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .form-group {
@@ -132,13 +132,13 @@
 .form-group select {
     width: 100%;
     padding: 12px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: white;
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    color: #333333;
     font-size: 1rem;
     font-family: inherit;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .form-group textarea {
@@ -151,7 +151,7 @@
 .form-group select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    box-shadow: 0 0 0 2px rgba(200, 16, 46, 0.2);
 }
 
 .form-group small {
@@ -255,8 +255,9 @@
     align-items: center;
     margin-bottom: 20px;
     padding: 15px;
-    background: rgba(0, 240, 255, 0.05);
-    border-radius: 8px;
+    background-color: rgba(200, 16, 46, 0.05); /* Light red tint */
+    border-left: 4px solid var(--primary-color);
+    border-radius: 0 8px 8px 0;
 }
 
 .testcase-header h3 {
@@ -273,30 +274,32 @@
 .btn-add {
     padding: 10px 20px;
     background: var(--primary-color);
-    color: black;
-    border: none;
-    border-radius: 6px;
+    color: white;
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
     cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s ease;
+    font-weight: 600;
+    transition: all 0.2s ease;
 }
 
 .btn-add:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    background: #a00d24; /* Darker red */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .testcase-item {
-    background: rgba(0, 0, 0, 0.2);
+    background: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .testcase-item.hidden {
-    border-color: rgba(255, 0, 85, 0.3);
-    background: rgba(255, 0, 85, 0.05);
+    border-color: var(--secondary-color);
+    background-color: rgba(255, 199, 44, 0.05); /* Light yellow */
 }
 
 .testcase-title {
@@ -308,7 +311,20 @@
 
 .testcase-title input {
     flex: 1;
-    margin-right: 10px;
+    margin-right: 15px;
+    padding: 10px 15px;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: var(--text-color);
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.testcase-title input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(200, 16, 46, 0.2);
 }
 
 .btn-remove {
@@ -316,9 +332,9 @@
     background: transparent;
     border: 1px solid var(--error-color);
     color: var(--error-color);
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .btn-remove:hover {
@@ -329,22 +345,43 @@
 .testcase-io {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 20px;
 }
 
 .io-group label {
     display: block;
-    color: var(--text-muted);
+    color: var(--text-color);
+    font-weight: 500;
     margin-bottom: 8px;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+}
+
+.io-group textarea {
+    width: 100%;
+    padding: 12px;
+    background-color: #fafafa;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    color: #333333;
+    font-size: 0.95rem;
+    font-family: 'Fira Code', monospace;
+    transition: all 0.2s ease;
+    resize: vertical;
+}
+
+.io-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(200, 16, 46, 0.2);
+    background-color: #ffffff;
 }
 
 .warning-box {
-    background: rgba(255, 204, 0, 0.1);
-    border: 1px solid var(--warning-color);
-    color: var(--warning-color);
+    background: rgba(200, 16, 46, 0.1);
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 4px;
     margin-top: 15px;
 }
 
@@ -449,13 +486,15 @@
 }
 
 .btn-publish {
-    background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+    background: var(--primary-color);
+    border: 1px solid var(--primary-color);
     color: white;
 }
 
 .btn-publish:hover:not(:disabled) {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    background: #a00d24; /* Darker red */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .btn-publish:disabled,
@@ -478,14 +517,16 @@
     align-items: center;
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .challenge-preview {
-    background: rgba(0, 0, 0, 0.2);
+    background: #ffffff;
+    border: 1px solid var(--border-color);
     padding: 30px;
-    border-radius: 12px;
+    border-radius: 8px;
     margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
 .preview-title {
@@ -524,7 +565,8 @@
 }
 
 .example-case {
-    background: rgba(0, 0, 0, 0.3);
+    background: #f8f9fa;
+    border: 1px solid var(--border-color);
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 15px;
@@ -542,10 +584,11 @@
 }
 
 .example-io pre {
-    background: rgba(0, 0, 0, 0.5);
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
     padding: 12px;
-    border-radius: 6px;
-    color: var(--primary-color);
+    border-radius: 4px;
+    color: var(--text-color);
     font-family: 'Fira Code', monospace;
     overflow-x: auto;
 }
@@ -554,9 +597,10 @@
     display: flex;
     gap: 30px;
     padding: 20px;
-    background: rgba(0, 240, 255, 0.05);
+    background: rgba(200, 16, 46, 0.05);
+    border: 1px solid var(--primary-color);
     border-radius: 8px;
-    color: var(--text-muted);
+    color: var(--text-color);
 }
 
 .preview-actions {

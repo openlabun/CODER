@@ -20,8 +20,19 @@ export class ChallengesController {
   ) { }
 
   @Post()
-  @ApiOperation({ summary: 'Create a new challenge with optional test cases' })
-  @ApiResponse({ status: 201, description: 'Challenge created successfully' })
+  @ApiOperation({ summary: 'Create a new challenge with optional test cases (currently public endpoint)' })
+  @ApiResponse({
+    status: 201,
+    description: 'Challenge created successfully',
+    schema: {
+      example: {
+        id: '550e8400-e29b-41d4-a716-446655440020',
+        title: 'Sum of Two Numbers',
+        status: 'draft',
+        createdAt: '2026-03-16T14:20:00.000Z',
+      },
+    },
+  })
   async create(@Body() dto: CreateChallengeDto) {
     const id = randomUUID();
     const c = await this.svc.create({
@@ -61,7 +72,22 @@ export class ChallengesController {
 
   @Get()
   @ApiOperation({ summary: 'List all public challenges (excludes course-assigned)' })
-  @ApiResponse({ status: 200, description: 'Returns list of public challenges' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns list of public challenges',
+    schema: {
+      example: [
+        {
+          id: '550e8400-e29b-41d4-a716-446655440020',
+          title: 'Sum of Two Numbers',
+          description: 'Given two integers, return their sum.',
+          difficulty: 'easy',
+          status: 'published',
+          createdAt: '2026-03-16T14:20:00.000Z',
+        },
+      ],
+    },
+  })
   async list() {
     const items = await this.svc.list();
 
@@ -120,9 +146,18 @@ export class ChallengesController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a challenge (not yet implemented)' })
+  @ApiOperation({ summary: 'Update a challenge (endpoint currently returns placeholder response)' })
   @ApiParam({ name: 'id', description: 'Challenge UUID' })
-  @ApiResponse({ status: 200, description: 'Challenge updated' })
+  @ApiResponse({
+    status: 200,
+    description: 'Placeholder response, full update flow pending implementation',
+    schema: {
+      example: {
+        id: '550e8400-e29b-41d4-a716-446655440020',
+        status: 'updated',
+      },
+    },
+  })
   async update(@Param('id') id: string, @Body() dto: CreateChallengeDto) {
     // For now, we'll just re-create the challenge logic or update fields
     // Ideally we should have a proper UpdateChallengeUseCase

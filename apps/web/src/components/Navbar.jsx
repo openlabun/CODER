@@ -11,16 +11,16 @@ const Navbar = () => {
                 <Link to="/">UninorteCoder</Link>
             </div>
             <div className="navbar-links">
-                <Link to="/challenges">Challenges</Link>
+                <Link to="/challenges">Retos</Link>
                 {user ? (
                     <>
-                        <span style={{ color: 'var(--text-secondary)' }}>Hello, {user.username || 'User'}!</span>
-                        <button onClick={logout} className="btn-logout">Logout</button>
+                        <span style={{ color: 'var(--text-color)' }}>¡Hola, {user.username || 'Usuario'}!</span>
+                        <button onClick={logout} className="btn-logout">Cerrar Sesión</button>
                     </>
                 ) : (
                     <>
-                        <Link to="/login">Login</Link>
-                        <Link to="/register">Register</Link>
+                        <Link to="/login">Ingresar</Link>
+                        <Link to="/register">Registrarse</Link>
                     </>
                 )}
             </div>

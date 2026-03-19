@@ -12,10 +12,18 @@ const (
 	SubmissionStatusError       SubmissionStatus = "error"
 )
 
+type ProgrammingLanguage string
+
+const (
+	LanguagePython ProgrammingLanguage = "python"
+	LanguageCPP	ProgrammingLanguage = "cpp"
+	LanguageJava	ProgrammingLanguage = "java"
+)
+
 type Submission struct {
 	ID          string
 	Code        string
-	Language    string
+	Language    ProgrammingLanguage
 
 	// state machine: queued -> running -> accepted|wrong_answer|error
 	Status      SubmissionStatus

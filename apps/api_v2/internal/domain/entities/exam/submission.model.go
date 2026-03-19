@@ -26,7 +26,10 @@ type Submission struct {
 	Language    ProgrammingLanguage
 
 	// state machine: queued -> running -> accepted|wrong_answer|error
-	Status      SubmissionStatus
+	Status         SubmissionStatus
+	ExpectedOutput *IOVariable // Optional, only populated for accepted/wrong_answer
+	ActualOutput   *IOVariable // Optional, only populated for accepted/wrong_answer
+	ErrorMessage   *string     // Optional, only populated for error state
 
 	// Results
 	Score       int

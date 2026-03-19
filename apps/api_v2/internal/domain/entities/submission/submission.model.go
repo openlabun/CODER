@@ -1,6 +1,9 @@
-package challenge_entities
+package Submission_entities
 
-import "time"
+import (
+	"time"
+	ChallengeEntities "../exam"
+)
 
 type SubmissionStatus string
 
@@ -27,8 +30,8 @@ type Submission struct {
 
 	// state machine: queued -> running -> accepted|wrong_answer|error
 	Status         SubmissionStatus
-	ExpectedOutput *IOVariable // Optional, only populated for accepted/wrong_answer
-	ActualOutput   *IOVariable // Optional, only populated for accepted/wrong_answer
+	ExpectedOutput *ChallengeEntities.IOVariable // Optional, only populated for accepted/wrong_answer
+	ActualOutput   *ChallengeEntities.IOVariable // Optional, only populated for accepted/wrong_answer
 	ErrorMessage   *string     // Optional, only populated for error state
 
 	// Results

@@ -3,7 +3,7 @@ package states
 import (
 	"fmt"
 
-	Entities "../entities/exam"
+	Entities "../entities/submission"
 )
 
 // State machine for submission processing

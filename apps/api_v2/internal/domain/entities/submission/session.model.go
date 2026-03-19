@@ -23,6 +23,7 @@ type Session struct {
 	// State machine: active|frozen -> completed|expired|blocked
 	Status 	 SessionStatus
 	Attempts int
+	TimeLeft int // in seconds
 	
 	// Metadata
 	StartedAt	time.Time

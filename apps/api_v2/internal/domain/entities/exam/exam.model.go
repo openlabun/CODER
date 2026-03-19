@@ -19,7 +19,7 @@ type Exam struct {
 	// Access Control
 	Visibility      Visibility
 	StartTime       time.Time
-	EndTime         time.Time
+	EndTime         *time.Time  // Optional, null means no end time
 	AllowLateSubmissions bool
 
 	// Exam Settings

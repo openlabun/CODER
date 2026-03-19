@@ -24,9 +24,9 @@ const (
 type AcademicPeriod string
 
 const (
-	AcademicFirstPeriod   AcademicPeriod = "01"
+	AcademicFirstPeriod    AcademicPeriod = "01"
 	AcademicIntersemestral AcademicPeriod = "02"
-	AcademicSecondPeriod AcademicPeriod = "03"
+	AcademicSecondPeriod   AcademicPeriod = "03"
 )
 
 type Period struct {
@@ -47,7 +47,7 @@ type Course struct {
 
 	// Course Institution Data
 	Code           string
-	Period         Period
+	Period         *Period // Optional, won't be blocked after the period ends
 
 	// Enrollment Details
 	EnrollmentCode string

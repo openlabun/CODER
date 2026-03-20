@@ -42,5 +42,6 @@ type Submission struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	ChallengeID string
+	SessionID   string
 	UserID      string
 }

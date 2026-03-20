@@ -1,9 +1,8 @@
-package states
+package challenge_states
 
 import (
 	"fmt"
-
-	Entities "../entities/exam"
+	Entities "../../entities/exam"
 )
 
 // State machine for challenge lifecycle
@@ -23,7 +22,7 @@ var challengeAllowedTransitions = map[Entities.ChallengeStatus]map[Entities.Chal
 	},
 }
 
-func IsValidChallengeState(state Entities.ChallengeStatus) bool {
+func isValidState(state Entities.ChallengeStatus) bool {
 	switch state {
 	case Entities.ChallengeStatusDraft:
 		return true
@@ -36,8 +35,8 @@ func IsValidChallengeState(state Entities.ChallengeStatus) bool {
 	}
 }
 
-func CanTransitionChallengeState(from Entities.ChallengeStatus, to Entities.ChallengeStatus) bool {
-	if !IsValidChallengeState(from) || !IsValidChallengeState(to) {
+func canTransitionState(from Entities.ChallengeStatus, to Entities.ChallengeStatus) bool {
+	if !isValidState(from) || !isValidState(to) {
 		return false
 	}
 
@@ -50,18 +49,27 @@ func CanTransitionChallengeState(from Entities.ChallengeStatus, to Entities.Chal
 	return allowed
 }
 
-func ValidateChallengeStateTransition(from Entities.ChallengeStatus, to Entities.ChallengeStatus) error {
-	if !IsValidChallengeState(from) {
-		return fmt.Errorf("invalid challenge state: %q", from)
+func validateStateTransition(challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
+	if !isValidState(challenge.Status) {
+		return fmt.Errorf("invalid challenge state: %q", challenge.Status)
 	}
 
-	if !IsValidChallengeState(to) {
+	if !isValidState(to) {
 		return fmt.Errorf("invalid target challenge state: %q", to)
 	}
 
-	if !CanTransitionChallengeState(from, to) {
-		return fmt.Errorf("invalid challenge transition: %s -> %s", from, to)
+	if !canTransitionState(challenge.Status, to) {
+		return fmt.Errorf("invalid challenge transition: %s -> %s", challenge.Status, to)
 	}
 
+	return nil
+}
+
+func ApplyTranstion (challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
+	if err := validateStateTransition(challenge, to); err != nil {
+		return err
+	}
+
+	challenge.Status = to
 	return nil
 }

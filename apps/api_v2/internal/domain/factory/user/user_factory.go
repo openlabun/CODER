@@ -17,7 +17,6 @@ func NewUser (id, username, email, password string) (*Entities.User, error) {
 		ID:        id,
 		Username:  username,
 		Email:     email,
-		PasswordHash: password, // In a real application, hash the password
 		Role:      defaultRole, // Default role
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -39,7 +38,6 @@ func ExistingUser (id, username, email, password string, role Entities.UserRole,
 		ID:        id,
 		Username:  username,
 		Email:     email,
-		PasswordHash: password,
 		Role:      role,
 		CreatedAt: createdAt,
 		UpdatedAt: now,

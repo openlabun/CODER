@@ -62,7 +62,7 @@ func canTransitionState(from SessionEntities.SessionStatus, to SessionEntities.S
 	return allowed
 }
 
-func validateStateTransition(session SessionEntities.Session, to SessionEntities.SessionStatus) error {
+func validateStateTransition(session *SessionEntities.Session, to SessionEntities.SessionStatus) error {
 	if !IsValidState(session.Status) {
 		return fmt.Errorf("invalid session state: %q", session.Status)
 	}
@@ -78,7 +78,7 @@ func validateStateTransition(session SessionEntities.Session, to SessionEntities
 	return nil
 }
 
-func ApplyTranstion(session SessionEntities.Session, to SessionEntities.SessionStatus) error {
+func ApplyTranstion(session *SessionEntities.Session, to SessionEntities.SessionStatus) error {
 	if err := validateStateTransition(session, to); err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func ApplyTranstion(session SessionEntities.Session, to SessionEntities.SessionS
 	return nil
 }
 
-func validateSessionExamBinding(session SessionEntities.Session, exam ExamEntities.Exam) error {
+func validateSessionExamBinding(session *SessionEntities.Session, exam ExamEntities.Exam) error {
 	if session.ExamID == "" {
 		return fmt.Errorf("session exam id is empty")
 	}
@@ -103,7 +103,7 @@ func validateSessionExamBinding(session SessionEntities.Session, exam ExamEntiti
 	return nil
 }
 
-func shouldExpireSession(session SessionEntities.Session, exam ExamEntities.Exam, now time.Time) bool {
+func shouldExpireSession(session *SessionEntities.Session, exam ExamEntities.Exam, now time.Time) bool {
 	if validateStateTransition(session, SessionEntities.SessionStatusExpired) != nil {
 		return true
 	}
@@ -135,7 +135,7 @@ func shouldExpireSession(session SessionEntities.Session, exam ExamEntities.Exam
 	return false
 }
 
-func shouldFreezeSession(session SessionEntities.Session, now time.Time) bool {
+func shouldFreezeSession(session *SessionEntities.Session, now time.Time) bool {
 	if validateStateTransition(session, SessionEntities.SessionStatusFrozen) != nil {
 		return false
 	}
@@ -148,7 +148,7 @@ func shouldFreezeSession(session SessionEntities.Session, now time.Time) bool {
 	return false
 }
 
-func shouldBlockSession(session SessionEntities.Session, exam ExamEntities.Exam) bool {
+func shouldBlockSession(session *SessionEntities.Session, exam ExamEntities.Exam) bool {
 	if validateStateTransition(session, SessionEntities.SessionStatusBlocked) != nil {
 		return false
 	}
@@ -167,12 +167,11 @@ func shouldBlockSession(session SessionEntities.Session, exam ExamEntities.Exam)
 }
 
 func UpdateSessionStatus(
-	session SessionEntities.Session,
+	session *SessionEntities.Session,
 	exam ExamEntities.Exam,
 	now time.Time,
 	heartbeat bool,
 ) error {
-
 	if err := validateSessionExamBinding(session, exam); err != nil {
 		return err
 	}

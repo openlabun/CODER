@@ -28,7 +28,7 @@ var submissionAllowedTransitions = map[Entities.SubmissionStatus]map[Entities.Su
 	},
 }
 
-func isValidState(state Entities.SubmissionStatus) bool {
+func IsValidState(state Entities.SubmissionStatus) bool {
 	switch state {
 	case Entities.SubmissionStatusQueued:
 		return true
@@ -46,7 +46,7 @@ func isValidState(state Entities.SubmissionStatus) bool {
 }
 
 func canTransitionState(from Entities.SubmissionStatus, to Entities.SubmissionStatus) bool {
-	if !isValidState(from) || !isValidState(to) {
+	if !IsValidState(from) || !IsValidState(to) {
 		return false
 	}
 
@@ -60,11 +60,11 @@ func canTransitionState(from Entities.SubmissionStatus, to Entities.SubmissionSt
 }
 
 func validateStateTransition(submission *Entities.SubmissionResult, to Entities.SubmissionStatus) error {
-	if !isValidState(submission.Status) {
+	if !IsValidState(submission.Status) {
 		return fmt.Errorf("invalid submission state: %q", submission.Status)
 	}
 
-	if !isValidState(to) {
+	if !IsValidState(to) {
 		return fmt.Errorf("invalid target submission state: %q", to)
 	}
 

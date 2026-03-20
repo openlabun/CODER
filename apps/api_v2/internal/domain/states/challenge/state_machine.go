@@ -2,6 +2,7 @@ package challenge_states
 
 import (
 	"fmt"
+
 	Entities "../../entities/exam"
 )
 
@@ -22,7 +23,7 @@ var challengeAllowedTransitions = map[Entities.ChallengeStatus]map[Entities.Chal
 	},
 }
 
-func isValidState(state Entities.ChallengeStatus) bool {
+func IsValidState(state Entities.ChallengeStatus) bool {
 	switch state {
 	case Entities.ChallengeStatusDraft:
 		return true
@@ -36,7 +37,7 @@ func isValidState(state Entities.ChallengeStatus) bool {
 }
 
 func canTransitionState(from Entities.ChallengeStatus, to Entities.ChallengeStatus) bool {
-	if !isValidState(from) || !isValidState(to) {
+	if !IsValidState(from) || !IsValidState(to) {
 		return false
 	}
 
@@ -50,11 +51,11 @@ func canTransitionState(from Entities.ChallengeStatus, to Entities.ChallengeStat
 }
 
 func validateStateTransition(challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
-	if !isValidState(challenge.Status) {
+	if !IsValidState(challenge.Status) {
 		return fmt.Errorf("invalid challenge state: %q", challenge.Status)
 	}
 
-	if !isValidState(to) {
+	if !IsValidState(to) {
 		return fmt.Errorf("invalid target challenge state: %q", to)
 	}
 
@@ -65,7 +66,7 @@ func validateStateTransition(challenge *Entities.Challenge, to Entities.Challeng
 	return nil
 }
 
-func ApplyTranstion (challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
+func ApplyTranstion(challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
 	if err := validateStateTransition(challenge, to); err != nil {
 		return err
 	}

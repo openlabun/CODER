@@ -31,7 +31,7 @@ var sessionAllowedTransitions = map[SessionEntities.SessionStatus]map[SessionEnt
 	},
 }
 
-func isValidState(state SessionEntities.SessionStatus) bool {
+func IsValidState(state SessionEntities.SessionStatus) bool {
 	switch state {
 	case SessionEntities.SessionStatusActive:
 		return true
@@ -49,7 +49,7 @@ func isValidState(state SessionEntities.SessionStatus) bool {
 }
 
 func canTransitionState(from SessionEntities.SessionStatus, to SessionEntities.SessionStatus) bool {
-	if !isValidState(from) || !isValidState(to) {
+	if !IsValidState(from) || !IsValidState(to) {
 		return false
 	}
 
@@ -63,11 +63,11 @@ func canTransitionState(from SessionEntities.SessionStatus, to SessionEntities.S
 }
 
 func validateStateTransition(session SessionEntities.Session, to SessionEntities.SessionStatus) error {
-	if !isValidState(session.Status) {
+	if !IsValidState(session.Status) {
 		return fmt.Errorf("invalid session state: %q", session.Status)
 	}
 
-	if !isValidState(to) {
+	if !IsValidState(to) {
 		return fmt.Errorf("invalid target session state: %q", to)
 	}
 
@@ -78,7 +78,7 @@ func validateStateTransition(session SessionEntities.Session, to SessionEntities
 	return nil
 }
 
-func ApplyTranstion (session SessionEntities.Session, to SessionEntities.SessionStatus) error {
+func ApplyTranstion(session SessionEntities.Session, to SessionEntities.SessionStatus) error {
 	if err := validateStateTransition(session, to); err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func shouldExpireSession(session SessionEntities.Session, exam ExamEntities.Exam
 	if validateStateTransition(session, SessionEntities.SessionStatusExpired) != nil {
 		return true
 	}
-	
+
 	// Check if session has exceeded time limit
 	if exam.TimeLimit > 0 {
 		if now.After(session.StartedAt.Add(time.Duration(exam.TimeLimit) * time.Second)) {
@@ -156,11 +156,11 @@ func shouldBlockSession(session SessionEntities.Session, exam ExamEntities.Exam)
 	return false
 }
 
-func UpdateSessionStatus (
+func UpdateSessionStatus(
 	session SessionEntities.Session,
 	exam ExamEntities.Exam,
 	now time.Time,
-	heartbeat bool, 
+	heartbeat bool,
 ) error {
 
 	if err := validateSessionExamBinding(session, exam); err != nil {
@@ -191,10 +191,9 @@ func UpdateSessionStatus (
 	if heartbeat {
 		session.LastHeartbeat = now
 	}
-	
+
 	return nil
 }
-
 
 func BlockSession(session *SessionEntities.Session) {
 	session.Status = SessionEntities.SessionStatusBlocked

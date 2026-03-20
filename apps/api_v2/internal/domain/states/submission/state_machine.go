@@ -59,7 +59,7 @@ func canTransitionState(from Entities.SubmissionStatus, to Entities.SubmissionSt
 	return allowed
 }
 
-func validateStateTransition(submission *Entities.Submission, to Entities.SubmissionStatus) error {
+func validateStateTransition(submission *Entities.SubmissionResult, to Entities.SubmissionStatus) error {
 	if !isValidState(submission.Status) {
 		return fmt.Errorf("invalid submission state: %q", submission.Status)
 	}
@@ -75,7 +75,7 @@ func validateStateTransition(submission *Entities.Submission, to Entities.Submis
 	return nil
 }
 
-func ApplyTransition(submission *Entities.Submission, to Entities.SubmissionStatus) error {
+func ApplyTransition(submission *Entities.SubmissionResult, to Entities.SubmissionStatus) error {
 	if err := validateStateTransition(submission, to); err != nil {
 		return err
 	}

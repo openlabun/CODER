@@ -6,7 +6,7 @@ import (
 	Validations "../../validations/user"
 )
 
-func NewUser (id, username, email string) (*Entities.User, error) {
+func NewUser (id, username, email, password string) (*Entities.User, error) {
 	// Set default role (e.g., student)
 	defaultRole := Entities.UserRoleStudent
 

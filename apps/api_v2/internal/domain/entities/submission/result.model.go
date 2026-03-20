@@ -1,7 +1,7 @@
 package Submission_entities
 
 import (
-	ChallengeEntities "../exam"
+	ChallengeEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 )
 
 type SubmissionStatus string

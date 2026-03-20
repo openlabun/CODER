@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	Entities "../../entities/submission"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
 func validateSubmissionLanguage(language Entities.ProgrammingLanguage) bool {

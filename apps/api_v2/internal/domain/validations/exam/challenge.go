@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	Entities "../../entities/exam"
-	StateMachine "../../../domain/states/challenge"
+	StateMachine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/challenge"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 )
 
 func validateChallengeDifficulty(difficulty Entities.ChallengeDifficulty) error {

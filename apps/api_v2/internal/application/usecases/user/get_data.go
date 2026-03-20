@@ -3,8 +3,8 @@ package user_usecases
 import (
 	"fmt"
 
-	Entities "../../../domain/entities/user"
-	ports "../../ports/user"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 )
 
 type GetDataUseCase struct {

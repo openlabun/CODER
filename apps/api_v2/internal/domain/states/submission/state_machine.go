@@ -3,7 +3,7 @@ package submission_states
 import (
 	"fmt"
 
-	Entities "../../entities/submission"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
 // State machine for submission processing

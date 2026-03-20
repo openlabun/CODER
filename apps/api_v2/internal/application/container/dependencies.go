@@ -3,7 +3,7 @@ package container
 import (
 	"fmt"
 
-	ports "../ports/user"
+	ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 )
 
 

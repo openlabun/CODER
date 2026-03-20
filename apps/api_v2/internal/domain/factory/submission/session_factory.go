@@ -4,9 +4,9 @@ import (
 	"strings"
 	"time"
 
-	Entities "../../entities/submission"
-	ExamEntities "../../entities/exam"
-	Validations "../../validations/submission"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/submission"
 )
 
 func NewSession(id, studentID string, exam *ExamEntities.Exam) (*Entities.Session, error) {

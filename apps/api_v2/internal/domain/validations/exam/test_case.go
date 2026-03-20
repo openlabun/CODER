@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	Entities "../../entities/exam"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 )
 
 func ValidateTestCase(testCase *Entities.TestCase) error {

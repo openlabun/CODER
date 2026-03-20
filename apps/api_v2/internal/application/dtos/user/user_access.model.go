@@ -1,7 +1,7 @@
 package dtos
 
 import (
-	Entities "../../../domain/entities/user"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 )
 
 type Token struct {

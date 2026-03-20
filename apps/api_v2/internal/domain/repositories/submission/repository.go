@@ -1,7 +1,7 @@
 package submission_repository
 
 import (
-	Entities "../../entities/submission"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
 type SubmissionRepository interface {

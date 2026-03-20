@@ -1,7 +1,7 @@
 package exam_repository
 
 import (
-	Entities "../../entities/exam"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 )
 
 type ExamRepository interface {

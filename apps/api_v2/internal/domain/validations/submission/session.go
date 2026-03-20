@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	Entities "../../entities/submission"
-	StateMachine "../../../domain/states/session"
+	StateMachine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
 func ValidateSession(session *Entities.Session) error {
@@ -44,7 +44,7 @@ func ValidateSession(session *Entities.Session) error {
 	if session.LastHeartbeat.IsZero() {
 		return fmt.Errorf("session lastHeartbeat is required")
 	}
-	
+
 	if session.FinishedAt != nil && session.FinishedAt.Before(session.StartedAt) {
 		return fmt.Errorf("session finishedAt cannot be before startedAt")
 	}

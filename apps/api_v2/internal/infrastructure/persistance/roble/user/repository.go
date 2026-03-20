@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	Entities "../../../../domain/entities/user"
-	infrastructure "../../../../infrastructure/persistance/roble"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 )
 
 const userTableName = "UserModel"
@@ -114,8 +114,6 @@ func (r *UserRepository) ExistsByID(userID string) (bool, error) {
 
 	return user != nil, nil
 }
-
-
 
 func firstRecord(res map[string]any) (map[string]any, error) {
 	if data, ok := res["data"]; ok {

@@ -1,0 +1,16 @@
+FROM golang:1.22-alpine
+
+WORKDIR /app
+
+ENV GO111MODULE=off \
+    GOPATH=/go \
+    CGO_ENABLED=0
+
+COPY . .
+
+# Fetch runtime dependency in GOPATH mode because this project currently uses relative imports.
+RUN go get github.com/gofiber/fiber/v2
+
+EXPOSE 8080
+
+CMD ["sh", "-c", "go test ./... && go run ./cmd/app"]

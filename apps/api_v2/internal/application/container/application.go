@@ -3,7 +3,7 @@ package container
 import (
 	"fmt"
 
-	user_usecases "../usecases/user"
+	user_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/user"
 )
 
 

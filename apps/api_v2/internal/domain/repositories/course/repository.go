@@ -1,7 +1,7 @@
 package course_repository
 
 import (
-	Entities "../../entities/course"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 )
 
 type CourseRepository interface {

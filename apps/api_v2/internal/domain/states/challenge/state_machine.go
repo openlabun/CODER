@@ -3,7 +3,7 @@ package challenge_states
 import (
 	"fmt"
 
-	Entities "../../entities/exam"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 )
 
 // State machine for challenge lifecycle

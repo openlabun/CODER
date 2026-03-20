@@ -3,15 +3,15 @@ package roble_infrastructure
 import (
 	"fmt"
 
-	infrastructure "../../../../infrastructure/persistance/roble"
-	dtos "../../../../application/dtos/user"
-	mapper "../../../../application/dtos/user/mapper"
-	Entities "../../../../domain/entities/user"
-	UserFactory "../../../../domain/factory/user"
+	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
+	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user/mapper"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	UserFactory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/user"
+	infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 )
 
 type RobleAuthAdapter struct {
-	adapter *infrastructure.RobleDatabaseAdapter
+	adapter    *infrastructure.RobleDatabaseAdapter
 	repository *UserRepository
 }
 
@@ -55,7 +55,7 @@ func (a *RobleAuthAdapter) LoginUser(email, password string) (*dtos.UserAccess, 
 
 func (a *RobleAuthAdapter) RegisterUser(email, name, password string) (bool, error) {
 	client := a.adapter.GetClient()
-	
+
 	// Register user in Roble and expect success message
 	_, err := client.Signup(email, password, name)
 	if err != nil {
@@ -67,7 +67,7 @@ func (a *RobleAuthAdapter) RegisterUser(email, name, password string) (bool, err
 
 func (a *RobleAuthAdapter) RegisterUserDirect(email, password, name string) (*dtos.UserAccess, error) {
 	client := a.adapter.GetClient()
-	
+
 	// Register user in Roble and expect success message
 	_, err := client.SignupDirect(email, password, name)
 	if err != nil {
@@ -148,7 +148,3 @@ func (a *RobleAuthAdapter) VerifyToken(accessToken string) (*infrastructure.Robl
 	client := a.adapter.GetClient()
 	return client.VerifyToken(accessToken)
 }
-
-
-
-

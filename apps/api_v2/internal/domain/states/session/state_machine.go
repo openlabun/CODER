@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	ExamEntities "../../entities/exam"
-	SessionEntities "../../entities/submission"
+	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	SessionEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
 // State machine for user session lifecycle

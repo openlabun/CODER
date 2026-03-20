@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	Entities "../../entities/course"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 )
 
 func ValidateCourseStudent(courseStudent *Entities.CourseStudent) error {

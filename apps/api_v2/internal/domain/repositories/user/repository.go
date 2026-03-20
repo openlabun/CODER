@@ -1,7 +1,7 @@
 package user_repository
 
 import (
-	Entities "../../entities/user"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 )
 
 type UserRepository interface {

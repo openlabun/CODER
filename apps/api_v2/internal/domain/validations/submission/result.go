@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	Entities "../../entities/submission"
-	ExamValidations "../exam"
-	StateMachine "../../../domain/states/submission"
+	StateMachine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/submission"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	ExamValidations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
 )
 
-func validateSubmissionResultsDetails (result *Entities.SubmissionResult) error {
+func validateSubmissionResultsDetails(result *Entities.SubmissionResult) error {
 	hasActualOutput := result.ActualOutput != nil
 	hasErrorMessage := result.ErrorMessage != nil && strings.TrimSpace(*result.ErrorMessage) != ""
 

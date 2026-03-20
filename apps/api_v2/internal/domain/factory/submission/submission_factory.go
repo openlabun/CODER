@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
-	Entities "../../entities/submission"
-	Validations "../../validations/submission"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/submission"
 )
 
 func NewSubmission(id, code string, language Entities.ProgrammingLanguage, challengeID, sessionID, userID string) (*Entities.Submission, error) {

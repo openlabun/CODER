@@ -2,8 +2,8 @@ package user_factory
 
 import (
 	"time"
-	Entities "../../entities/user"
-	Validations "../../validations/user"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/user"
 )
 
 func NewUser (id, username, email, password string) (*Entities.User, error) {

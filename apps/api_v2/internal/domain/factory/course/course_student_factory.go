@@ -3,8 +3,8 @@ package course_factory
 import (
 	"strings"
 
-	Entities "../../entities/course"
-	Validations "../../validations/course"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
+	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/course"
 )
 
 func NewCourseStudent(courseID, studentID string) (*Entities.CourseStudent, error) {

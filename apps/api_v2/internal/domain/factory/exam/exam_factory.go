@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
-	Entities "../../entities/exam"
-	Validations "../../validations/exam"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
 )
 
 func NewExam(

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	Entities "../../entities/course"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 )
 
 func validateCourseVisibility(visibility Entities.CourseVisibility) bool {
@@ -17,21 +17,21 @@ func validateCourseVisibility(visibility Entities.CourseVisibility) bool {
 	}
 }
 
-func validateActualYear (year int) bool {
+func validateActualYear(year int) bool {
 	currentYear := time.Now().Year()
-	return year >= currentYear - 1
+	return year >= currentYear-1
 }
 
 func validateCoursePeriod(period Entities.AcademicPeriod) bool {
 	switch period {
-		case Entities.AcademicFirstPeriod, Entities.AcademicIntersemestral, Entities.AcademicSecondPeriod:
-		default:
-			return false
+	case Entities.AcademicFirstPeriod, Entities.AcademicIntersemestral, Entities.AcademicSecondPeriod:
+	default:
+		return false
 	}
 	return true
 }
 
-func ValidateCourseEnrollmentCode (course *Entities.Course, enrollmentCode string) (bool, error) {
+func ValidateCourseEnrollmentCode(course *Entities.Course, enrollmentCode string) (bool, error) {
 	if course == nil {
 		return false, fmt.Errorf("course is nil")
 	}

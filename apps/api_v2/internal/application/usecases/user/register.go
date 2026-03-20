@@ -3,8 +3,8 @@ package user_usecases
 import (
 	"fmt"
 	
-	dtos "../../dtos/user"
-	ports "../../ports/user"
+	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
+	ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 )
 
 type RegisterUseCase struct {

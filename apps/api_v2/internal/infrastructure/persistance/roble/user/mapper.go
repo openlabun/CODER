@@ -4,11 +4,11 @@ import (
 	"strings"
 	"time"
 
-	Entities "../../../../domain/entities/user"
-	UserFactory "../../../../domain/factory/user"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	UserFactory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/user"
 )
 
-func UserToRecord (user *Entities.User) map[string]any {
+func UserToRecord(user *Entities.User) map[string]any {
 	return map[string]any{
 		"ID":             strings.TrimSpace(user.ID),
 		"Username":       strings.TrimSpace(user.Username),
@@ -30,7 +30,6 @@ func RecordToUser(record map[string]any, connection bool) *Entities.User {
 		time_last_connection = t
 	}
 
-	
 	user, err := UserFactory.ExistingUser(
 		asString(record["ID"]),
 		asString(record["Username"]),

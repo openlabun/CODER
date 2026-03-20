@@ -5,5 +5,7 @@ import (
 )
 
 type RegisterPort interface {
-	RegisterUser(email, name, password string) (*dtos.UserAccess, error)
+	RegisterUser(email, name, password string) (bool, error)
+	RegisterUserDirect(email, password, name string) (*dtos.UserAccess, error)
+	VerifyEmail(email, code string) (bool, error)
 }

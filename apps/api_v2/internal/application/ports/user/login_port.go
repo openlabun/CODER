@@ -7,5 +7,5 @@ import (
 
 type LoginPort interface {
 	LoginUser(email, password string) (*dtos.UserAccess, error)
-	GetUserData(userID string) (*Entities.User, error)
+	GetUserData(email string) (*Entities.User, error)
 }

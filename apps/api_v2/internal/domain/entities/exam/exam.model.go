@@ -23,8 +23,8 @@ type Exam struct {
 	AllowLateSubmissions bool
 
 	// Exam Settings
-	TimeLimit int // Optional, in seconds
-	TryLimit  int // Optional, null for unlimited
+	TimeLimit int // Optional, in seconds, -1 for unlimited
+	TryLimit  int // Optional, -1 for unlimited
 
 	// Metadata
 	CreatedAt       time.Time

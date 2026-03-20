@@ -108,6 +108,11 @@ func shouldExpireSession(session SessionEntities.Session, exam ExamEntities.Exam
 		return true
 	}
 
+	// If exam has unlimited time, it cannot expire
+	if exam.TimeLimit == -1 {
+		return false
+	}
+
 	// Check if session has exceeded time limit
 	if exam.TimeLimit > 0 {
 		if now.After(session.StartedAt.Add(time.Duration(exam.TimeLimit) * time.Second)) {
@@ -136,7 +141,7 @@ func shouldFreezeSession(session SessionEntities.Session, now time.Time) bool {
 	}
 
 	// If user has been inactive for more than 60 seconds, freeze the session
-	if now.Sub(session.LastHeartbeat) > 60*time.Second {
+	if now.Sub(session.LastHeartbeat) > 60*time.Second { //TODO: make this configurable from env
 		return true
 	}
 
@@ -145,6 +150,11 @@ func shouldFreezeSession(session SessionEntities.Session, now time.Time) bool {
 
 func shouldBlockSession(session SessionEntities.Session, exam ExamEntities.Exam) bool {
 	if validateStateTransition(session, SessionEntities.SessionStatusBlocked) != nil {
+		return false
+	}
+
+	// If exam has unlimited attempts, it cannot be blocked
+	if exam.TryLimit == -1 {
 		return false
 	}
 

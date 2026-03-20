@@ -39,7 +39,7 @@ func (uc *RegisterUseCase) Execute(email, name, password string) (*dtos.UserAcce
 	}
 
 	// Repository: validate user credentials
-	user, err := uc.registerService.RegisterUser(email, name, hashedPassword)
+	user, err := uc.registerService.RegisterUserDirect(email, name, hashedPassword)
 	if err != nil {
 		return nil, err
 	}

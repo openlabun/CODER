@@ -50,7 +50,7 @@
 
 - El examen podrá configurarse con una fecha de inicio (atributo `StartTime`) y con una fecha de cierre (atributo `EndTime`). Después de la fecha de cierre el examen no recibirá revisiones (`Submission`), a menos que se encuentre activada la configuración para aceptar respuestas tardías (`AllowLateSubmissions == True`).
 
-- El examen podrá tener un tiempo límite (atributo `TimeLimit`) y un límite de intentos (atributo `TryLimit`). Si alguna revisión (`Submission`) se carga después del tiempo límite no será recibida, y si se excede el límite de intentos tampoco.
+- El examen podrá tener un tiempo límite (atributo `TimeLimit`) y un límite de intentos (atributo `TryLimit`). Si alguna revisión (`Submission`) se carga después del tiempo límite no será recibida, y si se excede el límite de intentos tampoco. Si el valor de estos atributos es -1 entonces se tomará como tiempo o intentos ilimitados.
 
 #### Retos (`Challenge`)
 
@@ -135,5 +135,3 @@
   - `expired`: se cierra la sesión cuando el tiempo se agota y no se permiten revisiones atrasadas (atributo `AllowLateSubmissions == False`). También se cierra si el examen termina antes que el usuario le de a finalizar.
   
   - `blocked`: diseñado para casos de plagio, el usuario profesor puede activarlo manualmente a un estudiante en tiempo real. Bloqueará la sesión del usuario y no le permitirá hacer ninguna revisión.
-
-

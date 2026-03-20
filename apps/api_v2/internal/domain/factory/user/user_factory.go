@@ -30,17 +30,19 @@ func NewUser (id, username, email, password string) (*Entities.User, error) {
 	return user, nil
 }
 
-func ExistingUser (id, username, email, password string, role Entities.UserRole, createdAt, updatedAt time.Time) (*Entities.User, error) {
-	// Set update time to now
-	now := time.Now()
-	
+func ExistingUser (id, username, email, password string, role Entities.UserRole, createdAt, LastConnection time.Time, connected bool) (*Entities.User, error) {
+	// Update last connection time if user is connected
+	if connected {
+		LastConnection = time.Now()
+	}
+
 	user := &Entities.User{
 		ID:        id,
 		Username:  username,
 		Email:     email,
 		Role:      role,
 		CreatedAt: createdAt,
-		LastConnection: now,
+		LastConnection: LastConnection,
 	}
 
 	return user, nil

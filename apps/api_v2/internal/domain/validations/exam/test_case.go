@@ -38,7 +38,7 @@ func ValidateTestCase(testCase *Entities.TestCase) error {
 		return fmt.Errorf("invalid test case expected output: %w", err)
 	}
 
-	if testCase.Points < 0 {
+	if testCase.IsSample && testCase.Points < 0 {
 		return fmt.Errorf("test case points cannot be negative")
 	}
 

@@ -19,7 +19,7 @@ func NewUser (id, username, email, password string) (*Entities.User, error) {
 		Email:     email,
 		Role:      defaultRole, // Default role
 		CreatedAt: now,
-		UpdatedAt: now,
+		LastConnection: now,
 	}
 
 	// Validate registration data
@@ -40,7 +40,7 @@ func ExistingUser (id, username, email, password string, role Entities.UserRole,
 		Email:     email,
 		Role:      role,
 		CreatedAt: createdAt,
-		UpdatedAt: now,
+		LastConnection: now,
 	}
 
 	return user, nil

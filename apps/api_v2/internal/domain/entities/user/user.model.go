@@ -17,6 +17,6 @@ type User struct {
 	Role         UserRole
 
 	//Metadata
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	CreatedAt      time.Time
+	LastConnection time.Time
 }

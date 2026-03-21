@@ -3,13 +3,14 @@ package course_factory
 import (
 	"strings"
 	"time"
+	"github.com/google/uuid"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/course"
 )
 
 func NewCourse(
-	id, name, description string,
+	name, description string,
 	visibility Entities.CourseVisibility,
 	visualIdentity Entities.CourseColour,
 	code string,
@@ -23,7 +24,7 @@ func NewCourse(
 	}
 
 	course := &Entities.Course{
-		ID:             strings.TrimSpace(id),
+		ID:             uuid.New().String(),
 		Name:           strings.TrimSpace(name),
 		Description:    strings.TrimSpace(description),
 		Visibility:     visibility,

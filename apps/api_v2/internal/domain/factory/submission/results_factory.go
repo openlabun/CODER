@@ -3,14 +3,16 @@ package submission_factory
 import (
 	"strings"
 
+	"github.com/google/uuid"
+
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/submission"
 )
 
-func NewSubmissionResult(id, submissionID, testCaseID string) (*Entities.SubmissionResult, error) {
+func NewSubmissionResult(submissionID, testCaseID string) (*Entities.SubmissionResult, error) {
 	result := &Entities.SubmissionResult{
-		ID:           strings.TrimSpace(id),
+		ID:           uuid.New().String(),
 		SubmissionID: strings.TrimSpace(submissionID),
 		TestCaseID:   strings.TrimSpace(testCaseID),
 		Status:       Entities.SubmissionStatusQueued,

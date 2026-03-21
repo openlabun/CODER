@@ -3,6 +3,8 @@ package exam_factory
 import (
 	"strings"
 	"time"
+	
+	"github.com/google/uuid"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
@@ -10,7 +12,7 @@ import (
 
 
 func NewChallenge(
-	id, title, description string,
+	title, description string,
 	tags []string,
 	status Entities.ChallengeStatus,
 	difficulty Entities.ChallengeDifficulty,
@@ -28,7 +30,7 @@ func NewChallenge(
 	}
 
 	challenge := &Entities.Challenge{
-		ID:                strings.TrimSpace(id),
+		ID:                uuid.New().String(),
 		Title:             strings.TrimSpace(title),
 		Description:       strings.TrimSpace(description),
 		Tags:              tags,

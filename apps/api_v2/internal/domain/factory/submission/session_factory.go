@@ -4,12 +4,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/submission"
 )
 
-func NewSession(id, studentID string, exam *ExamEntities.Exam) (*Entities.Session, error) {
+func NewSession(studentID string, exam *ExamEntities.Exam) (*Entities.Session, error) {
 	now := time.Now()
 
 	timeLeft := 0
@@ -18,7 +20,7 @@ func NewSession(id, studentID string, exam *ExamEntities.Exam) (*Entities.Sessio
 	}
 	
 	session := &Entities.Session{
-		ID:            strings.TrimSpace(id),
+		ID:            uuid.New().String(),
 		StudentID:     strings.TrimSpace(studentID),
 		ExamID:        strings.TrimSpace(exam.ID),
 		Status:        Entities.SessionStatusActive,

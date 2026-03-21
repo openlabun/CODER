@@ -4,12 +4,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
 )
 
 func NewExam(
-	id, title, description string,
+	title, description string,
 	visibility Entities.Visibility,
 	startTime time.Time,
 	endTime *time.Time,
@@ -26,7 +28,7 @@ func NewExam(
 	}
 
 	exam := &Entities.Exam{
-		ID:                   strings.TrimSpace(id),
+		ID:                   uuid.New().String(),
 		Title:                strings.TrimSpace(title),
 		Description:          strings.TrimSpace(description),
 		Visibility:           visibility,

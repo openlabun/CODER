@@ -1,0 +1,20 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440020",
+  "title": "Sum of Two Numbers",
+  "description": "Given two integers, return their sum.",
+  "difficulty": "easy",
+  "timeLimit": 1500,
+  "memoryLimit": 256,
+  "tags": ["math", "beginner"],
+  "inputFormat": "Two integers",
+  "outputFormat": "One integer",
+  "constraints": "1 <= n <= 1e6",
+  "status": "published",
+  "createdAt": "2026-03-16T14:20:00.000Z",
+  "publicTestCases": [
+    { "name": "basic_1", "input": "2 3", "output": "5" }
+  ],
+  "hiddenTestCases": [
+    { "name": "edge_1", "input": "999999 1", "output": "1000000" }
+  ]
+}

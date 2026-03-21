@@ -1,0 +1,7 @@
+{
+  "courseId": "550e8400-e29b-41d4-a716-446655440100",
+  "entries": [
+    { "rank": 1, "userId": "u1", "username": "alice", "totalScore": 350 },
+    { "rank": 2, "userId": "u2", "username": "bob", "totalScore": 320 }
+  ]
+}

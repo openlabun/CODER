@@ -1,0 +1,17 @@
+{
+  "accessToken": "mock.jwt.access.token",
+  "refreshToken": "mock.jwt.refresh.token",
+  "user": {
+    "id": "fb5f3651-5bab-48fc-b790-d72f005fd7d1",
+    "email": "student@example.com",
+    "name": "Mock Student",
+    "avatarUrl": null,
+    "phoneNumber": null,
+    "birthDate": null,
+    "gender": null,
+    "country": null,
+    "city": null,
+    "address": null,
+    "role": "user"
+  }
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655441111",
+    "challengeId": "550e8400-e29b-41d4-a716-446655440020",
+    "name": "basic_1",
+    "input": "2 3",
+    "expectedOutput": "5",
+    "isSample": true,
+    "points": 50,
+    "createdAt": "2026-03-16T14:20:00.000Z"
+  }
+]

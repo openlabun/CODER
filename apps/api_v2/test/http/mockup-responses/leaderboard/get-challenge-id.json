@@ -1,0 +1,7 @@
+{
+  "challengeId": "550e8400-e29b-41d4-a716-446655440020",
+  "entries": [
+    { "rank": 1, "userId": "u1", "username": "alice", "score": 100 },
+    { "rank": 2, "userId": "u2", "username": "bob", "score": 95 }
+  ]
+}

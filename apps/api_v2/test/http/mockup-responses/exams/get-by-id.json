@@ -1,0 +1,10 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440300",
+  "title": "Midterm Exam",
+  "description": "Covers arrays and linked lists",
+  "courseId": "550e8400-e29b-41d4-a716-446655440100",
+  "durationMinutes": 120,
+  "challenges": [
+    { "challengeId": "550e8400-e29b-41d4-a716-446655440020", "points": 100, "order": 1 }
+  ]
+}

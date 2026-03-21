@@ -1,0 +1,16 @@
+{
+  "ideas": [
+    {
+      "title": "Two Sum",
+      "description": "Given an array and a target, return indices of two numbers that sum to target.",
+      "difficulty": "easy",
+      "tags": ["arrays", "hashing"]
+    },
+    {
+      "title": "Binary Search Variants",
+      "description": "Find first and last occurrence in sorted array.",
+      "difficulty": "medium",
+      "tags": ["binary-search"]
+    }
+  ]
+}

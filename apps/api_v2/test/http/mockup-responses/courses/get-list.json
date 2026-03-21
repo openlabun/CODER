@@ -1,0 +1,12 @@
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440100",
+    "name": "Data Structures",
+    "code": "CS201",
+    "period": "2026-1",
+    "groupNumber": 1,
+    "enrollmentCode": "CS201-20261G1",
+    "professorId": "550e8400-e29b-41d4-a716-446655440999",
+    "createdAt": "2026-03-16T10:00:00.000Z"
+  }
+]

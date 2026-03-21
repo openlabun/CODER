@@ -1,0 +1,666 @@
+openapi: 3.0.3
+info:
+  title: CODER API v2 Mocked Compatibility API
+  version: 1.0.0
+  description: |
+    OpenAPI documentation for api_v2 compatibility endpoints.
+    Each endpoint mirrors API v1 routes and returns mock responses from test/http/mockup-responses.
+servers:
+  - url: http://localhost:4000
+
+tags:
+  - name: auth
+  - name: ai
+  - name: challenges
+  - name: test-cases
+  - name: courses
+  - name: exams
+  - name: submissions
+  - name: leaderboard
+  - name: metrics
+  - name: health
+
+paths:
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Register user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password, role]
+              properties:
+                username: { type: string }
+                password: { type: string }
+                role: { type: string, enum: [student, professor, admin] }
+      responses:
+        '201':
+          description: Mock register response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Mock login response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+                  refreshToken: { type: string }
+                  user:
+                    type: object
+                    properties:
+                      id: { type: string }
+                      email: { type: string }
+                      name: { type: string }
+                      role: { type: string }
+
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Current user
+      responses:
+        '200':
+          description: Mock current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sub: { type: string }
+                  username: { type: string }
+                  role: { type: string }
+
+  /ai/generate-challenge-ideas:
+    post:
+      tags: [ai]
+      summary: Generate challenge ideas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topic]
+              properties:
+                topic: { type: string }
+                difficulty: { type: string }
+                count: { type: integer }
+      responses:
+        '200':
+          description: Mock AI challenge ideas
+          content:
+            application/json:
+              schema: { type: object }
+
+  /ai/generate-test-cases:
+    post:
+      tags: [ai]
+      summary: Generate test cases
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challengeDescription, inputFormat, outputFormat]
+              properties:
+                challengeDescription: { type: string }
+                inputFormat: { type: string }
+                outputFormat: { type: string }
+                publicCount: { type: integer }
+                hiddenCount: { type: integer }
+      responses:
+        '200':
+          description: Mock AI test cases
+          content:
+            application/json:
+              schema: { type: object }
+
+  /challenges:
+    post:
+      tags: [challenges]
+      summary: Create challenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201':
+          description: Mock challenge created
+          content:
+            application/json:
+              schema: { type: object }
+    get:
+      tags: [challenges]
+      summary: List challenges
+      responses:
+        '200':
+          description: Mock challenge list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+
+  /challenges/{id}:
+    get:
+      tags: [challenges]
+      summary: Get challenge by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock challenge details
+          content:
+            application/json:
+              schema: { type: object }
+    patch:
+      tags: [challenges]
+      summary: Update challenge
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200':
+          description: Mock challenge update
+          content:
+            application/json:
+              schema: { type: object }
+
+  /challenges/{id}/publish:
+    post:
+      tags: [challenges]
+      summary: Publish challenge
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock publish response
+          content:
+            application/json:
+              schema: { type: object }
+
+  /challenges/{id}/archive:
+    post:
+      tags: [challenges]
+      summary: Archive challenge
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock archive response
+          content:
+            application/json:
+              schema: { type: object }
+
+  /test-cases:
+    post:
+      tags: [test-cases]
+      summary: Create test case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201':
+          description: Mock test case created
+          content:
+            application/json:
+              schema: { type: object }
+
+  /test-cases/challenge/{challengeId}:
+    get:
+      tags: [test-cases]
+      summary: List test cases by challenge
+      parameters:
+        - in: path
+          name: challengeId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: samplesOnly
+          required: false
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: Mock test case list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+
+  /test-cases/{id}:
+    delete:
+      tags: [test-cases]
+      summary: Delete test case
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock delete response
+          content:
+            application/json:
+              schema: { type: object }
+
+  /courses/enroll:
+    post:
+      tags: [courses]
+      summary: Enroll by code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enrollmentCode]
+              properties:
+                enrollmentCode: { type: string }
+      responses:
+        '200':
+          description: Mock enrollment response
+          content:
+            application/json:
+              schema: { type: object }
+
+  /courses:
+    post:
+      tags: [courses]
+      summary: Create course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201':
+          description: Mock course created
+          content:
+            application/json:
+              schema: { type: object }
+    get:
+      tags: [courses]
+      summary: List my courses
+      responses:
+        '200':
+          description: Mock courses list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+
+  /courses/browse:
+    get:
+      tags: [courses]
+      summary: Browse all courses
+      responses:
+        '200':
+          description: Mock browse courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+
+  /courses/{id}:
+    get:
+      tags: [courses]
+      summary: Get course by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock course details
+          content:
+            application/json:
+              schema: { type: object }
+    post:
+      tags: [courses]
+      summary: Update course
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200':
+          description: Mock update response
+          content:
+            application/json:
+              schema: { type: object }
+
+  /courses/{id}/students:
+    post:
+      tags: [courses]
+      summary: Add student to course
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [studentId]
+              properties:
+                studentId: { type: string }
+      responses:
+        '200':
+          description: Mock enroll student response
+          content:
+            application/json:
+              schema: { type: object }
+    get:
+      tags: [courses]
+      summary: List students in course
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock students list
+          content:
+            application/json:
+              schema: { type: object }
+
+  /courses/{id}/students/{studentId}:
+    delete:
+      tags: [courses]
+      summary: Remove student from course
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: studentId
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock remove student response
+          content:
+            application/json:
+              schema: { type: object }
+
+  /courses/{id}/challenges:
+    post:
+      tags: [courses]
+      summary: Assign challenge to course
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challengeId]
+              properties:
+                challengeId: { type: string }
+      responses:
+        '200':
+          description: Mock assign challenge response
+          content:
+            application/json:
+              schema: { type: object }
+    get:
+      tags: [courses]
+      summary: List course challenges
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock course challenges list
+          content:
+            application/json:
+              schema: { type: object }
+
+  /exams:
+    post:
+      tags: [exams]
+      summary: Create exam
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201':
+          description: Mock exam created
+          content:
+            application/json:
+              schema: { type: object }
+
+  /exams/course/{courseId}:
+    get:
+      tags: [exams]
+      summary: List exams by course
+      parameters:
+        - in: path
+          name: courseId
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock course exams list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+
+  /exams/{id}:
+    get:
+      tags: [exams]
+      summary: Get exam details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock exam details
+          content:
+            application/json:
+              schema: { type: object }
+
+  /submissions:
+    post:
+      tags: [submissions]
+      summary: Create submission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201':
+          description: Mock submission created
+          content:
+            application/json:
+              schema: { type: object }
+    get:
+      tags: [submissions]
+      summary: List submissions
+      parameters:
+        - in: query
+          name: challengeId
+          required: false
+          schema: { type: string }
+        - in: query
+          name: status
+          required: false
+          schema: { type: string }
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer }
+        - in: query
+          name: offset
+          required: false
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Mock submissions list
+          content:
+            application/json:
+              schema: { type: object }
+
+  /submissions/{id}:
+    get:
+      tags: [submissions]
+      summary: Get submission by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock submission details
+          content:
+            application/json:
+              schema: { type: object }
+
+  /leaderboard/challenge/{id}:
+    get:
+      tags: [leaderboard]
+      summary: Challenge leaderboard
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock challenge leaderboard
+          content:
+            application/json:
+              schema: { type: object }
+
+  /leaderboard/course/{id}:
+    get:
+      tags: [leaderboard]
+      summary: Course leaderboard
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Mock course leaderboard
+          content:
+            application/json:
+              schema: { type: object }
+
+  /metrics:
+    get:
+      tags: [metrics]
+      summary: Metrics endpoint
+      responses:
+        '200':
+          description: Mock metrics response
+          content:
+            application/json:
+              schema: { type: object }
+
+  /health:
+    get:
+      tags: [health]
+      summary: Health endpoint
+      responses:
+        '200':
+          description: Mock health response
+          content:
+            application/json:
+              schema: { type: object }
+
+  /cache/health:
+    get:
+      tags: [health]
+      summary: Cache health endpoint
+      responses:
+        '200':
+          description: Mock cache health response
+          content:
+            application/json:
+              schema: { type: object }
+
+  /db/health:
+    get:
+      tags: [health]
+      summary: DB health endpoint
+      responses:
+        '200':
+          description: Mock db health response
+          content:
+            application/json:
+              schema: { type: object }

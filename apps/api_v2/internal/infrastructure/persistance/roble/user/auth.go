@@ -82,6 +82,15 @@ func (a *RobleAuthAdapter) RegisterUserDirect(email, password, name string) (*dt
 	// Set access token for subsequent requests
 	a.adapter.SetAccessToken(tokens.AccessToken)
 
+	// Check if email is already registered in local database
+	existingUser, err := a.GetUserData(email)
+	if err != nil {
+		return nil, err
+	}
+	if existingUser != nil {
+		return nil, fmt.Errorf("user with email %s is already registered", email)
+	}
+
 	// Create user entity (validations handled in factory)
 	user, err := UserFactory.NewUser(
 		tokens.User.ID,

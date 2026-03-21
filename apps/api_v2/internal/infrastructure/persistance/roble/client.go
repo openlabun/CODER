@@ -174,13 +174,21 @@ func (c *RobleClient) Read(tableName string, conditions map[string]string, acces
 		query[k] = v
 	}
 
-	var out map[string]any
-	err := c.doJSONWithQuery(http.MethodGet, c.databaseURL("read"), accessToken, query, nil, &out)
+	var raw any
+	err := c.doJSONWithQuery(http.MethodGet, c.databaseURL("read"), accessToken, query, nil, &raw)
 	if err != nil {
 		return nil, err
 	}
 
-	return out, nil
+	switch out := raw.(type) {
+	case map[string]any:
+		return out, nil
+	case []any:
+		// Normalize array responses so repository layer can consume a stable shape.
+		return map[string]any{"data": out}, nil
+	default:
+		return nil, fmt.Errorf("unexpected read response type %T", raw)
+	}
 }
 
 func (c *RobleClient) Update(tableName, idColumn, idValue string, updates map[string]any, accessToken string) (map[string]any, error) {

@@ -79,6 +79,9 @@ func (a *RobleAuthAdapter) RegisterUserDirect(email, password, name string) (*dt
 		return nil, err
 	}
 
+	// Set access token for subsequent requests
+	a.adapter.SetAccessToken(tokens.AccessToken)
+
 	// Create user entity (validations handled in factory)
 	user, err := UserFactory.NewUser(
 		tokens.User.ID,

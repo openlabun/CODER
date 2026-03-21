@@ -21,7 +21,20 @@ services:
             - .env.dev
         networks:
             - judge_net
-    
+    apiv2:
+        build:
+            context: ./apps/api_v2
+            dockerfile: Dockerfile.dev
+        working_dir: /app
+        command: air -c .air.toml
+        ports:
+            - "${APIV2_PORT:-4000}:4000"
+        volumes:
+            - ./apps/api_v2:/app
+        env_file:
+            - .env.dev
+        networks:
+            - judge_net
     web:
         build:
             context: ./apps/web

@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	user_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/user"
+	course_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course"
+	course_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course/crud"
 )
 
 
@@ -16,9 +18,24 @@ type UserUseCases struct {
 	RefreshToken *user_usecases.RefreshTokenUseCase
 }
 
+type CourseUseCases struct {
+	CreateCourse *course_crud_usecases.CreateCourseUseCase
+	UpdateCourse *course_crud_usecases.UpdateCourseUseCase
+	DeleteCourse *course_crud_usecases.DeleteCourseUseCase
+	GetCourseDetails *course_crud_usecases.GetCourseDetailsUseCase
+	GetEnrolledCourses *course_crud_usecases.GetEnrolledCoursesUseCase
+	GetOwnedCourses *course_crud_usecases.GetOwnedCoursesUseCase
+	
+	GetCourseStudents *course_usecases.GetCourseStudentsUseCase
+	EnrollInCourse    *course_usecases.EnrollInCourseUseCase
+	RemoveStudentFromCourse    *course_usecases.RemoveStudentFromCourseUseCase
+	
+}
+
 type Application struct {
 	Dependencies ApplicationDependencies
 	UserModule   UserUseCases
+	CourseModule CourseUseCases
 }
 
 func NewApplication(deps ApplicationDependencies) (*Application, error) {
@@ -28,6 +45,19 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	}
 	
 	app := &Application{Dependencies: deps}
+
+	app.CourseModule = CourseUseCases{
+		CreateCourse: course_crud_usecases.NewCreateCourseUseCase(deps.CourseRepository, deps.UserRepository),
+		UpdateCourse: course_crud_usecases.NewUpdateCourseUseCase(deps.CourseRepository, deps.UserRepository),
+		DeleteCourse: course_crud_usecases.NewDeleteCourseUseCase(deps.CourseRepository, deps.UserRepository),
+		GetCourseDetails: course_crud_usecases.NewGetCourseDetailsUseCase(deps.CourseRepository, deps.UserRepository),
+		GetEnrolledCourses: course_crud_usecases.NewGetEnrolledCoursesUseCase(deps.CourseRepository, deps.UserRepository),
+		GetOwnedCourses: course_crud_usecases.NewGetOwnedCoursesUseCase(deps.CourseRepository, deps.UserRepository),
+		GetCourseStudents: course_usecases.NewGetCourseStudentsUseCase(deps.CourseRepository, deps.UserRepository),
+		EnrollInCourse: course_usecases.NewEnrollInCourseUseCase(deps.CourseRepository, deps.UserRepository),
+		RemoveStudentFromCourse: course_usecases.NewRemoveStudentFromCourseUseCase(deps.CourseRepository, deps.UserRepository),
+	}
+	
 	app.UserModule = UserUseCases{
 		Register: user_usecases.NewRegisterUseCase(
 			deps.RegisterService,

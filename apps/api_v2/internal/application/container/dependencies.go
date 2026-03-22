@@ -4,6 +4,10 @@ import (
 	"fmt"
 
 	ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
+	user_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	course_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
+	exam_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
+	submission_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 )
 
 
@@ -15,6 +19,15 @@ type ApplicationDependencies struct {
 	UserService     ports.UserServicePort
 	TokenService    ports.TokenServicePort
 	PasswordHasher  ports.PasswordHasherPort
+
+	UserRepository user_repositories.UserRepository
+	CourseRepository course_repositories.CourseRepository
+	ExamRepository exam_repositories.ExamRepository
+	ChallengeRepository exam_repositories.ChallengeRepository
+	TestCaseRepository exam_repositories.TestCaseRepository
+	SubmissionRepository submission_repositories.SubmissionRepository
+	SessionRepository submission_repositories.SessionRepository
+	SubmissionResultRepository submission_repositories.SubmissionResultRepository
 }
 
 func NewApplicationDependencies(
@@ -23,6 +36,15 @@ func NewApplicationDependencies(
 	userService ports.UserServicePort,
 	tokenService ports.TokenServicePort,
 	passwordHasher ports.PasswordHasherPort,
+	userRepo user_repositories.UserRepository,
+	courseRepo course_repositories.CourseRepository,
+	examRepo exam_repositories.ExamRepository,
+	challengeRepo exam_repositories.ChallengeRepository,
+	testCaseRepo exam_repositories.TestCaseRepository,
+	submissionRepo submission_repositories.SubmissionRepository,
+	sessionRepo submission_repositories.SessionRepository,
+	submissionResultRepo submission_repositories.SubmissionResultRepository,
+
 ) ApplicationDependencies {
 	return ApplicationDependencies{
 		RegisterService: registerService,
@@ -30,6 +52,14 @@ func NewApplicationDependencies(
 		UserService:     userService,
 		TokenService:    tokenService,
 		PasswordHasher:  passwordHasher,
+		UserRepository:  userRepo,
+		CourseRepository: courseRepo,
+		ExamRepository: examRepo,
+		ChallengeRepository: challengeRepo,
+		TestCaseRepository: testCaseRepo,
+		SubmissionRepository: submissionRepo,
+		SessionRepository: sessionRepo,
+		SubmissionResultRepository: submissionResultRepo,
 	}
 }
 
@@ -53,6 +83,38 @@ func (deps ApplicationDependencies) CheckDependencies() error {
 	if deps.PasswordHasher == nil {
 		return fmt.Errorf("PasswordHasher dependency is not provided")
 	}
-	
+
+	if deps.UserRepository == nil {
+		return fmt.Errorf("UserRepository dependency is not provided")
+	}
+
+	if deps.CourseRepository == nil {
+		return fmt.Errorf("CourseRepository dependency is not provided")
+	}
+
+	if deps.ExamRepository == nil {
+		return fmt.Errorf("ExamRepository dependency is not provided")
+	}
+
+	if deps.SubmissionRepository == nil {
+		return fmt.Errorf("SubmissionRepository dependency is not provided")
+	}
+
+	if deps.ChallengeRepository == nil {
+		return fmt.Errorf("ChallengeRepository dependency is not provided")
+	}
+
+	if deps.TestCaseRepository == nil {
+		return fmt.Errorf("TestCaseRepository dependency is not provided")
+	}
+
+	if deps.SessionRepository == nil {
+		return fmt.Errorf("SessionRepository dependency is not provided")
+	}
+
+	if deps.SubmissionResultRepository == nil {
+		return fmt.Errorf("SubmissionResultRepository dependency is not provided")
+	}
+
 	return  nil
 }

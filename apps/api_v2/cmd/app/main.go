@@ -14,6 +14,10 @@ import (
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
 	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	http_interfaces "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http"
+
+	course_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
+	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
+	submission_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 )
 
 func buildApplication() (*container.Application, error) {
@@ -30,12 +34,33 @@ func buildApplication() (*container.Application, error) {
 	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
 	passwordHasher := security_infrastructure.NewSecurityAdapter()
 
+	courseRepository := course_repository.NewCourseRepository(robleAdapter)
+	examRepository := exam_repository.NewExamRepository(robleAdapter)
+	challengeRepository := exam_repository.NewChallengeRepository(robleAdapter)
+	testCaseRepository := exam_repository.NewTestCaseRepository(robleAdapter)
+	
+	submissionRepository := submission_repository.NewSubmissionRepository(robleAdapter)
+	sessionRepository := submission_repository.NewSessionRepository(robleAdapter)
+	submissionResRepository := submission_repository.NewSubmissionResultRepository(robleAdapter)
+
 	deps := container.NewApplicationDependencies(
 		authAdapter,
 		authAdapter,
 		userRepository,
 		authAdapter,
+
 		passwordHasher,
+
+		userRepository,
+		courseRepository,
+
+		examRepository,
+		challengeRepository,
+		testCaseRepository,
+
+		submissionRepository,
+		sessionRepository,
+		submissionResRepository,
 	)
 
 	appContainer, err := container.NewApplication(deps)

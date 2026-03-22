@@ -36,6 +36,10 @@ func (uc *PublishChallengeUseCase) Execute(ctx context.Context, input dtos.Publi
 		return nil, err
 	}
 
+	if user == nil {
+		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
+	}
+
 	if user.Role != user_entities.UserRoleProfessor {
 		return nil, fmt.Errorf("user does not have permissions to create an exam")
 	}
@@ -44,6 +48,10 @@ func (uc *PublishChallengeUseCase) Execute(ctx context.Context, input dtos.Publi
 	existingChallenge, err := uc.challengeRepository.GetChallengeByID(ctx, input.ChallengeID)
 	if err != nil {
 		return nil, err
+	}
+
+	if existingChallenge == nil {
+		return nil, fmt.Errorf("challenge with id %q does not exist", input.ChallengeID)
 	}
 
 	// [STEP 3] Create challenge publish entity with user provided values

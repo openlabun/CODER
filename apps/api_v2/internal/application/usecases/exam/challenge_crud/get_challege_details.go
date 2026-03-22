@@ -53,6 +53,10 @@ func (uc *GetChallengeDetailsUseCase) Execute(ctx context.Context, input dtos.Ge
 		return nil, err
 	}
 
+	if exam == nil {
+		return nil, fmt.Errorf("exam with id %q does not exist", challenge.ExamID)
+	}
+
 	if exam.ProfessorID != user.ID {
 		return nil, fmt.Errorf("user does not have permissions to access this exam")
 	}

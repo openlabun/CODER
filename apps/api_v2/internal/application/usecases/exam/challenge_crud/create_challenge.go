@@ -36,6 +36,10 @@ func (uc *CreateChallengeUseCase) Execute(ctx context.Context, input dtos.Create
 		return nil, err
 	}
 
+	if user == nil {
+		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
+	}
+
 	if user.Role != user_entities.UserRoleProfessor {
 		return nil, fmt.Errorf("user does not have permissions to create an exam")
 	}

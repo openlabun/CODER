@@ -51,6 +51,10 @@ func (uc *GetChallengesByExamUseCase) Execute(ctx context.Context, input dtos.Ge
 		return nil, err
 	}
 	
+	if exam == nil {
+		return nil, fmt.Errorf("exam with id %q does not exist", input.ExamID)
+	}
+	
 
 	// [STEP 3] If user is teacher Verify that exam belongs to the teacher or exam is public/teachers
 	if role == user_entities.UserRoleProfessor {

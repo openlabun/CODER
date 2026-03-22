@@ -6,7 +6,7 @@ import (
 
 type ExamRepository interface {
 	CreateExam(exam *Entities.Exam) (*Entities.Exam, error)
-	UpdateExam(examID string, exam *Entities.Exam) (*Entities.Exam, error)
+	UpdateExam(exam *Entities.Exam) (*Entities.Exam, error)
 	DeleteExam(examID string) error
 
 	GetExamByID(examID string) (*Entities.Exam, error)
@@ -16,7 +16,7 @@ type ExamRepository interface {
 
 type ChallengeRepository interface {
 	CreateChallenge(challenge *Entities.Challenge) (*Entities.Challenge, error)
-	UpdateChallenge(challengeID string, challenge *Entities.Challenge) (*Entities.Challenge, error)
+	UpdateChallenge(challenge *Entities.Challenge) (*Entities.Challenge, error)
 	DeleteChallenge(challengeID string) error
 
 	GetChallengeByID(challengeID string) (*Entities.Challenge, error)
@@ -26,7 +26,7 @@ type ChallengeRepository interface {
 
 type TestCaseRepository interface {
 	CreateTestCase(testCase *Entities.TestCase) (*Entities.TestCase, error)
-	UpdateTestCase(testCaseID string, testCase *Entities.TestCase) (*Entities.TestCase, error)
+	UpdateTestCase(testCase *Entities.TestCase) (*Entities.TestCase, error)
 	DeleteTestCase(testCaseID string) error
 
 	GetTestCaseByID(testCaseID string) (*Entities.TestCase, error)

@@ -6,7 +6,7 @@ import (
 
 type SubmissionRepository interface {
 	CreateSubmission(submission *Entities.Submission) (*Entities.Submission, error)
-	UpdateSubmission(submissionID string, submission *Entities.Submission) (*Entities.Submission, error)
+	UpdateSubmission(submission *Entities.Submission) (*Entities.Submission, error)
 	DeleteSubmission(submissionID string) error
 
 	GetSubmissionByID(submissionID string) (*Entities.Submission, error)
@@ -17,7 +17,7 @@ type SubmissionRepository interface {
 
 type SessionRepository interface {
 	CreateSession(session *Entities.Session) (*Entities.Session, error)
-	UpdateSession(sessionID string, session *Entities.Session) (*Entities.Session, error)
+	UpdateSession(session *Entities.Session) (*Entities.Session, error)
 	DeleteSession(sessionID string) error
 
 	GetSessionByID(sessionID string) (*Entities.Session, error)
@@ -27,7 +27,7 @@ type SessionRepository interface {
 
 type SubmissionResultRepository interface {
 	CreateResult(result *Entities.SubmissionResult) (*Entities.SubmissionResult, error)
-	UpdateResult(resultID string, result *Entities.SubmissionResult) (*Entities.SubmissionResult, error)
+	UpdateResult(result *Entities.SubmissionResult) (*Entities.SubmissionResult, error)
 	DeleteResult(resultID string) error
 
 	GetResultByID(resultID string) (*Entities.SubmissionResult, error)

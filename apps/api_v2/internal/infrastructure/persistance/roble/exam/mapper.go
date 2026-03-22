@@ -14,7 +14,6 @@ func examToRecord(exam *Entities.Exam) map[string]any {
 	record := map[string]any{
 		"ID":                   strings.TrimSpace(exam.ID),
 		"Title":                strings.TrimSpace(exam.Title),
-		"Description":          strings.TrimSpace(exam.Description),
 		"Visibility":           string(exam.Visibility),
 		"StartTime":            exam.StartTime.UTC().Format(time.RFC3339),
 		"AllowLateSubmissions": exam.AllowLateSubmissions,
@@ -23,7 +22,14 @@ func examToRecord(exam *Entities.Exam) map[string]any {
 		"CreatedAt":            exam.CreatedAt.UTC().Format(time.RFC3339),
 		"UpdatedAt":            exam.UpdatedAt.UTC().Format(time.RFC3339),
 		"ProfessorID":          strings.TrimSpace(exam.ProfessorID),
-		"CourseID":             strings.TrimSpace(exam.CourseID),
+	}
+
+	if description := strings.TrimSpace(exam.Description); description != "" {
+		record["Description"] = description
+	}
+
+	if courseID := strings.TrimSpace(exam.CourseID); courseID != "" {
+		record["CourseID"] = courseID
 	}
 
 	if exam.EndTime != nil && !exam.EndTime.IsZero() {

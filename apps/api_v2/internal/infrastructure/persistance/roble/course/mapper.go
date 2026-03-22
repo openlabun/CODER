@@ -12,7 +12,6 @@ func courseToRecord(course *Entities.Course) map[string]any {
 	record := map[string]any{
 		"ID":             strings.TrimSpace(course.ID),
 		"Name":           strings.TrimSpace(course.Name),
-		"Description":    strings.TrimSpace(course.Description),
 		"Visibility":     string(course.Visibility),
 		"VisualIdentity": string(course.VisualIdentity),
 		"Code":           strings.TrimSpace(course.Code),
@@ -23,7 +22,11 @@ func courseToRecord(course *Entities.Course) map[string]any {
 		"UpdatedAt":      course.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 
-	if course.Period != nil {
+	if enrollmentURL := strings.TrimSpace(course.EnrollmentURL); enrollmentURL != "" {
+		record["EnrollmentURL"] = enrollmentURL
+	}
+
+	if course.Period != nil && course.Period.Year > 0 && strings.TrimSpace(string(course.Period.Semester)) != "" {
 		record["PeriodYear"] = course.Period.Year
 		record["PeriodSemester"] = string(course.Period.Semester)
 	}

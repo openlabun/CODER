@@ -134,7 +134,9 @@ func resultToRecord(result *Entities.SubmissionResult) map[string]any {
 	}
 
 	if result.ActualOutput != nil {
-		record["ActualOutput"] = strings.TrimSpace(result.ActualOutput.ID)
+		if actualOutputID := strings.TrimSpace(result.ActualOutput.ID); actualOutputID != "" {
+			record["ActualOutput"] = actualOutputID
+		}
 	}
 
 	if result.ErrorMessage != nil && strings.TrimSpace(*result.ErrorMessage) != "" {

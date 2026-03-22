@@ -7,10 +7,9 @@ import (
 	course_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course"
 	course_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course/crud"
 
+	challenge_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/challenge_crud"
 	exam_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/exam_crud"
 )
-
-
 
 // UserUseCases holds all user-related use cases available in the application.
 type UserUseCases struct {
@@ -31,7 +30,16 @@ type CourseUseCases struct {
 	GetCourseStudents *course_usecases.GetCourseStudentsUseCase
 	EnrollInCourse    *course_usecases.EnrollInCourseUseCase
 	RemoveStudentFromCourse    *course_usecases.RemoveStudentFromCourseUseCase
-	
+}
+
+type ChallengeUseCases struct {
+	CreateChallenge *challenge_crud_usecases.CreateChallengeUseCase
+	UpdateChallenge *challenge_crud_usecases.UpdateChallengeUseCase
+	PublishChallenge *challenge_crud_usecases.PublishChallengeUseCase
+	ArchiveChallenge *challenge_crud_usecases.ArchiveChallengeUseCase
+	DeleteChallenge *challenge_crud_usecases.DeleteChallengeUseCase
+	GetChallengeDetails *challenge_crud_usecases.GetChallengeDetailsUseCase
+	GetChallengesByExam *challenge_crud_usecases.GetChallengesByExamUseCase
 }
 
 type ExamUseCases struct {
@@ -47,6 +55,7 @@ type Application struct {
 	UserModule   UserUseCases
 	CourseModule CourseUseCases
 	ExamModule   ExamUseCases
+	ChallengeModule ChallengeUseCases
 }
 
 func NewApplication(deps ApplicationDependencies) (*Application, error) {
@@ -67,6 +76,16 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		GetCourseStudents: course_usecases.NewGetCourseStudentsUseCase(deps.CourseRepository, deps.UserRepository),
 		EnrollInCourse: course_usecases.NewEnrollInCourseUseCase(deps.CourseRepository, deps.UserRepository),
 		RemoveStudentFromCourse: course_usecases.NewRemoveStudentFromCourseUseCase(deps.CourseRepository, deps.UserRepository),
+	}
+
+	app.ChallengeModule = ChallengeUseCases{
+		CreateChallenge: challenge_crud_usecases.NewCreateChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
+		UpdateChallenge: challenge_crud_usecases.NewUpdateChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
+		PublishChallenge: challenge_crud_usecases.NewPublishChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
+		ArchiveChallenge: challenge_crud_usecases.NewArchiveChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
+		DeleteChallenge: challenge_crud_usecases.NewDeleteChallengeUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
+		GetChallengeDetails: challenge_crud_usecases.NewGetChallengeDetailsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
+		GetChallengesByExam: challenge_crud_usecases.NewGetChallengesByExamUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 	}
 	
 	app.UserModule = UserUseCases{

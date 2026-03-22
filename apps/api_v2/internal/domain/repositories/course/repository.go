@@ -6,7 +6,7 @@ import (
 
 type CourseRepository interface {
 	CreateCourse(course *Entities.Course) (*Entities.Course, error)
-	UpdateCourse(courseID string, course *Entities.Course) (*Entities.Course, error)
+	UpdateCourse(course *Entities.Course) (*Entities.Course, error)
 	DeleteCourse(courseID string) error
 	AddStudentToCourse(courseID, studentID string) error
 

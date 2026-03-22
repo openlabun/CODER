@@ -7,7 +7,9 @@ import (
 	"time"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
+	UserEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
+	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
 )
 
 const (
@@ -97,6 +99,47 @@ func (r *CourseRepository) AddStudentToCourse(ctx context.Context, courseID, stu
 
 	_, err := r.adapter.Insert(courseStudentTableName, []map[string]any{record})
 	return err
+}
+
+func (r *CourseRepository) RemoveStudentFromCourse(ctx context.Context, courseID, studentID string) error {
+	if strings.TrimSpace(courseID) == "" {
+		return fmt.Errorf("courseID is required")
+	}
+	if strings.TrimSpace(studentID) == "" {
+		return fmt.Errorf("studentID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
+	}
+
+	res, err := r.adapter.Read(courseStudentTableName, map[string]string{
+		"CourseID":  strings.TrimSpace(courseID),
+		"StudentID": strings.TrimSpace(studentID),
+	})
+	if err != nil {
+		return err
+	}
+
+	relations := extractRecords(res)
+	if len(relations) == 0 {
+		return nil
+	}
+
+	for _, relation := range relations {
+		relationID := asString(relation["_id"])
+		if relationID == "" {
+			return fmt.Errorf("course-student relation without ID cannot be removed")
+		}
+
+		if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+			return err
+		}
+		if _, err := r.adapter.Delete(courseStudentTableName, "_id", relationID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *CourseRepository) GetCourseByID(ctx context.Context, courseID string) (*Entities.Course, error) {
@@ -208,6 +251,57 @@ func (r *CourseRepository) GetCoursesByTeacherID(ctx context.Context, teacherID 
 	}
 
 	return courses, nil
+}
+
+func (r *CourseRepository) GetStudentsByCourseID(ctx context.Context, courseID string) ([]*UserEntities.User, error) {
+	if strings.TrimSpace(courseID) == "" {
+		return nil, fmt.Errorf("courseID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
+
+	res, err := r.adapter.Read(courseStudentTableName, map[string]string{"CourseID": strings.TrimSpace(courseID)})
+	if err != nil {
+		return nil, err
+	}
+
+	relations := extractRecords(res)
+	if len(relations) == 0 {
+		return []*UserEntities.User{}, nil
+	}
+
+	seen := map[string]struct{}{}
+	studentIDs := make([]string, 0, len(relations))
+	for _, relation := range relations {
+		studentID := asString(relation["StudentID"])
+		if studentID == "" {
+			continue
+		}
+		if _, exists := seen[studentID]; exists {
+			continue
+		}
+		seen[studentID] = struct{}{}
+		studentIDs = append(studentIDs, studentID)
+	}
+
+	if len(studentIDs) == 0 {
+		return []*UserEntities.User{}, nil
+	}
+
+	userRepository := roble_user_infrastructure.NewUserRepository(r.adapter)
+	students := make([]*UserEntities.User, 0, len(studentIDs))
+	for _, studentID := range studentIDs {
+		student, fetchErr := userRepository.GetUserByID(ctx, studentID)
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		if student != nil {
+			students = append(students, student)
+		}
+	}
+
+	return students, nil
 }
 
 

@@ -22,6 +22,8 @@ type ChallengeRepository interface {
 	GetChallengeByID(challengeID string) (*Entities.Challenge, error)
 	GetChallengesByExamID(examID string) ([]*Entities.Challenge, error)
 	GetChallengesByTag(tag string) ([]*Entities.Challenge, error)
+	GetInputVariablesByChallengeID(challengeID string) ([]*Entities.IOVariable, error)
+	GetOutputVariablesByChallengeID(challengeID string) ([]*Entities.IOVariable, error)
 }
 
 type TestCaseRepository interface {
@@ -31,4 +33,6 @@ type TestCaseRepository interface {
 
 	GetTestCaseByID(testCaseID string) (*Entities.TestCase, error)
 	GetTestCasesByChallengeID(challengeID string) ([]*Entities.TestCase, error)
+	GetInputVariablesByTestCaseID(testCaseID string) ([]*Entities.IOVariable, error)
+	GetOutputVariablesByTestCaseID(testCaseID string) ([]*Entities.IOVariable, error)
 }

@@ -8,6 +8,7 @@ const (
 )
 
 type IOVariable struct {
+	ID 	   string
 	Name   string
 	Type   VariableFormat
 	Value  string

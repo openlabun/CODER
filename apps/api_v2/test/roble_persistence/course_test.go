@@ -1,13 +1,14 @@
 package roble_persistence_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
-	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/course"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
+	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/course"
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 	roble_course_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
@@ -42,6 +43,10 @@ func TestCourseCreation(t *testing.T) {
 	if access == nil || access.UserData == nil || access.UserData.ID == "" {
 		t.Fatal("expected logged user data with valid ID")
 	}
+	if access.Token == nil || access.Token.AccessToken == "" {
+		t.Fatal("expected access token in login response")
+	}
+	ctx := roble_infrastructure.WithAccessToken(context.Background(), access.Token.AccessToken)
 	t.Logf("[OK] Login exitoso. teacherID=%s", access.UserData.ID)
 
 	// Create a new course
@@ -68,7 +73,7 @@ func TestCourseCreation(t *testing.T) {
 		t.Fatalf("build course with factory failed: %v", err)
 	}
 
-	createdCourse, err := courseRepository.CreateCourse(course)
+	createdCourse, err := courseRepository.CreateCourse(ctx, course)
 	if err != nil {
 		t.Fatalf("create course failed: %v", err)
 	}
@@ -80,12 +85,12 @@ func TestCourseCreation(t *testing.T) {
 
 	defer func() {
 		t.Logf("[CLEANUP] Eliminando curso temporal %s", courseID)
-		_ = courseRepository.DeleteCourse(courseID)
+		_ = courseRepository.DeleteCourse(ctx, courseID)
 	}()
 
 	// Get all courses for the teacher and verify the new course is present
 	t.Logf("[STEP 4] Listando cursos del docente teacherID=%s", teacherID)
-	teacherCourses, err := courseRepository.GetCoursesByTeacherID(teacherID)
+	teacherCourses, err := courseRepository.GetCoursesByTeacherID(ctx, teacherID)
 	if err != nil {
 		t.Fatalf("get courses by teacher failed: %v", err)
 	}
@@ -107,7 +112,7 @@ func TestCourseCreation(t *testing.T) {
 	t.Log("[STEP 5] Actualizando nombre y descripcion del curso")
 	createdCourse.Name = "Integration Course Updated"
 	createdCourse.Description = "Updated by integration test"
-	updatedCourse, err := courseRepository.UpdateCourse(createdCourse)
+	updatedCourse, err := courseRepository.UpdateCourse(ctx, createdCourse)
 	if err != nil {
 		t.Fatalf("update course failed: %v", err)
 	}
@@ -117,7 +122,7 @@ func TestCourseCreation(t *testing.T) {
 	t.Logf("[OK] Update aplicado. Nuevo nombre=%q", updatedCourse.Name)
 
 	t.Logf("[STEP 6] Recargando curso por ID=%s para validar persistencia", courseID)
-	reloadedCourse, err := courseRepository.GetCourseByID(courseID)
+	reloadedCourse, err := courseRepository.GetCourseByID(ctx, courseID)
 	if err != nil {
 		t.Fatalf("get course by id failed: %v", err)
 	}
@@ -131,13 +136,13 @@ func TestCourseCreation(t *testing.T) {
 
 	// Delete course
 	t.Logf("[STEP 7] Eliminando curso ID=%s", courseID)
-	if err := courseRepository.DeleteCourse(courseID); err != nil {
+	if err := courseRepository.DeleteCourse(ctx, courseID); err != nil {
 		t.Fatalf("delete course failed: %v", err)
 	}
 	t.Log("[OK] Curso eliminado")
 
 	t.Logf("[STEP 8] Verificando que el curso %s ya no existe", courseID)
-	deletedCourse, err := courseRepository.GetCourseByID(courseID)
+	deletedCourse, err := courseRepository.GetCourseByID(ctx, courseID)
 	if err != nil {
 		t.Fatalf("get course after delete failed: %v", err)
 	}

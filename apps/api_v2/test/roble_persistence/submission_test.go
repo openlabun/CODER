@@ -1,6 +1,7 @@
 package roble_persistence_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -48,6 +49,10 @@ func TestSubmissionCRUD(t *testing.T) {
 	if access == nil || access.UserData == nil || access.UserData.ID == "" {
 		t.Fatal("expected logged user data with valid ID")
 	}
+	if access.Token == nil || access.Token.AccessToken == "" {
+		t.Fatal("expected access token in login response")
+	}
+	ctx := roble_infrastructure.WithAccessToken(context.Background(), access.Token.AccessToken)
 	teacherID := access.UserData.ID
 	t.Logf("[OK] Login exitoso. userID=%s", teacherID)
 
@@ -71,7 +76,7 @@ func TestSubmissionCRUD(t *testing.T) {
 		t.Fatalf("build course with factory failed: %v", err)
 	}
 
-	createdCourse, err := courseRepository.CreateCourse(course)
+	createdCourse, err := courseRepository.CreateCourse(ctx, course)
 	if err != nil {
 		t.Fatalf("create course failed: %v", err)
 	}
@@ -83,7 +88,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	defer func() {
 		if courseID != "" {
 			t.Logf("[CLEANUP] Eliminando curso %s", courseID)
-			_ = courseRepository.DeleteCourse(courseID)
+			_ = courseRepository.DeleteCourse(ctx, courseID)
 		}
 	}()
 
@@ -106,7 +111,7 @@ func TestSubmissionCRUD(t *testing.T) {
 		t.Fatalf("build exam with factory failed: %v", err)
 	}
 
-	createdExam, err := examRepository.CreateExam(exam)
+	createdExam, err := examRepository.CreateExam(ctx, exam)
 	if err != nil {
 		t.Fatalf("create exam failed: %v", err)
 	}
@@ -118,7 +123,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	defer func() {
 		if examID != "" {
 			t.Logf("[CLEANUP] Eliminando examen %s", examID)
-			_ = examRepository.DeleteExam(examID)
+			_ = examRepository.DeleteExam(ctx, examID)
 		}
 	}()
 
@@ -149,7 +154,7 @@ func TestSubmissionCRUD(t *testing.T) {
 		t.Fatalf("build challenge with factory failed: %v", err)
 	}
 
-	createdChallenge, err := challengeRepository.CreateChallenge(challenge)
+	createdChallenge, err := challengeRepository.CreateChallenge(ctx, challenge)
 	if err != nil {
 		t.Fatalf("create challenge failed: %v", err)
 	}
@@ -161,7 +166,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	defer func() {
 		if challengeID != "" {
 			t.Logf("[CLEANUP] Eliminando challenge %s", challengeID)
-			_ = challengeRepository.DeleteChallenge(challengeID)
+			_ = challengeRepository.DeleteChallenge(ctx, challengeID)
 		}
 	}()
 
@@ -186,7 +191,7 @@ func TestSubmissionCRUD(t *testing.T) {
 		t.Fatalf("build test case with factory failed: %v", err)
 	}
 
-	createdTestCase, err := testCaseRepository.CreateTestCase(testCase)
+	createdTestCase, err := testCaseRepository.CreateTestCase(ctx, testCase)
 	if err != nil {
 		t.Fatalf("create test case failed: %v", err)
 	}
@@ -198,7 +203,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	defer func() {
 		if testCaseID != "" {
 			t.Logf("[CLEANUP] Eliminando test case %s", testCaseID)
-			_ = testCaseRepository.DeleteTestCase(testCaseID)
+			_ = testCaseRepository.DeleteTestCase(ctx, testCaseID)
 		}
 	}()
 
@@ -209,7 +214,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	}
 	session.TimeLeft = 5400
 
-	createdSession, err := sessionRepository.CreateSession(session)
+	createdSession, err := sessionRepository.CreateSession(ctx, session)
 	if err != nil {
 		t.Fatalf("create session failed: %v", err)
 	}
@@ -222,11 +227,11 @@ func TestSubmissionCRUD(t *testing.T) {
 	defer func() {
 		if sessionID != "" {
 			t.Logf("[CLEANUP] Eliminando session %s", sessionID)
-			_ = sessionRepository.DeleteSession(sessionID)
+			_ = sessionRepository.DeleteSession(ctx, sessionID)
 		}
 	}()
 
-	reloadedSession, err := sessionRepository.GetSessionByID(sessionID)
+	reloadedSession, err := sessionRepository.GetSessionByID(ctx, sessionID)
 	if err != nil {
 		t.Fatalf("get session by id failed: %v", err)
 	}
@@ -238,7 +243,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	createdSession.Status = submission_entities.SessionStatusFrozen
 	createdSession.Attempts = 1
 	createdSession.TimeLeft = 5000
-	updatedSession, err := sessionRepository.UpdateSession(createdSession)
+	updatedSession, err := sessionRepository.UpdateSession(ctx, createdSession)
 	if err != nil {
 		t.Fatalf("update session failed: %v", err)
 	}
@@ -247,11 +252,11 @@ func TestSubmissionCRUD(t *testing.T) {
 	}
 	t.Logf("[OK] Session actualizada. attempts=%d timeLeft=%d", updatedSession.Attempts, updatedSession.TimeLeft)
 
-	sessionsByExam, err := sessionRepository.GetSessionsByExamID(examID)
+	sessionsByExam, err := sessionRepository.GetSessionsByExamID(ctx, examID)
 	if err != nil {
 		t.Fatalf("get sessions by exam failed: %v", err)
 	}
-	sessionsByStudent, err := sessionRepository.GetSessionsByStudentID(teacherID)
+	sessionsByStudent, err := sessionRepository.GetSessionsByStudentID(ctx, teacherID)
 	if err != nil {
 		t.Fatalf("get sessions by student failed: %v", err)
 	}
@@ -272,7 +277,7 @@ func TestSubmissionCRUD(t *testing.T) {
 		t.Fatalf("build submission with factory failed: %v", err)
 	}
 
-	createdSubmission, err := submissionRepository.CreateSubmission(submission)
+	createdSubmission, err := submissionRepository.CreateSubmission(ctx, submission)
 	if err != nil {
 		t.Fatalf("create submission failed: %v", err)
 	}
@@ -284,11 +289,11 @@ func TestSubmissionCRUD(t *testing.T) {
 	defer func() {
 		if submissionID != "" {
 			t.Logf("[CLEANUP] Eliminando submission %s", submissionID)
-			_ = submissionRepository.DeleteSubmission(submissionID)
+			_ = submissionRepository.DeleteSubmission(ctx, submissionID)
 		}
 	}()
 
-	reloadedSubmission, err := submissionRepository.GetSubmissionByID(submissionID)
+	reloadedSubmission, err := submissionRepository.GetSubmissionByID(ctx, submissionID)
 	if err != nil {
 		t.Fatalf("get submission by id failed: %v", err)
 	}
@@ -300,7 +305,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	createdSubmission.Code = "print(2+3+0)"
 	createdSubmission.Score = 100
 	createdSubmission.TimeMsTotal = 45
-	updatedSubmission, err := submissionRepository.UpdateSubmission(createdSubmission)
+	updatedSubmission, err := submissionRepository.UpdateSubmission(ctx, createdSubmission)
 	if err != nil {
 		t.Fatalf("update submission failed: %v", err)
 	}
@@ -309,15 +314,15 @@ func TestSubmissionCRUD(t *testing.T) {
 	}
 	t.Logf("[OK] Submission actualizada. score=%d timeMsTotal=%d", updatedSubmission.Score, updatedSubmission.TimeMsTotal)
 
-	bySession, err := submissionRepository.GetSubmissionsBySessionID(sessionID)
+	bySession, err := submissionRepository.GetSubmissionsBySessionID(ctx, sessionID)
 	if err != nil {
 		t.Fatalf("get submissions by session failed: %v", err)
 	}
-	byUser, err := submissionRepository.GetSubmissionsByUserID(teacherID)
+	byUser, err := submissionRepository.GetSubmissionsByUserID(ctx, teacherID)
 	if err != nil {
 		t.Fatalf("get submissions by user failed: %v", err)
 	}
-	byChallenge, err := submissionRepository.GetSubmissionsByChallengeID(challengeID)
+	byChallenge, err := submissionRepository.GetSubmissionsByChallengeID(ctx, challengeID)
 	if err != nil {
 		t.Fatalf("get submissions by challenge failed: %v", err)
 	}
@@ -339,7 +344,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	result.Status = submission_entities.SubmissionStatusAccepted
 	result.ActualOutput = actualOutput
 
-	createdResult, err := resultRepository.CreateResult(result)
+	createdResult, err := resultRepository.CreateResult(ctx, result)
 	if err != nil {
 		t.Fatalf("create result failed: %v", err)
 	}
@@ -351,11 +356,11 @@ func TestSubmissionCRUD(t *testing.T) {
 	defer func() {
 		if resultID != "" {
 			t.Logf("[CLEANUP] Eliminando result %s", resultID)
-			_ = resultRepository.DeleteResult(resultID)
+			_ = resultRepository.DeleteResult(ctx, resultID)
 		}
 	}()
 
-	reloadedResult, err := resultRepository.GetResultByID(resultID)
+	reloadedResult, err := resultRepository.GetResultByID(ctx, resultID)
 	if err != nil {
 		t.Fatalf("get result by id failed: %v", err)
 	}
@@ -372,7 +377,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	createdResult.ActualOutput = updatedActualOutput
 	createdResult.ErrorMessage = nil
 
-	updatedResult, err := resultRepository.UpdateResult(createdResult)
+	updatedResult, err := resultRepository.UpdateResult(ctx, createdResult)
 	if err != nil {
 		t.Fatalf("update result failed: %v", err)
 	}
@@ -381,11 +386,11 @@ func TestSubmissionCRUD(t *testing.T) {
 	}
 	t.Logf("[OK] Result actualizado. status=%s", updatedResult.Status)
 
-	resultsBySubmission, err := resultRepository.GetResultsBySubmissionID(submissionID)
+	resultsBySubmission, err := resultRepository.GetResultsBySubmissionID(ctx, submissionID)
 	if err != nil {
 		t.Fatalf("get results by submission failed: %v", err)
 	}
-	resultsByTestCase, err := resultRepository.GetResultByTestCase(testCaseID)
+	resultsByTestCase, err := resultRepository.GetResultByTestCase(ctx, testCaseID)
 	if err != nil {
 		t.Fatalf("get results by test case failed: %v", err)
 	}
@@ -395,10 +400,10 @@ func TestSubmissionCRUD(t *testing.T) {
 	t.Logf("[OK] Queries de result validadas. bySubmission=%d byTestCase=%d", len(resultsBySubmission), len(resultsByTestCase))
 
 	t.Log("[STEP 9] Eliminar Result, Submission y Session y validar borrado")
-	if err := resultRepository.DeleteResult(resultID); err != nil {
+	if err := resultRepository.DeleteResult(ctx, resultID); err != nil {
 		t.Fatalf("delete result failed: %v", err)
 	}
-	deletedResult, err := resultRepository.GetResultByID(resultID)
+	deletedResult, err := resultRepository.GetResultByID(ctx, resultID)
 	if err != nil {
 		t.Fatalf("get result after delete failed: %v", err)
 	}
@@ -408,10 +413,10 @@ func TestSubmissionCRUD(t *testing.T) {
 	resultID = ""
 	t.Log("[OK] Result eliminado")
 
-	if err := submissionRepository.DeleteSubmission(submissionID); err != nil {
+	if err := submissionRepository.DeleteSubmission(ctx, submissionID); err != nil {
 		t.Fatalf("delete submission failed: %v", err)
 	}
-	deletedSubmission, err := submissionRepository.GetSubmissionByID(submissionID)
+	deletedSubmission, err := submissionRepository.GetSubmissionByID(ctx, submissionID)
 	if err != nil {
 		t.Fatalf("get submission after delete failed: %v", err)
 	}
@@ -421,10 +426,10 @@ func TestSubmissionCRUD(t *testing.T) {
 	submissionID = ""
 	t.Log("[OK] Submission eliminada")
 
-	if err := sessionRepository.DeleteSession(sessionID); err != nil {
+	if err := sessionRepository.DeleteSession(ctx, sessionID); err != nil {
 		t.Fatalf("delete session failed: %v", err)
 	}
-	deletedSession, err := sessionRepository.GetSessionByID(sessionID)
+	deletedSession, err := sessionRepository.GetSessionByID(ctx, sessionID)
 	if err != nil {
 		t.Fatalf("get session after delete failed: %v", err)
 	}

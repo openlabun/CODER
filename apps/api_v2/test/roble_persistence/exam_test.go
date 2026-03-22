@@ -1,6 +1,7 @@
 package roble_persistence_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -46,6 +47,10 @@ func TestExamCRUD(t *testing.T) {
 	if access == nil || access.UserData == nil || access.UserData.ID == "" {
 		t.Fatal("expected logged user data with valid ID")
 	}
+	if access.Token == nil || access.Token.AccessToken == "" {
+		t.Fatal("expected access token in login response")
+	}
+	ctx := roble_infrastructure.WithAccessToken(context.Background(), access.Token.AccessToken)
 	teacherID := access.UserData.ID
 	t.Logf("[OK] Login exitoso. teacherID=%s", teacherID)
 
@@ -69,7 +74,7 @@ func TestExamCRUD(t *testing.T) {
 		t.Fatalf("build course with factory failed: %v", err)
 	}
 
-	createdCourse, err := courseRepository.CreateCourse(course)
+	createdCourse, err := courseRepository.CreateCourse(ctx, course)
 	if err != nil {
 		t.Fatalf("create course failed: %v", err)
 	}
@@ -81,7 +86,7 @@ func TestExamCRUD(t *testing.T) {
 
 	defer func() {
 		t.Logf("[CLEANUP] Eliminando curso auxiliar %s", courseID)
-		_ = courseRepository.DeleteCourse(courseID)
+		_ = courseRepository.DeleteCourse(ctx, courseID)
 	}()
 
 	t.Log("[STEP 4] Crear examen (CRUD Exam)")
@@ -104,7 +109,7 @@ func TestExamCRUD(t *testing.T) {
 		t.Fatalf("build exam with factory failed: %v", err)
 	}
 
-	createdExam, err := examRepository.CreateExam(exam)
+	createdExam, err := examRepository.CreateExam(ctx, exam)
 	if err != nil {
 		t.Fatalf("create exam failed: %v", err)
 	}
@@ -116,11 +121,11 @@ func TestExamCRUD(t *testing.T) {
 
 	defer func() {
 		t.Logf("[CLEANUP] Eliminando examen %s", examID)
-		_ = examRepository.DeleteExam(examID)
+		_ = examRepository.DeleteExam(ctx, examID)
 	}()
 
 	t.Logf("[STEP 5] Leer examen por ID=%s", examID)
-	reloadedExam, err := examRepository.GetExamByID(examID)
+	reloadedExam, err := examRepository.GetExamByID(ctx, examID)
 	if err != nil {
 		t.Fatalf("get exam by id failed: %v", err)
 	}
@@ -133,7 +138,7 @@ func TestExamCRUD(t *testing.T) {
 	createdExam.Title = "Integration Exam Updated"
 	createdExam.Description = "Updated exam description"
 	createdExam.TryLimit = 3
-	updatedExam, err := examRepository.UpdateExam(createdExam)
+	updatedExam, err := examRepository.UpdateExam(ctx, createdExam)
 	if err != nil {
 		t.Fatalf("update exam failed: %v", err)
 	}
@@ -143,11 +148,11 @@ func TestExamCRUD(t *testing.T) {
 	t.Logf("[OK] Examen actualizado. title=%q", updatedExam.Title)
 
 	t.Log("[STEP 7] Validar listados de examenes por courseID y teacherID")
-	courseExams, err := examRepository.GetExamsByCourseID(courseID)
+	courseExams, err := examRepository.GetExamsByCourseID(ctx, courseID)
 	if err != nil {
 		t.Fatalf("get exams by course id failed: %v", err)
 	}
-	teacherExams, err := examRepository.GetExamsByTeacherID(teacherID)
+	teacherExams, err := examRepository.GetExamsByTeacherID(ctx, teacherID)
 	if err != nil {
 		t.Fatalf("get exams by teacher id failed: %v", err)
 	}
@@ -190,7 +195,7 @@ func TestExamCRUD(t *testing.T) {
 		t.Fatalf("build challenge with factory failed: %v", err)
 	}
 
-	createdChallenge, err := challengeRepository.CreateChallenge(challenge)
+	createdChallenge, err := challengeRepository.CreateChallenge(ctx, challenge)
 	if err != nil {
 		t.Fatalf("create challenge failed: %v", err)
 	}
@@ -202,11 +207,11 @@ func TestExamCRUD(t *testing.T) {
 
 	defer func() {
 		t.Logf("[CLEANUP] Eliminando challenge %s", challengeID)
-		_ = challengeRepository.DeleteChallenge(challengeID)
+		_ = challengeRepository.DeleteChallenge(ctx, challengeID)
 	}()
 
 	t.Logf("[STEP 9] Leer challenge por ID=%s e hidratar IOVariables", challengeID)
-	reloadedChallenge, err := challengeRepository.GetChallengeByID(challengeID)
+	reloadedChallenge, err := challengeRepository.GetChallengeByID(ctx, challengeID)
 	if err != nil {
 		t.Fatalf("get challenge by id failed: %v", err)
 	}
@@ -222,7 +227,7 @@ func TestExamCRUD(t *testing.T) {
 	createdChallenge.Title = "Sum Challenge Updated"
 	createdChallenge.Status = exam_entities.ChallengeStatusPublished
 	createdChallenge.Tags = []string{"math", "updated"}
-	updatedChallenge, err := challengeRepository.UpdateChallenge(createdChallenge)
+	updatedChallenge, err := challengeRepository.UpdateChallenge(ctx, createdChallenge)
 	if err != nil {
 		t.Fatalf("update challenge failed: %v", err)
 	}
@@ -232,18 +237,18 @@ func TestExamCRUD(t *testing.T) {
 	t.Logf("[OK] Challenge actualizado. title=%q status=%s", updatedChallenge.Title, updatedChallenge.Status)
 
 	t.Log("[STEP 11] Validar listados y lecturas de IO de challenge")
-	examChallenges, err := challengeRepository.GetChallengesByExamID(examID)
+	examChallenges, err := challengeRepository.GetChallengesByExamID(ctx, examID)
 	if err != nil {
 		t.Fatalf("get challenges by exam failed: %v", err)
 	}
 	if len(examChallenges) == 0 {
 		t.Fatal("expected at least one challenge for exam")
 	}
-	challengeInputs, err := challengeRepository.GetInputVariablesByChallengeID(challengeID)
+	challengeInputs, err := challengeRepository.GetInputVariablesByChallengeID(ctx, challengeID)
 	if err != nil {
 		t.Fatalf("get challenge input variables failed: %v", err)
 	}
-	challengeOutputs, err := challengeRepository.GetOutputVariablesByChallengeID(challengeID)
+	challengeOutputs, err := challengeRepository.GetOutputVariablesByChallengeID(ctx, challengeID)
 	if err != nil {
 		t.Fatalf("get challenge output variables failed: %v", err)
 	}
@@ -278,7 +283,7 @@ func TestExamCRUD(t *testing.T) {
 		t.Fatalf("build test case with factory failed: %v", err)
 	}
 
-	createdTestCase, err := testCaseRepository.CreateTestCase(testCase)
+	createdTestCase, err := testCaseRepository.CreateTestCase(ctx, testCase)
 	if err != nil {
 		t.Fatalf("create test case failed: %v", err)
 	}
@@ -290,11 +295,11 @@ func TestExamCRUD(t *testing.T) {
 
 	defer func() {
 		t.Logf("[CLEANUP] Eliminando test case %s", testCaseID)
-		_ = testCaseRepository.DeleteTestCase(testCaseID)
+		_ = testCaseRepository.DeleteTestCase(ctx, testCaseID)
 	}()
 
 	t.Logf("[STEP 13] Leer test case por ID=%s e hidratar IOVariables", testCaseID)
-	reloadedTestCase, err := testCaseRepository.GetTestCaseByID(testCaseID)
+	reloadedTestCase, err := testCaseRepository.GetTestCaseByID(ctx, testCaseID)
 	if err != nil {
 		t.Fatalf("get test case by id failed: %v", err)
 	}
@@ -309,7 +314,7 @@ func TestExamCRUD(t *testing.T) {
 	t.Log("[STEP 14] Actualizar test case")
 	createdTestCase.Name = "sample_1_updated"
 	createdTestCase.Points = 25
-	updatedTestCase, err := testCaseRepository.UpdateTestCase(createdTestCase)
+	updatedTestCase, err := testCaseRepository.UpdateTestCase(ctx, createdTestCase)
 	if err != nil {
 		t.Fatalf("update test case failed: %v", err)
 	}
@@ -319,18 +324,18 @@ func TestExamCRUD(t *testing.T) {
 	t.Logf("[OK] TestCase actualizado. name=%q points=%d", updatedTestCase.Name, updatedTestCase.Points)
 
 	t.Log("[STEP 15] Validar listados y lecturas de IO de test case")
-	challengeTestCases, err := testCaseRepository.GetTestCasesByChallengeID(challengeID)
+	challengeTestCases, err := testCaseRepository.GetTestCasesByChallengeID(ctx, challengeID)
 	if err != nil {
 		t.Fatalf("get test cases by challenge id failed: %v", err)
 	}
 	if len(challengeTestCases) == 0 {
 		t.Fatal("expected at least one test case for challenge")
 	}
-	testCaseInputs, err := testCaseRepository.GetInputVariablesByTestCaseID(testCaseID)
+	testCaseInputs, err := testCaseRepository.GetInputVariablesByTestCaseID(ctx, testCaseID)
 	if err != nil {
 		t.Fatalf("get test case input variables failed: %v", err)
 	}
-	testCaseOutputs, err := testCaseRepository.GetOutputVariablesByTestCaseID(testCaseID)
+	testCaseOutputs, err := testCaseRepository.GetOutputVariablesByTestCaseID(ctx, testCaseID)
 	if err != nil {
 		t.Fatalf("get test case output variables failed: %v", err)
 	}
@@ -340,10 +345,10 @@ func TestExamCRUD(t *testing.T) {
 	t.Logf("[OK] Relaciones de IO test case validadas. inputs=%d outputs=%d", len(testCaseInputs), len(testCaseOutputs))
 
 	t.Log("[STEP 16] Eliminar test case y validar borrado")
-	if err := testCaseRepository.DeleteTestCase(testCaseID); err != nil {
+	if err := testCaseRepository.DeleteTestCase(ctx, testCaseID); err != nil {
 		t.Fatalf("delete test case failed: %v", err)
 	}
-	deletedTestCase, err := testCaseRepository.GetTestCaseByID(testCaseID)
+	deletedTestCase, err := testCaseRepository.GetTestCaseByID(ctx, testCaseID)
 	if err != nil {
 		t.Fatalf("get test case after delete failed: %v", err)
 	}
@@ -354,10 +359,10 @@ func TestExamCRUD(t *testing.T) {
 	t.Log("[OK] TestCase eliminado")
 
 	t.Log("[STEP 17] Eliminar challenge y validar borrado")
-	if err := challengeRepository.DeleteChallenge(challengeID); err != nil {
+	if err := challengeRepository.DeleteChallenge(ctx, challengeID); err != nil {
 		t.Fatalf("delete challenge failed: %v", err)
 	}
-	deletedChallenge, err := challengeRepository.GetChallengeByID(challengeID)
+	deletedChallenge, err := challengeRepository.GetChallengeByID(ctx, challengeID)
 	if err != nil {
 		t.Fatalf("get challenge after delete failed: %v", err)
 	}
@@ -368,10 +373,10 @@ func TestExamCRUD(t *testing.T) {
 	t.Log("[OK] Challenge eliminado")
 
 	t.Log("[STEP 18] Eliminar examen y validar borrado")
-	if err := examRepository.DeleteExam(examID); err != nil {
+	if err := examRepository.DeleteExam(ctx, examID); err != nil {
 		t.Fatalf("delete exam failed: %v", err)
 	}
-	deletedExam, err := examRepository.GetExamByID(examID)
+	deletedExam, err := examRepository.GetExamByID(ctx, examID)
 	if err != nil {
 		t.Fatalf("get exam after delete failed: %v", err)
 	}

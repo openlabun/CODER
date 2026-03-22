@@ -6,6 +6,8 @@ import (
 	user_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/user"
 	course_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course"
 	course_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course/crud"
+
+	exam_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/exam_crud"
 )
 
 
@@ -32,10 +34,19 @@ type CourseUseCases struct {
 	
 }
 
+type ExamUseCases struct {
+	CreateExam *exam_crud_usecases.CreateExamUseCase
+	UpdateExam *exam_crud_usecases.UpdateExamUseCase
+	DeleteExam *exam_crud_usecases.DeleteExamUseCase
+	GetExamDetails *exam_crud_usecases.GetExamDetailsUseCase
+	GetExamsByCourse *exam_crud_usecases.GetExamsByCourseUseCase
+}
+
 type Application struct {
 	Dependencies ApplicationDependencies
 	UserModule   UserUseCases
 	CourseModule CourseUseCases
+	ExamModule   ExamUseCases
 }
 
 func NewApplication(deps ApplicationDependencies) (*Application, error) {
@@ -72,6 +83,14 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		RefreshToken: user_usecases.NewRefreshTokenUseCase(
 			deps.TokenService,
 		),
+	}
+
+	app.ExamModule = ExamUseCases{
+		CreateExam: exam_crud_usecases.NewCreateExamUseCase(deps.UserRepository, deps.ExamRepository),
+		UpdateExam: exam_crud_usecases.NewUpdateExamUseCase(deps.UserRepository, deps.ExamRepository),
+		DeleteExam: exam_crud_usecases.NewDeleteExamUseCase(deps.UserRepository, deps.ExamRepository),
+		GetExamDetails: exam_crud_usecases.NewGetExamDetailsUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
+		GetExamsByCourse: exam_crud_usecases.NewGetExamsByCourseUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
 	}
 
 	return app, nil

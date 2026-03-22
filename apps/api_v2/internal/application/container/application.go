@@ -7,6 +7,8 @@ import (
 	course_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course"
 	course_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course/crud"
 
+	submission_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission"
+	session_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission/session"
 	test_case_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/test_case_crud"
 	challenge_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/challenge_crud"
 	exam_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/exam_crud"
@@ -50,6 +52,19 @@ type TestCaseUseCases struct {
 	GetTestCasesByChallenge *test_case_crud_usecases.GetTestCasesByChallengeUseCase
 }
 
+type SubmissionUseCases struct {
+	CreateSubmission *submission_usecases.CreateSubmissionUseCase
+	GetSubmissionStatus *submission_usecases.GetSubmissionStatusUseCase
+	GetChallengeSubmissions *submission_usecases.GetChallengeSubmissionsUseCase
+	GetUserSubmissions *submission_usecases.GetUserSubmissionsUseCase
+}
+
+type SessionUseCases struct {
+	CreateSession *session_usecases.CreateSessionUseCase
+	GetSession *session_usecases.GetSessionUseCase
+	HeartBeatSession *session_usecases.HeartBeatSessionUseCase
+}
+
 type ExamUseCases struct {
 	CreateExam *exam_crud_usecases.CreateExamUseCase
 	UpdateExam *exam_crud_usecases.UpdateExamUseCase
@@ -65,6 +80,7 @@ type Application struct {
 	ExamModule   ExamUseCases
 	ChallengeModule ChallengeUseCases
 	TestCaseModule TestCaseUseCases
+	SessionModule SessionUseCases
 }
 
 func NewApplication(deps ApplicationDependencies) (*Application, error) {
@@ -102,6 +118,12 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		UpdateTestCase: test_case_crud_usecases.NewUpdateTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
 		DeleteTestCase: test_case_crud_usecases.NewDeleteTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
 		GetTestCasesByChallenge: test_case_crud_usecases.NewGetTestCasesByChallengeUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.CourseRepository),
+	}
+
+	app.SessionModule = SessionUseCases{
+		CreateSession: session_usecases.NewCreateSessionUseCase(deps.UserRepository, deps.SessionRepository, deps.ExamRepository, ),
+		GetSession: session_usecases.NewGetSessionUseCase(deps.SessionRepository, deps.UserRepository),
+		HeartBeatSession: session_usecases.NewHeartBeatSessionUseCase(deps.UserRepository, deps.SessionRepository),
 	}
 	
 	app.UserModule = UserUseCases{

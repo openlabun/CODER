@@ -1,36 +1,38 @@
 package submission_repository
 
 import (
+	"context"
+
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
 type SubmissionRepository interface {
-	CreateSubmission(submission *Entities.Submission) (*Entities.Submission, error)
-	UpdateSubmission(submission *Entities.Submission) (*Entities.Submission, error)
-	DeleteSubmission(submissionID string) error
+	CreateSubmission(ctx context.Context, submission *Entities.Submission) (*Entities.Submission, error)
+	UpdateSubmission(ctx context.Context, submission *Entities.Submission) (*Entities.Submission, error)
+	DeleteSubmission(ctx context.Context, submissionID string) error
 
-	GetSubmissionByID(submissionID string) (*Entities.Submission, error)
-	GetSubmissionsBySessionID(sessionID string) ([]*Entities.Submission, error)
-	GetSubmissionsByUserID(userID string) ([]*Entities.Submission, error)
-	GetSubmissionsByChallengeID(challengeID string) ([]*Entities.Submission, error)
+	GetSubmissionByID(ctx context.Context, submissionID string) (*Entities.Submission, error)
+	GetSubmissionsBySessionID(ctx context.Context, sessionID string) ([]*Entities.Submission, error)
+	GetSubmissionsByUserID(ctx context.Context, userID string) ([]*Entities.Submission, error)
+	GetSubmissionsByChallengeID(ctx context.Context, challengeID string) ([]*Entities.Submission, error)
 }
 
 type SessionRepository interface {
-	CreateSession(session *Entities.Session) (*Entities.Session, error)
-	UpdateSession(session *Entities.Session) (*Entities.Session, error)
-	DeleteSession(sessionID string) error
+	CreateSession(ctx context.Context, session *Entities.Session) (*Entities.Session, error)
+	UpdateSession(ctx context.Context, session *Entities.Session) (*Entities.Session, error)
+	DeleteSession(ctx context.Context, sessionID string) error
 
-	GetSessionByID(sessionID string) (*Entities.Session, error)
-	GetSessionsByExamID(examID string) ([]*Entities.Session, error)
-	GetSessionsByStudentID(studentID string) ([]*Entities.Session, error)
+	GetSessionByID(ctx context.Context, sessionID string) (*Entities.Session, error)
+	GetSessionsByExamID(ctx context.Context, examID string) ([]*Entities.Session, error)
+	GetSessionsByStudentID(ctx context.Context, studentID string) ([]*Entities.Session, error)
 }
 
 type SubmissionResultRepository interface {
-	CreateResult(result *Entities.SubmissionResult) (*Entities.SubmissionResult, error)
-	UpdateResult(result *Entities.SubmissionResult) (*Entities.SubmissionResult, error)
-	DeleteResult(resultID string) error
+	CreateResult(ctx context.Context, result *Entities.SubmissionResult) (*Entities.SubmissionResult, error)
+	UpdateResult(ctx context.Context, result *Entities.SubmissionResult) (*Entities.SubmissionResult, error)
+	DeleteResult(ctx context.Context, resultID string) error
 
-	GetResultByID(resultID string) (*Entities.SubmissionResult, error)
-	GetResultsBySubmissionID(submissionID string) ([]*Entities.SubmissionResult, error)
-	GetResultByTestCase(testCaseID string) ([]*Entities.SubmissionResult, error)
+	GetResultByID(ctx context.Context, resultID string) (*Entities.SubmissionResult, error)
+	GetResultsBySubmissionID(ctx context.Context, submissionID string) ([]*Entities.SubmissionResult, error)
+	GetResultByTestCase(ctx context.Context, testCaseID string) ([]*Entities.SubmissionResult, error)
 }

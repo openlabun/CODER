@@ -1,17 +1,19 @@
 package course_repository
 
 import (
+	"context"
+
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 )
 
 type CourseRepository interface {
-	CreateCourse(course *Entities.Course) (*Entities.Course, error)
-	UpdateCourse(course *Entities.Course) (*Entities.Course, error)
-	DeleteCourse(courseID string) error
-	AddStudentToCourse(courseID, studentID string) error
+	CreateCourse(ctx context.Context, course *Entities.Course) (*Entities.Course, error)
+	UpdateCourse(ctx context.Context, course *Entities.Course) (*Entities.Course, error)
+	DeleteCourse(ctx context.Context, courseID string) error
+	AddStudentToCourse(ctx context.Context, courseID, studentID string) error
 
-	GetCourseByID(courseID string) (*Entities.Course, error)
-	GetCourseByEnrollmentCode(enrollmentCode string) (*Entities.Course, error)
-	GetCoursesByStudentID(studentID string) ([]*Entities.Course, error)
-	GetCoursesByTeacherID(teacherID string) ([]*Entities.Course, error)
+	GetCourseByID(ctx context.Context, courseID string) (*Entities.Course, error)
+	GetCourseByEnrollmentCode(ctx context.Context, enrollmentCode string) (*Entities.Course, error)
+	GetCoursesByStudentID(ctx context.Context, studentID string) ([]*Entities.Course, error)
+	GetCoursesByTeacherID(ctx context.Context, teacherID string) ([]*Entities.Course, error)
 }

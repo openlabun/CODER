@@ -1,38 +1,40 @@
 package exam_repository
 
 import (
+	"context"
+
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 )
 
 type ExamRepository interface {
-	CreateExam(exam *Entities.Exam) (*Entities.Exam, error)
-	UpdateExam(exam *Entities.Exam) (*Entities.Exam, error)
-	DeleteExam(examID string) error
+	CreateExam(ctx context.Context, exam *Entities.Exam) (*Entities.Exam, error)
+	UpdateExam(ctx context.Context, exam *Entities.Exam) (*Entities.Exam, error)
+	DeleteExam(ctx context.Context, examID string) error
 
-	GetExamByID(examID string) (*Entities.Exam, error)
-	GetExamsByCourseID(courseID string) ([]*Entities.Exam, error)
-	GetExamsByTeacherID(teacherID string) ([]*Entities.Exam, error)
+	GetExamByID(ctx context.Context, examID string) (*Entities.Exam, error)
+	GetExamsByCourseID(ctx context.Context, courseID string) ([]*Entities.Exam, error)
+	GetExamsByTeacherID(ctx context.Context, teacherID string) ([]*Entities.Exam, error)
 }
 
 type ChallengeRepository interface {
-	CreateChallenge(challenge *Entities.Challenge) (*Entities.Challenge, error)
-	UpdateChallenge(challenge *Entities.Challenge) (*Entities.Challenge, error)
-	DeleteChallenge(challengeID string) error
+	CreateChallenge(ctx context.Context, challenge *Entities.Challenge) (*Entities.Challenge, error)
+	UpdateChallenge(ctx context.Context, challenge *Entities.Challenge) (*Entities.Challenge, error)
+	DeleteChallenge(ctx context.Context, challengeID string) error
 
-	GetChallengeByID(challengeID string) (*Entities.Challenge, error)
-	GetChallengesByExamID(examID string) ([]*Entities.Challenge, error)
-	GetChallengesByTag(tag string) ([]*Entities.Challenge, error)
-	GetInputVariablesByChallengeID(challengeID string) ([]*Entities.IOVariable, error)
-	GetOutputVariablesByChallengeID(challengeID string) ([]*Entities.IOVariable, error)
+	GetChallengeByID(ctx context.Context, challengeID string) (*Entities.Challenge, error)
+	GetChallengesByExamID(ctx context.Context, examID string) ([]*Entities.Challenge, error)
+	GetChallengesByTag(ctx context.Context, tag string) ([]*Entities.Challenge, error)
+	GetInputVariablesByChallengeID(ctx context.Context, challengeID string) ([]*Entities.IOVariable, error)
+	GetOutputVariablesByChallengeID(ctx context.Context, challengeID string) ([]*Entities.IOVariable, error)
 }
 
 type TestCaseRepository interface {
-	CreateTestCase(testCase *Entities.TestCase) (*Entities.TestCase, error)
-	UpdateTestCase(testCase *Entities.TestCase) (*Entities.TestCase, error)
-	DeleteTestCase(testCaseID string) error
+	CreateTestCase(ctx context.Context, testCase *Entities.TestCase) (*Entities.TestCase, error)
+	UpdateTestCase(ctx context.Context, testCase *Entities.TestCase) (*Entities.TestCase, error)
+	DeleteTestCase(ctx context.Context, testCaseID string) error
 
-	GetTestCaseByID(testCaseID string) (*Entities.TestCase, error)
-	GetTestCasesByChallengeID(challengeID string) ([]*Entities.TestCase, error)
-	GetInputVariablesByTestCaseID(testCaseID string) ([]*Entities.IOVariable, error)
-	GetOutputVariablesByTestCaseID(testCaseID string) ([]*Entities.IOVariable, error)
+	GetTestCaseByID(ctx context.Context, testCaseID string) (*Entities.TestCase, error)
+	GetTestCasesByChallengeID(ctx context.Context, challengeID string) ([]*Entities.TestCase, error)
+	GetInputVariablesByTestCaseID(ctx context.Context, testCaseID string) ([]*Entities.IOVariable, error)
+	GetOutputVariablesByTestCaseID(ctx context.Context, testCaseID string) ([]*Entities.IOVariable, error)
 }

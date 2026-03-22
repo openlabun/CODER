@@ -66,7 +66,7 @@ func validateStateTransition(challenge *Entities.Challenge, to Entities.Challeng
 	return nil
 }
 
-func ApplyTranstion(challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
+func ApplyTransition(challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
 	if err := validateStateTransition(challenge, to); err != nil {
 		return err
 	}

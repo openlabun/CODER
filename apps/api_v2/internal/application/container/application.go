@@ -7,6 +7,7 @@ import (
 	course_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course"
 	course_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course/crud"
 
+	test_case_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/test_case_crud"
 	challenge_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/challenge_crud"
 	exam_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/exam_crud"
 )
@@ -42,6 +43,13 @@ type ChallengeUseCases struct {
 	GetChallengesByExam *challenge_crud_usecases.GetChallengesByExamUseCase
 }
 
+type TestCaseUseCases struct {
+	CreateTestCase *test_case_crud_usecases.CreateTestCaseUseCase
+	UpdateTestCase *test_case_crud_usecases.UpdateTestCaseUseCase
+	DeleteTestCase *test_case_crud_usecases.DeleteTestCaseUseCase
+	GetTestCasesByChallenge *test_case_crud_usecases.GetTestCasesByChallengeUseCase
+}
+
 type ExamUseCases struct {
 	CreateExam *exam_crud_usecases.CreateExamUseCase
 	UpdateExam *exam_crud_usecases.UpdateExamUseCase
@@ -56,6 +64,7 @@ type Application struct {
 	CourseModule CourseUseCases
 	ExamModule   ExamUseCases
 	ChallengeModule ChallengeUseCases
+	TestCaseModule TestCaseUseCases
 }
 
 func NewApplication(deps ApplicationDependencies) (*Application, error) {
@@ -86,6 +95,13 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		DeleteChallenge: challenge_crud_usecases.NewDeleteChallengeUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 		GetChallengeDetails: challenge_crud_usecases.NewGetChallengeDetailsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 		GetChallengesByExam: challenge_crud_usecases.NewGetChallengesByExamUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
+	}
+
+	app.TestCaseModule = TestCaseUseCases{
+		CreateTestCase: test_case_crud_usecases.NewCreateTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
+		UpdateTestCase: test_case_crud_usecases.NewUpdateTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
+		DeleteTestCase: test_case_crud_usecases.NewDeleteTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
+		GetTestCasesByChallenge: test_case_crud_usecases.NewGetTestCasesByChallengeUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.CourseRepository),
 	}
 	
 	app.UserModule = UserUseCases{

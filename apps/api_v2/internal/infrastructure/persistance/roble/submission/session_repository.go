@@ -1,6 +1,7 @@
 package roble_infrastructure
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -16,9 +17,12 @@ func NewSessionRepository(adapter *infrastructure.RobleDatabaseAdapter) *Session
 	return &SessionRepository{adapter: adapter}
 }
 
-func (r *SessionRepository) CreateSession(session *Entities.Session) (*Entities.Session, error) {
+func (r *SessionRepository) CreateSession(ctx context.Context, session *Entities.Session) (*Entities.Session, error) {
 	if session == nil {
 		return nil, fmt.Errorf("session is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	_, err := r.adapter.Insert(sessionTableName, []map[string]any{sessionToRecord(session)})
@@ -29,9 +33,12 @@ func (r *SessionRepository) CreateSession(session *Entities.Session) (*Entities.
 	return session, nil
 }
 
-func (r *SessionRepository) UpdateSession(session *Entities.Session) (*Entities.Session, error) {
+func (r *SessionRepository) UpdateSession(ctx context.Context, session *Entities.Session) (*Entities.Session, error) {
 	if session == nil {
 		return nil, fmt.Errorf("session is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	sessionID := strings.TrimSpace(session.ID)
@@ -47,20 +54,26 @@ func (r *SessionRepository) UpdateSession(session *Entities.Session) (*Entities.
 	return session, nil
 }
 
-func (r *SessionRepository) DeleteSession(sessionID string) error {
+func (r *SessionRepository) DeleteSession(ctx context.Context, sessionID string) error {
 	normalizedID := strings.TrimSpace(sessionID)
 	if normalizedID == "" {
 		return fmt.Errorf("sessionID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
 	}
 
 	_, err := r.adapter.Delete(sessionTableName, "ID", normalizedID)
 	return err
 }
 
-func (r *SessionRepository) GetSessionByID(sessionID string) (*Entities.Session, error) {
+func (r *SessionRepository) GetSessionByID(ctx context.Context, sessionID string) (*Entities.Session, error) {
 	normalizedID := strings.TrimSpace(sessionID)
 	if normalizedID == "" {
 		return nil, fmt.Errorf("sessionID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(sessionTableName, map[string]string{"ID": normalizedID})
@@ -76,18 +89,21 @@ func (r *SessionRepository) GetSessionByID(sessionID string) (*Entities.Session,
 	return recordToSession(record)
 }
 
-func (r *SessionRepository) GetSessionsByExamID(examID string) ([]*Entities.Session, error) {
-	return r.getSessionsByField("ExamID", examID)
+func (r *SessionRepository) GetSessionsByExamID(ctx context.Context, examID string) ([]*Entities.Session, error) {
+	return r.getSessionsByField(ctx, "ExamID", examID)
 }
 
-func (r *SessionRepository) GetSessionsByStudentID(studentID string) ([]*Entities.Session, error) {
-	return r.getSessionsByField("StudentID", studentID)
+func (r *SessionRepository) GetSessionsByStudentID(ctx context.Context, studentID string) ([]*Entities.Session, error) {
+	return r.getSessionsByField(ctx, "StudentID", studentID)
 }
 
-func (r *SessionRepository) getSessionsByField(field, value string) ([]*Entities.Session, error) {
+func (r *SessionRepository) getSessionsByField(ctx context.Context, field, value string) ([]*Entities.Session, error) {
 	normalizedValue := strings.TrimSpace(value)
 	if normalizedValue == "" {
 		return nil, fmt.Errorf("%s is required", field)
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(sessionTableName, map[string]string{field: normalizedValue})

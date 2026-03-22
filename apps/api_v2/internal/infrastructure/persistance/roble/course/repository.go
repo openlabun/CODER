@@ -1,6 +1,7 @@
 package roble_infrastructure
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -22,9 +23,12 @@ func NewCourseRepository(adapter *infrastructure.RobleDatabaseAdapter) *CourseRe
 	return &CourseRepository{adapter: adapter}
 }
 
-func (r *CourseRepository) CreateCourse(course *Entities.Course) (*Entities.Course, error) {
+func (r *CourseRepository) CreateCourse(ctx context.Context, course *Entities.Course) (*Entities.Course, error) {
 	if course == nil {
 		return nil, fmt.Errorf("course is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	_, err := r.adapter.Insert(courseTableName, []map[string]any{courseToRecord(course)})
@@ -35,9 +39,12 @@ func (r *CourseRepository) CreateCourse(course *Entities.Course) (*Entities.Cour
 	return course, nil
 }
 
-func (r *CourseRepository) UpdateCourse(course *Entities.Course) (*Entities.Course, error) {
+func (r *CourseRepository) UpdateCourse(ctx context.Context, course *Entities.Course) (*Entities.Course, error) {
 	if course == nil {
 		return nil, fmt.Errorf("course is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	courseID := course.ID
@@ -60,21 +67,27 @@ func (r *CourseRepository) UpdateCourse(course *Entities.Course) (*Entities.Cour
 	return course, nil
 }
 
-func (r *CourseRepository) DeleteCourse(courseID string) error {
+func (r *CourseRepository) DeleteCourse(ctx context.Context, courseID string) error {
 	if strings.TrimSpace(courseID) == "" {
 		return fmt.Errorf("courseID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
 	}
 
 	_, err := r.adapter.Delete(courseTableName, "ID", strings.TrimSpace(courseID))
 	return err
 }
 
-func (r *CourseRepository) AddStudentToCourse(courseID, studentID string) error {
+func (r *CourseRepository) AddStudentToCourse(ctx context.Context, courseID, studentID string) error {
 	if strings.TrimSpace(courseID) == "" {
 		return fmt.Errorf("courseID is required")
 	}
 	if strings.TrimSpace(studentID) == "" {
 		return fmt.Errorf("studentID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
 	}
 
 	record := map[string]any{
@@ -86,9 +99,12 @@ func (r *CourseRepository) AddStudentToCourse(courseID, studentID string) error 
 	return err
 }
 
-func (r *CourseRepository) GetCourseByID(courseID string) (*Entities.Course, error) {
+func (r *CourseRepository) GetCourseByID(ctx context.Context, courseID string) (*Entities.Course, error) {
 	if strings.TrimSpace(courseID) == "" {
 		return nil, fmt.Errorf("courseID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(courseTableName, map[string]string{"ID": strings.TrimSpace(courseID)})
@@ -104,9 +120,12 @@ func (r *CourseRepository) GetCourseByID(courseID string) (*Entities.Course, err
 	return recordToCourse(record)
 }
 
-func (r *CourseRepository) GetCourseByEnrollmentCode(enrollmentCode string) (*Entities.Course, error) {
+func (r *CourseRepository) GetCourseByEnrollmentCode(ctx context.Context, enrollmentCode string) (*Entities.Course, error) {
 	if strings.TrimSpace(enrollmentCode) == "" {
 		return nil, fmt.Errorf("enrollmentCode is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(courseTableName, map[string]string{"EnrollmentCode": strings.TrimSpace(enrollmentCode)})
@@ -122,9 +141,12 @@ func (r *CourseRepository) GetCourseByEnrollmentCode(enrollmentCode string) (*En
 	return recordToCourse(record)
 }
 
-func (r *CourseRepository) GetCoursesByStudentID(studentID string) ([]*Entities.Course, error) {
+func (r *CourseRepository) GetCoursesByStudentID(ctx context.Context, studentID string) ([]*Entities.Course, error) {
 	if strings.TrimSpace(studentID) == "" {
 		return nil, fmt.Errorf("studentID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(courseStudentTableName, map[string]string{"StudentID": strings.TrimSpace(studentID)})
@@ -144,7 +166,7 @@ func (r *CourseRepository) GetCoursesByStudentID(studentID string) ([]*Entities.
 			continue
 		}
 
-		course, err := r.GetCourseByID(courseID)
+		course, err := r.GetCourseByID(ctx, courseID)
 		if err != nil {
 			return nil, err
 		}
@@ -156,9 +178,12 @@ func (r *CourseRepository) GetCoursesByStudentID(studentID string) ([]*Entities.
 	return courses, nil
 }
 
-func (r *CourseRepository) GetCoursesByTeacherID(teacherID string) ([]*Entities.Course, error) {
+func (r *CourseRepository) GetCoursesByTeacherID(ctx context.Context, teacherID string) ([]*Entities.Course, error) {
 	if strings.TrimSpace(teacherID) == "" {
 		return nil, fmt.Errorf("teacherID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(courseTableName, map[string]string{"ProfessorID": strings.TrimSpace(teacherID)})

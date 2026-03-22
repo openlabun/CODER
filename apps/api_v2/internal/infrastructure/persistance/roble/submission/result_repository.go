@@ -1,6 +1,7 @@
 package roble_infrastructure
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -16,13 +17,16 @@ func NewSubmissionResultRepository(adapter *infrastructure.RobleDatabaseAdapter)
 	return &SubmissionResultRepository{adapter: adapter}
 }
 
-func (r *SubmissionResultRepository) CreateResult(result *Entities.SubmissionResult) (*Entities.SubmissionResult, error) {
+func (r *SubmissionResultRepository) CreateResult(ctx context.Context, result *Entities.SubmissionResult) (*Entities.SubmissionResult, error) {
 	if result == nil {
 		return nil, fmt.Errorf("result is nil")
 	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
 
 	if result.ActualOutput != nil {
-		if err := upsertIOVariable(r.adapter, *result.ActualOutput); err != nil {
+		if err := upsertIOVariable(ctx, r.adapter, *result.ActualOutput); err != nil {
 			return nil, err
 		}
 	}
@@ -32,12 +36,15 @@ func (r *SubmissionResultRepository) CreateResult(result *Entities.SubmissionRes
 		return nil, err
 	}
 
-	return r.GetResultByID(result.ID)
+	return r.GetResultByID(ctx, result.ID)
 }
 
-func (r *SubmissionResultRepository) UpdateResult(result *Entities.SubmissionResult) (*Entities.SubmissionResult, error) {
+func (r *SubmissionResultRepository) UpdateResult(ctx context.Context, result *Entities.SubmissionResult) (*Entities.SubmissionResult, error) {
 	if result == nil {
 		return nil, fmt.Errorf("result is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	resultID := strings.TrimSpace(result.ID)
@@ -46,7 +53,7 @@ func (r *SubmissionResultRepository) UpdateResult(result *Entities.SubmissionRes
 	}
 
 	if result.ActualOutput != nil {
-		if err := upsertIOVariable(r.adapter, *result.ActualOutput); err != nil {
+		if err := upsertIOVariable(ctx, r.adapter, *result.ActualOutput); err != nil {
 			return nil, err
 		}
 	}
@@ -56,13 +63,16 @@ func (r *SubmissionResultRepository) UpdateResult(result *Entities.SubmissionRes
 		return nil, err
 	}
 
-	return r.GetResultByID(resultID)
+	return r.GetResultByID(ctx, resultID)
 }
 
-func (r *SubmissionResultRepository) DeleteResult(resultID string) error {
+func (r *SubmissionResultRepository) DeleteResult(ctx context.Context, resultID string) error {
 	normalizedID := strings.TrimSpace(resultID)
 	if normalizedID == "" {
 		return fmt.Errorf("resultID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
 	}
 
 	res, err := r.adapter.Read(submissionResultTableName, map[string]string{"ID": normalizedID})
@@ -80,13 +90,16 @@ func (r *SubmissionResultRepository) DeleteResult(resultID string) error {
 		return err
 	}
 
-	return deleteIOVariableByID(r.adapter, ActualOutput)
+	return deleteIOVariableByID(ctx, r.adapter, ActualOutput)
 }
 
-func (r *SubmissionResultRepository) GetResultByID(resultID string) (*Entities.SubmissionResult, error) {
+func (r *SubmissionResultRepository) GetResultByID(ctx context.Context, resultID string) (*Entities.SubmissionResult, error) {
 	normalizedID := strings.TrimSpace(resultID)
 	if normalizedID == "" {
 		return nil, fmt.Errorf("resultID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(submissionResultTableName, map[string]string{"ID": normalizedID})
@@ -99,7 +112,7 @@ func (r *SubmissionResultRepository) GetResultByID(resultID string) (*Entities.S
 		return nil, nil
 	}
 
-	actualOutput, err := getIOVariableByID(r.adapter, asString(record["ActualOutput"]))
+	actualOutput, err := getIOVariableByID(ctx, r.adapter, asString(record["ActualOutput"]))
 	if err != nil {
 		return nil, err
 	}
@@ -107,18 +120,21 @@ func (r *SubmissionResultRepository) GetResultByID(resultID string) (*Entities.S
 	return recordToResult(record, actualOutput)
 }
 
-func (r *SubmissionResultRepository) GetResultsBySubmissionID(submissionID string) ([]*Entities.SubmissionResult, error) {
-	return r.getResultsByField("SubmissionID", submissionID)
+func (r *SubmissionResultRepository) GetResultsBySubmissionID(ctx context.Context, submissionID string) ([]*Entities.SubmissionResult, error) {
+	return r.getResultsByField(ctx, "SubmissionID", submissionID)
 }
 
-func (r *SubmissionResultRepository) GetResultByTestCase(testCaseID string) ([]*Entities.SubmissionResult, error) {
-	return r.getResultsByField("TestCaseID", testCaseID)
+func (r *SubmissionResultRepository) GetResultByTestCase(ctx context.Context, testCaseID string) ([]*Entities.SubmissionResult, error) {
+	return r.getResultsByField(ctx, "TestCaseID", testCaseID)
 }
 
-func (r *SubmissionResultRepository) getResultsByField(field, value string) ([]*Entities.SubmissionResult, error) {
+func (r *SubmissionResultRepository) getResultsByField(ctx context.Context, field, value string) ([]*Entities.SubmissionResult, error) {
 	normalizedValue := strings.TrimSpace(value)
 	if normalizedValue == "" {
 		return nil, fmt.Errorf("%s is required", field)
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(submissionResultTableName, map[string]string{field: normalizedValue})
@@ -133,7 +149,7 @@ func (r *SubmissionResultRepository) getResultsByField(field, value string) ([]*
 
 	results := make([]*Entities.SubmissionResult, 0, len(records))
 	for _, record := range records {
-		actualOutput, fetchErr := getIOVariableByID(r.adapter, asString(record["ActualOutput"]))
+		actualOutput, fetchErr := getIOVariableByID(ctx, r.adapter, asString(record["ActualOutput"]))
 		if fetchErr != nil {
 			return nil, fetchErr
 		}

@@ -1,6 +1,7 @@
 package roble_infrastructure
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -21,12 +22,15 @@ func NewChallengeRepository(adapter *infrastructure.RobleDatabaseAdapter) *Chall
 	return &ChallengeRepository{adapter: adapter}
 }
 
-func (r *ChallengeRepository) CreateChallenge(challenge *Entities.Challenge) (*Entities.Challenge, error) {
+func (r *ChallengeRepository) CreateChallenge(ctx context.Context, challenge *Entities.Challenge) (*Entities.Challenge, error) {
 	if challenge == nil {
 		return nil, fmt.Errorf("challenge is nil")
 	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
 
-	if err := r.upsertChallengeIOVariables(challenge); err != nil {
+	if err := r.upsertChallengeIOVariables(ctx, challenge); err != nil {
 		return nil, err
 	}
 
@@ -35,12 +39,15 @@ func (r *ChallengeRepository) CreateChallenge(challenge *Entities.Challenge) (*E
 		return nil, err
 	}
 
-	return r.GetChallengeByID(challenge.ID)
+	return r.GetChallengeByID(ctx, challenge.ID)
 }
 
-func (r *ChallengeRepository) UpdateChallenge(challenge *Entities.Challenge) (*Entities.Challenge, error) {
+func (r *ChallengeRepository) UpdateChallenge(ctx context.Context, challenge *Entities.Challenge) (*Entities.Challenge, error) {
 	if challenge == nil {
 		return nil, fmt.Errorf("challenge is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	challengeID := strings.TrimSpace(challenge.ID)
@@ -48,7 +55,7 @@ func (r *ChallengeRepository) UpdateChallenge(challenge *Entities.Challenge) (*E
 		return nil, fmt.Errorf("challenge id is required")
 	}
 
-	if err := r.upsertChallengeIOVariables(challenge); err != nil {
+	if err := r.upsertChallengeIOVariables(ctx, challenge); err != nil {
 		return nil, err
 	}
 
@@ -60,13 +67,16 @@ func (r *ChallengeRepository) UpdateChallenge(challenge *Entities.Challenge) (*E
 		return nil, err
 	}
 
-	return r.GetChallengeByID(challengeID)
+	return r.GetChallengeByID(ctx, challengeID)
 }
 
-func (r *ChallengeRepository) DeleteChallenge(challengeID string) error {
+func (r *ChallengeRepository) DeleteChallenge(ctx context.Context, challengeID string) error {
 	normalizedID := strings.TrimSpace(challengeID)
 	if normalizedID == "" {
 		return fmt.Errorf("challengeID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
 	}
 
 	res, err := r.adapter.Read(challengeTableName, map[string]string{"ID": normalizedID})
@@ -84,13 +94,16 @@ func (r *ChallengeRepository) DeleteChallenge(challengeID string) error {
 		return err
 	}
 
-	return deleteIOVariablesByIDs(r.adapter, ioVariableIDs)
+	return deleteIOVariablesByIDs(ctx, r.adapter, ioVariableIDs)
 }
 
-func (r *ChallengeRepository) GetChallengeByID(challengeID string) (*Entities.Challenge, error) {
+func (r *ChallengeRepository) GetChallengeByID(ctx context.Context, challengeID string) (*Entities.Challenge, error) {
 	normalizedID := strings.TrimSpace(challengeID)
 	if normalizedID == "" {
 		return nil, fmt.Errorf("challengeID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(challengeTableName, map[string]string{"ID": normalizedID})
@@ -103,13 +116,16 @@ func (r *ChallengeRepository) GetChallengeByID(challengeID string) (*Entities.Ch
 		return nil, nil
 	}
 
-	return r.recordToHydratedChallenge(record)
+	return r.recordToHydratedChallenge(ctx, record)
 }
 
-func (r *ChallengeRepository) GetChallengesByExamID(examID string) ([]*Entities.Challenge, error) {
+func (r *ChallengeRepository) GetChallengesByExamID(ctx context.Context, examID string) ([]*Entities.Challenge, error) {
 	normalizedID := strings.TrimSpace(examID)
 	if normalizedID == "" {
 		return nil, fmt.Errorf("examID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(challengeTableName, map[string]string{"ExamID": normalizedID})
@@ -124,7 +140,7 @@ func (r *ChallengeRepository) GetChallengesByExamID(examID string) ([]*Entities.
 
 	challenges := make([]*Entities.Challenge, 0, len(records))
 	for _, record := range records {
-		challenge, mapErr := r.recordToHydratedChallenge(record)
+		challenge, mapErr := r.recordToHydratedChallenge(ctx, record)
 		if mapErr != nil {
 			return nil, mapErr
 		}
@@ -136,10 +152,13 @@ func (r *ChallengeRepository) GetChallengesByExamID(examID string) ([]*Entities.
 	return challenges, nil
 }
 
-func (r *ChallengeRepository) GetChallengesByTag(tag string) ([]*Entities.Challenge, error) {
+func (r *ChallengeRepository) GetChallengesByTag(ctx context.Context, tag string) ([]*Entities.Challenge, error) {
 	normalizedTag := strings.TrimSpace(tag)
 	if normalizedTag == "" {
 		return nil, fmt.Errorf("tag is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(challengeTableName, map[string]string{"Tags": normalizedTag})
@@ -154,7 +173,7 @@ func (r *ChallengeRepository) GetChallengesByTag(tag string) ([]*Entities.Challe
 
 	challenges := make([]*Entities.Challenge, 0, len(records))
 	for _, record := range records {
-		challenge, mapErr := r.recordToHydratedChallenge(record)
+		challenge, mapErr := r.recordToHydratedChallenge(ctx, record)
 		if mapErr != nil {
 			return nil, mapErr
 		}
@@ -166,8 +185,8 @@ func (r *ChallengeRepository) GetChallengesByTag(tag string) ([]*Entities.Challe
 	return challenges, nil
 }
 
-func (r *ChallengeRepository) GetInputVariablesByChallengeID(challengeID string) ([]*Entities.IOVariable, error) {
-	challenge, err := r.GetChallengeByID(challengeID)
+func (r *ChallengeRepository) GetInputVariablesByChallengeID(ctx context.Context, challengeID string) ([]*Entities.IOVariable, error) {
+	challenge, err := r.GetChallengeByID(ctx, challengeID)
 	if err != nil {
 		return nil, err
 	}
@@ -184,8 +203,8 @@ func (r *ChallengeRepository) GetInputVariablesByChallengeID(challengeID string)
 	return variables, nil
 }
 
-func (r *ChallengeRepository) GetOutputVariablesByChallengeID(challengeID string) ([]*Entities.IOVariable, error) {
-	challenge, err := r.GetChallengeByID(challengeID)
+func (r *ChallengeRepository) GetOutputVariablesByChallengeID(ctx context.Context, challengeID string) ([]*Entities.IOVariable, error) {
+	challenge, err := r.GetChallengeByID(ctx, challengeID)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +216,7 @@ func (r *ChallengeRepository) GetOutputVariablesByChallengeID(challengeID string
 	return []*Entities.IOVariable{&output}, nil
 }
 
-func (r *ChallengeRepository) recordToHydratedChallenge(record map[string]any) (*Entities.Challenge, error) {
+func (r *ChallengeRepository) recordToHydratedChallenge(ctx context.Context, record map[string]any) (*Entities.Challenge, error) {
 	inputIDs := asStringList(record["Input"])
 	if len(inputIDs) == 0 {
 		inputIDs = asStringList(record["InputVariables"])
@@ -208,12 +227,12 @@ func (r *ChallengeRepository) recordToHydratedChallenge(record map[string]any) (
 		outputID = asString(record["OutputVariable"])
 	}
 
-	inputVariables, err := r.getIOVariablesByIDs(inputIDs)
+	inputVariables, err := r.getIOVariablesByIDs(ctx, inputIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	outputVariable, err := r.getIOVariableByID(outputID)
+	outputVariable, err := r.getIOVariableByID(ctx, outputID)
 	if err != nil {
 		return nil, err
 	}
@@ -221,28 +240,28 @@ func (r *ChallengeRepository) recordToHydratedChallenge(record map[string]any) (
 	return recordToChallenge(record, inputVariables, outputVariable)
 }
 
-func (r *ChallengeRepository) upsertChallengeIOVariables(challenge *Entities.Challenge) error {
+func (r *ChallengeRepository) upsertChallengeIOVariables(ctx context.Context, challenge *Entities.Challenge) error {
 	for _, input := range challenge.InputVariables {
-		if err := r.upsertIOVariable(input); err != nil {
+		if err := r.upsertIOVariable(ctx, input); err != nil {
 			return err
 		}
 	}
 
-	if err := r.upsertIOVariable(challenge.OutputVariable); err != nil {
+	if err := r.upsertIOVariable(ctx, challenge.OutputVariable); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *ChallengeRepository) getIOVariablesByIDs(ids []string) ([]Entities.IOVariable, error) {
+func (r *ChallengeRepository) getIOVariablesByIDs(ctx context.Context, ids []string) ([]Entities.IOVariable, error) {
 	if len(ids) == 0 {
 		return []Entities.IOVariable{}, nil
 	}
 
 	variables := make([]Entities.IOVariable, 0, len(ids))
 	for _, id := range ids {
-		ioVariable, err := r.getIOVariableByID(id)
+		ioVariable, err := r.getIOVariableByID(ctx, id)
 		if err != nil {
 			return nil, err
 		}
@@ -254,10 +273,13 @@ func (r *ChallengeRepository) getIOVariablesByIDs(ids []string) ([]Entities.IOVa
 	return variables, nil
 }
 
-func (r *ChallengeRepository) getIOVariableByID(variableID string) (*Entities.IOVariable, error) {
+func (r *ChallengeRepository) getIOVariableByID(ctx context.Context, variableID string) (*Entities.IOVariable, error) {
 	normalizedID := strings.TrimSpace(variableID)
 	if normalizedID == "" {
 		return nil, nil
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(ioVariableTableName, map[string]string{"ID": normalizedID})
@@ -273,10 +295,13 @@ func (r *ChallengeRepository) getIOVariableByID(variableID string) (*Entities.IO
 	return recordToIOVariable(record)
 }
 
-func (r *ChallengeRepository) upsertIOVariable(variable Entities.IOVariable) error {
+func (r *ChallengeRepository) upsertIOVariable(ctx context.Context, variable Entities.IOVariable) error {
 	variableID := strings.TrimSpace(variable.ID)
 	if variableID == "" {
 		return fmt.Errorf("io variable id is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
 	}
 
 	res, err := r.adapter.Read(ioVariableTableName, map[string]string{"ID": variableID})

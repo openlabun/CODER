@@ -1,6 +1,7 @@
 package roble_infrastructure
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -17,9 +18,12 @@ func NewSubmissionRepository(adapter *infrastructure.RobleDatabaseAdapter) *Subm
 	return &SubmissionRepository{adapter: adapter}
 }
 
-func (r *SubmissionRepository) CreateSubmission(submission *Entities.Submission) (*Entities.Submission, error) {
+func (r *SubmissionRepository) CreateSubmission(ctx context.Context, submission *Entities.Submission) (*Entities.Submission, error) {
 	if submission == nil {
 		return nil, fmt.Errorf("submission is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	_, err := r.adapter.Insert(submissionTableName, []map[string]any{submissionToRecord(submission)})
@@ -30,9 +34,12 @@ func (r *SubmissionRepository) CreateSubmission(submission *Entities.Submission)
 	return submission, nil
 }
 
-func (r *SubmissionRepository) UpdateSubmission(submission *Entities.Submission) (*Entities.Submission, error) {
+func (r *SubmissionRepository) UpdateSubmission(ctx context.Context, submission *Entities.Submission) (*Entities.Submission, error) {
 	if submission == nil {
 		return nil, fmt.Errorf("submission is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	submissionID := strings.TrimSpace(submission.ID)
@@ -58,20 +65,26 @@ func (r *SubmissionRepository) UpdateSubmission(submission *Entities.Submission)
 	return submission, nil
 }
 
-func (r *SubmissionRepository) DeleteSubmission(submissionID string) error {
+func (r *SubmissionRepository) DeleteSubmission(ctx context.Context, submissionID string) error {
 	normalizedID := strings.TrimSpace(submissionID)
 	if normalizedID == "" {
 		return fmt.Errorf("submissionID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
 	}
 
 	_, err := r.adapter.Delete(submissionTableName, "ID", normalizedID)
 	return err
 }
 
-func (r *SubmissionRepository) GetSubmissionByID(submissionID string) (*Entities.Submission, error) {
+func (r *SubmissionRepository) GetSubmissionByID(ctx context.Context, submissionID string) (*Entities.Submission, error) {
 	normalizedID := strings.TrimSpace(submissionID)
 	if normalizedID == "" {
 		return nil, fmt.Errorf("submissionID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(submissionTableName, map[string]string{"ID": normalizedID})
@@ -87,22 +100,25 @@ func (r *SubmissionRepository) GetSubmissionByID(submissionID string) (*Entities
 	return recordToSubmission(record)
 }
 
-func (r *SubmissionRepository) GetSubmissionsBySessionID(sessionID string) ([]*Entities.Submission, error) {
-	return r.getSubmissionsByField("SessionID", sessionID)
+func (r *SubmissionRepository) GetSubmissionsBySessionID(ctx context.Context, sessionID string) ([]*Entities.Submission, error) {
+	return r.getSubmissionsByField(ctx, "SessionID", sessionID)
 }
 
-func (r *SubmissionRepository) GetSubmissionsByUserID(userID string) ([]*Entities.Submission, error) {
-	return r.getSubmissionsByField("UserID", userID)
+func (r *SubmissionRepository) GetSubmissionsByUserID(ctx context.Context, userID string) ([]*Entities.Submission, error) {
+	return r.getSubmissionsByField(ctx, "UserID", userID)
 }
 
-func (r *SubmissionRepository) GetSubmissionsByChallengeID(challengeID string) ([]*Entities.Submission, error) {
-	return r.getSubmissionsByField("ChallengeID", challengeID)
+func (r *SubmissionRepository) GetSubmissionsByChallengeID(ctx context.Context, challengeID string) ([]*Entities.Submission, error) {
+	return r.getSubmissionsByField(ctx, "ChallengeID", challengeID)
 }
 
-func (r *SubmissionRepository) getSubmissionsByField(field, value string) ([]*Entities.Submission, error) {
+func (r *SubmissionRepository) getSubmissionsByField(ctx context.Context, field, value string) ([]*Entities.Submission, error) {
 	normalizedValue := strings.TrimSpace(value)
 	if normalizedValue == "" {
 		return nil, fmt.Errorf("%s is required", field)
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(submissionTableName, map[string]string{field: normalizedValue})

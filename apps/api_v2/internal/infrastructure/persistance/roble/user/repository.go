@@ -1,6 +1,7 @@
 package roble_infrastructure
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -19,9 +20,12 @@ func NewUserRepository(adapter *infrastructure.RobleDatabaseAdapter) *UserReposi
 	return &UserRepository{adapter: adapter}
 }
 
-func (r *UserRepository) SaveUser(user *Entities.User) (*Entities.User, error) {
+func (r *UserRepository) SaveUser(ctx context.Context, user *Entities.User) (*Entities.User, error) {
 	if user == nil {
 		return nil, fmt.Errorf("user is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	record := UserToRecord(user)
@@ -34,9 +38,12 @@ func (r *UserRepository) SaveUser(user *Entities.User) (*Entities.User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetUserByID(userID string) (*Entities.User, error) {
+func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (*Entities.User, error) {
 	if strings.TrimSpace(userID) == "" {
 		return nil, fmt.Errorf("userID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(userTableName, map[string]string{"ID": userID})
@@ -52,9 +59,12 @@ func (r *UserRepository) GetUserByID(userID string) (*Entities.User, error) {
 	return RecordToUser(record, false), nil
 }
 
-func (r *UserRepository) GetUserByEmail(email string) (*Entities.User, error) {
+func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*Entities.User, error) {
 	if strings.TrimSpace(email) == "" {
 		return nil, fmt.Errorf("email is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(userTableName, map[string]string{"Email": strings.ToLower(strings.TrimSpace(email))})
@@ -70,9 +80,12 @@ func (r *UserRepository) GetUserByEmail(email string) (*Entities.User, error) {
 	return RecordToUser(record, false), nil
 }
 
-func (r *UserRepository) GetUserByUsername(username string) (*Entities.User, error) {
+func (r *UserRepository) GetUserByUsername(ctx context.Context, username string) (*Entities.User, error) {
 	if strings.TrimSpace(username) == "" {
 		return nil, fmt.Errorf("username is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(userTableName, map[string]string{"Username": strings.TrimSpace(username)})
@@ -88,8 +101,8 @@ func (r *UserRepository) GetUserByUsername(username string) (*Entities.User, err
 	return RecordToUser(record, false), nil
 }
 
-func (r *UserRepository) ExistsByEmail(email string) (bool, error) {
-	user, err := r.GetUserByEmail(email)
+func (r *UserRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	user, err := r.GetUserByEmail(ctx, email)
 	if err != nil {
 		return false, err
 	}
@@ -97,8 +110,8 @@ func (r *UserRepository) ExistsByEmail(email string) (bool, error) {
 	return user != nil, nil
 }
 
-func (r *UserRepository) ExistsByUsername(username string) (bool, error) {
-	user, err := r.GetUserByUsername(username)
+func (r *UserRepository) ExistsByUsername(ctx context.Context, username string) (bool, error) {
+	user, err := r.GetUserByUsername(ctx, username)
 	if err != nil {
 		return false, err
 	}
@@ -106,8 +119,8 @@ func (r *UserRepository) ExistsByUsername(username string) (bool, error) {
 	return user != nil, nil
 }
 
-func (r *UserRepository) ExistsByID(userID string) (bool, error) {
-	user, err := r.GetUserByID(userID)
+func (r *UserRepository) ExistsByID(ctx context.Context, userID string) (bool, error) {
+	user, err := r.GetUserByID(ctx, userID)
 	if err != nil {
 		return false, err
 	}

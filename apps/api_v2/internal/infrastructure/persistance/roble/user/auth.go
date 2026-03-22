@@ -1,6 +1,7 @@
 package roble_infrastructure
 
 import (
+	"context"
 	"fmt"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
@@ -19,8 +20,8 @@ func NewRobleAuthAdapter(adapter *infrastructure.RobleDatabaseAdapter, repositor
 	return &RobleAuthAdapter{adapter: adapter, repository: repository}
 }
 
-func (a *RobleAuthAdapter) GetUserData(email string) (*Entities.User, error) {
-	return a.repository.GetUserByEmail(email)
+func (a *RobleAuthAdapter) GetUserData(ctx context.Context, email string) (*Entities.User, error) {
+	return a.repository.GetUserByEmail(ctx, email)
 }
 
 func (a *RobleAuthAdapter) LoginUser(email, password string) (*dtos.UserAccess, error) {
@@ -34,8 +35,9 @@ func (a *RobleAuthAdapter) LoginUser(email, password string) (*dtos.UserAccess, 
 
 	// Set access token for subsequent requests
 	a.adapter.SetAccessToken(tokens.AccessToken)
+	tokenCtx := infrastructure.WithAccessToken(context.Background(), tokens.AccessToken)
 
-	user, err := a.GetUserData(email)
+	user, err := a.GetUserData(tokenCtx, email)
 	if err != nil {
 		return nil, err
 	}
@@ -81,9 +83,10 @@ func (a *RobleAuthAdapter) RegisterUserDirect(email, password, name string) (*dt
 
 	// Set access token for subsequent requests
 	a.adapter.SetAccessToken(tokens.AccessToken)
+	tokenCtx := infrastructure.WithAccessToken(context.Background(), tokens.AccessToken)
 
 	// Check if email is already registered in local database
-	existingUser, err := a.GetUserData(email)
+	existingUser, err := a.GetUserData(tokenCtx, email)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +111,7 @@ func (a *RobleAuthAdapter) RegisterUserDirect(email, password, name string) (*dt
 	}
 
 	// Save user data
-	_, err = a.repository.SaveUser(user)
+	_, err = a.repository.SaveUser(tokenCtx, user)
 	if err != nil {
 		return nil, err
 	}

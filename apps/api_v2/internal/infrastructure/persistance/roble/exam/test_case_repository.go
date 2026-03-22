@@ -1,6 +1,7 @@
 package roble_infrastructure
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -21,12 +22,15 @@ func NewTestCaseRepository(adapter *infrastructure.RobleDatabaseAdapter) *TestCa
 	return &TestCaseRepository{adapter: adapter}
 }
 
-func (r *TestCaseRepository)  CreateTestCase(testCase *Entities.TestCase) (*Entities.TestCase, error) {
+func (r *TestCaseRepository) CreateTestCase(ctx context.Context, testCase *Entities.TestCase) (*Entities.TestCase, error) {
 	if testCase == nil {
 		return nil, fmt.Errorf("testCase is nil")
 	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
 
-	if err := r.upsertTestCaseIOVariables(testCase); err != nil {
+	if err := r.upsertTestCaseIOVariables(ctx, testCase); err != nil {
 		return nil, err
 	}
 
@@ -35,12 +39,15 @@ func (r *TestCaseRepository)  CreateTestCase(testCase *Entities.TestCase) (*Enti
 		return nil, err
 	}
 
-	return r.GetTestCaseByID(testCase.ID)
+	return r.GetTestCaseByID(ctx, testCase.ID)
 }
 
-func (r *TestCaseRepository) UpdateTestCase(testCase *Entities.TestCase) (*Entities.TestCase, error) {
+func (r *TestCaseRepository) UpdateTestCase(ctx context.Context, testCase *Entities.TestCase) (*Entities.TestCase, error) {
 	if testCase == nil {
 		return nil, fmt.Errorf("testCase is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	testCaseID := strings.TrimSpace(testCase.ID)
@@ -48,7 +55,7 @@ func (r *TestCaseRepository) UpdateTestCase(testCase *Entities.TestCase) (*Entit
 		return nil, fmt.Errorf("testCase id is required")
 	}
 
-	if err := r.upsertTestCaseIOVariables(testCase); err != nil {
+	if err := r.upsertTestCaseIOVariables(ctx, testCase); err != nil {
 		return nil, err
 	}
 
@@ -57,13 +64,16 @@ func (r *TestCaseRepository) UpdateTestCase(testCase *Entities.TestCase) (*Entit
 		return nil, err
 	}
 
-	return r.GetTestCaseByID(testCaseID)
+	return r.GetTestCaseByID(ctx, testCaseID)
 }
 
-func (r *TestCaseRepository) DeleteTestCase(testCaseID string) error {
+func (r *TestCaseRepository) DeleteTestCase(ctx context.Context, testCaseID string) error {
 	normalizedID := strings.TrimSpace(testCaseID)
 	if normalizedID == "" {
 		return fmt.Errorf("testCaseID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
 	}
 
 	res, err := r.adapter.Read(testCaseTableName, map[string]string{"ID": normalizedID})
@@ -81,13 +91,16 @@ func (r *TestCaseRepository) DeleteTestCase(testCaseID string) error {
 		return err
 	}
 
-	return deleteIOVariablesByIDs(r.adapter, ioVariableIDs)
+	return deleteIOVariablesByIDs(ctx, r.adapter, ioVariableIDs)
 }
 
-func (r *TestCaseRepository) GetTestCaseByID(testCaseID string) (*Entities.TestCase, error) {
+func (r *TestCaseRepository) GetTestCaseByID(ctx context.Context, testCaseID string) (*Entities.TestCase, error) {
 	normalizedID := strings.TrimSpace(testCaseID)
 	if normalizedID == "" {
 		return nil, fmt.Errorf("testCaseID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(testCaseTableName, map[string]string{"ID": normalizedID})
@@ -100,13 +113,16 @@ func (r *TestCaseRepository) GetTestCaseByID(testCaseID string) (*Entities.TestC
 		return nil, nil
 	}
 
-	return r.recordToHydratedTestCase(record)
+	return r.recordToHydratedTestCase(ctx, record)
 }
 
-func (r *TestCaseRepository) GetTestCasesByChallengeID(challengeID string) ([]*Entities.TestCase, error) {
+func (r *TestCaseRepository) GetTestCasesByChallengeID(ctx context.Context, challengeID string) ([]*Entities.TestCase, error) {
 	normalizedID := strings.TrimSpace(challengeID)
 	if normalizedID == "" {
 		return nil, fmt.Errorf("challengeID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(testCaseTableName, map[string]string{"ChallengeID": normalizedID})
@@ -121,7 +137,7 @@ func (r *TestCaseRepository) GetTestCasesByChallengeID(challengeID string) ([]*E
 
 	testCases := make([]*Entities.TestCase, 0, len(records))
 	for _, record := range records {
-		testCase, mapErr := r.recordToHydratedTestCase(record)
+		testCase, mapErr := r.recordToHydratedTestCase(ctx, record)
 		if mapErr != nil {
 			return nil, mapErr
 		}
@@ -133,8 +149,8 @@ func (r *TestCaseRepository) GetTestCasesByChallengeID(challengeID string) ([]*E
 	return testCases, nil
 }
 
-func (r *TestCaseRepository) GetInputVariablesByTestCaseID(testCaseID string) ([]*Entities.IOVariable, error) {
-	testCase, err := r.GetTestCaseByID(testCaseID)
+func (r *TestCaseRepository) GetInputVariablesByTestCaseID(ctx context.Context, testCaseID string) ([]*Entities.IOVariable, error) {
+	testCase, err := r.GetTestCaseByID(ctx, testCaseID)
 	if err != nil {
 		return nil, err
 	}
@@ -151,8 +167,8 @@ func (r *TestCaseRepository) GetInputVariablesByTestCaseID(testCaseID string) ([
 	return variables, nil
 }
 
-func (r *TestCaseRepository) GetOutputVariablesByTestCaseID(testCaseID string) ([]*Entities.IOVariable, error) {
-	testCase, err := r.GetTestCaseByID(testCaseID)
+func (r *TestCaseRepository) GetOutputVariablesByTestCaseID(ctx context.Context, testCaseID string) ([]*Entities.IOVariable, error) {
+	testCase, err := r.GetTestCaseByID(ctx, testCaseID)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +180,7 @@ func (r *TestCaseRepository) GetOutputVariablesByTestCaseID(testCaseID string) (
 	return []*Entities.IOVariable{&output}, nil
 }
 
-func (r *TestCaseRepository) recordToHydratedTestCase(record map[string]any) (*Entities.TestCase, error) {
+func (r *TestCaseRepository) recordToHydratedTestCase(ctx context.Context, record map[string]any) (*Entities.TestCase, error) {
 	inputIDs := asStringList(record["Input"])
 	if len(inputIDs) == 0 {
 		inputIDs = asStringList(record["InputVariables"])
@@ -175,12 +191,12 @@ func (r *TestCaseRepository) recordToHydratedTestCase(record map[string]any) (*E
 		outputID = asString(record["OutputVariable"])
 	}
 
-	inputVariables, err := r.getIOVariablesByIDs(inputIDs)
+	inputVariables, err := r.getIOVariablesByIDs(ctx, inputIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	outputVariable, err := r.getIOVariableByID(outputID)
+	outputVariable, err := r.getIOVariableByID(ctx, outputID)
 	if err != nil {
 		return nil, err
 	}
@@ -188,28 +204,28 @@ func (r *TestCaseRepository) recordToHydratedTestCase(record map[string]any) (*E
 	return recordToTestCase(record, inputVariables, outputVariable)
 }
 
-func (r *TestCaseRepository) upsertTestCaseIOVariables(testCase *Entities.TestCase) error {
+func (r *TestCaseRepository) upsertTestCaseIOVariables(ctx context.Context, testCase *Entities.TestCase) error {
 	for _, input := range testCase.Input {
-		if err := r.upsertIOVariable(input); err != nil {
+		if err := r.upsertIOVariable(ctx, input); err != nil {
 			return err
 		}
 	}
 
-	if err := r.upsertIOVariable(testCase.ExpectedOutput); err != nil {
+	if err := r.upsertIOVariable(ctx, testCase.ExpectedOutput); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *TestCaseRepository) getIOVariablesByIDs(ids []string) ([]Entities.IOVariable, error) {
+func (r *TestCaseRepository) getIOVariablesByIDs(ctx context.Context, ids []string) ([]Entities.IOVariable, error) {
 	if len(ids) == 0 {
 		return []Entities.IOVariable{}, nil
 	}
 
 	variables := make([]Entities.IOVariable, 0, len(ids))
 	for _, id := range ids {
-		ioVariable, err := r.getIOVariableByID(id)
+		ioVariable, err := r.getIOVariableByID(ctx, id)
 		if err != nil {
 			return nil, err
 		}
@@ -221,10 +237,13 @@ func (r *TestCaseRepository) getIOVariablesByIDs(ids []string) ([]Entities.IOVar
 	return variables, nil
 }
 
-func (r *TestCaseRepository) getIOVariableByID(variableID string) (*Entities.IOVariable, error) {
+func (r *TestCaseRepository) getIOVariableByID(ctx context.Context, variableID string) (*Entities.IOVariable, error) {
 	normalizedID := strings.TrimSpace(variableID)
 	if normalizedID == "" {
 		return nil, nil
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(ioVariableTableName, map[string]string{"ID": normalizedID})
@@ -240,10 +259,13 @@ func (r *TestCaseRepository) getIOVariableByID(variableID string) (*Entities.IOV
 	return recordToIOVariable(record)
 }
 
-func (r *TestCaseRepository) upsertIOVariable(variable Entities.IOVariable) error {
+func (r *TestCaseRepository) upsertIOVariable(ctx context.Context, variable Entities.IOVariable) error {
 	variableID := strings.TrimSpace(variable.ID)
 	if variableID == "" {
 		return fmt.Errorf("io variable id is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
 	}
 
 	res, err := r.adapter.Read(ioVariableTableName, map[string]string{"ID": variableID})

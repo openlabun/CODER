@@ -1,6 +1,7 @@
 package roble_infrastructure
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -207,10 +208,13 @@ func recordToIOVariable(record map[string]any) (*ExamEntities.IOVariable, error)
 	}, nil
 }
 
-func getIOVariableByID(adapter *infrastructure.RobleDatabaseAdapter, variableID string) (*ExamEntities.IOVariable, error) {
+func getIOVariableByID(ctx context.Context, adapter *infrastructure.RobleDatabaseAdapter, variableID string) (*ExamEntities.IOVariable, error) {
 	normalizedID := strings.TrimSpace(variableID)
 	if normalizedID == "" {
 		return nil, nil
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := adapter.Read(ioVariableTableName, map[string]string{"ID": normalizedID})
@@ -226,10 +230,13 @@ func getIOVariableByID(adapter *infrastructure.RobleDatabaseAdapter, variableID 
 	return recordToIOVariable(record)
 }
 
-func upsertIOVariable(adapter *infrastructure.RobleDatabaseAdapter, variable ExamEntities.IOVariable) error {
+func upsertIOVariable(ctx context.Context, adapter *infrastructure.RobleDatabaseAdapter, variable ExamEntities.IOVariable) error {
 	variableID := strings.TrimSpace(variable.ID)
 	if variableID == "" {
 		return fmt.Errorf("io variable id is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, adapter); err != nil {
+		return err
 	}
 
 	res, err := adapter.Read(ioVariableTableName, map[string]string{"ID": variableID})
@@ -246,10 +253,13 @@ func upsertIOVariable(adapter *infrastructure.RobleDatabaseAdapter, variable Exa
 	return updateErr
 }
 
-func deleteIOVariableByID(adapter *infrastructure.RobleDatabaseAdapter, variableID string) error {
+func deleteIOVariableByID(ctx context.Context, adapter *infrastructure.RobleDatabaseAdapter, variableID string) error {
 	normalizedID := strings.TrimSpace(variableID)
 	if normalizedID == "" {
 		return nil
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, adapter); err != nil {
+		return err
 	}
 
 	_, err := adapter.Delete(ioVariableTableName, "ID", normalizedID)

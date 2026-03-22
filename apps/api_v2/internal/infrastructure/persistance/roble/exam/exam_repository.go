@@ -1,6 +1,7 @@
 package roble_infrastructure
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -21,9 +22,12 @@ func NewExamRepository(adapter *infrastructure.RobleDatabaseAdapter) *ExamReposi
 	return &ExamRepository{adapter: adapter}
 }
 
-func (r *ExamRepository) CreateExam(exam *Entities.Exam) (*Entities.Exam, error) {
+func (r *ExamRepository) CreateExam(ctx context.Context, exam *Entities.Exam) (*Entities.Exam, error) {
 	if exam == nil {
 		return nil, fmt.Errorf("exam is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	_, err := r.adapter.Insert(examTableName, []map[string]any{examToRecord(exam)})
@@ -34,9 +38,12 @@ func (r *ExamRepository) CreateExam(exam *Entities.Exam) (*Entities.Exam, error)
 	return exam, nil
 }
 
-func (r *ExamRepository) UpdateExam(exam *Entities.Exam) (*Entities.Exam, error) {
+func (r *ExamRepository) UpdateExam(ctx context.Context, exam *Entities.Exam) (*Entities.Exam, error) {
 	if exam == nil {
 		return nil, fmt.Errorf("exam is nil")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	examID := strings.TrimSpace(exam.ID)
@@ -62,20 +69,26 @@ func (r *ExamRepository) UpdateExam(exam *Entities.Exam) (*Entities.Exam, error)
 	return exam, nil
 }
 
-func (r *ExamRepository) DeleteExam(examID string) error {
+func (r *ExamRepository) DeleteExam(ctx context.Context, examID string) error {
 	normalizedID := strings.TrimSpace(examID)
 	if normalizedID == "" {
 		return fmt.Errorf("examID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return err
 	}
 
 	_, err := r.adapter.Delete(examTableName, "ID", normalizedID)
 	return err
 }
 
-func (r *ExamRepository) GetExamByID(examID string) (*Entities.Exam, error) {
+func (r *ExamRepository) GetExamByID(ctx context.Context, examID string) (*Entities.Exam, error) {
 	normalizedID := strings.TrimSpace(examID)
 	if normalizedID == "" {
 		return nil, fmt.Errorf("examID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(examTableName, map[string]string{"ID": normalizedID})
@@ -91,10 +104,13 @@ func (r *ExamRepository) GetExamByID(examID string) (*Entities.Exam, error) {
 	return recordToExam(record)
 }
 
-func (r *ExamRepository) GetExamsByCourseID(courseID string) ([]*Entities.Exam, error) {
+func (r *ExamRepository) GetExamsByCourseID(ctx context.Context, courseID string) ([]*Entities.Exam, error) {
 	normalizedID := strings.TrimSpace(courseID)
 	if normalizedID == "" {
 		return nil, fmt.Errorf("courseID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(examTableName, map[string]string{"CourseID": normalizedID})
@@ -121,10 +137,13 @@ func (r *ExamRepository) GetExamsByCourseID(courseID string) ([]*Entities.Exam, 
 	return exams, nil
 }
 
-func (r *ExamRepository) GetExamsByTeacherID(teacherID string) ([]*Entities.Exam, error) {
+func (r *ExamRepository) GetExamsByTeacherID(ctx context.Context, teacherID string) ([]*Entities.Exam, error) {
 	normalizedID := strings.TrimSpace(teacherID)
 	if normalizedID == "" {
 		return nil, fmt.Errorf("teacherID is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
 	}
 
 	res, err := r.adapter.Read(examTableName, map[string]string{"ProfessorID": normalizedID})

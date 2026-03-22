@@ -1,8 +1,6 @@
 package user_usecases
 
 import (
-	"fmt"
-	
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
 	ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 )
@@ -30,12 +28,6 @@ func (uc *RegisterUseCase) Execute(email, name, password string) (*dtos.UserAcce
 	hashedPassword, err := uc.passwordHasher.Hash(password)
 	if err != nil {
 		return nil, err
-	}
-
-	// Check if user already exists by email
-	existingUser, _ := uc.userService.GetUserByEmail(email)
-	if existingUser != nil {
-		return nil, fmt.Errorf("user with email %s already exists", email)
 	}
 
 	// Repository: validate user credentials

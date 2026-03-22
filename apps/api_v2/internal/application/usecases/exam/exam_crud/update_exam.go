@@ -38,6 +38,10 @@ func (uc *UpdateExamUseCase) Execute(ctx context.Context, input dtos.UpdateExamI
 		return nil, err
 	}
 
+	if user == nil {
+		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
+	}
+
 	if user.Role != user_entities.UserRoleProfessor {
 		return nil, fmt.Errorf("user does not have permissions to update an exam")
 	}
@@ -46,6 +50,10 @@ func (uc *UpdateExamUseCase) Execute(ctx context.Context, input dtos.UpdateExamI
 	exam, err := uc.examRepository.GetExamByID(ctx, input.ExamID)
 	if err != nil {
 		return nil, err
+	}
+
+	if exam == nil {
+		return nil, fmt.Errorf("exam with id %q does not exist", input.ExamID)
 	}
 
 	// [STEP 3] Update exam entity with user provided values

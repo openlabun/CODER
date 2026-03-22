@@ -40,6 +40,10 @@ func (uc *GetExamsByCourseUseCase) Execute(ctx context.Context, input dtos.GetEx
 		return nil, err
 	}
 
+	if user == nil {
+		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
+	}
+
 	if user.Role != user_entities.UserRoleProfessor {
 		return nil, fmt.Errorf("user does not have permissions to create an exam")
 	}
@@ -48,6 +52,10 @@ func (uc *GetExamsByCourseUseCase) Execute(ctx context.Context, input dtos.GetEx
 	course, err := uc.courseRepository.GetCourseByID(ctx, input.CourseID)
 	if err != nil {
 		return nil, err
+	}
+
+	if course == nil {
+		return nil, fmt.Errorf("course with id %q does not exist", input.CourseID)
 	}
 
 	if course.ProfessorID != user.ID {

@@ -37,6 +37,10 @@ func (uc *DeleteExamUseCase) Execute(ctx context.Context, input dtos.DeleteExamI
 		return nil, err
 	}
 
+	if user == nil {
+		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
+	}
+
 	if user.Role != user_entities.UserRoleProfessor {
 		return nil, fmt.Errorf("user does not have permissions to delete an exam")
 	}
@@ -47,7 +51,16 @@ func (uc *DeleteExamUseCase) Execute(ctx context.Context, input dtos.DeleteExamI
 		return nil, err
 	}
 
-	// [STEP 3] Delete exam entity
+	if exam == nil {
+		return nil, fmt.Errorf("exam with id %q does not exist", input.ExamID)
+	}
+
+	// [STEP 3] Verify that user has permissions to delete this exam (is the owner)
+	if exam.ProfessorID != user.ID {
+		return nil, fmt.Errorf("user does not have permissions to delete this exam")
+	}
+
+	// [STEP 4] Delete exam entity
 	err = uc.examRepository.DeleteExam(ctx, input.ExamID)
 	if err != nil {
 		return nil, err

@@ -38,6 +38,10 @@ func (uc *ChangeExamVisibilityUseCase) Execute(ctx context.Context, input dtos.C
 		return nil, err
 	}
 
+	if user == nil {
+		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
+	}
+
 	if user.Role != user_entities.UserRoleProfessor {
 		return nil, fmt.Errorf("user does not have permissions to create an exam")
 	}
@@ -46,6 +50,10 @@ func (uc *ChangeExamVisibilityUseCase) Execute(ctx context.Context, input dtos.C
 	exam, err := uc.examRepository.GetExamByID(ctx, input.ExamID)
 	if err != nil {
 		return nil, err
+	}
+
+	if exam == nil {
+		return nil, fmt.Errorf("exam with id %q does not exist", input.ExamID)
 	}
 
 	// [STEP 3] Update exam entity with new visibility value

@@ -41,12 +41,20 @@ func (uc *GetExamDetailsUseCase) Execute(ctx context.Context, input dtos.GetExam
 		return nil, err
 	}
 
+	if user == nil {
+		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
+	}
+
 	role := user.Role
 
 	// [STEP 2] Get exam entity with user provided exam ID
 	exam, err := uc.examRepository.GetExamByID(ctx, input.ExamID)
 	if err != nil {
 		return nil, err
+	}
+
+	if exam == nil {
+		return nil, fmt.Errorf("exam with id %q does not exist", input.ExamID)
 	}
 
 	// [STEP 3] If user is teacher and is not the owner or exam visibility is not "public" or "teachers"

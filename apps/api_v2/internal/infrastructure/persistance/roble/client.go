@@ -293,6 +293,7 @@ func (c *RobleClient) doJSONExpectedStatus(method, url, accessToken string, requ
 		}
 	}
 
+
 	if !statusValid {
 		bodyText := strings.TrimSpace(string(bodyBytes))
 		if len(bodyText) > 300 {
@@ -304,6 +305,27 @@ func (c *RobleClient) doJSONExpectedStatus(method, url, accessToken string, requ
 		return fmt.Errorf("roble request failed (%d): %s", res.StatusCode, bodyText)
 	}
 
+	if res.StatusCode == http.StatusCreated {
+		trimmedBody := bytes.TrimSpace(bodyBytes)
+		if len(trimmedBody) > 0 {
+			var parsedBody any
+			if err := json.Unmarshal(trimmedBody, &parsedBody); err == nil {
+				if bodyMap, ok := parsedBody.(map[string]any); ok {
+					if skippedRaw, exists := bodyMap["skipped"]; exists {
+						skippedItems, isArray := skippedRaw.([]any)
+						if !isArray {
+							return fmt.Errorf("roble request failed (201): skipped must be an array")
+						}
+						if len(skippedItems) > 0 {
+							return fmt.Errorf("roble request failed (201): database returned skipped items: %v", skippedItems)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	
 	if output == nil || len(bytes.TrimSpace(bodyBytes)) == 0 {
 		return nil
 	}
@@ -311,6 +333,8 @@ func (c *RobleClient) doJSONExpectedStatus(method, url, accessToken string, requ
 	if err := json.Unmarshal(bodyBytes, output); err != nil {
 		return fmt.Errorf("decode response body: %w", err)
 	}
+
+	
 
 	return nil
 }

@@ -1,0 +1,7 @@
+{
+  "statusCode": 200,
+  "body": {
+    "access_token": "new-access-token",
+    "refresh_token": "new-refresh-token"
+  }
+}

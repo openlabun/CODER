@@ -1,4 +1,4 @@
-package postcreate
+package getbyuserid
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -8,14 +8,12 @@ import (
 
 func Handler(appContainer *container.Application) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var req RequestDTO
-		if err := c.BodyParser(&req); err != nil {
-			return shared.HandleError(c, err)
-		}
-		result, err := appContainer.SubmissionUseCases.CreateSubmission.Execute(shared.BuildRequestContext(c), MapRequestToInput(req))
+		path := MapPath(c.Params("userId"))
+		query := MapQuery(c.Query("status"), c.Query("testId"), c.Query("challengeId"))
+		result, err := appContainer.SubmissionUseCases.GetUserSubmissions.Execute(shared.BuildRequestContext(c), ToInput(path, query))
 		if err != nil {
 			return shared.HandleError(c, err)
 		}
-		return c.Status(fiber.StatusCreated).JSON(result)
+		return c.Status(fiber.StatusOK).JSON(result)
 	}
 }

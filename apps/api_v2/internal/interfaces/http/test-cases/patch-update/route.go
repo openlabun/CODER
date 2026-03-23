@@ -1,4 +1,4 @@
-package postcreate
+package patchupdate
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -12,10 +12,15 @@ func Handler(appContainer *container.Application) fiber.Handler {
 		if err := c.BodyParser(&req); err != nil {
 			return shared.HandleError(c, err)
 		}
-		result, err := appContainer.SubmissionUseCases.CreateSubmission.Execute(shared.BuildRequestContext(c), MapRequestToInput(req))
+
+		result, err := appContainer.TestCaseModule.UpdateTestCase.Execute(
+			shared.BuildRequestContext(c),
+			ToInput(MapPath(c.Params("id")), req),
+		)
 		if err != nil {
 			return shared.HandleError(c, err)
 		}
-		return c.Status(fiber.StatusCreated).JSON(result)
+
+		return c.Status(fiber.StatusOK).JSON(result)
 	}
 }

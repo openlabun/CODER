@@ -1,12 +1,17 @@
 package http_interfaces
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/MarceloPetrucio/go-scalar-api-reference"
 	"github.com/gofiber/fiber/v2"
 	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
 	auth_get_me "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/get-me"
 	auth_post_login "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-login"
+	auth_post_refresh_token "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-refresh-token"
 	auth_post_register "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-register"
+	challenge_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/delete-by-id"
 	challenge_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-by-id"
 	challenge_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-list"
 	challenge_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/patch-update"
@@ -22,6 +27,7 @@ import (
 	course_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-create"
 	course_post_enroll "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-enroll"
 	course_post_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-update"
+	exam_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/delete-by-id"
 	exam_get_by_course_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-course-id"
 	exam_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-id"
 	exam_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/patch-update"
@@ -30,12 +36,14 @@ import (
 	exam_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-create"
 	sub_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-id"
 	sub_get_by_session_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-session-id"
+	sub_get_by_user_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-user-id"
 	sub_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-list"
 	sub_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create"
 	sub_post_heartbeat "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-heartbeat"
 	sub_post_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-session"
 	tc_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/delete-by-id"
 	tc_get_by_challenge_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/get-by-challenge-id"
+	tc_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/patch-update"
 	tc_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/post-create"
 )
 
@@ -56,10 +64,19 @@ func RegisterRoutes(app *fiber.App, appContainer *container.Application) {
 }
 
 func registerDocsRoutes(app *fiber.App) {
+	app.Get("/docs/openapi.yaml", func(c *fiber.Ctx) error {
+		specPath, err := resolveOpenAPISpecPath()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.SendFile(specPath)
+	})
+
 	app.Get("/docs", func(c *fiber.Ctx) error {
+		specURL := c.BaseURL() + "/docs/openapi.yaml"
 		htmlContent, err := scalar.ApiReferenceHTML(
 			&scalar.Options{
-				SpecURL: "./docs/openapi.yaml",
+				SpecURL: specURL,
 				CustomOptions: scalar.CustomOptions{
 					PageTitle: "Artemisa Source-Search Service",
 				},
@@ -67,17 +84,37 @@ func registerDocsRoutes(app *fiber.App) {
 			},
 		)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Error generando la referencia")
+			return c.Status(fiber.StatusInternalServerError).SendString("Error generando la referencia: " + err.Error())
 		}
 
 		return c.Type("html").SendString(htmlContent)
 	})
 }
 
+func resolveOpenAPISpecPath() (string, error) {
+	candidates := []string{
+		filepath.Join("docs", "openapi.yaml"),
+		filepath.Join("apps", "api_v2", "docs", "openapi.yaml"),
+	}
+
+	for _, candidate := range candidates {
+		if _, err := os.Stat(candidate); err == nil {
+			abs, absErr := filepath.Abs(candidate)
+			if absErr != nil {
+				return "", absErr
+			}
+			return abs, nil
+		}
+	}
+
+	return "", os.ErrNotExist
+}
+
 func registerAuthRoutes(app *fiber.App, appContainer *container.Application) {
 	auth := app.Group("/auth")
 	auth.Post("/register", auth_post_register.Handler(appContainer))
 	auth.Post("/login", auth_post_login.Handler(appContainer))
+	auth.Post("/refresh-token", auth_post_refresh_token.Handler(appContainer))
 	auth.Get("/me", auth_get_me.Handler(appContainer))
 }
 
@@ -93,6 +130,7 @@ func registerChallengesRoutes(app *fiber.App, appContainer *container.Applicatio
 	challenges.Get("/", challenge_get_list.Handler(appContainer))
 	challenges.Get("/:id", challenge_get_by_id.Handler(appContainer))
 	challenges.Patch("/:id", challenge_patch_update.Handler(appContainer))
+	challenges.Delete("/:id", challenge_delete_by_id.Handler(appContainer))
 	challenges.Post("/:id/publish", challenge_post_publish.Handler(appContainer))
 	challenges.Post("/:id/archive", challenge_post_archive.Handler(appContainer))
 }
@@ -101,6 +139,7 @@ func registerTestCasesRoutes(app *fiber.App, appContainer *container.Application
 	testCases := app.Group("/test-cases")
 	testCases.Post("/", tc_post_create.Handler(appContainer))
 	testCases.Get("/challenge/:challengeId", tc_get_by_challenge_id.Handler(appContainer))
+	testCases.Patch("/:id", tc_patch_update.Handler(appContainer))
 	testCases.Delete("/:id", tc_delete_by_id.Handler(appContainer))
 }
 
@@ -126,6 +165,7 @@ func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 	exams.Get("/course/:courseId", exam_get_by_course_id.Handler(appContainer))
 	exams.Get("/:id", exam_get_by_id.Handler(appContainer))
 	exams.Patch("/:id", exam_patch_update.Handler(appContainer))
+	exams.Delete("/:id", exam_delete_by_id.Handler(appContainer))
 	exams.Post("/:id/visibility", exam_post_change_visibility.Handler(appContainer))
 	exams.Post("/:id/close", exam_post_close.Handler(appContainer))
 }
@@ -133,6 +173,7 @@ func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Application) {
 	submissions := app.Group("/submissions")
 	submissions.Post("/", sub_post_create.Handler(appContainer))
+	submissions.Get("/user/:userId", sub_get_by_user_id.Handler(appContainer))
 	submissions.Get("/:id", sub_get_by_id.Handler(appContainer))
 	submissions.Get("/", sub_get_list.Handler(appContainer))
 	sessions := submissions.Group("/sessions")

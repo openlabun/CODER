@@ -81,6 +81,7 @@ type Application struct {
 	ChallengeModule ChallengeUseCases
 	TestCaseModule TestCaseUseCases
 	SessionModule SessionUseCases
+	SubmissionUseCases SubmissionUseCases
 }
 
 func NewApplication(deps ApplicationDependencies) (*Application, error) {
@@ -124,6 +125,13 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		CreateSession: session_usecases.NewCreateSessionUseCase(deps.UserRepository, deps.SessionRepository, deps.ExamRepository, ),
 		GetSession: session_usecases.NewGetSessionUseCase(deps.SessionRepository, deps.UserRepository),
 		HeartBeatSession: session_usecases.NewHeartBeatSessionUseCase(deps.UserRepository, deps.SessionRepository),
+	}
+
+	app.SubmissionUseCases = SubmissionUseCases{
+		CreateSubmission: submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository),
+		GetSubmissionStatus: submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
+		GetChallengeSubmissions: submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
+		GetUserSubmissions: submission_usecases.NewGetUserSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository),
 	}
 	
 	app.UserModule = UserUseCases{

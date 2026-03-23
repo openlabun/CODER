@@ -8,7 +8,10 @@ import (
 
 type ContextKey string
 
-const UserEmailContextKey ContextKey = "userEmail"
+const (
+	UserEmailContextKey ContextKey = "userEmail"
+	AccessTokenContextKey ContextKey = "accessToken"
+)
 
 func WithUserEmail(ctx context.Context, email string) context.Context {
 	return context.WithValue(ctx, UserEmailContextKey, strings.TrimSpace(email))
@@ -25,4 +28,24 @@ func UserEmailFromContext(ctx context.Context) (string, error) {
 	}
 
 	return strings.TrimSpace(email), nil
+}
+
+
+func WithAccessToken(ctx context.Context, accessToken string) context.Context {
+	return context.WithValue(ctx, AccessTokenContextKey, strings.TrimSpace(accessToken))
+}
+
+func AccessTokenFromContext(ctx context.Context) (string, bool) {
+	if ctx == nil {
+		return "", false
+	}
+
+	if token, ok := ctx.Value(AccessTokenContextKey).(string); ok {
+		token = strings.TrimSpace(token)
+		if token != "" {
+			return token, true
+		}
+	}
+
+	return "", false
 }

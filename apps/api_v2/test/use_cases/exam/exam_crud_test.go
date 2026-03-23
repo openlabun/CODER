@@ -304,7 +304,7 @@ func mustLoginExamTeacher(t *testing.T, app *container.Application) *user_dtos.U
 }
 
 func teacherExamCtx(teacherAccess *user_dtos.UserAccess) context.Context {
-	ctx := roble_infrastructure.WithAccessToken(context.Background(), teacherAccess.Token.AccessToken)
+	ctx := services.WithAccessToken(context.Background(), teacherAccess.Token.AccessToken)
 	ctx = services.WithUserEmail(ctx, teacherAccess.UserData.Email)
 	return ctx
 }

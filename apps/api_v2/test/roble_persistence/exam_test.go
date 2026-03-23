@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
+
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	course_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/course"
@@ -50,7 +52,7 @@ func TestExamCRUD(t *testing.T) {
 	if access.Token == nil || access.Token.AccessToken == "" {
 		t.Fatal("expected access token in login response")
 	}
-	ctx := roble_infrastructure.WithAccessToken(context.Background(), access.Token.AccessToken)
+	ctx := services.WithAccessToken(context.Background(), access.Token.AccessToken)
 	teacherID := access.UserData.ID
 	t.Logf("[OK] Login exitoso. teacherID=%s", teacherID)
 

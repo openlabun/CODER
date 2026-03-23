@@ -6,7 +6,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
-	roble "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 )
 
 func BuildRequestContext(c *fiber.Ctx) context.Context {
@@ -16,7 +15,7 @@ func BuildRequestContext(c *fiber.Ctx) context.Context {
 	if strings.HasPrefix(strings.ToLower(authHeader), "bearer ") {
 		token := strings.TrimSpace(authHeader[7:])
 		if token != "" {
-			ctx = roble.WithAccessToken(ctx, token)
+			ctx = services.WithAccessToken(ctx, token)
 		}
 	}
 

@@ -535,7 +535,7 @@ func ensureSubmissionStudentAccess(t *testing.T, app *container.Application) *us
 }
 
 func submissionCtx(access *user_dtos.UserAccess) context.Context {
-	ctx := roble_infrastructure.WithAccessToken(context.Background(), access.Token.AccessToken)
+	ctx := services.WithAccessToken(context.Background(), access.Token.AccessToken)
 	ctx = services.WithUserEmail(ctx, access.UserData.Email)
 	return ctx
 }

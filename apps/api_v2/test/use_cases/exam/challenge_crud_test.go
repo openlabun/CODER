@@ -14,7 +14,6 @@ import (
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	user_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 )
 
 func TestChallengeCRUD(t *testing.T) {
@@ -441,7 +440,7 @@ func ensureExamStudentAccess(t *testing.T, app *container.Application) *user_dto
 }
 
 func studentExamCtx(studentAccess *user_dtos.UserAccess) context.Context {
-	ctx := roble_infrastructure.WithAccessToken(context.Background(), studentAccess.Token.AccessToken)
+	ctx := services.WithAccessToken(context.Background(), studentAccess.Token.AccessToken)
 	ctx = services.WithUserEmail(ctx, studentAccess.UserData.Email)
 	return ctx
 }

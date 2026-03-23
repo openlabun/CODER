@@ -8,6 +8,7 @@ import (
 	"time"
 
 	course_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
+	"github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
@@ -99,7 +100,7 @@ func TestCoursesWithStudentsCRUD(t *testing.T) {
 	t.Log("[STEP 7] Obtener/crear estudiante y construir contexto")
 	// Create student user
 	studentAccess := ensureStudentAccess(t, authAdapter)
-	studentCtx := roble_infrastructure.WithAccessToken(context.Background(), studentAccess.Token.AccessToken)
+	studentCtx := services.WithAccessToken(context.Background(), studentAccess.Token.AccessToken)
 	t.Logf("[OK] Estudiante listo. studentID=%s", studentAccess.UserData.ID)
 
 	t.Log("[STEP 8] Matricular estudiante en el curso")

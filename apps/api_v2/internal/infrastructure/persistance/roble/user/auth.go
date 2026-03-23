@@ -9,6 +9,7 @@ import (
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	UserFactory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/user"
 	infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
+	service "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 )
 
 type RobleAuthAdapter struct {
@@ -35,7 +36,7 @@ func (a *RobleAuthAdapter) LoginUser(email, password string) (*dtos.UserAccess, 
 
 	// Set access token for subsequent requests
 	a.adapter.SetAccessToken(tokens.AccessToken)
-	tokenCtx := infrastructure.WithAccessToken(context.Background(), tokens.AccessToken)
+	tokenCtx := service.WithAccessToken(context.Background(), tokens.AccessToken)
 
 	user, err := a.GetUserData(tokenCtx, email)
 	if err != nil {
@@ -83,7 +84,7 @@ func (a *RobleAuthAdapter) RegisterUserDirect(email, password, name string) (*dt
 
 	// Set access token for subsequent requests
 	a.adapter.SetAccessToken(tokens.AccessToken)
-	tokenCtx := infrastructure.WithAccessToken(context.Background(), tokens.AccessToken)
+	tokenCtx := service.WithAccessToken(context.Background(), tokens.AccessToken)
 
 	// Check if email is already registered in local database
 	existingUser, err := a.GetUserData(tokenCtx, email)

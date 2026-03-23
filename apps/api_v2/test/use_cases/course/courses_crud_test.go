@@ -215,7 +215,7 @@ func ensureStudentAccess(t *testing.T, auth *user_repo.RobleAuthAdapter) *user_d
 }
 
 func teacherCourseCtx(teacherAccess *user_dtos.UserAccess) context.Context {
-	ctx := roble_infrastructure.WithAccessToken(context.Background(), teacherAccess.Token.AccessToken)
+	ctx := services.WithAccessToken(context.Background(), teacherAccess.Token.AccessToken)
 	ctx = services.WithUserEmail(ctx, teacherAccess.UserData.Email)
 	return ctx
 }

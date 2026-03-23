@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/course"
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
@@ -46,7 +47,7 @@ func TestCourseCreation(t *testing.T) {
 	if access.Token == nil || access.Token.AccessToken == "" {
 		t.Fatal("expected access token in login response")
 	}
-	ctx := roble_infrastructure.WithAccessToken(context.Background(), access.Token.AccessToken)
+	ctx := services.WithAccessToken(context.Background(), access.Token.AccessToken)
 	t.Logf("[OK] Login exitoso. teacherID=%s", access.UserData.ID)
 
 	// Create a new course

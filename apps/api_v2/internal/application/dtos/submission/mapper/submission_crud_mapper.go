@@ -51,10 +51,15 @@ func MapResultInputToSubmissionResultEntity(input dtos.UpdateResultInput, submis
 		return nil, fmt.Errorf("submission result cannot be nil")
 	}
 	
-	submissionResult.ActualOutput.Value = *input.Output
+	if input.Output != nil {
+		if submissionResult.ActualOutput == nil {
+			submissionResult.ActualOutput = &examEntities.IOVariable{Type: examEntities.VariableFormatString}
+		}
+		submissionResult.ActualOutput.Value = *input.Output
+	}
 	submissionResult.ErrorMessage = input.Error
 
-	status := Entities.SubmissionStatus(submissionResult.Status)
+	status := Entities.SubmissionStatus(input.Status)
 
 	valid := state_machine.IsValidState(status)
 	if !valid {

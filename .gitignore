@@ -140,3 +140,4 @@ vite.config.ts.timestamp-*
 
 # APIv2 temp files
 /apps/api_v2/tmp/**
+/apps/api_v2/scripts/**

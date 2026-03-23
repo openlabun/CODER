@@ -57,6 +57,7 @@ type SubmissionUseCases struct {
 	GetSubmissionStatus     *submission_usecases.GetSubmissionStatusUseCase
 	GetChallengeSubmissions *submission_usecases.GetChallengeSubmissionsUseCase
 	GetUserSubmissions      *submission_usecases.GetUserSubmissionsUseCase
+	UpdateResult            *submission_usecases.UpdateResultUseCase
 }
 
 type SessionUseCases struct {
@@ -132,6 +133,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		GetSubmissionStatus:     submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
 		GetChallengeSubmissions: submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
 		GetUserSubmissions:      submission_usecases.NewGetUserSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository),
+		UpdateResult:            submission_usecases.NewUpdateResultUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository),
 	}
 
 	app.UserModule = UserUseCases{

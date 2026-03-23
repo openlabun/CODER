@@ -27,5 +27,13 @@ func BuildRequestContext(c *fiber.Ctx) context.Context {
 		ctx = services.WithUserEmail(ctx, email)
 	}
 
+	workerKey := strings.TrimSpace(c.Get("WorkerKey"))
+	if workerKey == "" {
+		workerKey = strings.TrimSpace(c.Get("X-Worker-Key"))
+	}
+	if workerKey != "" {
+		ctx = services.WithInternalServiceKey(ctx, workerKey)
+	}
+
 	return ctx
 }

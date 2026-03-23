@@ -38,6 +38,7 @@ import (
 	sub_get_by_session_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-session-id"
 	sub_get_by_user_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-user-id"
 	sub_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-list"
+	sub_patch_update_result "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/patch-update-result"
 	sub_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create"
 	sub_post_heartbeat "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-heartbeat"
 	sub_post_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-session"
@@ -173,6 +174,7 @@ func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Application) {
 	submissions := app.Group("/submissions")
 	submissions.Post("/", sub_post_create.Handler(appContainer))
+	submissions.Patch("/results/:resultId", sub_patch_update_result.Handler(appContainer))
 	submissions.Get("/user/:userId", sub_get_by_user_id.Handler(appContainer))
 	submissions.Get("/:id", sub_get_by_id.Handler(appContainer))
 	submissions.Get("/", sub_get_list.Handler(appContainer))

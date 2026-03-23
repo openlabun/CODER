@@ -11,6 +11,9 @@ class ProcessSubmission:
         self.api_client = api_client
 
     def execute(self, submission: SubmissionResult):
+        submission.status = "running"
+        self.api_client.update_submission(submission)
+
         start = time.time()
 
         result = self.executor.execute(submission)

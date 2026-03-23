@@ -85,17 +85,17 @@ class DockerExecutor(Executor):
             execution_time = self._extract_exec_time_ms(result.stderr, submission.time_limit_ms)
 
             if result.returncode == 0:
-                submission.status = "SUCCESS"
-                submission.output = submission.var_type(result.stdout.strip())
+                submission.status = "executed"
+                submission.output = result.stdout.strip()
                 submission.execution_time_ms = execution_time
                 submission.error = None
             elif self._is_timeout_result(result):
-                submission.status = "TIMEOUT"
+                submission.status = "timeout"
                 submission.output = None
                 submission.error = "Execution timed out"
                 submission.execution_time_ms = execution_time
             else:
-                submission.status = "ERROR"
+                submission.status = "error"
                 submission.output = None
                 submission.execution_time_ms = execution_time
                 submission.error = (result.stderr or result.stdout).strip() or "Execution failed"
@@ -103,14 +103,14 @@ class DockerExecutor(Executor):
             return submission
                 
         except subprocess.TimeoutExpired:
-            submission.status = "TIMEOUT"
+            submission.status = "timeout"
             submission.output = None
             submission.error = "Infrastructure timeout while starting container"
             submission.execution_time_ms = submission.time_limit_ms
 
             return submission
         except Exception as e:
-            submission.status = "ERROR"
+            submission.status = "error"
             submission.output = None
             submission.error = str(e)
             submission.execution_time_ms = 0

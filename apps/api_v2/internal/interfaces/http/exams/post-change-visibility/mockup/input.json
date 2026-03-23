@@ -1,0 +1,11 @@
+{
+  "method": "POST",
+  "path": "/exams/{id}/visibility",
+  "pathParams": {
+    "id": "exam-123"
+  },
+  "query": {},
+  "body": {
+    "visibility": "private"
+  }
+}

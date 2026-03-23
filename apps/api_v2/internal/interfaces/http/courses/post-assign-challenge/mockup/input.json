@@ -1,0 +1,11 @@
+{
+  "method": "POST",
+  "path": "/courses/{id}/challenges",
+  "pathParams": {
+    "id": "course-123"
+  },
+  "query": {},
+  "body": {
+    "challengeID": "challenge-123"
+  }
+}

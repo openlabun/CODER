@@ -1,0 +1,22 @@
+{
+  "method": "POST",
+  "path": "/challenges",
+  "pathParams": {},
+  "query": {},
+  "body": {
+    "title": "Two Sum",
+    "description": "Return indexes of two numbers that add up to target",
+    "tags": ["arrays", "hashmap"],
+    "status": "draft",
+    "difficulty": "easy",
+    "workerTimeLimit": 1500,
+    "workerMemoryLimit": 256,
+    "inputVariables": [
+      {"name": "nums", "type": "string", "value": "2,7,11,15"},
+      {"name": "target", "type": "int", "value": "9"}
+    ],
+    "outputVariable": {"name": "indexes", "type": "string", "value": "0,1"},
+    "constraints": "2 <= n <= 10000",
+    "examID": "exam-123"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/leaderboard/course/{id}",
+  "pathParams": {
+    "id": "course-123"
+  },
+  "query": {},
+  "body": null
+}

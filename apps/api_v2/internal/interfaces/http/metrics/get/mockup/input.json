@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "path": "/metrics",
+  "pathParams": {},
+  "query": {},
+  "body": null
+}

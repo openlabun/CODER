@@ -1,19 +1,52 @@
 package http_interfaces
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"github.com/MarceloPetrucio/go-scalar-api-reference"
+	"github.com/gofiber/fiber/v2"
+	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
+	auth_get_me "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/get-me"
+	auth_post_login "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-login"
+	auth_post_register "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-register"
+	challenge_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-by-id"
+	challenge_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-list"
+	challenge_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/patch-update"
+	challenge_post_archive "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-archive"
+	challenge_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-create"
+	challenge_post_publish "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-publish"
+	course_delete_student "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/delete-student"
+	course_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-by-id"
+	course_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-list"
+	course_get_students "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-students"
+	course_post_add_student "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-add-student"
+	course_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-create"
+	course_post_enroll "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-enroll"
+	course_post_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-update"
+	exam_get_by_course_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-course-id"
+	exam_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-id"
+	exam_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/patch-update"
+	exam_post_change_visibility "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-change-visibility"
+	exam_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-close"
+	exam_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-create"
+	sub_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-id"
+	sub_get_by_session_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-session-id"
+	sub_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-list"
+	sub_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create"
+	sub_post_heartbeat "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-heartbeat"
+	sub_post_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-session"
+	tc_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/delete-by-id"
+	tc_get_by_challenge_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/get-by-challenge-id"
+	tc_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/post-create"
 )
 
-func RegisterRoutes(app *fiber.App) {
+func RegisterRoutes(app *fiber.App, appContainer *container.Application) {
 	registerDocsRoutes(app)
-	registerAuthRoutes(app)
+	registerAuthRoutes(app, appContainer)
 	registerAIRoutes(app)
-	registerChallengesRoutes(app)
-	registerTestCasesRoutes(app)
-	registerCoursesRoutes(app)
-	registerExamsRoutes(app)
-	registerSubmissionsRoutes(app)
+	registerChallengesRoutes(app, appContainer)
+	registerTestCasesRoutes(app, appContainer)
+	registerCoursesRoutes(app, appContainer)
+	registerExamsRoutes(app, appContainer)
+	registerSubmissionsRoutes(app, appContainer)
 	registerLeaderboardRoutes(app)
 	registerMetricsRoutes(app)
 	registerHealthRoutes(app)
@@ -40,85 +73,92 @@ func registerDocsRoutes(app *fiber.App) {
 	})
 }
 
-func registerAuthRoutes(app *fiber.App) {
+func registerAuthRoutes(app *fiber.App, appContainer *container.Application) {
 	auth := app.Group("/auth")
-	auth.Post("/register", mockHandler("auth/post-register.json", fiber.StatusCreated))
-	auth.Post("/login", mockHandler("auth/post-login.json", fiber.StatusOK))
-	auth.Get("/me", mockHandler("auth/get-me.json", fiber.StatusOK))
+	auth.Post("/register", auth_post_register.Handler(appContainer))
+	auth.Post("/login", auth_post_login.Handler(appContainer))
+	auth.Get("/me", auth_get_me.Handler(appContainer))
 }
 
 func registerAIRoutes(app *fiber.App) {
 	ai := app.Group("/ai")
-	ai.Post("/generate-challenge-ideas", mockHandler("ai/post-generate-challenge-ideas.json", fiber.StatusOK))
-	ai.Post("/generate-test-cases", mockHandler("ai/post-generate-test-cases.json", fiber.StatusOK))
+	ai.Post("/generate-challenge-ideas", mockHandler("ai/post-generate-challenge-ideas/mockup/output.json", fiber.StatusOK))
+	ai.Post("/generate-test-cases", mockHandler("ai/post-generate-test-cases/mockup/output.json", fiber.StatusOK))
 }
 
-func registerChallengesRoutes(app *fiber.App) {
+func registerChallengesRoutes(app *fiber.App, appContainer *container.Application) {
 	challenges := app.Group("/challenges")
-	challenges.Post("/", mockHandler("challenges/post-create.json", fiber.StatusCreated))
-	challenges.Get("/", mockHandler("challenges/get-list.json", fiber.StatusOK))
-	challenges.Get("/:id", mockHandler("challenges/get-by-id.json", fiber.StatusOK))
-	challenges.Patch("/:id", mockHandler("challenges/patch-update.json", fiber.StatusOK))
-	challenges.Post("/:id/publish", mockHandler("challenges/post-publish.json", fiber.StatusOK))
-	challenges.Post("/:id/archive", mockHandler("challenges/post-archive.json", fiber.StatusOK))
+	challenges.Post("/", challenge_post_create.Handler(appContainer))
+	challenges.Get("/", challenge_get_list.Handler(appContainer))
+	challenges.Get("/:id", challenge_get_by_id.Handler(appContainer))
+	challenges.Patch("/:id", challenge_patch_update.Handler(appContainer))
+	challenges.Post("/:id/publish", challenge_post_publish.Handler(appContainer))
+	challenges.Post("/:id/archive", challenge_post_archive.Handler(appContainer))
 }
 
-func registerTestCasesRoutes(app *fiber.App) {
+func registerTestCasesRoutes(app *fiber.App, appContainer *container.Application) {
 	testCases := app.Group("/test-cases")
-	testCases.Post("/", mockHandler("test-cases/post-create.json", fiber.StatusCreated))
-	testCases.Get("/challenge/:challengeId", mockHandler("test-cases/get-by-challenge-id.json", fiber.StatusOK))
-	testCases.Delete("/:id", mockHandler("test-cases/delete-by-id.json", fiber.StatusOK))
+	testCases.Post("/", tc_post_create.Handler(appContainer))
+	testCases.Get("/challenge/:challengeId", tc_get_by_challenge_id.Handler(appContainer))
+	testCases.Delete("/:id", tc_delete_by_id.Handler(appContainer))
 }
 
-func registerCoursesRoutes(app *fiber.App) {
+func registerCoursesRoutes(app *fiber.App, appContainer *container.Application) {
 	courses := app.Group("/courses")
-	courses.Post("/enroll", mockHandler("courses/post-enroll.json", fiber.StatusOK))
-	courses.Post("/", mockHandler("courses/post-create.json", fiber.StatusCreated))
-	courses.Get("/browse", mockHandler("courses/get-browse.json", fiber.StatusOK))
-	courses.Get("/", mockHandler("courses/get-list.json", fiber.StatusOK))
-	courses.Get("/:id", mockHandler("courses/get-by-id.json", fiber.StatusOK))
-	courses.Post("/:id", mockHandler("courses/post-update.json", fiber.StatusOK))
-	courses.Post("/:id/students", mockHandler("courses/post-add-student.json", fiber.StatusOK))
-	courses.Delete("/:id/students/:studentId", mockHandler("courses/delete-student.json", fiber.StatusOK))
-	courses.Post("/:id/challenges", mockHandler("courses/post-assign-challenge.json", fiber.StatusOK))
-	courses.Get("/:id/students", mockHandler("courses/get-students.json", fiber.StatusOK))
-	courses.Get("/:id/challenges", mockHandler("courses/get-challenges.json", fiber.StatusOK))
+	courses.Post("/enroll", course_post_enroll.Handler(appContainer))
+	courses.Post("/", course_post_create.Handler(appContainer))
+	courses.Get("/browse", mockHandler("courses/get-browse/mockup/output.json", fiber.StatusOK))
+	courses.Get("/", course_get_list.Handler(appContainer))
+	courses.Get("/:id", course_get_by_id.Handler(appContainer))
+	courses.Post("/:id", course_post_update.Handler(appContainer))
+	courses.Post("/:id/students", course_post_add_student.Handler(appContainer))
+	courses.Delete("/:id/students/:studentId", course_delete_student.Handler(appContainer))
+	courses.Post("/:id/challenges", mockHandler("courses/post-assign-challenge/mockup/output.json", fiber.StatusOK))
+	courses.Get("/:id/students", course_get_students.Handler(appContainer))
+	courses.Get("/:id/challenges", mockHandler("courses/get-challenges/mockup/output.json", fiber.StatusOK))
 }
 
-func registerExamsRoutes(app *fiber.App) {
+func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 	exams := app.Group("/exams")
-	exams.Post("/", mockHandler("exams/post-create.json", fiber.StatusCreated))
-	exams.Get("/course/:courseId", mockHandler("exams/get-by-course-id.json", fiber.StatusOK))
-	exams.Get("/:id", mockHandler("exams/get-by-id.json", fiber.StatusOK))
+	exams.Post("/", exam_post_create.Handler(appContainer))
+	exams.Get("/course/:courseId", exam_get_by_course_id.Handler(appContainer))
+	exams.Get("/:id", exam_get_by_id.Handler(appContainer))
+	exams.Patch("/:id", exam_patch_update.Handler(appContainer))
+	exams.Post("/:id/visibility", exam_post_change_visibility.Handler(appContainer))
+	exams.Post("/:id/close", exam_post_close.Handler(appContainer))
 }
 
-func registerSubmissionsRoutes(app *fiber.App) {
+func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Application) {
 	submissions := app.Group("/submissions")
-	submissions.Post("/", mockHandler("submissions/post-create.json", fiber.StatusCreated))
-	submissions.Get("/:id", mockHandler("submissions/get-by-id.json", fiber.StatusOK))
-	submissions.Get("/", mockHandler("submissions/get-list.json", fiber.StatusOK))
+	submissions.Post("/", sub_post_create.Handler(appContainer))
+	submissions.Get("/:id", sub_get_by_id.Handler(appContainer))
+	submissions.Get("/", sub_get_list.Handler(appContainer))
+	sessions := submissions.Group("/sessions")
+	sessions.Post("/", sub_post_session.Handler(appContainer))
+	sessions.Get("/:id", sub_get_by_session_id.Handler(appContainer))
+	sessions.Post("/:id/heartbeat", sub_post_heartbeat.Handler(appContainer))
 }
 
 func registerLeaderboardRoutes(app *fiber.App) {
 	leaderboard := app.Group("/leaderboard")
-	leaderboard.Get("/challenge/:id", mockHandler("leaderboard/get-challenge-id.json", fiber.StatusOK))
-	leaderboard.Get("/course/:id", mockHandler("leaderboard/get-course-id.json", fiber.StatusOK))
+	leaderboard.Get("/challenge/:id", mockHandler("leaderboard/get-challenge-id/mockup/output.json", fiber.StatusOK))
+	leaderboard.Get("/course/:id", mockHandler("leaderboard/get-course-id/mockup/output.json", fiber.StatusOK))
 }
 
 func registerMetricsRoutes(app *fiber.App) {
-	app.Get("/metrics", mockHandler("metrics/get.json", fiber.StatusOK))
+	app.Get("/metrics", mockHandler("metrics/get/mockup/output.json", fiber.StatusOK))
 }
 
 func registerHealthRoutes(app *fiber.App) {
-	app.Get("/health", mockHandler("health/get.json", fiber.StatusOK))
+	app.Get("/health", mockHandler("health/get/mockup/output.json", fiber.StatusOK))
 }
 
 func registerCacheRoutes(app *fiber.App) {
 	cache := app.Group("/cache")
-	cache.Get("/health", mockHandler("cache/get-health.json", fiber.StatusOK))
+	cache.Get("/health", mockHandler("cache/get-health/mockup/output.json", fiber.StatusOK))
 }
 
 func registerDBRoutes(app *fiber.App) {
 	db := app.Group("/db")
-	db.Get("/health", mockHandler("db/get-health.json", fiber.StatusOK))
+	db.Get("/health", mockHandler("db/get-health/mockup/output.json", fiber.StatusOK))
 }

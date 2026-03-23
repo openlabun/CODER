@@ -1,0 +1,9 @@
+{
+  "method": "DELETE",
+  "path": "/test-cases/{id}",
+  "pathParams": {
+    "id": "test-case-123"
+  },
+  "query": {},
+  "body": null
+}

@@ -1,0 +1,9 @@
+{
+  "statusCode": 200,
+  "body": {
+    "id": "challenge-123",
+    "title": "Two Sum Updated",
+    "difficulty": "medium",
+    "workerTimeLimit": 2000
+  }
+}

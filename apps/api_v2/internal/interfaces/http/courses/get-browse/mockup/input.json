@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "path": "/courses/browse",
+  "pathParams": {},
+  "query": {},
+  "body": null
+}

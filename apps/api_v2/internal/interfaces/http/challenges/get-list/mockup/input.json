@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/challenges",
+  "pathParams": {},
+  "query": {
+    "examId": "exam-123"
+  },
+  "body": null
+}

@@ -1,0 +1,8 @@
+{
+  "statusCode": 200,
+  "body": {
+    "enrolled": true,
+    "courseID": "course-123",
+    "studentID": "usr-student-123"
+  }
+}

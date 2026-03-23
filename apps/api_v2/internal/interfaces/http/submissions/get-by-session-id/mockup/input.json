@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/submissions/sessions/{id}",
+  "pathParams": {
+    "id": "session-123"
+  },
+  "query": {},
+  "body": null
+}

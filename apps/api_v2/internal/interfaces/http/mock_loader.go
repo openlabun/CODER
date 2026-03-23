@@ -9,7 +9,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-const mockBasePath = "test/http/mockup-responses"
+var mockBasePaths = []string{
+	"internal/interfaces/http",
+	"test/http/mockup-responses",
+}
 
 func mockHandler(relativePath string, statusCode int) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -21,22 +24,46 @@ func mockHandler(relativePath string, statusCode int) fiber.Handler {
 			})
 		}
 
+		if envelope, ok := payload.(map[string]any); ok {
+			if body, hasBody := envelope["body"]; hasBody {
+				if code, hasCode := envelope["statusCode"]; hasCode {
+					if codeFloat, castOk := code.(float64); castOk {
+						c.Status(int(codeFloat))
+						return c.JSON(body)
+					}
+				}
+				c.Status(statusCode)
+				return c.JSON(body)
+			}
+		}
+
 		c.Status(statusCode)
 		return c.JSON(payload)
 	}
 }
 
 func loadMock(relativePath string) (any, error) {
-	path := filepath.Join(mockBasePath, relativePath)
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("read mock file %s: %w", path, err)
+	var lastErr error
+
+	for _, basePath := range mockBasePaths {
+		path := filepath.Join(basePath, relativePath)
+		bytes, err := os.ReadFile(path)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		var out any
+		if err := json.Unmarshal(bytes, &out); err != nil {
+			return nil, fmt.Errorf("decode mock file %s: %w", path, err)
+		}
+
+		return out, nil
 	}
 
-	var out any
-	if err := json.Unmarshal(bytes, &out); err != nil {
-		return nil, fmt.Errorf("decode mock file %s: %w", path, err)
+	if lastErr == nil {
+		lastErr = fmt.Errorf("mock file not found")
 	}
 
-	return out, nil
+	return nil, fmt.Errorf("read mock file %s: %w", relativePath, lastErr)
 }

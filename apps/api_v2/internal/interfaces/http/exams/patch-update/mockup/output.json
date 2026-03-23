@@ -1,0 +1,8 @@
+{
+  "statusCode": 200,
+  "body": {
+    "id": "exam-123",
+    "title": "Midterm 1 Updated",
+    "try_limit": 3
+  }
+}

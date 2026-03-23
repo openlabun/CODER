@@ -1,0 +1,13 @@
+{
+  "method": "PATCH",
+  "path": "/challenges/{id}",
+  "pathParams": {
+    "id": "challenge-123"
+  },
+  "query": {},
+  "body": {
+    "title": "Two Sum Updated",
+    "difficulty": "medium",
+    "workerTimeLimit": 2000
+  }
+}

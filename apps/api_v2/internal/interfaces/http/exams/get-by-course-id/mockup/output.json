@@ -1,0 +1,10 @@
+{
+  "statusCode": 200,
+  "body": [
+    {
+      "id": "exam-123",
+      "title": "Midterm 1",
+      "course_id": "course-123"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "statusCode": 201,
+  "body": {
+    "id": "submission-123",
+    "challengeID": "challenge-123",
+    "sessionID": "session-123",
+    "status": "queued"
+  }
+}

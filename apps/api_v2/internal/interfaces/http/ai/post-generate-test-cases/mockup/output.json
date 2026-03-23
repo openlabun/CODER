@@ -1,0 +1,6 @@
+{
+  "statusCode": 501,
+  "body": {
+    "message": "AI test case generation not implemented in application usecases"
+  }
+}

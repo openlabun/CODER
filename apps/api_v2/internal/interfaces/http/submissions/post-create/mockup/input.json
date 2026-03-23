@@ -1,0 +1,12 @@
+{
+  "method": "POST",
+  "path": "/submissions",
+  "pathParams": {},
+  "query": {},
+  "body": {
+    "code": "def solve(a,b): return a+b",
+    "language": "python",
+    "challengeID": "challenge-123",
+    "sessionID": "session-123"
+  }
+}

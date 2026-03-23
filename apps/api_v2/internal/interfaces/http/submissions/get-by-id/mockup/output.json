@@ -1,0 +1,17 @@
+{
+  "statusCode": 200,
+  "body": {
+    "submission": {
+      "id": "submission-123",
+      "challengeID": "challenge-123",
+      "sessionID": "session-123",
+      "userID": "usr-student-123"
+    },
+    "results": [
+      {
+        "id": "result-1",
+        "status": "queued"
+      }
+    ]
+  }
+}

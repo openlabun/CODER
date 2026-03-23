@@ -1,0 +1,10 @@
+{
+  "method": "GET",
+  "path": "/submissions",
+  "pathParams": {},
+  "query": {
+    "challengeId": "challenge-123",
+    "status": "queued"
+  },
+  "body": null
+}

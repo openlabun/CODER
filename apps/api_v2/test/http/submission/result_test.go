@@ -10,7 +10,7 @@ import (
 )
 
 func TestUpdateSubmissionResultWithWorker(t *testing.T) {
-	// [STEP 1] Initialize the app and authenticate a user
+	t.Log("[STEP 1] Initialize the app and authenticate a user")
 	app := initSubmissionHTTPApp(t)
 	workerKey := "worker-key-http-result-test"
 	t.Setenv("WORKER_KEY", workerKey)
@@ -20,11 +20,11 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 	runSuffix := fmt.Sprintf("%d", time.Now().UnixNano())
 	studentEmail := "student.result." + runSuffix + "@test.com"
 
-	// [STEP 2] Login as teacher
+	t.Log("[STEP 2] Login as teacher")
 	teacherAccess := ensureSubmissionHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
 	teacherHeaders := submissionAuthHeaders(teacherAccess)
 
-	// [STEP 3] Create course, exam, challenge and a test case
+	t.Log("[STEP 3] Create course, exam, challenge and a test case")
 	courseID := createSubmissionCourseHTTP(t, app, teacherAccess, "result")
 	examID := createSubmissionExamHTTP(t, app, teacherAccess, courseID, "HTTP Submission Result Exam")
 	challengeID := createSubmissionChallengeHTTP(t, app, teacherAccess, examID, "HTTP Submission Result Challenge")
@@ -38,7 +38,7 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 		t.Fatalf("expected publish challenge status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 
-	// [STEP 4] Login as student and create a submission for the challenge
+	t.Log("[STEP 4] Login as student and create a submission for the challenge")
 	studentAccess := ensureSubmissionHTTPAuthUserAccess(t, app, studentEmail, "Testing123!", "Student Result")
 	studentHeaders := submissionAuthHeaders(studentAccess)
 
@@ -91,11 +91,7 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 		t.Fatalf("expected at least one submission result for submission=%s", submissionID)
 	}
 
-	for _, state := range states {
-		execUpdateResultStatus(t, app, state.ID, "accepted", "5", workerKey)
-	}
-
-	// [STEP 5] Request submission status until its "accepted" (max. 3 tries with 2s wait)
+	t.Log("[STEP 5] Request submission status until its \"accepted\" (max. 3 tries with 2s wait)")
 	accepted := false
 	for attempt := 1; attempt <= 3; attempt++ {
 		status, body, err = httputils.DoJSONRequest(app, http.MethodGet, "/submissions/"+submissionID, nil, teacherHeaders)
@@ -138,6 +134,7 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 		t.Fatalf("expected submission=%s results to reach accepted within 3 attempts", submissionID)
 	}
 
+	t.Log("[STEP 6] Delete the course")
 	status, body, err = httputils.DoJSONRequest(app, http.MethodDelete, "/courses/"+courseID, nil, teacherHeaders)
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)

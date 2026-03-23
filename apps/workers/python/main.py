@@ -5,6 +5,7 @@ from app.adapters.driving.rabbitmq_consumer import RabbitMQConsumer
 
 
 def main():
+    print("[Worker] Starting Python worker...", flush=True)
     executor = DockerExecutor()
     executor.ensure_image_cached()
     api_client = HTTPAPIClient()
@@ -12,7 +13,7 @@ def main():
     use_case = ProcessSubmission(executor, api_client)
 
     consumer = RabbitMQConsumer(handler=use_case.execute)
-    consumer.start()
+    consumer.start()    
 
 
 if __name__ == "__main__":

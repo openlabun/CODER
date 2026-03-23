@@ -1,0 +1,11 @@
+{
+  "statusCode": 201,
+  "body": {
+    "id": "submission-123",
+    "function": "solve(a, b)",
+    "language": "python",
+    "challengeID": "challenge-123",
+    "sessionID": "session-123",
+    "status": "queued"
+  }
+}

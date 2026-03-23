@@ -1,0 +1,9 @@
+{
+  "method": "POST",
+  "path": "/auth/refresh-token",
+  "pathParams": {},
+  "query": {},
+  "body": {
+    "refresh_token": "your-refresh-token"
+  }
+}

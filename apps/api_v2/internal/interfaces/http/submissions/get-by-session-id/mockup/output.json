@@ -1,0 +1,11 @@
+{
+  "statusCode": 200,
+  "body": {
+    "id": "session-123",
+    "studentID": "usr-student-123",
+    "examID": "exam-123",
+    "status": "active",
+    "attempts": 0,
+    "timeLeft": 3600
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "method": "GET",
+  "path": "/test-cases/challenge/{challengeId}",
+  "pathParams": {
+    "challengeId": "challenge-123"
+  },
+  "query": {
+    "samplesOnly": true
+  },
+  "body": null
+}

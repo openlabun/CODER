@@ -1,0 +1,5 @@
+package postupdate
+
+func MapPath(id string) PathDTO { 
+	return PathDTO{ID: id} 
+}

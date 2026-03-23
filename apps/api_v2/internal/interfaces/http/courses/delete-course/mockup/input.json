@@ -1,0 +1,9 @@
+{
+  "method": "DELETE",
+  "path": "/courses/{id}",
+  "pathParams": {
+    "id": "course-123"
+  },
+  "query": {},
+  "body": null
+}

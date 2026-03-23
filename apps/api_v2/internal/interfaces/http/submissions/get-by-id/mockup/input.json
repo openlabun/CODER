@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/submissions/{id}",
+  "pathParams": {
+    "id": "submission-123"
+  },
+  "query": {},
+  "body": null
+}

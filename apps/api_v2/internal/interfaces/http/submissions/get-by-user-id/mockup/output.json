@@ -1,0 +1,13 @@
+{
+  "statusCode": 200,
+  "body": [
+    {
+      "id": "sub-123",
+      "function": "solve",
+      "language": "python",
+      "userID": "usr-123",
+      "challengeID": "challenge-123",
+      "status": "pending"
+    }
+  ]
+}

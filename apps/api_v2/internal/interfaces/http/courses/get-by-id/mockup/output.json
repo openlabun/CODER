@@ -1,0 +1,9 @@
+{
+  "statusCode": 200,
+  "body": {
+    "id": "course-123",
+    "name": "Algorithms 1",
+    "description": "Intro to algorithms",
+    "code": "ALG-101"
+  }
+}

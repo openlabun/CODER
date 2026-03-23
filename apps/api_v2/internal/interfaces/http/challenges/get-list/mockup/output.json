@@ -1,0 +1,12 @@
+{
+  "statusCode": 200,
+  "body": [
+    {
+      "id": "challenge-123",
+      "title": "Two Sum",
+      "status": "published",
+      "difficulty": "easy",
+      "examID": "exam-123"
+    }
+  ]
+}

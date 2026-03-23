@@ -1,0 +1,39 @@
+package shared
+
+import (
+	"context"
+	"strings"
+
+	"github.com/gofiber/fiber/v2"
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
+)
+
+func BuildRequestContext(c *fiber.Ctx) context.Context {
+	ctx := context.Background()
+
+	authHeader := strings.TrimSpace(c.Get("Authorization"))
+	if strings.HasPrefix(strings.ToLower(authHeader), "bearer ") {
+		token := strings.TrimSpace(authHeader[7:])
+		if token != "" {
+			ctx = services.WithAccessToken(ctx, token)
+		}
+	}
+
+	email := strings.TrimSpace(c.Get("X-User-Email"))
+	if email == "" {
+		email = strings.TrimSpace(c.Query("userEmail"))
+	}
+	if email != "" {
+		ctx = services.WithUserEmail(ctx, email)
+	}
+
+	workerKey := strings.TrimSpace(c.Get("WorkerKey"))
+	if workerKey == "" {
+		workerKey = strings.TrimSpace(c.Get("X-Worker-Key"))
+	}
+	if workerKey != "" {
+		ctx = services.WithInternalServiceKey(ctx, workerKey)
+	}
+
+	return ctx
+}

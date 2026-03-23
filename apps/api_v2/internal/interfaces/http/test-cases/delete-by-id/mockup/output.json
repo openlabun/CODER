@@ -1,0 +1,7 @@
+{
+  "statusCode": 200,
+  "body": {
+    "deleted": true,
+    "testCaseID": "test-case-123"
+  }
+}

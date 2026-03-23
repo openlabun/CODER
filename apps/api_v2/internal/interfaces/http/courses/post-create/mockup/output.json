@@ -1,0 +1,9 @@
+{
+  "statusCode": 201,
+  "body": {
+    "id": "course-123",
+    "name": "Algorithms 1",
+    "code": "ALG-101",
+    "teacherID": "usr-teacher-123"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "statusCode": 200,
+  "body": {
+    "id": "exam-123",
+    "visibility": "private"
+  }
+}

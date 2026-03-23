@@ -1,0 +1,9 @@
+{
+  "statusCode": 201,
+  "body": {
+    "id": "test-case-123",
+    "challengeID": "challenge-123",
+    "isSample": true,
+    "points": 10
+  }
+}

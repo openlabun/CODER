@@ -1,0 +1,10 @@
+{
+  "method": "POST",
+  "path": "/courses/enroll",
+  "pathParams": {},
+  "query": {},
+  "body": {
+    "courseID": "course-123",
+    "studentID": "usr-student-123"
+  }
+}

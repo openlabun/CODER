@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/leaderboard/challenge/{id}",
+  "pathParams": {
+    "id": "challenge-123"
+  },
+  "query": {},
+  "body": null
+}

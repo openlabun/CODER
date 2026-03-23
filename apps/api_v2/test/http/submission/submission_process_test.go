@@ -386,7 +386,7 @@ func createSubmissionChallengeHTTP(t *testing.T, app *fiber.App, teacherAccess *
 		"title":             title,
 		"description":       "Challenge for HTTP submission tests",
 		"tags":              []string{"submission", "http"},
-		"status":            "published",
+		"status":            "draft",
 		"difficulty":        "easy",
 		"workerTimeLimit":   1500,
 		"workerMemoryLimit": 256,

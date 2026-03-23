@@ -17,6 +17,36 @@ services:
             - .env.dev
         networks:
             - judge_net
+
+    rabbitmq:
+        image: rabbitmq:3.13-management
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        networks:
+            - judge_net
+
+    worker-python:
+        build:
+            context: ./apps/workers/python
+            dockerfile: Dockerfile
+        working_dir: /app
+        command: python main.py
+        env_file:
+            - .env.dev
+        environment:
+            - API_BASE_URL=http://apiv2:4000
+            - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+            - QUEUE_NAME=python.queue
+        volumes:
+            - ./apps/workers/python:/app
+            - /var/run/docker.sock:/var/run/docker.sock
+        depends_on:
+            - apiv2
+            - rabbitmq
+        networks:
+            - judge_net
+
     web:
         build:
             context: ./apps/web
@@ -32,7 +62,7 @@ services:
         networks:
             - judge_net
         depends_on:
-            - api
+            - apiv2
 volumes:
     pgdata:
 

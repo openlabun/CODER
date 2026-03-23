@@ -1344,6 +1344,41 @@ paths:
                   results:
                     - id: result-1
                       status: queued
+  /submissions/results/{resultId}:
+    patch:
+      tags:
+        - submissions
+      summary: Update submission result (internal worker endpoint)
+      description: Internal consumption endpoint for workers. Requires WorkerKey header.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/submissions/patch-update-result/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/submissions/patch-update-result/mockup/output.json
+      parameters:
+        - in: path
+          name: resultId
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: WorkerKey
+          required: true
+          schema:
+            type: string
+          description: Internal worker authorization key. Must match WORKER_KEY configured in API.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmissionsPatchUpdateResultInput"
+      responses:
+        "200":
+          description: Submission result updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionsPatchUpdateResultOutput200"
   /submissions/user/{userId}:
     get:
       tags:
@@ -3360,6 +3395,50 @@ components:
             challengeID: challenge-123
             sessionID: session-123
             status: queued
+    SubmissionsPatchUpdateResultInput:
+      type: object
+      properties:
+        status:
+          type: string
+        timeExecution:
+          type: integer
+        output:
+          type: string
+          nullable: true
+        error:
+          type: string
+          nullable: true
+      required:
+        - status
+        - timeExecution
+    SubmissionsPatchUpdateResultOutput200:
+      type: object
+      properties:
+        id:
+          type: string
+        submissionID:
+          type: string
+        testCaseID:
+          type: string
+        status:
+          type: string
+        actualOutput:
+          type: object
+          nullable: true
+          properties:
+            type:
+              type: string
+            value:
+              type: string
+              nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+      required:
+        - id
+        - submissionID
+        - testCaseID
+        - status
     SubmissionsPostSessionInput:
       type: object
       properties:

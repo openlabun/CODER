@@ -15,6 +15,9 @@ services:
             - ./apps/api_v2:/app
         env_file:
             - .env.dev
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
         networks:
             - judge_net
 
@@ -23,6 +26,11 @@ services:
         ports:
             - "5672:5672"
             - "15672:15672"
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
         networks:
             - judge_net
 

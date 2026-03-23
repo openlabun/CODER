@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 	entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
@@ -23,7 +24,9 @@ func NewRabbitMQAdapter() (*RabbitMQAdapter, error) {
 		string(entities.LanguageCPP):    getEnvOrDefault("CPP_QUEUE", "cpp.queue"),
 	}
 
-	conn, err := amqp.Dial(getEnvOrDefault("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"))
+	amqpURL := getEnvOrDefault("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")
+
+	conn, err := connectWithRetry(amqpURL, 10, 2*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("connect to rabbitmq: %w", err)
 	}
@@ -55,6 +58,24 @@ func NewRabbitMQAdapter() (*RabbitMQAdapter, error) {
 		channel:    ch,
 		queues:     queues,
 	}, nil
+}
+
+func connectWithRetry(amqpURL string, attempts int, delay time.Duration) (*amqp.Connection, error) {
+	var lastErr error
+
+	for i := 0; i < attempts; i++ {
+		conn, err := amqp.Dial(amqpURL)
+		if err == nil {
+			return conn, nil
+		}
+
+		lastErr = err
+		if i < attempts-1 {
+			time.Sleep(delay)
+		}
+	}
+
+	return nil, fmt.Errorf("after %d attempts: %w", attempts, lastErr)
 }
 
 func (a *RabbitMQAdapter) PublishSubmission(dto dtos.SubmissionResultPublishedDTO) error {

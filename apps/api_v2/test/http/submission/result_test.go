@@ -92,8 +92,8 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 		t.Fatalf("expected at least one submission result for submission=%s", submissionID)
 	}
 
-	t.Log("[STEP 5] Request submission status until its \"executed\" (max. 3 tries with 2s wait)")
-	executed := false
+	t.Log("[STEP 5] Request submission status until its \"accepted\" (max. 3 tries with 2s wait)")
+	accepted := false
 	for attempt := 1; attempt <= 3; attempt++ {
 		status, body, err = httputils.DoJSONRequest(app, http.MethodGet, "/submissions/"+submissionID, nil, teacherHeaders)
 		if err != nil {
@@ -113,16 +113,16 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 			t.Fatalf("expected submission results in status payload, got body=%s", string(body))
 		}
 
-		allExecuted := true
+		allAccepted := true
 		for _, state := range currentStates {
-			if state.Status != "executed" {
-				allExecuted = false
+			if state.Status != "accepted" {
+				allAccepted = false
 				break
 			}
 		}
 
-		if allExecuted {
-			executed = true
+		if allAccepted {
+			accepted = true
 			break
 		}
 
@@ -131,8 +131,8 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 		}
 	}
 
-	if !executed {
-		t.Fatalf("expected submission=%s results to reach executed within 3 attempts", submissionID)
+	if !accepted {
+		t.Fatalf("expected submission=%s results to reach accepted within 3 attempts", submissionID)
 	}
 
 	t.Log("[STEP 6] Delete the course")

@@ -126,6 +126,28 @@ paths:
                   username: Student Test
                   email: student@example.com
                   role: student
+  /auth/refresh-token:
+    post:
+      tags:
+        - auth
+      summary: Refresh auth token
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/auth/post-refresh-token/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/auth/post-refresh-token/mockup/output.json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthPostRefreshTokenInput"
+      responses:
+        "200":
+          description: Refreshed token response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthPostRefreshTokenOutput200"
   /ai/generate-challenge-ideas:
     post:
       tags:
@@ -358,8 +380,27 @@ paths:
                 body:
                   id: challenge-123
                   title: Two Sum Updated
-                  difficulty: medium
-                  workerTimeLimit: 2000
+    delete:
+      tags:
+        - challenges
+      summary: Delete challenge
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/challenges/delete-by-id/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/challenges/delete-by-id/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Challenge deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengesDeleteByIdOutput200"
   /challenges/{id}/publish:
     post:
       tags:
@@ -500,6 +541,33 @@ paths:
                     points: 10
                     challengeID: challenge-123
   /test-cases/{id}:
+    patch:
+      tags:
+        - test-cases
+      summary: Update test case
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/test-cases/patch-update/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/test-cases/patch-update/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestCasesPatchUpdateInput"
+      responses:
+        "200":
+          description: Test case updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestCasesPatchUpdateOutput200"
     delete:
       tags:
         - test-cases
@@ -1073,6 +1141,27 @@ paths:
                   id: exam-123
                   title: Midterm 1 Updated
                   try_limit: 3
+    delete:
+      tags:
+        - exams
+      summary: Delete exam
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exams/delete-by-id/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exams/delete-by-id/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Exam deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamsDeleteByIdOutput200"
   /exams/{id}/visibility:
     post:
       tags:
@@ -1255,6 +1344,43 @@ paths:
                   results:
                     - id: result-1
                       status: queued
+  /submissions/user/{userId}:
+    get:
+      tags:
+        - submissions
+      summary: List submissions by user
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/submissions/get-by-user-id/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/submissions/get-by-user-id/mockup/output.json
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: testId
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: challengeId
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User submissions list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionsGetByUserIdOutput200"
   /submissions/sessions:
     post:
       tags:
@@ -1663,6 +1789,62 @@ components:
         - statusCode
         - body
       example: *a5
+    AuthPostRefreshTokenInput:
+      type: object
+      properties:
+        method:
+          type: string
+        path:
+          type: string
+        pathParams:
+          type: object
+          properties: {}
+        query:
+          type: object
+          properties: {}
+        body:
+          type: object
+          properties:
+            refresh_token:
+              type: string
+          required:
+            - refresh_token
+      required:
+        - method
+        - path
+        - pathParams
+        - query
+        - body
+      example:
+        method: POST
+        path: /auth/refresh-token
+        pathParams: {}
+        query: {}
+        body:
+          refresh_token: jwt-refresh-token
+    AuthPostRefreshTokenOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+          properties:
+            access_token:
+              type: string
+            refresh_token:
+              type: string
+          required:
+            - access_token
+            - refresh_token
+      required:
+        - statusCode
+        - body
+      example:
+        statusCode: 200
+        body:
+          access_token: jwt-access-token-new
+          refresh_token: jwt-refresh-token-new
     AiPostGenerateChallengeIdeasInput:
       type: object
       properties:
@@ -2001,6 +2183,25 @@ components:
         - statusCode
         - body
       example: *a15
+    ChallengesDeleteByIdOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+          properties:
+            removed:
+              type: boolean
+          required:
+            - removed
+      required:
+        - statusCode
+        - body
+      example:
+        statusCode: 200
+        body:
+          removed: true
     ChallengesPostPublishOutput200:
       type: object
       properties:
@@ -2179,6 +2380,92 @@ components:
         - statusCode
         - body
       example: *a21
+    TestCasesPatchUpdateInput:
+      type: object
+      properties:
+        method:
+          type: string
+        path:
+          type: string
+        pathParams:
+          type: object
+          properties:
+            id:
+              type: string
+          required:
+            - id
+        query:
+          type: object
+          properties: {}
+        body:
+          type: object
+          properties:
+            name:
+              type: string
+            input:
+              type: array
+              items:
+                type: object
+            expectedOutput:
+              type: object
+            isSample:
+              type: boolean
+            points:
+              type: integer
+      required:
+        - method
+        - path
+        - pathParams
+        - query
+        - body
+      example:
+        method: PATCH
+        path: /test-cases/{id}
+        pathParams:
+          id: test-case-123
+        query: {}
+        body:
+          name: tc_add_1_updated
+          input:
+            - name: a
+              type: int
+              value: "2"
+            - name: b
+              type: int
+              value: "3"
+          expectedOutput:
+            name: sum
+            type: int
+            value: "5"
+          isSample: true
+          points: 15
+    TestCasesPatchUpdateOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            points:
+              type: integer
+          required:
+            - id
+            - name
+            - points
+      required:
+        - statusCode
+        - body
+      example:
+        statusCode: 200
+        body:
+          id: test-case-123
+          name: tc_add_1_updated
+          points: 15
     CoursesPostEnrollInput:
       type: object
       properties:
@@ -2868,6 +3155,25 @@ components:
         - statusCode
         - body
       example: *a46
+    ExamsDeleteByIdOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+          properties:
+            removed:
+              type: boolean
+          required:
+            - removed
+      required:
+        - statusCode
+        - body
+      example:
+        statusCode: 200
+        body:
+          removed: true
     SubmissionsPostCreateInput:
       type: object
       properties:
@@ -3017,6 +3323,43 @@ components:
         - statusCode
         - body
       example: *a50
+    SubmissionsGetByUserIdOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              userID:
+                type: string
+              challengeID:
+                type: string
+              sessionID:
+                type: string
+              status:
+                type: string
+            required:
+              - id
+              - userID
+              - challengeID
+              - sessionID
+              - status
+      required:
+        - statusCode
+        - body
+      example:
+        statusCode: 200
+        body:
+          - id: submission-123
+            userID: usr-student-123
+            challengeID: challenge-123
+            sessionID: session-123
+            status: queued
     SubmissionsPostSessionInput:
       type: object
       properties:

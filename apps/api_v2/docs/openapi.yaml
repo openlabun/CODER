@@ -734,6 +734,31 @@ paths:
                 body:
                   id: course-123
                   name: Algorithms 1 - Updated
+    delete:
+      tags:
+        - courses
+      summary: Delete course
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/courses/delete-course/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/courses/delete-course/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Course deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesDeleteCourseOutput200"
+              example: &a30_delete
+                statusCode: 200
+                body:
+                  removed: true
   /courses/{id}/students:
     post:
       tags:
@@ -2403,6 +2428,22 @@ components:
         - statusCode
         - body
       example: *a30
+    CoursesDeleteCourseOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+          properties:
+            removed:
+              type: boolean
+          required:
+            - removed
+      required:
+        - statusCode
+        - body
+      example: *a30_delete
     CoursesPostAddStudentInput:
       type: object
       properties:

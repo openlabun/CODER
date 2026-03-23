@@ -13,6 +13,7 @@ import (
 	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
+	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitMQ"
 	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	http_interfaces "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http"
 
@@ -39,10 +40,15 @@ func buildApplication() (*container.Application, error) {
 	examRepository := exam_repository.NewExamRepository(robleAdapter)
 	challengeRepository := exam_repository.NewChallengeRepository(robleAdapter)
 	testCaseRepository := exam_repository.NewTestCaseRepository(robleAdapter)
-	
+
 	submissionRepository := submission_repository.NewSubmissionRepository(robleAdapter)
 	sessionRepository := submission_repository.NewSessionRepository(robleAdapter)
 	submissionResRepository := submission_repository.NewSubmissionResultRepository(robleAdapter)
+
+	publisherAdapter, err := rabbitmq_infrastructure.NewRabbitMQAdapter()
+	if err != nil {
+		return nil, fmt.Errorf("initialize rabbitmq publisher adapter: %w", err)
+	}
 
 	deps := container.NewApplicationDependencies(
 		authAdapter,
@@ -62,6 +68,7 @@ func buildApplication() (*container.Application, error) {
 		submissionRepository,
 		sessionRepository,
 		submissionResRepository,
+		publisherAdapter,
 	)
 
 	appContainer, err := container.NewApplication(deps)
@@ -101,7 +108,6 @@ func main() {
 	app := newFiberApp(application)
 
 	//endpoint de documentacion
-	
 
 	port := os.Getenv("APIV2_PORT")
 	if port == "" {

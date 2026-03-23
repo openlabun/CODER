@@ -19,6 +19,7 @@ import (
 	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 	submission_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
+	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitmq"
 	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 )
 
@@ -256,6 +257,10 @@ func buildExamApplication() (*container.Application, error) {
 	subRepo := submission_repository.NewSubmissionRepository(robleAdapter)
 	sessionRepo := submission_repository.NewSessionRepository(robleAdapter)
 	resultRepo := submission_repository.NewSubmissionResultRepository(robleAdapter)
+	publisherPort, err := rabbitmq_infrastructure.NewRabbitMQAdapter()
+	if err != nil {
+		return nil, err
+	}
 
 	deps := container.NewApplicationDependencies(
 		authAdapter,
@@ -271,6 +276,7 @@ func buildExamApplication() (*container.Application, error) {
 		subRepo,
 		sessionRepo,
 		resultRepo,
+		publisherPort,
 	)
 
 	app, err := container.NewApplication(deps)

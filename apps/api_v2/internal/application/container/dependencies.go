@@ -3,13 +3,13 @@ package container
 import (
 	"fmt"
 
+	submussion_ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/submission"
 	ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
-	user_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	course_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	exam_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submission_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
+	user_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 )
-
 
 // ApplicationDependencies groups all contract-based dependencies required by
 // application use cases.
@@ -20,13 +20,15 @@ type ApplicationDependencies struct {
 	TokenService    ports.TokenServicePort
 	PasswordHasher  ports.PasswordHasherPort
 
-	UserRepository user_repositories.UserRepository
-	CourseRepository course_repositories.CourseRepository
-	ExamRepository exam_repositories.ExamRepository
-	ChallengeRepository exam_repositories.ChallengeRepository
-	TestCaseRepository exam_repositories.TestCaseRepository
-	SubmissionRepository submission_repositories.SubmissionRepository
-	SessionRepository submission_repositories.SessionRepository
+	PublisherPort submussion_ports.SubmissionPublisherPort
+
+	UserRepository             user_repositories.UserRepository
+	CourseRepository           course_repositories.CourseRepository
+	ExamRepository             exam_repositories.ExamRepository
+	ChallengeRepository        exam_repositories.ChallengeRepository
+	TestCaseRepository         exam_repositories.TestCaseRepository
+	SubmissionRepository       submission_repositories.SubmissionRepository
+	SessionRepository          submission_repositories.SessionRepository
 	SubmissionResultRepository submission_repositories.SubmissionResultRepository
 }
 
@@ -44,21 +46,22 @@ func NewApplicationDependencies(
 	submissionRepo submission_repositories.SubmissionRepository,
 	sessionRepo submission_repositories.SessionRepository,
 	submissionResultRepo submission_repositories.SubmissionResultRepository,
-
+	publisherPort submussion_ports.SubmissionPublisherPort,
 ) ApplicationDependencies {
 	return ApplicationDependencies{
-		RegisterService: registerService,
-		LoginService:    loginService,
-		UserService:     userService,
-		TokenService:    tokenService,
-		PasswordHasher:  passwordHasher,
-		UserRepository:  userRepo,
-		CourseRepository: courseRepo,
-		ExamRepository: examRepo,
-		ChallengeRepository: challengeRepo,
-		TestCaseRepository: testCaseRepo,
-		SubmissionRepository: submissionRepo,
-		SessionRepository: sessionRepo,
+		RegisterService:            registerService,
+		LoginService:               loginService,
+		UserService:                userService,
+		TokenService:               tokenService,
+		PasswordHasher:             passwordHasher,
+		PublisherPort:              publisherPort,
+		UserRepository:             userRepo,
+		CourseRepository:           courseRepo,
+		ExamRepository:             examRepo,
+		ChallengeRepository:        challengeRepo,
+		TestCaseRepository:         testCaseRepo,
+		SubmissionRepository:       submissionRepo,
+		SessionRepository:          sessionRepo,
 		SubmissionResultRepository: submissionResultRepo,
 	}
 }
@@ -116,5 +119,9 @@ func (deps ApplicationDependencies) CheckDependencies() error {
 		return fmt.Errorf("SubmissionResultRepository dependency is not provided")
 	}
 
-	return  nil
+	if deps.PublisherPort == nil {
+		return fmt.Errorf("SubmissionPublisherPort dependency is not provided")
+	}
+
+	return nil
 }

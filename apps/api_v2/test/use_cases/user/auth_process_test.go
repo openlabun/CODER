@@ -10,6 +10,7 @@ import (
 	user_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
+	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitmq"
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 	course_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
 	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
@@ -102,6 +103,11 @@ func buildAuthApplication() (*container.Application, error) {
 	sessionRepo := submission_repository.NewSessionRepository(robleAdapter)
 	resultRepo := submission_repository.NewSubmissionResultRepository(robleAdapter)
 
+	publisherAdapter, err := rabbitmq_infrastructure.NewRabbitMQAdapter()
+	if err != nil {
+		return nil, err
+	}
+
 	deps := container.NewApplicationDependencies(
 		authAdapter,
 		authAdapter,
@@ -116,6 +122,7 @@ func buildAuthApplication() (*container.Application, error) {
 		submissionRepo,
 		sessionRepo,
 		resultRepo,
+		publisherAdapter,
 	)
 
 	return container.NewApplication(deps)

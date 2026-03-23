@@ -6,6 +6,7 @@ import (
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 
+	submissionPorts "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/submission"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
@@ -24,9 +25,10 @@ type CreateSubmissionUseCase struct {
 	challengeRepository examRepository.ChallengeRepository
 	testCaseRepository examRepository.TestCaseRepository
 	resultRepository submissionRepository.SubmissionResultRepository
+	publisherPort submissionPorts.SubmissionPublisherPort
 }
 
-func NewCreateSubmissionUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository) *CreateSubmissionUseCase {
+func NewCreateSubmissionUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository, publisherPort submissionPorts.SubmissionPublisherPort) *CreateSubmissionUseCase {
 	return &CreateSubmissionUseCase{
 		userRepository: userRepository,
 		submissionRepository: submissionRepository,
@@ -34,6 +36,7 @@ func NewCreateSubmissionUseCase(userRepository userRepository.UserRepository, su
 		challengeRepository: challengeRepository,
 		testCaseRepository: testCaseRepository,
 		resultRepository: resultRepository,
+		publisherPort: publisherPort,
 	}
 }
 
@@ -99,32 +102,44 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 	}
 
 	// [STEP 7] Create submission results for each test case of the challenge
+	var publishedResults []dtos.SubmissionResultPublishedDTO
 	for _, testCase := range testCases {
-		err = uc.createSubmissionResultsForTestCases(ctx, createdSubmission.ID, *testCase)
+		result, err := uc.createSubmissionResultsForTestCases(ctx, createdSubmission.ID, *testCase)
 		if err != nil {
 			return nil, err
 		}
-	}
 
+		if result != nil {
+			// [STEP 8] Create DTO for publishing
+			publishedResult := mapper.MapSubmissionResultToPublishedDTO(*createdSubmission, *result, *testCase, *challenge)
+			publishedResults = append(publishedResults, *publishedResult)
+		}
+	}
+	
 	// [STEP 8] Publish submission created event to message broker for asynchronous processing of submission results
-	// TODO: implement event publishing to message broker
+	for _, publishedResult := range publishedResults {
+		err = uc.publisherPort.PublishSubmission(publishedResult)
+		if err != nil {
+			return nil, fmt.Errorf("failed to publish submission result: %w", err)
+		}
+	}
 
 	// [STEP 8] Return created submission entity
 	return createdSubmission, nil
 }
 
-func (uc *CreateSubmissionUseCase) createSubmissionResultsForTestCases(ctx context.Context, submissionID string, testCase examEntities.TestCase) error {
+func (uc *CreateSubmissionUseCase) createSubmissionResultsForTestCases(ctx context.Context, submissionID string, testCase examEntities.TestCase) (*Entities.SubmissionResult, error) {
 	// [STEP 7.1] Create submission result entity with user provided values
 	submissionResult, err := mapper.MapSubmissionResultEntity(submissionID, testCase.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// [STEP 7.2] Save submission result in database
-	_, err = uc.resultRepository.CreateResult(ctx, submissionResult)
+	result, err := uc.resultRepository.CreateResult(ctx, submissionResult)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	
-	return nil
+	return result, nil
 }

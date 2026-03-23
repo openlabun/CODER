@@ -24,6 +24,7 @@ import (
 	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 	submission_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
+	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitmq"
 	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	http_interfaces "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http"
 )
@@ -89,6 +90,10 @@ func InitApp() (*fiber.App, error) {
 	submissionRepository := submission_repository.NewSubmissionRepository(robleAdapter)
 	sessionRepository := submission_repository.NewSessionRepository(robleAdapter)
 	submissionResRepository := submission_repository.NewSubmissionResultRepository(robleAdapter)
+	publisherPort, err := rabbitmq_infrastructure.NewRabbitMQAdapter()
+	if err != nil {
+		return nil, fmt.Errorf("initialize publisher adapter: %w", err)
+	}
 
 	deps := container.NewApplicationDependencies(
 		authAdapter,
@@ -104,6 +109,7 @@ func InitApp() (*fiber.App, error) {
 		submissionRepository,
 		sessionRepository,
 		submissionResRepository,
+		publisherPort,
 	)
 
 	appContainer, err := container.NewApplication(deps)

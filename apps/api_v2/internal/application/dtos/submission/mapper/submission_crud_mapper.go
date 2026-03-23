@@ -5,6 +5,7 @@ import (
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 
+	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
 	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/submission"
@@ -66,4 +67,23 @@ func MapResultInputToSubmissionResultEntity(input dtos.UpdateResultInput, submis
 	}
 
 	return submissionResult, nil
+}
+
+func MapSubmissionResultToPublishedDTO(
+	submission Entities.Submission, 
+	result Entities.SubmissionResult, 
+	test_case examEntities.TestCase, 
+	challenge examEntities.Challenge,
+) *dtos.SubmissionResultPublishedDTO {
+
+	return &dtos.SubmissionResultPublishedDTO{
+		SubmissionID: submission.ID,
+		Code: submission.Code,
+		ResultID: result.ID,
+		TimeLimitMs: challenge.WorkerTimeLimit,
+		MemoryLimitMb: challenge.WorkerMemoryLimit,
+		Status: string(result.Status),
+		Type: string(test_case.ExpectedOutput.Type),
+		Language: string(submission.Language),
+	}
 }

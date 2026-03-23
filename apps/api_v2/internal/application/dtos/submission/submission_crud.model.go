@@ -41,3 +41,14 @@ type SubmissionOutputDTO struct {
 	Submission Entities.Submission
 	Results    []Entities.SubmissionResult
 }
+
+type SubmissionResultPublishedDTO struct {
+	SubmissionID string `json:"submission_id"`
+	Code 	  	 string `json:"code"`
+	ResultID	 string `json:"result_id"`
+	TimeLimitMs  int    `json:"time_limit_ms"`
+	MemoryLimitMb int    `json:"memory_limit_mb"`
+	Status		 string `json:"status"`
+	Type 		 string `json:"type"`
+	Language 	 string `json:"language"`
+}

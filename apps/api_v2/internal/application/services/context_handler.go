@@ -11,6 +11,7 @@ type ContextKey string
 const (
 	UserEmailContextKey ContextKey = "userEmail"
 	AccessTokenContextKey ContextKey = "accessToken"
+	InternalServiceContextKey ContextKey = "workerKey"
 )
 
 func WithUserEmail(ctx context.Context, email string) context.Context {
@@ -44,6 +45,25 @@ func AccessTokenFromContext(ctx context.Context) (string, bool) {
 		token = strings.TrimSpace(token)
 		if token != "" {
 			return token, true
+		}
+	}
+
+	return "", false
+}
+
+func WithInternalServiceKey(ctx context.Context, key string) context.Context {
+	return context.WithValue(ctx, InternalServiceContextKey, strings.TrimSpace(key))
+}
+
+func AccessInternalServiceKeyFromContext(ctx context.Context) (string, bool) {
+	if ctx == nil {
+		return "", false
+	}
+
+	if key, ok := ctx.Value(InternalServiceContextKey).(string); ok {
+		key = strings.TrimSpace(key)
+		if key != "" {
+			return key, true
 		}
 	}
 

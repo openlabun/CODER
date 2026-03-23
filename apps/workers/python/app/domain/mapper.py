@@ -9,9 +9,9 @@ def MapSubmissionResult(data: dict) -> SubmissionResult:
         memory_limit_mb=data["memory_limit_mb"],
         var_type=standarizeTypes(data["type"]),
         status=data["status"],
-        output=data.get("output"),
-        error=data.get("error"),
-        execution_time_ms=data.get("execution_time_ms", 0)
+        output=None,
+        error=None,
+        execution_time_ms=0
     )
 
 def standarizeTypes(var_type: str) -> type:

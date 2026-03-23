@@ -14,11 +14,11 @@ func validateSubmissionResultsDetails(result *Entities.SubmissionResult) error {
 	hasErrorMessage := result.ErrorMessage != nil && strings.TrimSpace(*result.ErrorMessage) != ""
 
 	switch result.Status {
-	case Entities.SubmissionStatusQueued, Entities.SubmissionStatusRunning:
+	case Entities.SubmissionStatusQueued, Entities.SubmissionStatusRunning, Entities.SubmissionStatusTimeout:
 		if hasActualOutput || hasErrorMessage {
 			return fmt.Errorf("queued/running result cannot include output or error message")
 		}
-	case Entities.SubmissionStatusAccepted, Entities.SubmissionStatusWrongAnswer:
+	case Entities.SubmissionStatusAccepted, Entities.SubmissionStatusWrongAnswer, Entities.SubmissionStatusExecuted:
 		if !hasActualOutput {
 			return fmt.Errorf("accepted/wrong_answer result requires actual output")
 		}

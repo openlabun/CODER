@@ -7,11 +7,13 @@ import (
 )
 
 // State machine for submission processing
-// States: queued -> running -> accepted|wrong_answer|error
+// States: queued -> running -> executed|timeout|errro -> accepted|wrong_answer
 //   - queued: initial state when a submission is made
 //   - running: when the submission is being evaluated
-//   - accepted: when the submission passes all test cases
-//   - wrong_answer: when the submission fails one or more test cases
+//   - executed: when the submission has been executed
+//   - timeout: when the submission times out
+//   - accepted: when the submission is accepted
+//   - wrong_answer: when the submission is rejected due to wrong answer
 //   - error: when there is an internal error during processing (e.g., runtime error, compilation error)
 
 // If a submission is in the accepted/wrong_answer state: ExpectedOutput and ActualOutput may be populated for feedback purposes
@@ -22,9 +24,13 @@ var submissionAllowedTransitions = map[Entities.SubmissionStatus]map[Entities.Su
 		Entities.SubmissionStatusRunning: {},
 	},
 	Entities.SubmissionStatusRunning: {
+		Entities.SubmissionStatusExecuted: {},
+		Entities.SubmissionStatusTimeout:  {},
+		Entities.SubmissionStatusError:    {},
+	},
+	Entities.SubmissionStatusExecuted: {
 		Entities.SubmissionStatusAccepted:    {},
 		Entities.SubmissionStatusWrongAnswer: {},
-		Entities.SubmissionStatusError:       {},
 	},
 }
 

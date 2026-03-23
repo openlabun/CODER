@@ -7,7 +7,7 @@ import (
 )
 
 // State machine for submission processing
-// States: queued -> running -> executed|timeout|errro -> accepted|wrong_answer
+// States: queued -> running -> executed|timeout|error -> accepted|wrong_answer
 //   - queued: initial state when a submission is made
 //   - running: when the submission is being evaluated
 //   - executed: when the submission has been executed
@@ -39,6 +39,10 @@ func IsValidState(state Entities.SubmissionStatus) bool {
 	case Entities.SubmissionStatusQueued:
 		return true
 	case Entities.SubmissionStatusRunning:
+		return true
+	case Entities.SubmissionStatusTimeout:
+		return true
+	case Entities.SubmissionStatusExecuted:
 		return true
 	case Entities.SubmissionStatusAccepted:
 		return true

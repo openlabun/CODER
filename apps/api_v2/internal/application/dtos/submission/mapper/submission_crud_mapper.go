@@ -91,7 +91,7 @@ func MapSubmissionResultToPublishedDTO(
 	challenge examEntities.Challenge,
 ) *dtos.SubmissionResultPublishedDTO {
 
-	code, err := services.AppendFunctionCall(submission.Code, submission.Language, test_case.Input)
+	code, err := services.AppendFunctionCall(submission.Code,submission.Function, submission.Language, test_case.Input)
 	if err != nil {
 		return nil
 	}

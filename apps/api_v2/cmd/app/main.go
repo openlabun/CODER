@@ -75,7 +75,7 @@ func newFiberApp(appContainer *container.Application) *fiber.App {
 	app := fiber.New()
 	_ = appContainer
 
-	http_interfaces.RegisterRoutes(app)
+	http_interfaces.RegisterRoutes(app, appContainer)
 
 	return app
 }

@@ -1,39 +1,90 @@
 package services
 
 import (
-	submissionEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	"fmt"
+	"strings"
+
 	entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	submissionEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
-func detectFunction (code string, language submissionEntities.ProgrammingLanguage, inputs []entities.IOVariable) (string, error) {
-	var variable_list []string
-	for _, variable := range inputs {
-		variable_list = append(variable_list, variable.Name)
+func makeFunctionCall(functionName string, inputs []entities.IOVariable) (string, error) {
+	for _, input := range inputs {
+		// For string inputs, we need to add quotes around them
+		if input.Type == "string" {
+			input.Value = "\"" + input.Value + "\""
+		}
+
+		// Replace input.Name in functionName with input.Value
+		functionName = replaceVariable(functionName, input.Name, input.Value)
 	}
-	
-	// TODO: Implement function for detecting the function name from the code.
 
-	return "", nil
+	return functionName, nil
 }
 
-func makeFunctionCall (functionName string, inputs []entities.IOVariable) (string, error) {
-	// TODO: Implement function for creating a function call string based on the function name and the input variables.
-	
-	return "", nil
+func isIdentifierChar(b byte) bool {
+	return (b >= 'a' && b <= 'z') ||
+		(b >= 'A' && b <= 'Z') ||
+		(b >= '0' && b <= '9') ||
+		b == '_'
 }
 
-func AppendFunctionCall (code string, language submissionEntities.ProgrammingLanguage, inputs []entities.IOVariable) (string, error) {
-	function_name, err := detectFunction(code, language, inputs)
+func replaceVariable(functionCall string, variableName string, variableValue string) string {
+	if variableName == "" {
+		return functionCall
+	}
+
+	var out strings.Builder
+	start := 0
+	searchFrom := 0
+
+	for {
+		idx := strings.Index(functionCall[searchFrom:], variableName)
+		if idx == -1 {
+			break
+		}
+
+		idx += searchFrom
+		end := idx + len(variableName)
+
+		leftOK := idx == 0 || !isIdentifierChar(functionCall[idx-1])
+		rightOK := end >= len(functionCall) || !isIdentifierChar(functionCall[end])
+
+		if leftOK && rightOK {
+			out.WriteString(functionCall[start:idx])
+			out.WriteString(variableValue)
+			start = end
+		}
+
+		searchFrom = end
+	}
+
+	if start == 0 {
+		return functionCall
+	}
+
+	out.WriteString(functionCall[start:])
+	return out.String()
+}
+
+func AppendFunctionCall(code string, function string, language submissionEntities.ProgrammingLanguage, inputs []entities.IOVariable) (string, error) {
+	function_call, err := makeFunctionCall(function, inputs)
 	if err != nil {
 		return "", err
 	}
 
-	function_call, err := makeFunctionCall(function_name, inputs)
-	if err != nil {
-		return "", err
+	switch language {
+	case submissionEntities.LanguagePython:
+		function_call = "print(" + function_call + ")"
+	case submissionEntities.LanguageJava:
+		function_call = "System.out.println(" + function_call + ");"
+	case submissionEntities.LanguageCPP:
+		function_call = "cout << " + function_call + " << endl;"
+	default:
+		return "", fmt.Errorf("language not implemented")
 	}
 
 	code = code + "\n" + function_call
-	
+
 	return code, nil
 }

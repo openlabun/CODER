@@ -4,10 +4,12 @@ import (
 	"fmt"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
+	exam_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
 	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/submission"
 )
 
@@ -46,14 +48,21 @@ func MapSubmissionOutputDTO(submission *Entities.Submission, results []Entities.
 	}
 }
 
-func MapResultInputToSubmissionResultEntity(input dtos.UpdateResultInput, submissionResult *Entities.SubmissionResult) (*Entities.SubmissionResult, error) {
+func MapResultInputToSubmissionResultEntity(input dtos.UpdateResultInput, submissionResult *Entities.SubmissionResult, testCase *examEntities.TestCase) (*Entities.SubmissionResult, error) {
 	if submissionResult == nil {
 		return nil, fmt.Errorf("submission result cannot be nil")
 	}
 	
 	if input.Output != nil {
+		output_name := testCase.ExpectedOutput.Name
+		output_type := testCase.ExpectedOutput.Type
+
 		if submissionResult.ActualOutput == nil {
-			submissionResult.ActualOutput = &examEntities.IOVariable{Type: examEntities.VariableFormatString}
+			submissionResult.ActualOutput, _ = exam_factory.NewIOVariable(
+				output_name,
+				output_type,
+				*input.Output,
+			)
 		}
 		submissionResult.ActualOutput.Value = *input.Output
 	}
@@ -81,9 +90,15 @@ func MapSubmissionResultToPublishedDTO(
 	challenge examEntities.Challenge,
 ) *dtos.SubmissionResultPublishedDTO {
 
+	code, err := services.AppendFunctionCall(submission.Code, submission.Language, test_case.Input)
+	if err != nil {
+		return nil
+	}
+
+
 	return &dtos.SubmissionResultPublishedDTO{
 		SubmissionID: submission.ID,
-		Code: submission.Code,
+		Code: code,
 		ResultID: result.ID,
 		TimeLimitMs: challenge.WorkerTimeLimit,
 		MemoryLimitMb: challenge.WorkerMemoryLimit,

@@ -90,7 +90,15 @@ func (uc *UpdateResultUseCase) Execute(ctx context.Context, input dtos.UpdateRes
 		return nil, fmt.Errorf("failed to map input to submission result entity: %w", err)
 	}
 
-	// [STEP 5] Save the updated submission result back to the repository
+	// [STEP 5] Check results if status is executed, it changes status to accepted or wrong_answer
+	if updatedResult.Status == Entities.SubmissionStatusExecuted {
+		updatedResult, err = services.CheckSubmissionResult(updatedResult, testCase)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check submission result: %w", err)
+		}
+	}
+
+	// [STEP 6] Save the updated submission result back to the repository
 	result, err := uc.resultRepository.UpdateResult(ctx, updatedResult)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update submission result: %w", err)

@@ -3227,6 +3227,8 @@ components:
           properties:
             code:
               type: string
+            function:
+              type: string
             language:
               type: string
             challengeID:
@@ -3254,6 +3256,10 @@ components:
           type: object
           properties:
             id:
+              type: string
+            function:
+              type: string
+            language:
               type: string
             challengeID:
               type: string
@@ -3284,6 +3290,10 @@ components:
                 type: object
                 properties:
                   id:
+                    type: string
+                  function:
+                    type: string
+                  language:
                     type: string
                   challengeID:
                     type: string
@@ -3328,6 +3338,10 @@ components:
               properties:
                 id:
                   type: string
+                function:
+                  type: string
+                language:
+                  type: string
                 challengeID:
                   type: string
                 sessionID:
@@ -3369,6 +3383,10 @@ components:
             type: object
             properties:
               id:
+                type: string
+              function:
+                type: string
+              language:
                 type: string
               userID:
                 type: string

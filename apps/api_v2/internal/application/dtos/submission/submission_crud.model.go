@@ -6,6 +6,7 @@ import (
 
 type CreateSubmissionInput struct {
 	Code        string
+	Function    string
 	Language    string
 	Score       int
 	ChallengeID string

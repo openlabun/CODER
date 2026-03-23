@@ -15,6 +15,7 @@ const (
 type Submission struct {
 	ID          string
 	Code        string
+	Function    string
 	Language    ProgrammingLanguage
 
 	// Results

@@ -268,7 +268,8 @@ func TestSubmissionCRUD(t *testing.T) {
 
 	t.Log("[STEP 7] CRUD Submission")
 	submission, err := submission_factory.NewSubmission(
-		"print(2+3)",
+		"print(1+2)",
+		"print(1+2)",
 		submission_entities.LanguagePython,
 		challengeID,
 		sessionID,

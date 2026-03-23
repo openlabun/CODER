@@ -4,6 +4,8 @@
     {
       "submission": {
         "id": "submission-123",
+        "function": "solve",
+        "language": "python",
         "challengeID": "challenge-123",
         "sessionID": "session-123",
         "userID": "usr-student-123"

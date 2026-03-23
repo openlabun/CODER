@@ -12,6 +12,14 @@ type CreateSubmissionInput struct {
 	SessionID   string
 }
 
+type UpdateResultInput struct {
+	ResultID	string
+	Status		string
+	TimeExecution	int
+	Output		*string
+	Error		*string
+}
+
 type GetSubmissionStatusInput struct {
 	SubmissionID string
 }

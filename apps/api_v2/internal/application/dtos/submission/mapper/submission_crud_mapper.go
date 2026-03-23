@@ -1,10 +1,13 @@
 package mapper
 
 import (
+	"fmt"
+
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 
-	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
+	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/submission"
 )
 
 func MapCreateSubmissionInputToSubmissionEntity(userID string, input dtos.CreateSubmissionInput) (*Entities.Submission, error) {
@@ -40,4 +43,27 @@ func MapSubmissionOutputDTO(submission *Entities.Submission, results []Entities.
 		Submission: *submission,
 		Results: results,
 	}
+}
+
+func MapResultInputToSubmissionResultEntity(input dtos.UpdateResultInput, submissionResult *Entities.SubmissionResult) (*Entities.SubmissionResult, error) {
+	if submissionResult == nil {
+		return nil, fmt.Errorf("submission result cannot be nil")
+	}
+	
+	submissionResult.ActualOutput.Value = *input.Output
+	submissionResult.ErrorMessage = input.Error
+
+	status := Entities.SubmissionStatus(submissionResult.Status)
+
+	valid := state_machine.IsValidState(status)
+	if !valid {
+		return nil, fmt.Errorf("invalid submission status: %s", status)
+	}
+
+	err := state_machine.ApplyTransition(submissionResult, status)
+	if err != nil {
+		return nil, fmt.Errorf("failed to apply transition: %w", err)
+	}
+
+	return submissionResult, nil
 }

@@ -7,25 +7,29 @@ import (
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 
+	userPort "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	passwordHasher "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission/mapper"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 )
 
 type UpdateResultUseCase struct {
+	userService    userPort.LoginPort
 	userRepository userRepository.UserRepository
 	submissionRepository submissionRepository.SubmissionRepository
 	sessionRepository submissionRepository.SessionRepository
 	challengeRepository examRepository.ChallengeRepository
 	testCaseRepository examRepository.TestCaseRepository
 	resultRepository submissionRepository.SubmissionResultRepository
+	passwordHasher passwordHasher.PasswordHasherPort
 }
 
-func NewUpdateResultUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository) *UpdateResultUseCase {
+func NewUpdateResultUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository, userService userPort.LoginPort, passwordHasher passwordHasher.PasswordHasherPort) *UpdateResultUseCase {
 	return &UpdateResultUseCase{
 		userRepository: userRepository,
 		submissionRepository: submissionRepository,
@@ -33,6 +37,8 @@ func NewUpdateResultUseCase(userRepository userRepository.UserRepository, submis
 		challengeRepository: challengeRepository,
 		testCaseRepository: testCaseRepository,
 		resultRepository: resultRepository,
+		userService: userService,
+		passwordHasher: passwordHasher,
 	}
 }
 
@@ -52,19 +58,39 @@ func (uc *UpdateResultUseCase) Execute(ctx context.Context, input dtos.UpdateRes
 		return nil, fmt.Errorf("invalid internal service key")
 	}
 
-	// [STEP 1] Retrieve the submission result from the repository
+	// [STEP 2] Login with internal admin user and set access token in context
+	internalEmail := os.Getenv("INTERNAL_USER_EMAIL")
+	internalPassword, err := uc.passwordHasher.Hash(os.Getenv("INTERNAL_USER_PASSWORD"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash internal user password: %w", err)
+	}
+
+	user, err := uc.userService.LoginUser(internalEmail, internalPassword)
+	if err != nil {
+		return nil, fmt.Errorf("failed to login with internal user: %w", err)
+	}
+
+	ctx = services.WithAccessToken(ctx, user.Token.AccessToken)
+
+	// [STEP 3] Retrieve the submission result from the repository
 	submissionResult, err := uc.resultRepository.GetResultByID(ctx, input.ResultID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve submission result: %w", err)
 	}
 
-	// [STEP 2] Update the submission result entity with the new data
-	updatedResult, err := mapper.MapResultInputToSubmissionResultEntity(input, submissionResult)
+	// [STEP 4] Get submission test case
+	testCase, err := uc.testCaseRepository.GetTestCaseByID(ctx, submissionResult.TestCaseID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve test case: %w", err)
+	}
+
+	// [STEP 4] Update the submission result entity with the new data
+	updatedResult, err := mapper.MapResultInputToSubmissionResultEntity(input, submissionResult, testCase)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map input to submission result entity: %w", err)
 	}
 
-	// [STEP 3] Save the updated submission result back to the repository
+	// [STEP 5] Save the updated submission result back to the repository
 	result, err := uc.resultRepository.UpdateResult(ctx, updatedResult)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update submission result: %w", err)

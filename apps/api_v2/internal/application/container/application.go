@@ -133,7 +133,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		GetSubmissionStatus:     submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
 		GetChallengeSubmissions: submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
 		GetUserSubmissions:      submission_usecases.NewGetUserSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository),
-		UpdateResult:            submission_usecases.NewUpdateResultUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository),
+		UpdateResult:            submission_usecases.NewUpdateResultUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.LoginService, deps.PasswordHasher),
 	}
 
 	app.UserModule = UserUseCases{

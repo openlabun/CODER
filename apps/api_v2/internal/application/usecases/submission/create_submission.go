@@ -112,7 +112,9 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		if result != nil {
 			// [STEP 8] Create DTO for publishing
 			publishedResult := mapper.MapSubmissionResultToPublishedDTO(*createdSubmission, *result, *testCase, *challenge)
-			publishedResults = append(publishedResults, *publishedResult)
+			if publishedResult != nil {
+				publishedResults = append(publishedResults, *publishedResult)
+			}
 		}
 	}
 	

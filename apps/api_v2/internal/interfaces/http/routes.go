@@ -7,12 +7,12 @@ import (
 	"github.com/MarceloPetrucio/go-scalar-api-reference"
 	"github.com/gofiber/fiber/v2"
 	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
+	ai_post_generate_exam "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-exam"
+	ai_post_generate_full_challenge "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-full-challenge"
 	auth_get_me "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/get-me"
 	auth_post_login "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-login"
 	auth_post_refresh_token "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-refresh-token"
 	auth_post_register "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-register"
-	ai_post_generate_full_challenge "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-full-challenge"
-	ai_post_generate_exam "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-exam"
 	challenge_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/delete-by-id"
 	challenge_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-by-id"
 	challenge_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-list"
@@ -22,16 +22,16 @@ import (
 	challenge_post_publish "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-publish"
 	course_delete_course "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/delete-course"
 	course_delete_student "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/delete-student"
-	course_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-by-id"
 	course_get_browse "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-browse"
+	course_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-by-id"
+	course_get_challenges "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-challenges"
 	course_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-list"
 	course_get_students "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-students"
 	course_post_add_student "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-add-student"
+	course_post_assign_challenge "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-assign-challenge"
 	course_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-create"
 	course_post_enroll "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-enroll"
 	course_post_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-update"
-	course_get_challenges "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-challenges"
-	course_post_assign_challenge "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-assign-challenge"
 	exam_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/delete-by-id"
 	exam_get_by_course_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-course-id"
 	exam_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-id"
@@ -44,6 +44,7 @@ import (
 	sub_get_by_user_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-user-id"
 	sub_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-list"
 	sub_patch_update_result "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/patch-update-result"
+	sub_post_close_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-close-session"
 	sub_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create"
 	sub_post_heartbeat "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-heartbeat"
 	sub_post_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-session"
@@ -189,6 +190,7 @@ func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Applicati
 	sessions.Post("/", sub_post_session.Handler(appContainer))
 	sessions.Get("/:id", sub_get_by_session_id.Handler(appContainer))
 	sessions.Post("/:id/heartbeat", sub_post_heartbeat.Handler(appContainer))
+	sessions.Post("/:id/close", sub_post_close_session.Handler(appContainer))
 }
 
 func registerLeaderboardRoutes(app *fiber.App) {

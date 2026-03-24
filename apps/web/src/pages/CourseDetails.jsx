@@ -259,12 +259,16 @@ const CourseDetails = () => {
                     </div>
                 ) : (
                     <div className="exams-grid-new">
-                        {exams.map(exam => {
-                           const isClosed = exam.status === 'closed';
-                           const isVisible = exam.isVisible || exam.status !== 'private';
+                                {exams.map(exam => {
+                                    const examId = exam.id || exam.ID;
+                                    const visibility = String(exam.visibility || exam.Visibility || 'private').toLowerCase();
+                                    const endTime = exam.endTime || exam.EndTime;
+                                    const isClosed = Boolean(endTime && new Date(endTime) <= new Date());
+                                    const isVisible = visibility !== 'private';
+                                    const isStudentVisible = visibility === 'public' || visibility === 'course';
                            
                            return (
-                            <div key={exam.id} className={`exam-card-new ${isClosed ? 'closed' : ''}`}>
+                            <div key={examId} className={`exam-card-new ${isClosed ? 'closed' : ''}`}>
                                 <div className="exam-card-info">
                                     <div className="exam-card-top">
                                         <h3>{exam.title || exam.Title}</h3>
@@ -290,8 +294,8 @@ const CourseDetails = () => {
                                         <div className="exam-admin-group">
                                             <button 
                                                 className={`exam-action-btn ${isVisible ? 'visible' : 'hidden'}`}
-                                                onClick={() => handleToggleVisibility(exam.id)}
-                                                disabled={processingId === exam.id}
+                                                onClick={() => handleToggleVisibility(examId)}
+                                                disabled={processingId === examId}
                                                 title={isVisible ? "Ocultar Examen" : "Hacer Visible"}
                                             >
                                                 {isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
@@ -299,8 +303,8 @@ const CourseDetails = () => {
                                             {!isClosed && (
                                                 <button 
                                                     className="exam-action-btn close"
-                                                    onClick={() => handleCloseExam(exam.id)}
-                                                    disabled={processingId === exam.id}
+                                                    onClick={() => handleCloseExam(examId)}
+                                                    disabled={processingId === examId}
                                                     title="Cerrar Examen"
                                                 >
                                                     <Lock size={16} />
@@ -308,16 +312,16 @@ const CourseDetails = () => {
                                             )}
                                             <button 
                                                 className="exam-action-btn delete"
-                                                onClick={() => handleDeleteExam(exam.id)}
-                                                disabled={processingId === exam.id}
+                                                onClick={() => handleDeleteExam(examId)}
+                                                disabled={processingId === examId}
                                                 title="Eliminar Examen"
                                             >
                                                 <Trash2 size={16} />
                                             </button>
                                         </div>
                                     ) : (
-                                        !isClosed && isVisible && (
-                                            <Link to={`/exam/${exam.id}`} className="btn-enter-exam">
+                                        !isClosed && isStudentVisible && (
+                                            <Link to={`/exam/${examId}`} className="btn-enter-exam">
                                                 Iniciar <ChevronRight size={14} />
                                             </Link>
                                         )

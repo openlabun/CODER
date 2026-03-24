@@ -62,8 +62,9 @@ func (uc *GetExamDetailsUseCase) Execute(ctx context.Context, input dtos.GetExam
 		return nil, fmt.Errorf("user does not have permissions to view exam details")
 	}
 
-	// [STEP 4] If user is student and exam visibility is not "public"
-	if role == user_entities.UserRoleStudent && exam.Visibility != Entities.VisibilityPublic {
+	// [STEP 4] If user is student, allow only public or course visibility exams.
+	// Teacher-only/private exams must remain restricted.
+	if role == user_entities.UserRoleStudent && exam.Visibility != Entities.VisibilityPublic && exam.Visibility != Entities.VisibilityCourse {
 		return nil, fmt.Errorf("user does not have permissions to view exam details")
 	}
 

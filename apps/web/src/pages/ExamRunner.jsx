@@ -1,13 +1,11 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getExamDetails } from '../api/exams';
 import client from '../api/client';
-import { AuthContext } from '../context/AuthContext';
 import './ChallengeSolver.css'; // Reuse styles
 
 const ExamRunner = () => {
     const { id } = useParams();
-    const { token } = useContext(AuthContext);
     const navigate = useNavigate();
     const [exam, setExam] = useState(null);
     const [currentChallenge, setCurrentChallenge] = useState(null);
@@ -20,14 +18,16 @@ const ExamRunner = () => {
     useEffect(() => {
         const fetchExam = async () => {
             try {
-                const data = await getExamDetails(id, token);
+                const data = await getExamDetails(id);
                 setExam(data);
-                if (data.challenges && data.challenges.length > 0) {
-                    setCurrentChallenge(data.challenges[0]);
+                const challenges = data?.challenges || data?.Challenges || [];
+                if (challenges.length > 0) {
+                    setCurrentChallenge(challenges[0]);
                 }
             } catch (err) {
                 console.error(err);
-                alert('Failed to load exam');
+                const apiMessage = err?.response?.data?.error || err?.message || 'Failed to load exam';
+                alert(apiMessage);
                 navigate('/courses');
             } finally {
                 setLoading(false);
@@ -43,7 +43,7 @@ const ExamRunner = () => {
         if (sessionId) {
             heartbeatInterval = setInterval(async () => {
                 try {
-                    await client.put(`/sessions/${sessionId}/heartbeat`);
+                    await client.post(`/submissions/sessions/${sessionId}/heartbeat`);
                 } catch (err) {
                     console.warn('Heartbeat failed:', err);
                 }
@@ -53,34 +53,74 @@ const ExamRunner = () => {
         return () => {
             if (heartbeatInterval) clearInterval(heartbeatInterval);
         };
-    }, [id, token, navigate]);
+    }, [id, navigate]);
 
     const handleSubmit = async () => {
         if (!code.trim()) return;
+
+        const sessionId = localStorage.getItem('session_id');
+        if (!sessionId) {
+            alert('No hay una sesion de examen activa. Vuelve a entrar al examen desde el curso.');
+            return;
+        }
+
+        const challengeId = currentChallenge?.id || currentChallenge?.ID;
+        if (!challengeId) {
+            alert('No se pudo identificar el reto actual del examen.');
+            return;
+        }
+
         setSubmitting(true);
         setResult(null);
         try {
             const { data } = await client.post('/submissions', {
-                challengeId: currentChallenge.id,
+                challengeID: challengeId,
                 code,
                 language,
-                examId: exam.id,
+                sessionID: sessionId,
             });
 
             // Poll for result
             const pollInterval = setInterval(async () => {
-                const res = await client.get(`/submissions/${data.id}`);
-                if (res.data.status !== 'queued' && res.data.status !== 'running') {
+                const submissionId = data?.id || data?.ID;
+                if (!submissionId) {
                     clearInterval(pollInterval);
-                    setResult(res.data);
                     setSubmitting(false);
+                    alert('La API no devolvio ID de submission.');
+                    return;
                 }
+
+                const res = await client.get(`/submissions/${submissionId}`);
+                const submission = res?.data?.Submission || res?.data?.submission;
+                const results = res?.data?.Results || res?.data?.results || [];
+
+                if (!Array.isArray(results) || results.length === 0) return;
+
+                const hasPending = results.some((r) => {
+                    const status = String(r?.Status || r?.status || '').toLowerCase();
+                    return status === 'queued' || status === 'running';
+                });
+
+                if (hasPending) return;
+
+                const acceptedCount = results.filter((r) => String(r?.Status || r?.status || '').toLowerCase() === 'accepted').length;
+                const score = Math.round((acceptedCount / results.length) * 100);
+
+                clearInterval(pollInterval);
+                setResult({
+                    status: score === 100 ? 'accepted' : 'wrong_answer',
+                    score,
+                    submission,
+                    results,
+                });
+                setSubmitting(false);
             }, 1000);
 
         } catch (err) {
             console.error(err);
             setSubmitting(false);
-            alert('Error submitting code');
+            const apiMessage = err?.response?.data?.error || err?.message || 'Error submitting code';
+            alert(apiMessage);
         }
     };
 
@@ -90,7 +130,7 @@ const ExamRunner = () => {
     return (
         <div className="challenge-solver">
             <div className="solver-header">
-                <h2>Exam: {exam.title}</h2>
+                <h2>Exam: {exam.title || exam.Title}</h2>
                 <div className="timer">Time Remaining: --:--</div>
             </div>
 
@@ -98,21 +138,21 @@ const ExamRunner = () => {
                 <div className="problem-description">
                     <h3>Challenges</h3>
                     <ul className="exam-challenge-list">
-                        {exam.challenges.map(ch => (
+                        {(exam.challenges || exam.Challenges || []).map(ch => (
                             <li
-                                key={ch.id}
-                                className={currentChallenge?.id === ch.id ? 'active' : ''}
+                                key={ch.id || ch.ID}
+                                className={(currentChallenge?.id || currentChallenge?.ID) === (ch.id || ch.ID) ? 'active' : ''}
                                 onClick={() => setCurrentChallenge(ch)}
                             >
-                                {ch.title} ({ch.points} pts)
+                                {ch.title || ch.Title} ({ch.points || ch.Points || 0} pts)
                             </li>
                         ))}
                     </ul>
 
                     {currentChallenge && (
                         <>
-                            <h3>{currentChallenge.title}</h3>
-                            <p>{currentChallenge.description}</p>
+                            <h3>{currentChallenge.title || currentChallenge.Title}</h3>
+                            <p>{currentChallenge.description || currentChallenge.Description}</p>
                         </>
                     )}
                 </div>
@@ -121,9 +161,6 @@ const ExamRunner = () => {
                     <div className="editor-controls">
                         <select value={language} onChange={(e) => setLanguage(e.target.value)}>
                             <option value="python">Python</option>
-                            <option value="javascript">Node.js</option>
-                            <option value="cpp">C++</option>
-                            <option value="java">Java</option>
                         </select>
                         <button onClick={handleSubmit} disabled={submitting}>
                             {submitting ? 'Running...' : 'Submit Solution'}

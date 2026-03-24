@@ -56,17 +56,24 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
+	if user.Role != user_entities.UserRoleStudent {
+		return nil, fmt.Errorf("only students can create submissions")
 	}
 
-	// [STEP 2] Verify existing student session
-	session, err := uc.sessionRepository.GetSessionByID(ctx, input.SessionID)
-	if err != nil {
-		return nil, err
+	if input.Language != string(Entities.LanguagePython) {
+		return nil, fmt.Errorf("unsupported language %q. currently only python is enabled", input.Language)
 	}
-	if session == nil {
-		return nil, fmt.Errorf("no active session found for student %q", user.Username)
+
+	// [STEP 2] Session is optional for challenge-only flow.
+	// If it is provided (exam flow), validate it exists.
+	if input.SessionID != "" {
+		session, err := uc.sessionRepository.GetSessionByID(ctx, input.SessionID)
+		if err != nil {
+			return nil, err
+		}
+		if session == nil {
+			return nil, fmt.Errorf("no active session found for student %q", user.Username)
+		}
 	}
 
 	// [STEP 3] Create submission with user provided values

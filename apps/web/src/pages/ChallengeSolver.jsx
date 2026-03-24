@@ -24,9 +24,10 @@ const ChallengeSolver = () => {
     const { user } = useContext(AuthContext);
     const [challenge, setChallenge] = useState(null);
     const [code, setCode] = useState('');
-    const [language, setLanguage] = useState('javascript');
+    const [language, setLanguage] = useState('python');
     const [output, setOutput] = useState('');
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchChallenge = async () => {
@@ -50,16 +51,90 @@ const ChallengeSolver = () => {
         if (id) fetchChallenge();
     }, [id]);
 
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const formatResultsOutput = (submission, results) => {
+        if (!results.length) {
+            return `Submission ${submission?.ID || submission?.id || ''} creada. Aun no hay resultados.`;
+        }
+
+        const lines = [];
+        lines.push(`Submission: ${submission?.ID || submission?.id || 'N/A'}`);
+        lines.push(`Lenguaje: ${submission?.Language || submission?.language || 'python'}`);
+        lines.push('');
+        lines.push('Resultados por caso de prueba:');
+
+        results.forEach((result, index) => {
+            const status = (result.Status || result.status || 'unknown').toLowerCase();
+            const errorMessage = result.ErrorMessage || result.errorMessage || '';
+            let line = `- Caso ${index + 1}: ${status}`;
+            if (errorMessage) {
+                line += ` | error: ${errorMessage}`;
+            }
+            lines.push(line);
+        });
+
+        return lines.join('\n');
+    };
+
     const handleSubmit = async () => {
+        if (!code.trim()) {
+            setOutput('No puedes enviar codigo vacio.');
+            return;
+        }
+
+        setSubmitting(true);
+        setOutput('Enviando solucion...');
+
         try {
-            const { data } = await client.post('/submissions', {
-                challengeId: id,
+            const sessionId = localStorage.getItem('session_id') || undefined;
+            const payload = {
+                challengeID: id,
                 code,
-                language
-            });
-            setOutput(data.output || 'Submission received');
+                language,
+            };
+
+            if (sessionId) {
+                payload.sessionID = sessionId;
+            }
+
+            const { data } = await client.post('/submissions', payload);
+            const submissionId = data?.id || data?.ID;
+
+            if (!submissionId) {
+                setOutput('La API no retorno un ID de submission.');
+                return;
+            }
+
+            setOutput('Solucion enviada. Ejecutando pruebas...');
+
+            const maxAttempts = 40;
+            for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+                const res = await client.get(`/submissions/${submissionId}`);
+                const submission = res?.data?.Submission || res?.data?.submission;
+                const results = res?.data?.Results || res?.data?.results || [];
+
+                if (Array.isArray(results) && results.length > 0) {
+                    const hasPendingResults = results.some((result) => {
+                        const status = (result.Status || result.status || '').toLowerCase();
+                        return status === 'queued' || status === 'running';
+                    });
+
+                    if (!hasPendingResults) {
+                        setOutput(formatResultsOutput(submission, results));
+                        return;
+                    }
+                }
+
+                await sleep(1500);
+            }
+
+            setOutput('La solucion fue enviada, pero la evaluacion sigue en proceso. Revisa tu historial de envios en unos segundos.');
         } catch (error) {
-            setOutput('Error submitting solution');
+            const apiMessage = error?.response?.data?.error || error?.message;
+            setOutput(apiMessage ? `Error submitting solution: ${apiMessage}` : 'Error submitting solution');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -161,12 +236,11 @@ const ChallengeSolver = () => {
             <div className="editor-container">
                 <div className="editor-header">
                     <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                        <option value="javascript">JavaScript</option>
                         <option value="python">Python</option>
-                        <option value="cpp">C++</option>
-                        <option value="java">Java</option>
                     </select>
-                    <button onClick={handleSubmit} className="btn-primary">Submit</button>
+                    <button onClick={handleSubmit} className="btn-primary" disabled={submitting}>
+                        {submitting ? 'Evaluando...' : 'Submit'}
+                    </button>
                 </div>
                 <Editor
                     height="80vh"

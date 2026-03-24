@@ -63,5 +63,11 @@ func (uc *CloseSessionUseCase) Execute(ctx context.Context, input dtos.CloseSess
 		return nil, err
 	}
 
-	return active_sesion, nil
+	// [STEP 5] Persist session changes
+	session, err := uc.sessionRepository.UpdateSession(ctx, active_sesion)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }

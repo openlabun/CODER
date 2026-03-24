@@ -114,7 +114,7 @@ func TestChallengeCRUD(t *testing.T) {
 		},
 		OutputVariable: exam_dtos.IOVariableDTO{Name: "sum", Type: "int", Value: "5"},
 		Constraints:    "1 <= a,b <= 1000",
-		ExamID:          examID,
+		ExamID:         examID,
 	})
 	if err != nil {
 		t.Fatalf("create challenge failed: %v", err)
@@ -315,7 +315,7 @@ func TestChallengeFromStudentView(t *testing.T) {
 			},
 			OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: "int", Value: "1"},
 			Constraints:    "1 <= a <= 10",
-			ExamID:          examID,
+			ExamID:         examID,
 		})
 		if createErr != nil {
 			t.Fatalf("create challenge %s failed: %v", title, createErr)
@@ -418,7 +418,7 @@ func ensureExamStudentAccess(t *testing.T, app *container.Application) *user_dto
 	t.Log("[AUTH] Intentando login de estudiante")
 
 	email := "stud@test.com"
-	password := "Testing123!"
+	password := "Password123!"
 
 	access, err := app.Dependencies.LoginService.LoginUser(email, password)
 	if err == nil && access != nil && access.UserData != nil && access.UserData.ID != "" && access.Token != nil && access.Token.AccessToken != "" {

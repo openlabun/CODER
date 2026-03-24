@@ -14,7 +14,7 @@ func TestExamCRUDHTTP(t *testing.T) {
 	t.Log("[OK] App inicializada")
 
 	t.Log("[STEP 2] Login/registro de profesor por HTTP")
-	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := authHeaders(teacherAccess)
 	t.Logf("[OK] Profesor autenticado. teacherID=%s", teacherAccess.UserData.ID)
 
@@ -41,7 +41,7 @@ func TestExamCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected update status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 	updated := decodeMap(t, body, "update exam")
-	if mapString(t, updated, "Title", "update exam") != updatedTitle {
+	if mapString(t, updated, "title", "update exam") != updatedTitle {
 		t.Fatalf("expected updated title=%q, got body=%s", updatedTitle, string(body))
 	}
 	t.Logf("[OK] Examen 1 actualizado. title=%q", updatedTitle)
@@ -55,10 +55,10 @@ func TestExamCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected get-by-id status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 	reloaded := decodeMap(t, body, "get exam by id")
-	if mapString(t, reloaded, "ID", "get exam by id") != examID1 {
+	if mapString(t, reloaded, "id", "get exam by id") != examID1 {
 		t.Fatalf("expected exam id=%s, got body=%s", examID1, string(body))
 	}
-	if mapString(t, reloaded, "Title", "get exam by id") != updatedTitle {
+	if mapString(t, reloaded, "title", "get exam by id") != updatedTitle {
 		t.Fatalf("expected title=%q, got body=%s", updatedTitle, string(body))
 	}
 	t.Log("[OK] Detalle de examen 1 validado")

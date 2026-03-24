@@ -12,7 +12,7 @@ func TestTestCasesCRUDHTTP(t *testing.T) {
 	app := initExamHTTPApp(t)
 
 	t.Log("[STEP 2] Autenticando profesor")
-	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := authHeaders(teacherAccess)
 
 	t.Log("[STEP 3] Crear curso + examen + challenge")
@@ -86,7 +86,7 @@ func TestTestCasesFromStudentViewHTTP(t *testing.T) {
 	app := initExamHTTPApp(t)
 
 	t.Log("[STEP 2] Autenticando profesor")
-	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := authHeaders(teacherAccess)
 
 	t.Log("[STEP 3] Crear curso + examen + challenge")
@@ -109,7 +109,7 @@ func TestTestCasesFromStudentViewHTTP(t *testing.T) {
 	privateTC := createTestCaseHTTP(t, app, teacherAccess, challengeID, "tc_private_1", false)
 
 	t.Log("[STEP 6] Autenticando estudiante y matriculando")
-	studentAccess := ensureExamHTTPAuthUserAccess(t, app, "stud@test.com", "Testing123!", "Student Test")
+	studentAccess := ensureExamHTTPAuthUserAccess(t, app, "stud@test.com", "Password123!", "Student Test")
 	studentHeaders := authHeaders(studentAccess)
 	enrollBody := map[string]string{"course_id": courseID, "student_id": studentAccess.UserData.ID}
 	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/courses/enroll", enrollBody, studentHeaders)

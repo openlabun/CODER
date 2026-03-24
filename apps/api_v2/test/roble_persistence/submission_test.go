@@ -43,7 +43,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	t.Log("[OK] Repositories inicializados")
 
 	t.Log("[STEP 2] Login docente de pruebas")
-	access, err := authAdapter.LoginUser("test@test.com", "Testing123!")
+	access, err := authAdapter.LoginUser("test@test.com", "Password123!")
 	if err != nil {
 		t.Fatalf("teacher login failed: %v", err)
 	}

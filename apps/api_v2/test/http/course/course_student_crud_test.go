@@ -19,12 +19,12 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 	t.Log("[OK] App inicializada")
 
 	t.Log("[STEP 2] Autenticando profesor")
-	teacherAccess := ensureCourseHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureCourseHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := authHeaders(teacherAccess)
 	t.Logf("[OK] Profesor autenticado. teacherID=%s", teacherAccess.UserData.ID)
 
 	t.Log("[STEP 3] Autenticando estudiante")
-	studentAccess := ensureCourseHTTPAuthUserAccess(t, app, "stud@test.com", "Testing123!", "Student Test")
+	studentAccess := ensureCourseHTTPAuthUserAccess(t, app, "stud@test.com", "Password123!", "Student Test")
 	studentHeaders := authHeaders(studentAccess)
 	t.Logf("[OK] Estudiante autenticado. studentID=%s", studentAccess.UserData.ID)
 
@@ -54,7 +54,7 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected create status=%d, got=%d body=%s", http.StatusCreated, status, string(body))
 	}
 
-	courseID := mapString(t, decodeMap(t, body, "create course"), "ID", "create course")
+	courseID := mapString(t, decodeMap(t, body, "create course"), "id", "create course")
 	t.Logf("[OK] Curso creado. courseID=%s", courseID)
 
 	t.Log("[STEP 5] Matricular estudiante vía POST /courses/enroll")
@@ -138,7 +138,7 @@ func containsStudentID(t *testing.T, raw []byte, studentID string) bool {
 	}
 
 	for _, item := range list {
-		if id, ok := item["ID"].(string); ok && id == studentID {
+		if id, ok := item["id"].(string); ok && id == studentID {
 			return true
 		}
 	}

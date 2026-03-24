@@ -236,7 +236,6 @@ func TestExamCRUD(t *testing.T) {
 	t.Log("[OK] Examen 2 eliminado")
 }
 
-
 func buildExamApplication() (*container.Application, error) {
 	httpClient := &http.Client{Timeout: 15 * time.Second}
 	robleClient, err := roble_infrastructure.NewRobleClient(httpClient)
@@ -292,7 +291,7 @@ func mustLoginExamTeacher(t *testing.T, app *container.Application) *user_dtos.U
 	t.Log("[AUTH] Intentando login de profesor")
 
 	email := "test@test.com"
-	password := "Testing123!"
+	password := "Password123!"
 
 	access, err := app.Dependencies.LoginService.LoginUser(email, password)
 	if err != nil {

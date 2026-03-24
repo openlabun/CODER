@@ -22,7 +22,7 @@ func TestCoursesCRUDHTTP(t *testing.T) {
 	t.Log("[OK] App inicializada")
 
 	t.Log("[STEP 2] Login/registro de profesor por HTTP")
-	teacherAccess := ensureCourseHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureCourseHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := authHeaders(teacherAccess)
 	t.Logf("[OK] Profesor autenticado. teacherID=%s", teacherAccess.UserData.ID)
 
@@ -53,7 +53,7 @@ func TestCoursesCRUDHTTP(t *testing.T) {
 	}
 
 	created := decodeMap(t, body, "create course")
-	courseID := mapString(t, created, "ID", "create course")
+	courseID := mapString(t, created, "id", "create course")
 	t.Logf("[OK] Curso creado. courseID=%s", courseID)
 
 	t.Log("[STEP 4] Actualizar curso via POST /courses/:id")
@@ -73,7 +73,7 @@ func TestCoursesCRUDHTTP(t *testing.T) {
 	}
 
 	updated := decodeMap(t, body, "update course")
-	if mapString(t, updated, "Name", "update course") != updatedName {
+	if mapString(t, updated, "name", "update course") != updatedName {
 		t.Fatalf("expected updated name=%q, got body=%s", updatedName, string(body))
 	}
 	t.Logf("[OK] Curso actualizado. name=%q", updatedName)
@@ -88,10 +88,10 @@ func TestCoursesCRUDHTTP(t *testing.T) {
 	}
 
 	reloaded := decodeMap(t, body, "get course by id")
-	if mapString(t, reloaded, "ID", "get course by id") != courseID {
+	if mapString(t, reloaded, "id", "get course by id") != courseID {
 		t.Fatalf("expected course id=%s, got body=%s", courseID, string(body))
 	}
-	if mapString(t, reloaded, "Name", "get course by id") != updatedName {
+	if mapString(t, reloaded, "name", "get course by id") != updatedName {
 		t.Fatalf("expected updated name=%q, got body=%s", updatedName, string(body))
 	}
 	t.Log("[OK] Detalles del curso validados")
@@ -235,7 +235,7 @@ func containsCourseID(t *testing.T, raw []byte, courseID string) bool {
 	}
 
 	for _, item := range list {
-		if id, ok := item["ID"].(string); ok && id == courseID {
+		if id, ok := item["id"].(string); ok && id == courseID {
 			return true
 		}
 	}

@@ -17,11 +17,11 @@ func TestCreateSessionHTTP(t *testing.T) {
 	t.Log("[STEP 1] Inicializando app HTTP")
 	app := initSubmissionHTTPApp(t)
 	runSuffix := fmt.Sprintf("%d", time.Now().UnixNano())
-	studentEmail := "student.session." + runSuffix + "@test.com"
+	studentEmail := "stud@test.com"
 	observerEmail := "observer.session." + runSuffix + "@test.com"
 
 	t.Log("[STEP 2] Login de profesor")
-	teacherAccess := ensureSubmissionHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureSubmissionHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := submissionAuthHeaders(teacherAccess)
 	teacherID := teacherAccess.UserData.ID
 
@@ -32,7 +32,7 @@ func TestCreateSessionHTTP(t *testing.T) {
 	examID := createSubmissionExamHTTP(t, app, teacherAccess, courseID, "HTTP Submission Session Exam")
 
 	t.Log("[STEP 5] Login de estudiante y matrícula")
-	studentAccess := ensureSubmissionHTTPAuthUserAccess(t, app, studentEmail, "Testing123!", "Student Test")
+	studentAccess := ensureSubmissionHTTPAuthUserAccess(t, app, studentEmail, "Password123!", "Student Test")
 	studentHeaders := submissionAuthHeaders(studentAccess)
 	studentID := studentAccess.UserData.ID
 	enrollBody := map[string]string{"course_id": courseID, "student_id": studentID}
@@ -54,7 +54,7 @@ func TestCreateSessionHTTP(t *testing.T) {
 		t.Fatalf("expected create session status=%d, got=%d body=%s", http.StatusCreated, status, string(body))
 	}
 	studentSession := decodeSubmissionMap(t, body, "create student session")
-	studentSessionID := submissionMapString(t, studentSession, "ID", "create student session")
+	studentSessionID := submissionMapString(t, studentSession, "id", "create student session")
 	if submissionMapString(t, studentSession, "StudentID", "create student session") != studentID {
 		t.Fatalf("expected student session StudentID=%s, got body=%s", studentID, string(body))
 	}
@@ -72,7 +72,7 @@ func TestCreateSessionHTTP(t *testing.T) {
 	}
 
 	t.Log("[STEP 8] Validar error con examen inexistente")
-	observerAccess := ensureSubmissionHTTPAuthUserAccess(t, app, observerEmail, "Testing123!", "Observer Test")
+	observerAccess := ensureSubmissionHTTPAuthUserAccess(t, app, observerEmail, "Password123!", "Observer Test")
 	observerHeaders := submissionAuthHeaders(observerAccess)
 	nonExistingExamBody := map[string]string{"userID": studentID, "examID": "non-existing-exam-id"}
 	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/submissions/sessions/", nonExistingExamBody, observerHeaders)
@@ -92,7 +92,7 @@ func TestCreateSessionHTTP(t *testing.T) {
 	var teacherSessionID string
 	if status == http.StatusCreated {
 		teacherSession := decodeSubmissionMap(t, body, "create teacher session")
-		teacherSessionID = submissionMapString(t, teacherSession, "ID", "create teacher session")
+		teacherSessionID = submissionMapString(t, teacherSession, "id", "create teacher session")
 	} else if status == http.StatusBadRequest {
 		status, body, err = httputils.DoJSONRequest(app, http.MethodGet, "/submissions/sessions/active", nil, teacherHeaders)
 		if err != nil {
@@ -102,7 +102,7 @@ func TestCreateSessionHTTP(t *testing.T) {
 			t.Fatalf("expected active teacher session status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 		}
 		teacherSession := decodeSubmissionMap(t, body, "get active teacher session")
-		teacherSessionID = submissionMapString(t, teacherSession, "ID", "get active teacher session")
+		teacherSessionID = submissionMapString(t, teacherSession, "id", "get active teacher session")
 	} else {
 		t.Fatalf("unexpected teacher session create status=%d body=%s", status, string(body))
 	}
@@ -115,11 +115,29 @@ func TestCreateSessionHTTP(t *testing.T) {
 		t.Fatalf("expected heartbeat status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 	heartbeatSession := decodeSubmissionMap(t, body, "heartbeat session")
-	if submissionMapString(t, heartbeatSession, "ID", "heartbeat session") != teacherSessionID {
+	if submissionMapString(t, heartbeatSession, "id", "heartbeat session") != teacherSessionID {
 		t.Fatalf("expected heartbeat session ID=%s, got body=%s", teacherSessionID, string(body))
 	}
 
-	t.Log("[STEP 10] Cleanup por curso")
+	t.Log("[STEP 10] Cerrar sesión de estudiante")
+	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/submissions/sessions/"+studentSessionID+"/close", nil, studentHeaders)
+	if err != nil {
+		t.Fatalf("close student session request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected close student session status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+
+	t.Log("[STEP 11] Cerrar sesión de profesor")
+	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/submissions/sessions/"+teacherSessionID+"/close", nil, teacherHeaders)
+	if err != nil {
+		t.Fatalf("close teacher session request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected close teacher session status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+
+	t.Log("[STEP 12] Cleanup por curso")
 	status, body, err = httputils.DoJSONRequest(app, http.MethodDelete, "/courses/"+courseID, nil, teacherHeaders)
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)
@@ -142,7 +160,7 @@ func TestSubmissionsHTTP(t *testing.T) {
 	studentEmail := "student.submission." + runSuffix + "@test.com"
 
 	t.Log("[STEP 2] Login de profesor")
-	teacherAccess := ensureSubmissionHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureSubmissionHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := submissionAuthHeaders(teacherAccess)
 	teacherID := teacherAccess.UserData.ID
 
@@ -151,7 +169,7 @@ func TestSubmissionsHTTP(t *testing.T) {
 	examID := createSubmissionExamHTTP(t, app, teacherAccess, courseID, "HTTP Submission Exam")
 
 	t.Log("[STEP 4] Login estudiante y matrícula")
-	studentAccess := ensureSubmissionHTTPAuthUserAccess(t, app, studentEmail, "Testing123!", "Student Test")
+	studentAccess := ensureSubmissionHTTPAuthUserAccess(t, app, studentEmail, "Password123!", "Student Test")
 	studentHeaders := submissionAuthHeaders(studentAccess)
 	studentID := studentAccess.UserData.ID
 	enrollBody := map[string]string{"course_id": courseID, "student_id": studentID}
@@ -177,7 +195,7 @@ func TestSubmissionsHTTP(t *testing.T) {
 	if status != http.StatusCreated {
 		t.Fatalf("expected create session status=%d, got=%d body=%s", http.StatusCreated, status, string(body))
 	}
-	sessionID := submissionMapString(t, decodeSubmissionMap(t, body, "create session"), "ID", "create session")
+	sessionID := submissionMapString(t, decodeSubmissionMap(t, body, "create session"), "id", "create session")
 
 	t.Log("[STEP 7] Crear submission")
 	createSubmissionBody := map[string]any{
@@ -194,7 +212,7 @@ func TestSubmissionsHTTP(t *testing.T) {
 		t.Fatalf("expected create submission status=%d, got=%d body=%s", http.StatusCreated, status, string(body))
 	}
 	createdSubmission := decodeSubmissionMap(t, body, "create submission")
-	submissionID := submissionMapString(t, createdSubmission, "ID", "create submission")
+	submissionID := submissionMapString(t, createdSubmission, "id", "create submission")
 
 	t.Log("[STEP 8] Listar submissions por challenge y validar inclusión")
 	listPath := "/submissions/?challengeId=" + challengeID
@@ -220,7 +238,7 @@ func TestSubmissionsHTTP(t *testing.T) {
 		if !ok {
 			continue
 		}
-		id, ok := subMap["ID"].(string)
+		id, ok := subMap["id"].(string)
 		if !ok {
 			id, _ = subMap["id"].(string)
 		}
@@ -237,7 +255,16 @@ func TestSubmissionsHTTP(t *testing.T) {
 		t.Fatalf("expected created submission=%s to be present in challenge list, got body=%s", submissionID, string(body))
 	}
 
-	t.Log("[STEP 9] Cleanup por curso")
+	t.Log("[STEP 9] Cerrar sesión de estudiante")
+	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/submissions/sessions/"+sessionID+"/close", nil, studentHeaders)
+	if err != nil {
+		t.Fatalf("close student session request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected close student session status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+
+	t.Log("[STEP 10] Cleanup por curso")
 	status, body, err = httputils.DoJSONRequest(app, http.MethodDelete, "/courses/"+courseID, nil, teacherHeaders)
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)
@@ -347,7 +374,7 @@ func createSubmissionCourseHTTP(t *testing.T, app *fiber.App, teacherAccess *use
 	}
 
 	created := decodeSubmissionMap(t, body, "create course")
-	return submissionMapString(t, created, "ID", "create course")
+	return submissionMapString(t, created, "id", "create course")
 }
 
 func createSubmissionExamHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.UserAccess, courseID, title string) string {
@@ -377,7 +404,7 @@ func createSubmissionExamHTTP(t *testing.T, app *fiber.App, teacherAccess *user_
 	}
 
 	created := decodeSubmissionMap(t, body, "create exam")
-	return submissionMapString(t, created, "ID", "create exam")
+	return submissionMapString(t, created, "id", "create exam")
 }
 
 func createSubmissionChallengeHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.UserAccess, examID, title string) string {
@@ -408,7 +435,7 @@ func createSubmissionChallengeHTTP(t *testing.T, app *fiber.App, teacherAccess *
 	}
 
 	created := decodeSubmissionMap(t, body, "create challenge")
-	return submissionMapString(t, created, "ID", "create challenge")
+	return submissionMapString(t, created, "id", "create challenge")
 }
 
 func createSubmissionTestCaseHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.UserAccess, challengeID, name, expectedOutput string) string {
@@ -434,7 +461,7 @@ func createSubmissionTestCaseHTTP(t *testing.T, app *fiber.App, teacherAccess *u
 	}
 
 	created := decodeSubmissionMap(t, body, "create test-case")
-	return submissionMapString(t, created, "ID", "create test-case")
+	return submissionMapString(t, created, "id", "create test-case")
 }
 
 func decodeSubmissionMap(t *testing.T, raw []byte, source string) map[string]any {

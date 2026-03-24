@@ -15,8 +15,8 @@ import (
 	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
-	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitmq"
+	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 
 	course_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
 	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
@@ -24,7 +24,6 @@ import (
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 )
-
 
 func TestCoursesCRUD(t *testing.T) {
 	t.Log("[STEP 1] Inicializando application container")
@@ -113,8 +112,6 @@ func TestCoursesCRUD(t *testing.T) {
 	t.Log("[OK] Curso eliminado")
 }
 
-
-
 func buildApplication() (*container.Application, error) {
 	// verbose logs are intentionally omitted here to keep the helper reusable in tests.
 	// Start clients
@@ -134,7 +131,7 @@ func buildApplication() (*container.Application, error) {
 	examRepository := exam_repository.NewExamRepository(robleAdapter)
 	challengeRepository := exam_repository.NewChallengeRepository(robleAdapter)
 	testCaseRepository := exam_repository.NewTestCaseRepository(robleAdapter)
-	
+
 	submissionRepository := submission_repository.NewSubmissionRepository(robleAdapter)
 	sessionRepository := submission_repository.NewSessionRepository(robleAdapter)
 	submissionResRepository := submission_repository.NewSubmissionResultRepository(robleAdapter)
@@ -142,7 +139,6 @@ func buildApplication() (*container.Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("initialize publisher adapter: %w", err)
 	}
-
 
 	deps := container.NewApplicationDependencies(
 		authAdapter,
@@ -178,7 +174,7 @@ func mustLoginTeacher(t *testing.T, app *container.Application) *user_dtos.UserA
 	t.Log("[AUTH] Intentando login de profesor")
 
 	email := "test@test.com"
-	password := "Testing123!"
+	password := "Password123!"
 
 	access, err := app.Dependencies.LoginService.LoginUser(email, password)
 	if err != nil {
@@ -200,7 +196,7 @@ func ensureStudentAccess(t *testing.T, auth *user_repo.RobleAuthAdapter) *user_d
 	t.Log("[AUTH] Intentando login de estudiante")
 
 	email := "stud@test.com"
-	password := "Testing123!"
+	password := "Password123!"
 
 	access, err := auth.LoginUser(email, password)
 	if err == nil && access != nil && access.UserData != nil && access.UserData.ID != "" && access.Token != nil && access.Token.AccessToken != "" {

@@ -184,7 +184,7 @@ func createCourseHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.Use
 	}
 
 	created := decodeMap(t, body, "create course")
-	return mapString(t, created, "ID", "create course")
+	return mapString(t, created, "id", "create course")
 }
 
 func createExamHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.UserAccess, courseID, title string) string {
@@ -216,7 +216,7 @@ func createExamHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.UserA
 	}
 
 	created := decodeMap(t, body, "create exam")
-	return mapString(t, created, "ID", "create exam")
+	return mapString(t, created, "id", "create exam")
 }
 
 func createChallengeHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.UserAccess, examID, title string) string {
@@ -248,7 +248,7 @@ func createChallengeHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.
 	}
 
 	created := decodeMap(t, body, "create challenge")
-	return mapString(t, created, "ID", "create challenge")
+	return mapString(t, created, "id", "create challenge")
 }
 
 func createTestCaseHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.UserAccess, challengeID, name string, isSample bool) string {
@@ -275,5 +275,5 @@ func createTestCaseHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.U
 	}
 
 	created := decodeMap(t, body, "create test-case")
-	return mapString(t, created, "ID", "create test-case")
+	return mapString(t, created, "id", "create test-case")
 }

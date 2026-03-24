@@ -34,7 +34,7 @@ func TestCourseCreation(t *testing.T) {
 
 	// Login Teacher user
 	email := "test@test.com"
-	password := "Testing123!"
+	password := "Password123!"
 	t.Logf("[STEP 2] Login docente con email=%s", email)
 
 	access, err := authAdapter.LoginUser(email, password)

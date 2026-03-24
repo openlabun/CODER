@@ -1,7 +1,6 @@
 package submission_test
 
 import (
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -15,13 +14,12 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 	workerKey := "worker-key-http-result-test"
 	t.Setenv("WORKER_KEY", workerKey)
 	t.Setenv("INTERNAL_USER_EMAIL", "test@test.com")
-	t.Setenv("INTERNAL_USER_PASSWORD", "Testing123!")
+	t.Setenv("INTERNAL_USER_PASSWORD", "Password123!")
 
-	runSuffix := fmt.Sprintf("%d", time.Now().UnixNano())
-	studentEmail := "student.result." + runSuffix + "@test.com"
+	studentEmail := "stud@test.com"
 
 	t.Log("[STEP 2] Login as teacher")
-	teacherAccess := ensureSubmissionHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureSubmissionHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := submissionAuthHeaders(teacherAccess)
 
 	t.Log("[STEP 3] Create course, exam, challenge and a test case")
@@ -39,7 +37,7 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 	}
 
 	t.Log("[STEP 4] Login as student and create a submission for the challenge")
-	studentAccess := ensureSubmissionHTTPAuthUserAccess(t, app, studentEmail, "Testing123!", "Student Result")
+	studentAccess := ensureSubmissionHTTPAuthUserAccess(t, app, studentEmail, "Password123!", "Student Result")
 	studentHeaders := submissionAuthHeaders(studentAccess)
 
 	enrollBody := map[string]string{"course_id": courseID, "student_id": studentAccess.UserData.ID}
@@ -59,11 +57,11 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 	if status != http.StatusCreated {
 		t.Fatalf("expected create session status=%d, got=%d body=%s", http.StatusCreated, status, string(body))
 	}
-	sessionID := submissionMapString(t, decodeSubmissionMap(t, body, "create session"), "ID", "create session")
+	sessionID := submissionMapString(t, decodeSubmissionMap(t, body, "create session"), "id", "create session")
 
 	createSubmissionBody := map[string]any{
 		"code":        "def solve(a, b):\n    return a + b",
-		"function":	    "solve(a, b)",
+		"function":    "solve(a, b)",
 		"language":    "python",
 		"challengeID": challengeID,
 		"sessionID":   sessionID,
@@ -85,7 +83,7 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 	}
 
 	createdSubmission := decodeSubmissionMap(t, body, "create submission")
-	submissionID := submissionMapString(t, createdSubmission, "ID", "create submission")
+	submissionID := submissionMapString(t, createdSubmission, "id", "create submission")
 
 	states := execPollSubmissionStates(t, app, submissionID, teacherHeaders, 10*time.Second)
 	if len(states) == 0 {
@@ -135,7 +133,16 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 		t.Fatalf("expected submission=%s results to reach accepted within 3 attempts", submissionID)
 	}
 
-	t.Log("[STEP 6] Delete the course")
+	t.Log("[STEP 6] Close student session")
+	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/submissions/sessions/"+sessionID+"/close", nil, studentHeaders)
+	if err != nil {
+		t.Fatalf("close session request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected close session status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+
+	t.Log("[STEP 7] Delete the course")
 	status, body, err = httputils.DoJSONRequest(app, http.MethodDelete, "/courses/"+courseID, nil, teacherHeaders)
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)

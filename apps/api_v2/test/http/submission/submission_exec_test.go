@@ -1,7 +1,6 @@
 package submission_test
 
 import (
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -17,13 +16,12 @@ func TestSubmissionExecHTTP(t *testing.T) {
 	workerKey := "worker-key-http-test"
 	t.Setenv("WORKER_KEY", workerKey)
 
-	runSuffix := fmt.Sprintf("%d", time.Now().UnixNano())
-	studentEmail := "student.exec." + runSuffix + "@test.com"
+	studentEmail := "stud@test.com"
 
 	t.Log("[STEP 2] Ensure teacher and student access")
-	teacherAccess := ensureSubmissionHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureSubmissionHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := submissionAuthHeaders(teacherAccess)
-	studentAccess := ensureSubmissionHTTPAuthUserAccess(t, app, studentEmail, "Testing123!", "Student Exec")
+	studentAccess := ensureSubmissionHTTPAuthUserAccess(t, app, studentEmail, "Password123!", "Student Exec")
 	studentHeaders := submissionAuthHeaders(studentAccess)
 
 	t.Log("[STEP 3] Create course and exam")
@@ -62,7 +60,7 @@ func TestSubmissionExecHTTP(t *testing.T) {
 	if status != http.StatusCreated {
 		t.Fatalf("expected create session status=%d, got=%d body=%s", http.StatusCreated, status, string(body))
 	}
-	sessionID := submissionMapString(t, decodeSubmissionMap(t, body, "create session"), "ID", "create session")
+	sessionID := submissionMapString(t, decodeSubmissionMap(t, body, "create session"), "id", "create session")
 
 	createSubmissionBody := map[string]any{
 		"code":        "def solve(a, b):\n    return a + b",
@@ -81,7 +79,7 @@ func TestSubmissionExecHTTP(t *testing.T) {
 	}
 
 	createdSubmission := decodeSubmissionMap(t, body, "create submission")
-	submissionID := submissionMapString(t, createdSubmission, "ID", "create submission")
+	submissionID := submissionMapString(t, createdSubmission, "id", "create submission")
 
 	// Simulate worker updates over internal endpoint so execution flow can be validated in HTTP tests.
 	states := execPollSubmissionStates(t, app, submissionID, teacherHeaders, 10*time.Second)
@@ -116,7 +114,16 @@ func TestSubmissionExecHTTP(t *testing.T) {
 		}
 	}
 
-	t.Log("[STEP 9] Cleanup created data")
+	t.Log("[STEP 9] Close student session")
+	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/submissions/sessions/"+sessionID+"/close", nil, studentHeaders)
+	if err != nil {
+		t.Fatalf("close session request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected close session status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+
+	t.Log("[STEP 10] Cleanup created data")
 	status, body, err = httputils.DoJSONRequest(app, http.MethodDelete, "/courses/"+courseID, nil, teacherHeaders)
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)
@@ -214,9 +221,9 @@ func execExtractResultStates(payload map[string]any) []execResultState {
 		}
 
 		state := execResultState{
-			ID:           execMapString(resultMap, "ID", "id"),
-			Status:       execMapString(resultMap, "Status", "status"),
-			ErrorMessage: execMapString(resultMap, "ErrorMessage", "errorMessage"),
+			ID:           execMapString(resultMap, "id", "id"),
+			Status:       execMapString(resultMap, "status", "status"),
+			ErrorMessage: execMapString(resultMap, "errorMessage", "errorMessage"),
 		}
 
 		if rawActualOutput, ok := resultMap["ActualOutput"]; ok {

@@ -13,7 +13,7 @@ func TestChallengeCRUDHTTP(t *testing.T) {
 	app := initExamHTTPApp(t)
 
 	t.Log("[STEP 2] Autenticando profesor")
-	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := authHeaders(teacherAccess)
 
 	t.Log("[STEP 3] Crear curso + examen para challenges")
@@ -39,7 +39,7 @@ func TestChallengeCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected update status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 	updated := decodeMap(t, body, "update challenge")
-	if mapString(t, updated, "Title", "update challenge") != updatedTitle {
+	if mapString(t, updated, "title", "update challenge") != updatedTitle {
 		t.Fatalf("expected title=%q after update, got body=%s", updatedTitle, string(body))
 	}
 	t.Log("[OK] Challenge actualizado")
@@ -53,7 +53,7 @@ func TestChallengeCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected publish status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 	published := decodeMap(t, body, "publish challenge")
-	if mapString(t, published, "Status", "publish challenge") != "published" {
+	if mapString(t, published, "status", "publish challenge") != "published" {
 		t.Fatalf("expected Status=published, got body=%s", string(body))
 	}
 	t.Log("[OK] Challenge publicado")
@@ -82,7 +82,7 @@ func TestChallengeCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected archive status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 	archived := decodeMap(t, body, "archive challenge")
-	if mapString(t, archived, "Status", "archive challenge") != "archived" {
+	if mapString(t, archived, "status", "archive challenge") != "archived" {
 		t.Fatalf("expected Status=archived, got body=%s", string(body))
 	}
 	t.Log("[OK] Challenge archivado")
@@ -106,7 +106,7 @@ func TestChallengeFromStudentViewHTTP(t *testing.T) {
 	app := initExamHTTPApp(t)
 
 	t.Log("[STEP 2] Autenticando profesor")
-	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
+	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	teacherHeaders := authHeaders(teacherAccess)
 
 	t.Log("[STEP 3] Crear curso + examen")
@@ -124,7 +124,7 @@ func TestChallengeFromStudentViewHTTP(t *testing.T) {
 	_, _, _ = httputils.DoJSONRequest(app, http.MethodPost, "/challenges/"+archivedID+"/archive", nil, teacherHeaders)
 
 	t.Log("[STEP 6] Autenticando estudiante y matriculando")
-	studentAccess := ensureExamHTTPAuthUserAccess(t, app, "stud@test.com", "Testing123!", "Student Test")
+	studentAccess := ensureExamHTTPAuthUserAccess(t, app, "stud@test.com", "Password123!", "Student Test")
 	studentHeaders := authHeaders(studentAccess)
 	enrollBody := map[string]string{"course_id": courseID, "student_id": studentAccess.UserData.ID}
 	status, body, err := httputils.DoJSONRequest(app, http.MethodPost, "/courses/enroll", enrollBody, studentHeaders)

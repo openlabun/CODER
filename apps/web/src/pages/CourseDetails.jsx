@@ -5,7 +5,8 @@ import {
     getCourseExams, 
     toggleExamVisibility, 
     closeExam, 
-    deleteExam 
+    deleteExam,
+    createExamSession
 } from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
 import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, Target, ChevronRight, Code, Edit } from 'lucide-react';
@@ -132,6 +133,24 @@ const CourseDetails = () => {
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el examen.' });
         } finally {
             setProcessingId(null);
+        }
+    };
+
+    const handleStartExam = async (examId) => {
+        try {
+            const session = await createExamSession(examId);
+            const sessionId = session?.id || session?.ID;
+            if (sessionId) {
+                localStorage.setItem('session_id', sessionId);
+            }
+            navigate(`/exam/${examId}`);
+        } catch (err) {
+            const apiMessage = err?.response?.data?.error || err?.message || 'No se pudo iniciar el examen';
+            if (String(apiMessage).toLowerCase().includes('active session')) {
+                navigate(`/exam/${examId}`);
+                return;
+            }
+            Swal.fire({ icon: 'error', title: 'Error', text: apiMessage });
         }
     };
 
@@ -321,9 +340,13 @@ const CourseDetails = () => {
                                         </div>
                                     ) : (
                                         !isClosed && isStudentVisible && (
-                                            <Link to={`/exam/${examId}`} className="btn-enter-exam">
+                                            <button
+                                                type="button"
+                                                className="btn-enter-exam"
+                                                onClick={() => handleStartExam(examId)}
+                                            >
                                                 Iniciar <ChevronRight size={14} />
-                                            </Link>
+                                            </button>
                                         )
                                     )}
                                 </div>

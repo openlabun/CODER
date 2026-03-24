@@ -128,7 +128,7 @@ const Courses = () => {
                         </>
                     )}
                     {(user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin') && (
-                        <button onClick={() => navigate('/courses/new')} className="btn-action-filled">
+                        <button onClick={() => navigate('/courses/create')} className="btn-action-filled">
                             <Plus size={18} /> Crear Nuevo Curso
                         </button>
                     )}

@@ -33,6 +33,7 @@ function App() {
           <Route path="challenge/:id" element={<ProtectedRoute><ChallengeSolver /></ProtectedRoute>} />
           <Route path="leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="courses" element={<ProtectedRoute><Courses /></ProtectedRoute>} />
+          <Route path="courses/new" element={<ProtectedRoute><CreateCourse /></ProtectedRoute>} />
           <Route path="courses/join" element={<ProtectedRoute><JoinCourse /></ProtectedRoute>} />
           <Route path="courses/browse" element={<ProtectedRoute><BrowseCourses /></ProtectedRoute>} />
           <Route path="courses/:id" element={<ProtectedRoute><CourseDetails /></ProtectedRoute>} />

@@ -12,3 +12,7 @@ type HeartbeatSessionInput struct {
 type GetSessionInput struct {
 	SessionID string
 }
+
+type CloseSessionInput struct {
+	SessionID string
+}

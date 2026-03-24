@@ -130,8 +130,10 @@ func TestUpdateSubmissionResultWithWorker(t *testing.T) {
 	}
 
 	if !accepted {
+		// Close the session before fail the test if results didn't reach accepted status after retries.
+		_, _, _ = httputils.DoJSONRequest(app, http.MethodPost, "/submissions/sessions/"+sessionID+"/close", nil, studentHeaders)
 		t.Fatalf("expected submission=%s results to reach accepted within 3 attempts", submissionID)
-	}
+	} 
 
 	t.Log("[STEP 6] Close student session")
 	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/submissions/sessions/"+sessionID+"/close", nil, studentHeaders)

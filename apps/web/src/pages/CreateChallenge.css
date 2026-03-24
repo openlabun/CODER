@@ -23,28 +23,26 @@
 }
 
 .btn-ai-assist {
-    padding: 12px 24px;
-    background: linear-gradient(135deg, #00f0ff, #7000ff, #00f0ff);
-    background-size: 200% 200%;
+    padding: 10px 20px;
+    background: #1a1a1a;
     color: white;
-    border: none;
-    border-radius: 30px;
-    font-weight: 700;
-    font-size: 1rem;
+    border: 1px solid #1a1a1a;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
-    animation: gradient-shift 3s ease infinite;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .btn-ai-assist:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 0 30px rgba(0, 240, 255, 0.6);
+    background: #c8102e;
+    border-color: #c8102e;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(200, 16, 46, 0.2);
 }
 
 @keyframes gradient-shift {

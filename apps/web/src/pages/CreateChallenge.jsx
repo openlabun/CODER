@@ -1,20 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
 import AIAssistantModal from '../components/AIAssistantModal';
+import Swal from 'sweetalert2';
 import './CreateChallenge.css';
-import './Challenges.css'; // Imported to style the Card Preview correctly
+import './Challenges.css';
 
 const CreateChallenge = () => {
+    const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const { id } = useParams();
+    const isEditing = !!id;
+
     const [activeTab, setActiveTab] = useState('basic');
     const [showPreview, setShowPreview] = useState(false);
     const [showAIModal, setShowAIModal] = useState(false);
 
-    // Get courseId from URL query params
     const queryParams = new URLSearchParams(location.search);
-    const courseId = queryParams.get('courseId');
+    const courseIdFromUrl = queryParams.get('courseId');
 
     const [formData, setFormData] = useState({
         title: '',
@@ -27,35 +32,99 @@ const CreateChallenge = () => {
         outputFormat: '',
         constraints: '',
         status: 'draft',
-        assignedCourses: [],
-        courseId: courseId || null
+        courseId: courseIdFromUrl || null,
+        examId: queryParams.get('examId') || null
     });
 
     const [publicTestCases, setPublicTestCases] = useState([]);
     const [hiddenTestCases, setHiddenTestCases] = useState([]);
     const [newTag, setNewTag] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+    const [fetching, setFetching] = useState(isEditing);
     const [courses, setCourses] = useState([]);
+    const [exams, setExams] = useState([]);
 
     useEffect(() => {
+        const fetchChallengeForEdit = async () => {
+            if (!isEditing) return;
+            setFetching(true);
+            try {
+                const { data: challenge } = await client.get(`/challenges/${id}`);
+
+                setFormData({
+                    title: challenge.title || challenge.Title || '',
+                    description: challenge.description || challenge.Description || '',
+                    difficulty: (challenge.difficulty || challenge.Difficulty || 'medium').toLowerCase(),
+                    timeLimit: challenge.timeLimit || challenge.WorkerTimeLimit || 1000,
+                    memoryLimit: challenge.memoryLimit || challenge.WorkerMemoryLimit || 256,
+                    tags: challenge.tags || challenge.Tags || [],
+                    inputFormat: challenge.inputFormat || challenge.InputFormat || '',
+                    outputFormat: challenge.outputFormat || challenge.OutputFormat || '',
+                    constraints: challenge.constraints || challenge.Constraints || '',
+                    status: challenge.status || challenge.Status || 'draft',
+                    courseId: challenge.courseId || challenge.CourseID || null,
+                    examId: challenge.examId || challenge.ExamID || queryParams.get('examId') || null
+                });
+
+                try {
+                    const { data: testCases } = await client.get(`/test-cases/challenge/${id}`);
+                    const cases = Array.isArray(testCases) ? testCases : (testCases.items || []);
+
+                    setPublicTestCases(cases.filter(tc => tc.type === 'public' || tc.Type === 'public' || tc.is_public || tc.isPublic));
+                    setHiddenTestCases(cases.filter(tc => tc.type !== 'public' && tc.Type !== 'public' && !tc.is_public && !tc.isPublic));
+                } catch (tcErr) {
+                    console.warn('Test cases fetch failed:', tcErr);
+                }
+            } catch (err) {
+                console.error('Error fetching challenge:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de carga',
+                    text: 'No se pudo cargar el reto.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 4000
+                });
+            } finally {
+                setFetching(false);
+            }
+        };
+
         const fetchCourses = async () => {
             try {
-                const { data } = await client.get('/courses');
-                setCourses(data.items || data);
+                const scope = (user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin') ? '?scope=owned' : '';
+                const { data } = await client.get(`/courses${scope}`);
+                const coursesList = Array.isArray(data) ? data : (data.items || []);
+                setCourses(coursesList);
             } catch (err) {
                 console.error('Error fetching courses:', err);
             }
         };
-        fetchCourses();
-    }, []);
 
-    const predefinedTags = [
-        'arrays', 'strings', 'math', 'hashing', 'greedy', 'dynamic-programming',
-        'trees', 'graphs', 'sorting', 'searching', 'recursion', 'backtracking',
-        'two-pointers', 'sliding-window', 'stack', 'queue', 'linked-list'
-    ];
+        if (user) {
+            fetchCourses();
+            if (isEditing) fetchChallengeForEdit();
+        }
+    }, [id, isEditing, user?.role]);
+
+    useEffect(() => {
+        const fetchExams = async () => {
+            if (!formData.courseId) {
+                setExams([]);
+                return;
+            }
+            try {
+                const { data } = await client.get(`/exams/course/${formData.courseId}`);
+                setExams(Array.isArray(data) ? data : (data.items || []));
+            } catch (err) {
+                console.error('Error fetching exams:', err);
+                setExams([]);
+            }
+        };
+
+        fetchExams();
+    }, [formData.courseId]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -63,11 +132,11 @@ const CreateChallenge = () => {
     };
 
     const addPublicTestCase = () => {
-        setPublicTestCases([...publicTestCases, { input: '', output: '', name: `Example ${publicTestCases.length + 1}` }]);
+        setPublicTestCases([...publicTestCases, { input: '', output: '', name: `Example ${publicTestCases.length + 1}`, type: 'public' }]);
     };
 
     const addHiddenTestCase = () => {
-        setHiddenTestCases([...hiddenTestCases, { input: '', output: '', name: `Hidden ${hiddenTestCases.length + 1}` }]);
+        setHiddenTestCases([...hiddenTestCases, { input: '', output: '', name: `Hidden ${hiddenTestCases.length + 1}`, type: 'hidden' }]);
     };
 
     const updateTestCase = (index, field, value, isPublic) => {
@@ -95,18 +164,17 @@ const CreateChallenge = () => {
 
     const validateForm = () => {
         if (!formData.title || !formData.description) {
-            setError('Title and description are required');
+            Swal.fire({ icon: 'warning', title: 'Campos incompletos', text: 'El título y la descripción son requeridos.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
             return false;
         }
         if (hiddenTestCases.length < 3) {
-            setError('At least 3 hidden test cases are required');
+            Swal.fire({ icon: 'warning', title: 'Faltan casos ocultos', text: 'Se requieren al menos 3 casos ocultos.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
             return false;
         }
-        // Validate all test cases have both input and output
         const allCases = [...publicTestCases, ...hiddenTestCases];
         for (let tc of allCases) {
             if (!tc.input.trim() || !tc.output.trim()) {
-                setError('All test cases must have both input and output');
+                Swal.fire({ icon: 'warning', title: 'Casos incompletos', text: 'Todos los casos deben tener entrada y salida.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
                 return false;
             }
         }
@@ -114,542 +182,239 @@ const CreateChallenge = () => {
     };
 
     const handleSubmit = async (status) => {
-        setError('');
-        setSuccessMessage('');
-        if (status === 'published' && !validateForm()) {
-            return;
-        }
+        if (status === 'published' && !validateForm()) return;
 
         setLoading(true);
         try {
             const payload = {
-                ...formData,
-                status,
-                publicTestCases,
-                hiddenTestCases
+                title: formData.title,
+                description: formData.description,
+                difficulty: formData.difficulty,
+                workerTimeLimit: parseInt(formData.timeLimit),
+                workerMemoryLimit: parseInt(formData.memoryLimit),
+                tags: formData.tags,
+                inputVariables: [{ name: 'stdin', type: 'string', value: '' }],
+                outputVariable: { name: 'stdout', type: 'string', value: '' },
+                constraints: formData.constraints,
+                status: status || formData.status,
+                courseId: formData.courseId,
+                examId: formData.examId || null
             };
 
-            const response = await client.post('/challenges', payload);
+            let response;
+            if (isEditing) {
+                response = await client.patch(`/challenges/${id}`, payload);
+            } else {
+                response = await client.post('/challenges', payload);
+            }
 
-            // If challenge was created for a course, assign it
-            if (formData.courseId && response.data.id) {
-                await client.post(`/courses/${formData.courseId}/challenges`, {
-                    challengeId: response.data.id
-                });
+            const challengeId = response.data.id || response.data.ID || id;
+
+            // Guardado automático y en cascada de Casos de Prueba
+            if (!isEditing && challengeId) {
+                const allCasesToSave = [
+                    ...publicTestCases.map(tc => ({ ...tc, isSample: true, points: 0 })),
+                    ...hiddenTestCases.map(tc => ({ ...tc, isSample: false, points: 10 }))
+                ];
+
+                const tcRequests = allCasesToSave.map(tc => 
+                    client.post('/test-cases', {
+                        name: tc.name,
+                        input: [{ name: "stdin", type: "string", value: tc.input }],
+                        expectedOutput: { name: "stdout", type: "string", value: tc.output },
+                        isSample: tc.isSample,
+                        points: tc.points,
+                        challengeId: challengeId
+                    })
+                );
+
+                await Promise.all(tcRequests);
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: isEditing ? '¡Actualizado!' : '¡Creado!',
+                text: `Reto ${isEditing ? 'actualizado' : 'publicado'} exitosamente`,
+                timer: 1000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+
+            if (formData.courseId && challengeId) {
+                try {
+                    await client.post(`/courses/${formData.courseId}/challenges`, { challengeId });
+                } catch (assignErr) {
+                    console.warn('Silent failure assigning challenge to course:', assignErr);
+                }
             }
             
-            setSuccessMessage(`¡Reto publicado exitosamente!`);
-            window.scrollTo(0, 0);
-
-            // Optional: Reset form here to allow creating another one freely
-            setFormData({
-                title: '',
-                description: '',
-                difficulty: 'medium',
-                timeLimit: 1000,
-                memoryLimit: 256,
-                tags: [],
-                inputFormat: '',
-                outputFormat: '',
-                constraints: '',
-                status: 'draft',
-                assignedCourses: [],
-                courseId: courseId || null
-            });
-            setPublicTestCases([]);
-            setHiddenTestCases([]);
-            setShowPreview(false);
-            
+            setTimeout(() => navigate('/challenges'), 1000);
         } catch (err) {
-            setError('Failed to create challenge. Please try again.');
-            console.error(err);
+            console.error('Error en handleSubmit:', err.response?.data || err);
+            const serverMsg = err.response?.data?.error || err.response?.data?.message;
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo guardar',
+                text: serverMsg ? `${serverMsg}` : 'Hubo un problema al guardar el reto.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000
+            });
         } finally {
             setLoading(false);
         }
     };
 
     const handleApplyIdea = (idea) => {
+        let diff = (idea.difficulty || 'medium').toLowerCase();
+        if (diff === 'fácil' || diff === 'facil' || diff === 'easy') diff = 'easy';
+        else if (diff === 'difícil' || diff === 'dificil' || diff === 'hard') diff = 'hard';
+        else diff = 'medium';
+
         setFormData(prev => ({
             ...prev,
             title: idea.title,
             description: idea.description,
-            difficulty: idea.difficulty || 'medium',
+            difficulty: diff,
             tags: idea.tags || [],
             inputFormat: idea.inputFormat || '',
             outputFormat: idea.outputFormat || '',
-            constraints: idea.constraints || ''
+            constraints: idea.constraints || '',
+            status: 'draft'
         }));
-
-        if (idea.publicTestCases) {
-            setPublicTestCases(idea.publicTestCases);
-        }
-        if (idea.hiddenTestCases) {
-            setHiddenTestCases(idea.hiddenTestCases);
-        }
-
-        // If we have test cases, switch to test cases tab to show them
-        if (idea.publicTestCases?.length > 0 || idea.hiddenTestCases?.length > 0) {
-            setActiveTab('testcases');
-        } else {
-            setActiveTab('details');
-        }
+        if (idea.publicTestCases) setPublicTestCases(idea.publicTestCases);
+        if (idea.hiddenTestCases) setHiddenTestCases(idea.hiddenTestCases);
+        setActiveTab('basic');
     };
 
-    const handleApplyTestCases = (cases) => {
-        if (cases.publicTestCases) setPublicTestCases(cases.publicTestCases);
-        if (cases.hiddenTestCases) setHiddenTestCases(cases.hiddenTestCases);
-        setActiveTab('testcases');
-    };
+    if (fetching) return <div className="loading">Cargando datos...</div>;
 
     return (
         <div className="create-challenge-page">
             <div className="page-header">
-                <h1>Create New Challenge</h1>
-                <p className="subtitle">Design a comprehensive coding challenge</p>
-                <button
-                    className="btn-ai-assist"
-                    onClick={() => setShowAIModal(true)}
-                >
-                    ✨ AI Assistant
-                </button>
+                <div>
+                    <h1>{isEditing ? 'Editar Reto' : 'Crear Nuevo Reto'}</h1>
+                    <p className="subtitle">{isEditing ? 'Modifica tu desafío' : 'Diseña un nuevo desafío de programación'}</p>
+                </div>
+                <button className="btn-ai-assist" onClick={() => setShowAIModal(true)}>✨ Asistente IA</button>
             </div>
 
             {showAIModal && (
                 <AIAssistantModal
                     onClose={() => setShowAIModal(false)}
                     onApplyIdea={handleApplyIdea}
-                    onApplyTestCases={handleApplyTestCases}
+                    onApplyTestCases={(cases) => {
+                        if (cases.publicTestCases) setPublicTestCases(cases.publicTestCases);
+                        if (cases.hiddenTestCases) setHiddenTestCases(cases.hiddenTestCases);
+                        setFormData(prev => ({ ...prev, status: 'draft' }));
+                        setActiveTab('testcases');
+                    }}
                 />
             )}
-
-            {error && <div className="error-message">{error}</div>}
-            {successMessage && <div className="success-message" style={{ background: 'rgba(40, 167, 69, 0.1)', border: '1px solid var(--success-color)', color: 'var(--success-color)', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>{successMessage}</div>}
 
             {!showPreview ? (
                 <>
                     <div className="tabs">
-                        <button className={activeTab === 'basic' ? 'tab active' : 'tab'} onClick={() => setActiveTab('basic')}>
-                            📝 Basic Info
-                        </button>
-                        <button className={activeTab === 'details' ? 'tab active' : 'tab'} onClick={() => setActiveTab('details')}>
-                            📋 Details & Format
-                        </button>
-                        <button className={activeTab === 'testcases' ? 'tab active' : 'tab'} onClick={() => setActiveTab('testcases')}>
-                            🧪 Test Cases
-                        </button>
-                        <button className={activeTab === 'settings' ? 'tab active' : 'tab'} onClick={() => setActiveTab('settings')}>
-                            ⚙️ Settings
-                        </button>
+                        <button className={activeTab === 'basic' ? 'tab active' : 'tab'} onClick={() => setActiveTab('basic')}>📝 Básicos</button>
+                        <button className={activeTab === 'testcases' ? 'tab active' : 'tab'} onClick={() => setActiveTab('testcases')}>🧪 Pruebas</button>
+                        <button className={activeTab === 'settings' ? 'tab active' : 'tab'} onClick={() => setActiveTab('settings')}>⚙️ Ajustes</button>
                     </div>
 
                     <div className="tab-content">
                         {activeTab === 'basic' && (
                             <div className="form-section">
-                                <h2>Basic Information</h2>
-
                                 <div className="form-group">
-                                    <label htmlFor="title">Challenge Title *</label>
-                                    <input
-                                        type="text"
-                                        id="title"
-                                        name="title"
-                                        value={formData.title}
-                                        onChange={handleChange}
-                                        placeholder="e.g., Two Sum Problem"
-                                        required
-                                    />
+                                    <label>Título *</label>
+                                    <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Ej: Suma A+B" required />
                                 </div>
-
                                 <div className="form-group">
-                                    <label htmlFor="description">Problem Statement *</label>
-                                    <textarea
-                                        id="description"
-                                        name="description"
-                                        value={formData.description}
-                                        onChange={handleChange}
-                                        placeholder="Describe the problem clearly..."
-                                        rows="12"
-                                        required
-                                    />
-                                    <small>Supports Markdown formatting</small>
+                                    <label>Descripción *</label>
+                                    <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Enunciado..." rows="8" required />
                                 </div>
-
                                 <div className="form-row">
                                     <div className="form-group">
-                                        <label htmlFor="difficulty">Difficulty *</label>
-                                        <select id="difficulty" name="difficulty" value={formData.difficulty} onChange={handleChange}>
-                                            <option value="easy">Easy</option>
-                                            <option value="medium">Medium</option>
-                                            <option value="hard">Hard</option>
+                                        <label>Dificultad</label>
+                                        <select name="difficulty" value={formData.difficulty} onChange={handleChange}>
+                                            <option value="easy">Fácil</option>
+                                            <option value="medium">Medio</option>
+                                            <option value="hard">Difícil</option>
                                         </select>
                                     </div>
-
                                     <div className="form-group">
-                                        <label htmlFor="timeLimit">Time Limit (ms) *</label>
-                                        <input type="number" id="timeLimit" name="timeLimit" value={formData.timeLimit} onChange={handleChange} min="100" max="10000" />
+                                        <label>Tiempo (ms)</label>
+                                        <input type="number" name="timeLimit" value={formData.timeLimit} onChange={handleChange} />
                                     </div>
-
-                                    <div className="form-group">
-                                        <label htmlFor="memoryLimit">Memory Limit (MB) *</label>
-                                        <input type="number" id="memoryLimit" name="memoryLimit" value={formData.memoryLimit} onChange={handleChange} min="64" max="512" />
-                                    </div>
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Tags</label>
-                                    <div className="tags-container">
-                                        {formData.tags.map(tag => (
-                                            <span key={tag} className="tag">
-                                                {tag}
-                                                <button type="button" onClick={() => removeTag(tag)}>×</button>
-                                            </span>
-                                        ))}
-                                    </div>
-                                    <div className="tag-input-group">
-                                        <input
-                                            type="text"
-                                            value={newTag}
-                                            onChange={(e) => setNewTag(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag(newTag))}
-                                            placeholder="Type and press Enter"
-                                        />
-                                        <button type="button" onClick={() => addTag(newTag)} className="btn-add-tag">Add</button>
-                                    </div>
-                                    <div className="predefined-tags">
-                                        {predefinedTags.filter(t => !formData.tags.includes(t)).map(tag => (
-                                            <button key={tag} type="button" onClick={() => addTag(tag)} className="predefined-tag">
-                                                + {tag}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'details' && (
-                            <div className="form-section">
-                                <h2>Input/Output Format & Constraints</h2>
-
-                                <div className="form-group">
-                                    <label htmlFor="inputFormat">Input Format</label>
-                                    <textarea
-                                        id="inputFormat"
-                                        name="inputFormat"
-                                        value={formData.inputFormat}
-                                        onChange={handleChange}
-                                        placeholder="Describe the input format..."
-                                        rows="4"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label htmlFor="outputFormat">Output Format</label>
-                                    <textarea
-                                        id="outputFormat"
-                                        name="outputFormat"
-                                        value={formData.outputFormat}
-                                        onChange={handleChange}
-                                        placeholder="Describe the expected output format..."
-                                        rows="4"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label htmlFor="constraints">Constraints</label>
-                                    <textarea
-                                        id="constraints"
-                                        name="constraints"
-                                        value={formData.constraints}
-                                        onChange={handleChange}
-                                        placeholder="e.g., 1 ≤ n ≤ 10^5, -10^9 ≤ arr[i] ≤ 10^9"
-                                        rows="4"
-                                    />
                                 </div>
                             </div>
                         )}
 
                         {activeTab === 'testcases' && (
                             <div className="form-section">
-                                <h2>Test Cases</h2>
-
-                                <div className="testcases-section">
-                                    <div className="testcase-header">
-                                        <h3>📖 Public Test Cases</h3>
-                                        <p>Students can see these examples</p>
-                                        <button type="button" onClick={addPublicTestCase} className="btn-add">+ Add Public Case</button>
+                                <h3>Casos Públicos (Ejemplos)</h3>
+                                {publicTestCases.map((tc, idx) => (
+                                    <div key={idx} className="testcase-item">
+                                        <input value={tc.input} onChange={(e) => updateTestCase(idx, 'input', e.target.value, true)} placeholder="Entrada" />
+                                        <input value={tc.output} onChange={(e) => updateTestCase(idx, 'output', e.target.value, true)} placeholder="Salida" />
+                                        <button onClick={() => removeTestCase(idx, true)}>🗑️</button>
                                     </div>
+                                ))}
+                                <button onClick={addPublicTestCase} className="btn-add">+ Caso Público</button>
 
-                                    {publicTestCases.map((tc, idx) => (
-                                        <div key={idx} className="testcase-item">
-                                            <div className="testcase-title">
-                                                <input
-                                                    type="text"
-                                                    value={tc.name}
-                                                    onChange={(e) => updateTestCase(idx, 'name', e.target.value, true)}
-                                                    placeholder="Case name"
-                                                />
-                                                <button type="button" onClick={() => removeTestCase(idx, true)} className="btn-remove">🗑️</button>
-                                            </div>
-                                            <div className="testcase-io">
-                                                <div className="io-group">
-                                                    <label>Input</label>
-                                                    <textarea
-                                                        value={tc.input}
-                                                        onChange={(e) => updateTestCase(idx, 'input', e.target.value, true)}
-                                                        placeholder="Input data..."
-                                                        rows="3"
-                                                    />
-                                                </div>
-                                                <div className="io-group">
-                                                    <label>Expected Output</label>
-                                                    <textarea
-                                                        value={tc.output}
-                                                        onChange={(e) => updateTestCase(idx, 'output', e.target.value, true)}
-                                                        placeholder="Expected output..."
-                                                        rows="3"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="testcases-section">
-                                    <div className="testcase-header">
-                                        <h3>🔒 Hidden Test Cases</h3>
-                                        <p>Used for evaluation (min. 3 required)</p>
-                                        <button type="button" onClick={addHiddenTestCase} className="btn-add">+ Add Hidden Case</button>
+                                <h3 style={{ marginTop: '2rem' }}>Casos Ocultos (Evaluación)</h3>
+                                {hiddenTestCases.map((tc, idx) => (
+                                    <div key={idx} className="testcase-item">
+                                        <input value={tc.input} onChange={(e) => updateTestCase(idx, 'input', e.target.value, false)} placeholder="Entrada" />
+                                        <input value={tc.output} onChange={(e) => updateTestCase(idx, 'output', e.target.value, false)} placeholder="Salida" />
+                                        <button onClick={() => removeTestCase(idx, false)}>🗑️</button>
                                     </div>
-
-                                    {hiddenTestCases.map((tc, idx) => (
-                                        <div key={idx} className="testcase-item hidden">
-                                            <div className="testcase-title">
-                                                <input
-                                                    type="text"
-                                                    value={tc.name}
-                                                    onChange={(e) => updateTestCase(idx, 'name', e.target.value, false)}
-                                                    placeholder="Case name"
-                                                />
-                                                <button type="button" onClick={() => removeTestCase(idx, false)} className="btn-remove">🗑️</button>
-                                            </div>
-                                            <div className="testcase-io">
-                                                <div className="io-group">
-                                                    <label>Input</label>
-                                                    <textarea
-                                                        value={tc.input}
-                                                        onChange={(e) => updateTestCase(idx, 'input', e.target.value, false)}
-                                                        placeholder="Input data..."
-                                                        rows="3"
-                                                    />
-                                                </div>
-                                                <div className="io-group">
-                                                    <label>Expected Output</label>
-                                                    <textarea
-                                                        value={tc.output}
-                                                        onChange={(e) => updateTestCase(idx, 'output', e.target.value, false)}
-                                                        placeholder="Expected output..."
-                                                        rows="3"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    {hiddenTestCases.length < 3 && (
-                                        <div className="warning-box">
-                                            ⚠️ You need at least {3 - hiddenTestCases.length} more hidden test case(s) to publish this challenge.
-                                        </div>
-                                    )}
-                                </div>
+                                ))}
+                                <button onClick={addHiddenTestCase} className="btn-add">+ Caso Oculto</button>
                             </div>
                         )}
 
                         {activeTab === 'settings' && (
                             <div className="form-section">
-                                <h2>Publication & Course Assignment</h2>
-
                                 <div className="form-group">
-                                    <label>Status</label>
-                                    <div className="status-options">
-                                        <label className="radio-option">
-                                            <input
-                                                type="radio"
-                                                name="status"
-                                                value="draft"
-                                                checked={formData.status === 'draft'}
-                                                onChange={handleChange}
-                                            />
-                                            <span>📝 Draft</span>
-                                            <small>Save for later, not visible to students</small>
-                                        </label>
-                                        <label className="radio-option">
-                                            <input
-                                                type="radio"
-                                                name="status"
-                                                value="published"
-                                                checked={formData.status === 'published'}
-                                                onChange={handleChange}
-                                            />
-                                            <span>✅ Published</span>
-                                            <small>Visible to assigned courses</small>
-                                        </label>
-                                        <label className="radio-option">
-                                            <input
-                                                type="radio"
-                                                name="status"
-                                                value="archived"
-                                                checked={formData.status === 'archived'}
-                                                onChange={handleChange}
-                                            />
-                                            <span>📦 Archived</span>
-                                            <small>Hidden but preserved</small>
-                                        </label>
-                                    </div>
+                                    <label>Curso Destino</label>
+                                    <select name="courseId" value={formData.courseId || ''} onChange={handleChange}>
+                                        <option value="">Seleccionar curso...</option>
+                                        {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
                                 </div>
-
-                                <div className="info-box" style={{ background: 'rgba(200, 16, 46, 0.05)', border: '1px solid var(--primary-color)' }}>
-                                    <h3 style={{ color: 'var(--primary-color)' }}>📚 Asignar a Curso</h3>
-                                    <p>Selecciona un curso al que quieres asignar este reto (Opcional).</p>
-                                    <div className="form-group" style={{ marginTop: '15px' }}>
-                                        <select
-                                            name="courseId"
-                                            value={formData.courseId || ''}
-                                            onChange={handleChange}
-                                        >
-                                            <option value="">-- No asignar a ningún curso por ahora --</option>
-                                            {courses.map(course => (
-                                                <option key={course.id} value={course.id}>
-                                                    {course.title}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                <div className="form-group">
+                                    <label>Examen Asociado</label>
+                                    <select name="examId" value={formData.examId || ''} onChange={handleChange}>
+                                        <option value="">Ninguno / Autónomo</option>
+                                        {exams.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
+                                    </select>
+                                    <small>Asocia este reto a un examen específico para que aparezca en la evaluación.</small>
+                                </div>
+                                <div className="form-group">
+                                    <label>Estado Inicial</label>
+                                    <select name="status" value={formData.status} onChange={handleChange}>
+                                        <option value="draft">Borrador</option>
+                                        <option value="published">Publicado</option>
+                                        <option value="private">Privado</option>
+                                    </select>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     <div className="form-actions">
-                        <button type="button" onClick={() => navigate('/challenges')} className="btn-secondary">
-                            Cancel
-                        </button>
-                        <button type="button" onClick={() => setShowPreview(true)} className="btn-preview">
-                            👁️ Preview
-                        </button>
-                        <button type="button" onClick={() => handleSubmit('draft')} disabled={loading} className="btn-draft">
-                            {loading ? 'Saving...' : '💾 Save as Draft'}
-                        </button>
-                        <button type="button" onClick={() => handleSubmit('published')} disabled={loading} className="btn-publish">
-                            {loading ? 'Publishing...' : '🚀 Publish Challenge'}
-                        </button>
+                        <button onClick={() => navigate('/challenges')} className="btn-secondary">Cancelar</button>
+                        <button onClick={() => handleSubmit('draft')} disabled={loading} className="btn-draft">Guardar Borrador</button>
+                        <button onClick={() => handleSubmit('published')} disabled={loading} className="btn-publish">🚀 {isEditing ? 'Actualizar' : 'Publicar'}</button>
                     </div>
                 </>
             ) : (
                 <div className="preview-container">
-                    <div className="preview-header">
-                        <h2>Preview</h2>
-                        <button onClick={() => setShowPreview(false)} className="btn-secondary">← Back to Edit</button>
-                    </div>
-
-                    <div className="preview-section-title" style={{ marginTop: '20px', marginBottom: '15px', color: 'var(--text-muted)' }}>
-                        <h3>Card Preview (How it looks in the list)</h3>
-                    </div>
-
-                    <div className="challenge-card" style={{ maxWidth: '400px', marginBottom: '40px' }}>
-                        <div className="challenge-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                            <h3 className="challenge-title" style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-color)', margin: 0 }}>
-                                {formData.title || 'Untitled Challenge'}
-                            </h3>
-                            <span className={`difficulty-badge ${(formData.difficulty || 'medium').toLowerCase()}`}>
-                                {formData.difficulty || 'Medium'}
-                            </span>
-                        </div>
-                        <p className="challenge-desc" style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {formData.description || 'No description provided'}
-                        </p>
-                        <div className="btn-solve" style={{ display: 'inline-block', width: '100%', padding: '12px', textAlign: 'center', background: 'transparent', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', borderRadius: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Solve Challenge
-                        </div>
-                    </div>
-
-                    <div className="preview-section-title" style={{ marginBottom: '15px', color: 'var(--text-muted)' }}>
-                        <h3>Detailed Preview (How it looks to the student)</h3>
-                    </div>
-
-                    <div className="challenge-preview">
-                        <div className="preview-title">
-                            <h1>{formData.title || 'Untitled Challenge'}</h1>
-                            <span className={`difficulty-badge ${formData.difficulty}`}>{formData.difficulty}</span>
-                        </div>
-
-                        {formData.tags.length > 0 && (
-                            <div className="preview-tags">
-                                {formData.tags.map(tag => <span key={tag} className="tag">{tag}</span>)}
-                            </div>
-                        )}
-
-                        <div className="preview-section">
-                            <h3>Problem Statement</h3>
-                            <div className="preview-content">{formData.description || 'No description provided'}</div>
-                        </div>
-
-                        {formData.inputFormat && (
-                            <div className="preview-section">
-                                <h3>Input Format</h3>
-                                <div className="preview-content">{formData.inputFormat}</div>
-                            </div>
-                        )}
-
-                        {formData.outputFormat && (
-                            <div className="preview-section">
-                                <h3>Output Format</h3>
-                                <div className="preview-content">{formData.outputFormat}</div>
-                            </div>
-                        )}
-
-                        {formData.constraints && (
-                            <div className="preview-section">
-                                <h3>Constraints</h3>
-                                <div className="preview-content">{formData.constraints}</div>
-                            </div>
-                        )}
-
-                        {publicTestCases.length > 0 && (
-                            <div className="preview-section">
-                                <h3>Examples</h3>
-                                {publicTestCases.map((tc, idx) => (
-                                    <div key={idx} className="example-case">
-                                        <h4>{tc.name}</h4>
-                                        <div className="example-io">
-                                            <div>
-                                                <strong>Input:</strong>
-                                                <pre>{tc.input}</pre>
-                                            </div>
-                                            <div>
-                                                <strong>Output:</strong>
-                                                <pre>{tc.output}</pre>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="preview-meta">
-                            <div>⏱️ Time Limit: {formData.timeLimit}ms</div>
-                            <div>💾 Memory Limit: {formData.memoryLimit}MB</div>
-                            <div>🔒 Hidden Test Cases: {hiddenTestCases.length}</div>
-                        </div>
-                    </div>
-
-                    <div className="preview-actions">
-                        <button onClick={() => setShowPreview(false)} className="btn-secondary">
-                            ✏️ Edit Challenge
-                        </button>
-                        <button onClick={() => handleSubmit(formData.status)} disabled={loading} className="btn-publish">
-                            {loading ? 'Publishing...' : '✅ Confirm & Publish'}
-                        </button>
-                    </div>
+                    {/* Simplified Preview */}
+                    <button onClick={() => setShowPreview(false)}>Volver</button>
+                    <h2>{formData.title}</h2>
+                    <p>{formData.description}</p>
                 </div>
             )}
         </div>

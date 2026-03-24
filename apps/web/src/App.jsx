@@ -12,6 +12,7 @@ import CourseStudents from './pages/CourseStudents';
 import ExamRunner from './pages/ExamRunner';
 import Dashboard from './pages/Dashboard';
 import CreateChallenge from './pages/CreateChallenge';
+import CreateExam from './pages/CreateExam';
 import CreateCourse from './pages/CreateCourse';
 import EditCourse from './pages/EditCourse';
 import JoinCourse from './pages/JoinCourse';
@@ -41,6 +42,7 @@ function App() {
           <Route path="submissions" element={<ProtectedRoute><Submissions /></ProtectedRoute>} />
           <Route path="challenges/create" element={<ProtectedRoute><CreateChallenge /></ProtectedRoute>} />
           <Route path="challenges/edit/:id" element={<ProtectedRoute><CreateChallenge /></ProtectedRoute>} />
+          <Route path="exams/create" element={<ProtectedRoute><CreateExam /></ProtectedRoute>} />
           <Route path="courses/create" element={<ProtectedRoute><CreateCourse /></ProtectedRoute>} />
           <Route path="courses/edit/:id" element={<ProtectedRoute><EditCourse /></ProtectedRoute>} />
         </Route>

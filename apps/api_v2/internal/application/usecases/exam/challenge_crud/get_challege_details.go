@@ -26,42 +26,39 @@ func NewGetChallengeDetailsUseCase(challengeRepository repositories.ChallengeRep
 }
 
 func (uc *GetChallengeDetailsUseCase) Execute(ctx context.Context, input dtos.GetChallengeDetailsInput) (*Entities.Challenge, error) {
-	// [STEP 1] Verify user is teacher
+	// [STEP 1] Verify user
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	user, err := uc.userRepository.GetUserByEmail(ctx, userEmail)
-	if err != nil {
-		return nil, err
-	}
-
-	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
+	if err != nil || user == nil {
+		return nil, fmt.Errorf("user not found")
 	}
 
 	// [STEP 2] Verify challenge exists
 	challenge, err := uc.challengeRepository.GetChallengeByID(ctx, input.ChallengeID)
-	if err != nil {
-		return nil, err
+	if err != nil || challenge == nil {
+		return nil, fmt.Errorf("challenge not found")
 	}
 
-	// [STEP 3] Verify that exam exists and belongs to the teacher
-	exam, err := uc.examRepository.GetExamByID(ctx, challenge.ExamID)
-	if err != nil {
-		return nil, err
+	// [STEP 3] Access Control
+	if user.Role == user_entities.UserRoleStudent {
+		// Students can only see published challenges or those in an active exam
+		if challenge.Status != Entities.ChallengeStatusPublished && challenge.ExamID == "" {
+			return nil, fmt.Errorf("challenge is not accessible")
+		}
+	} else if user.Role == user_entities.UserRoleProfessor {
+		// Professors should be able to see their own challenges
+		// If it belongs to an exam, check exam ownership
+		if challenge.ExamID != "" {
+			exam, err := uc.examRepository.GetExamByID(ctx, challenge.ExamID)
+			if err == nil && exam != nil && exam.ProfessorID != user.ID {
+				return nil, fmt.Errorf("you do not have permission to view this exam's challenge")
+			}
+		}
 	}
-
-	if exam == nil {
-		return nil, fmt.Errorf("exam with id %q does not exist", challenge.ExamID)
-	}
-
-	if exam.ProfessorID != user.ID {
-		return nil, fmt.Errorf("user does not have permissions to access this exam")
-	}
-
-	// [STEP 4] Return challenge details
 
 	return challenge, nil
 }

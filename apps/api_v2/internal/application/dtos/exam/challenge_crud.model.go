@@ -7,36 +7,38 @@ type IOVariableDTO struct {
 }
 
 type CreateChallengeInput struct {
-	Title       string
-	Description string
-	Tags        []string
-	Status       string
-	Difficulty   string
-	WorkerTimeLimit    int
-	WorkerMemoryLimit  int
-	InputVariables  []IOVariableDTO
-	OutputVariable  IOVariableDTO
-	Constraints     string
-	CreatedAt       string
-	UpdatedAt       string
-	ExamID		    string
+	Title             string            `json:"title"`
+	Description       string            `json:"description"`
+	Tags              []string          `json:"tags"`
+	Status            string            `json:"status"`
+	Difficulty        string            `json:"difficulty"`
+	WorkerTimeLimit   int               `json:"workerTimeLimit"`
+	WorkerMemoryLimit int               `json:"workerMemoryLimit"`
+	InputVariables    []IOVariableDTO  `json:"inputVariables"`
+	OutputVariable    IOVariableDTO    `json:"outputVariable"`
+	Constraints       string            `json:"constraints"`
+	CreatedAt         string            `json:"createdAt"`
+	UpdatedAt         string            `json:"updatedAt"`
+	ExamID            string            `json:"examId"`
+	CourseID          string            `json:"courseId"`
 }
 
 type UpdateChallengeInput struct {
-	ChallengeID string `json:"challenge_id"`
-	Title       *string
-	Description *string
-	Tags        *[]string
-	Status       *string
-	Difficulty   *string
-	WorkerTimeLimit    *int
-	WorkerMemoryLimit  *int
-	InputVariables  *[]IOVariableDTO
-	OutputVariable  *IOVariableDTO
-	Constraints     *string
-	CreatedAt       *string
-	UpdatedAt       *string
-	ExamID		    *string
+	ChallengeID       string             `json:"challenge_id"`
+	Title             *string           `json:"title"`
+	Description       *string           `json:"description"`
+	Tags              *[]string          `json:"tags"`
+	Status            *string           `json:"status"`
+	Difficulty        *string           `json:"difficulty"`
+	WorkerTimeLimit   *int              `json:"workerTimeLimit"`
+	WorkerMemoryLimit *int              `json:"workerMemoryLimit"`
+	InputVariables    *[]IOVariableDTO   `json:"inputVariables"`
+	OutputVariable    *IOVariableDTO     `json:"outputVariable"`
+	Constraints       *string           `json:"constraints"`
+	CreatedAt         *string           `json:"createdAt"`
+	UpdatedAt         *string           `json:"updatedAt"`
+	ExamID            *string           `json:"examId"`
+	CourseID          *string           `json:"courseId"`
 }
 
 type DeleteChallengeInput struct {

@@ -157,10 +157,13 @@
     padding: 1rem;
     border-left: 1px solid #f1f5f9;
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
 }
 
-.btn-settings {
+.btn-settings, .btn-delete-course {
     width: 40px;
     height: 40px;
     border: none;
@@ -175,8 +178,13 @@
 }
 
 .btn-settings:hover {
-    background: #f1f5f9;
-    color: #64748b;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.btn-delete-course:hover {
+    background: #fff1f2;
+    color: #e11d48;
 }
 
 .card-arrow-link {

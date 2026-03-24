@@ -52,9 +52,6 @@ func ValidateChallenge(challenge *Entities.Challenge) error {
 	if strings.TrimSpace(challenge.Description) == "" {
 		return fmt.Errorf("challenge description is required")
 	}
-	if strings.TrimSpace(challenge.ExamID) == "" {
-		return fmt.Errorf("challenge exam id is required")
-	}
 
 	if !StateMachine.IsValidState(challenge.Status) {
 		return fmt.Errorf("invalid challenge status: %q", challenge.Status)

@@ -19,7 +19,7 @@ func NewChallenge(
 	workerTimeLimit, workerMemoryLimit int,
 	inputVariables []Entities.IOVariable,
 	outputVariable Entities.IOVariable,
-	constraints, examID string,
+	constraints, examID, courseID string,
 ) (*Entities.Challenge, error) {
 	now := time.Now()
 	if status == "" {
@@ -44,6 +44,7 @@ func NewChallenge(
 		CreatedAt:         now,
 		UpdatedAt:         now,
 		ExamID:            strings.TrimSpace(examID),
+		CourseID:          strings.TrimSpace(courseID),
 	}
 
 	if err := Validations.ValidateChallenge(challenge); err != nil {
@@ -61,7 +62,7 @@ func ExistingChallenge(
 	workerTimeLimit, workerMemoryLimit int,
 	inputVariables []Entities.IOVariable,
 	outputVariable Entities.IOVariable,
-	constraints, examID string,
+	constraints, examID, courseID string,
 	createdAt, updatedAt time.Time,
 ) (*Entities.Challenge, error) {
 	challenge := &Entities.Challenge{
@@ -79,6 +80,7 @@ func ExistingChallenge(
 		CreatedAt:         createdAt,
 		UpdatedAt:         updatedAt,
 		ExamID:            strings.TrimSpace(examID),
+		CourseID:          strings.TrimSpace(courseID),
 	}
 
 	if err := Validations.ValidateChallenge(challenge); err != nil {

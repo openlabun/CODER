@@ -12,6 +12,8 @@ import (
 	test_case_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/test_case_crud"
 	submission_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission"
 	session_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission/session"
+	ai_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/ai"
+	"github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 )
 
 // UserUseCases holds all user-related use cases available in the application.
@@ -34,6 +36,8 @@ type CourseUseCases struct {
 	GetCourseStudents       *course_usecases.GetCourseStudentsUseCase
 	EnrollInCourse          *course_usecases.EnrollInCourseUseCase
 	RemoveStudentFromCourse *course_usecases.RemoveStudentFromCourseUseCase
+	GetCourseChallenges     *course_usecases.GetCourseChallengesUseCase
+	AssignChallengeToCourse *course_usecases.AssignChallengeToCourseUseCase
 }
 
 type ChallengeUseCases struct {
@@ -75,6 +79,11 @@ type ExamUseCases struct {
 	GetExamsByCourse *exam_crud_usecases.GetExamsByCourseUseCase
 }
 
+type AIUseCases struct {
+	GenerateFullChallenge *ai_usecases.GenerateFullChallengeUseCase
+	GenerateExam         *ai_usecases.GenerateExamUseCase
+}
+
 type Application struct {
 	Dependencies       ApplicationDependencies
 	UserModule         UserUseCases
@@ -84,6 +93,7 @@ type Application struct {
 	TestCaseModule     TestCaseUseCases
 	SessionModule      SessionUseCases
 	SubmissionUseCases SubmissionUseCases
+	AIModule           AIUseCases
 }
 
 func NewApplication(deps ApplicationDependencies) (*Application, error) {
@@ -105,6 +115,8 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		GetCourseStudents:       course_usecases.NewGetCourseStudentsUseCase(deps.CourseRepository, deps.UserRepository),
 		EnrollInCourse:          course_usecases.NewEnrollInCourseUseCase(deps.CourseRepository, deps.UserRepository),
 		RemoveStudentFromCourse: course_usecases.NewRemoveStudentFromCourseUseCase(deps.CourseRepository, deps.UserRepository),
+		GetCourseChallenges:     course_usecases.NewGetCourseChallengesUseCase(deps.ChallengeRepository, deps.UserRepository),
+		AssignChallengeToCourse: course_usecases.NewAssignChallengeToCourseUseCase(deps.ChallengeRepository, deps.UserRepository),
 	}
 
 	app.ChallengeModule = ChallengeUseCases{
@@ -160,6 +172,12 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		DeleteExam:       exam_crud_usecases.NewDeleteExamUseCase(deps.UserRepository, deps.ExamRepository),
 		GetExamDetails:   exam_crud_usecases.NewGetExamDetailsUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
 		GetExamsByCourse: exam_crud_usecases.NewGetExamsByCourseUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
+	}
+
+	geminiService := services.NewGeminiService()
+	app.AIModule = AIUseCases{
+		GenerateFullChallenge: ai_usecases.NewGenerateFullChallengeUseCase(geminiService),
+		GenerateExam:          ai_usecases.NewGenerateExamUseCase(geminiService),
 	}
 
 	return app, nil

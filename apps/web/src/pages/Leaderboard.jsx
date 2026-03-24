@@ -12,38 +12,52 @@ import {
     Search,
     Award
 } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Leaderboard.css';
 
-const Leaderboard = () => {
+const Leaderboard = ({ challengeId, courseId }) => {
     const [rankings, setRankings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
+            setLoading(true);
+            setError('');
             try {
-                // Mocking with enhanced data for a better visual representation
-                const mockData = [
-                    { rank: 1, username: 'neo_coder', score: 2850, challenges: 42, avatar: 'N' },
-                    { rank: 2, username: 'trinity_dev', score: 2720, challenges: 38, avatar: 'T' },
-                    { rank: 3, username: 'morpheus_root', score: 2600, challenges: 35, avatar: 'M' },
-                    { rank: 4, username: 'cipher_hacker', score: 2100, challenges: 28, avatar: 'C' },
-                    { rank: 5, username: 'agent_smith', score: 1950, challenges: 25, avatar: 'A' },
-                    { rank: 6, username: 'the_oracle', score: 1800, challenges: 22, avatar: 'O' },
-                    { rank: 7, username: 'keymaker', score: 1650, challenges: 20, avatar: 'K' },
-                    { rank: 8, username: 'architect', score: 1500, challenges: 18, avatar: 'A' },
-                    { rank: 9, username: 'niobe', score: 1420, challenges: 17, avatar: 'N' },
-                    { rank: 10, username: 'seraph', score: 1380, challenges: 16, avatar: 'S' },
-                ];
-                setRankings(mockData);
+                let endpoint = '/leaderboard';
+                if (challengeId) endpoint = `/leaderboard/challenge/${challengeId}`;
+                else if (courseId) endpoint = `/leaderboard/course/${courseId}`;
+                
+                const { data } = await client.get(endpoint);
+                
+                // Transform backend data to frontend format
+                // Backend might return { items: [...] } or just [...]
+                const rawData = Array.isArray(data) ? data : (data.items || []);
+                
+                const formattedData = rawData.map((item, index) => ({
+                    rank: item.rank || (index + 1),
+                    username: item.username || item.Username || 'Anónimo',
+                    score: item.score || item.TotalScore || item.Score || 0,
+                    challenges: item.challengesSolved || item.ChallengesSolved || item.SolvedCount || 0,
+                    avatar: (item.username || item.Username || 'A').charAt(0).toUpperCase(),
+                    userId: item.userId || item.ID
+                }));
+
+                setRankings(formattedData);
             } catch (err) {
-                console.error(err);
+                console.error('Error loading leaderboard:', err);
+                setError('No se pudo cargar el ranking en este momento.');
+                // Fallback to empty if error
+                setRankings([]);
             } finally {
                 setLoading(false);
             }
         };
         fetchLeaderboard();
-    }, []);
+    }, [challengeId, courseId]);
 
     const filteredRankings = rankings.filter(user => 
         user.username.toLowerCase().includes(searchTerm.toLowerCase())

@@ -1,14 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useContext } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import client from '../api/client';
-import { useAuth } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext';
+import { 
+    Clock, 
+    Target, 
+    ChevronLeft, 
+    Play, 
+    Send, 
+    Code, 
+    FileText, 
+    Info, 
+    AlertTriangle,
+    CheckCircle2
+} from 'lucide-react';
 import './ChallengeSolver.css';
+import './Dashboard.css';
 
 const ChallengeSolver = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user } = useContext(AuthContext);
     const [challenge, setChallenge] = useState(null);
     const [code, setCode] = useState('');
     const [language, setLanguage] = useState('javascript');
@@ -17,18 +30,24 @@ const ChallengeSolver = () => {
 
     useEffect(() => {
         const fetchChallenge = async () => {
+            setLoading(true);
             try {
-                const { data } = await client.get(`/challenges/${id}`);
-                setChallenge(data);
-                // Set default code template based on language
-                setCode('// Write your solution here\n');
+                // Ensure ID is passed correctly and try to fetch
+                const response = await client.get(`/challenges/${id}`);
+                setChallenge(response.data);
+                // Set default code template
+                setCode('// Escribe tu solución aquí\n');
             } catch (error) {
                 console.error('Error fetching challenge:', error);
+                // If 404, maybe it's not published
+                if (error.response?.status === 404) {
+                    console.warn("Challenge not found or not accessible");
+                }
             } finally {
                 setLoading(false);
             }
         };
-        fetchChallenge();
+        if (id) fetchChallenge();
     }, [id]);
 
     const handleSubmit = async () => {
@@ -44,8 +63,33 @@ const ChallengeSolver = () => {
         }
     };
 
-    if (loading) return <div>Loading...</div>;
-    if (!challenge) return <div>Challenge not found</div>;
+    if (loading) {
+        return (
+            <div className="dashboard-loading">
+                <div className="loader-orbit">
+                    <div className="orbit-dot"></div>
+                </div>
+                <p>Preparando desafío...</p>
+            </div>
+        );
+    }
+    
+    if (!challenge) {
+        return (
+            <div className="dashboard-loading error">
+                <div className="error-icon" style={{fontSize: '3rem', marginBottom: '1rem'}}>🎯</div>
+                <h2>Desafío no encontrado</h2>
+                <p>No se pudo cargar la información del reto o no tienes permisos.</p>
+                <button 
+                    onClick={() => navigate(-1)} 
+                    className="btn-retry" 
+                    style={{marginTop: '2rem'}}
+                >
+                    Volver Atrás
+                </button>
+            </div>
+        );
+    }
 
     if (user?.role === 'professor' || user?.role === 'admin') {
         return (

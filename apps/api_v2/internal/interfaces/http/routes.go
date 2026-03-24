@@ -11,6 +11,8 @@ import (
 	auth_post_login "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-login"
 	auth_post_refresh_token "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-refresh-token"
 	auth_post_register "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-register"
+	ai_post_generate_full_challenge "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-full-challenge"
+	ai_post_generate_exam "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-exam"
 	challenge_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/delete-by-id"
 	challenge_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-by-id"
 	challenge_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-list"
@@ -28,6 +30,8 @@ import (
 	course_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-create"
 	course_post_enroll "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-enroll"
 	course_post_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-update"
+	course_get_challenges "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-challenges"
+	course_post_assign_challenge "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-assign-challenge"
 	exam_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/delete-by-id"
 	exam_get_by_course_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-course-id"
 	exam_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-id"
@@ -52,7 +56,7 @@ import (
 func RegisterRoutes(app *fiber.App, appContainer *container.Application) {
 	registerDocsRoutes(app)
 	registerAuthRoutes(app, appContainer)
-	registerAIRoutes(app)
+	registerAIRoutes(app, appContainer)
 	registerChallengesRoutes(app, appContainer)
 	registerTestCasesRoutes(app, appContainer)
 	registerCoursesRoutes(app, appContainer)
@@ -120,10 +124,12 @@ func registerAuthRoutes(app *fiber.App, appContainer *container.Application) {
 	auth.Get("/me", auth_get_me.Handler(appContainer))
 }
 
-func registerAIRoutes(app *fiber.App) {
+func registerAIRoutes(app *fiber.App, appContainer *container.Application) {
 	ai := app.Group("/ai")
 	ai.Post("/generate-challenge-ideas", mockHandler("ai/post-generate-challenge-ideas/mockup/output.json", fiber.StatusOK))
 	ai.Post("/generate-test-cases", mockHandler("ai/post-generate-test-cases/mockup/output.json", fiber.StatusOK))
+	ai.Post("/generate-full-challenge", ai_post_generate_full_challenge.Handler(appContainer))
+	ai.Post("/generate-exam", ai_post_generate_exam.Handler(appContainer))
 }
 
 func registerChallengesRoutes(app *fiber.App, appContainer *container.Application) {
@@ -156,9 +162,9 @@ func registerCoursesRoutes(app *fiber.App, appContainer *container.Application) 
 	courses.Delete("/:id", course_delete_course.Handler(appContainer))
 	courses.Post("/:id/students", course_post_add_student.Handler(appContainer))
 	courses.Delete("/:id/students/:studentId", course_delete_student.Handler(appContainer))
-	courses.Post("/:id/challenges", mockHandler("courses/post-assign-challenge/mockup/output.json", fiber.StatusOK))
+	courses.Post("/:id/challenges", course_post_assign_challenge.Handler(appContainer))
 	courses.Get("/:id/students", course_get_students.Handler(appContainer))
-	courses.Get("/:id/challenges", mockHandler("courses/get-challenges/mockup/output.json", fiber.StatusOK))
+	courses.Get("/:id/challenges", course_get_challenges.Handler(appContainer))
 }
 
 func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {

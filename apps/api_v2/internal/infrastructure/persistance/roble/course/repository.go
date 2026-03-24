@@ -160,7 +160,13 @@ func (r *CourseRepository) GetCourseByID(ctx context.Context, courseID string) (
 		return nil, nil
 	}
 
-	return recordToCourse(record)
+	course, err := recordToCourse(record)
+	if err != nil {
+		return nil, err
+	}
+
+	r.hydrateCourseCounts(ctx, course)
+	return course, nil
 }
 
 func (r *CourseRepository) GetCourseByEnrollmentCode(ctx context.Context, enrollmentCode string) (*Entities.Course, error) {
@@ -181,7 +187,13 @@ func (r *CourseRepository) GetCourseByEnrollmentCode(ctx context.Context, enroll
 		return nil, nil
 	}
 
-	return recordToCourse(record)
+	course, err := recordToCourse(record)
+	if err != nil {
+		return nil, err
+	}
+
+	r.hydrateCourseCounts(ctx, course)
+	return course, nil
 }
 
 func (r *CourseRepository) GetCoursesByStudentID(ctx context.Context, studentID string) ([]*Entities.Course, error) {
@@ -246,6 +258,7 @@ func (r *CourseRepository) GetCoursesByTeacherID(ctx context.Context, teacherID 
 			return nil, err
 		}
 		if course != nil {
+			r.hydrateCourseCounts(ctx, course)
 			courses = append(courses, course)
 		}
 	}
@@ -454,4 +467,17 @@ func asTime(v any) (time.Time, bool) {
 	}
 
 	return time.Time{}, false
+}
+func (r *CourseRepository) hydrateCourseCounts(ctx context.Context, course *Entities.Course) {
+	if course == nil {
+		return
+	}
+
+	// We ignore error here to not break the whole request if count fails
+	res, err := r.adapter.Read(courseStudentTableName, map[string]string{"CourseID": course.ID})
+	if err == nil {
+		records := extractRecords(res)
+		course.StudentCount = len(records)
+		course.EnrolledCount = len(records)
+	}
 }

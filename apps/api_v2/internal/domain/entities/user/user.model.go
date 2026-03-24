@@ -11,12 +11,12 @@ const (
 )
 
 type User struct {
-	ID           string
-	Username     string
-	Email        string
-	Role         UserRole
+	ID           string    `json:"id"`
+	Username     string    `json:"username"`
+	Email        string    `json:"email"`
+	Role         UserRole  `json:"role"`
 
 	//Metadata
-	CreatedAt      time.Time
-	LastConnection time.Time
+	CreatedAt      time.Time `json:"created_at"`
+	LastConnection time.Time `json:"last_connection"`
 }

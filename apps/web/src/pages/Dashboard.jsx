@@ -35,13 +35,16 @@ const Dashboard = () => {
             
             try {
                 // Fetch user-specific submissions to avoid 400 error on broad list
-                const { data } = await client.get(`/submissions/user/${user.id}`);
-                const submissions = Array.isArray(data) ? data : (data.items || []);
+                const submissionsRes = await client.get(`/submissions/user/${user.id}`);
+                const submissions = Array.isArray(submissionsRes.data) ? submissionsRes.data : (submissionsRes.data.items || []);
+
+                const challengesRes = await client.get('/challenges');
+                const challenges = Array.isArray(challengesRes.data) ? challengesRes.data : (challengesRes.data.items || []);
 
                 setStats({
                     totalSubmissions: submissions.length,
                     acceptedSubmissions: submissions.filter(s => s.status === 'accepted').length,
-                    activeChallenges: 0, 
+                    activeChallenges: challenges.filter(c => c.status === 'published').length, 
                     recentSubmissions: submissions.slice(0, 4)
                 });
             } catch (err) {

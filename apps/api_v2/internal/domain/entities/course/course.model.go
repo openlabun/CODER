@@ -57,4 +57,8 @@ type Course struct {
 	CreatedAt      time.Time        `json:"created_at"`
 	UpdatedAt      time.Time        `json:"updated_at"`
 	ProfessorID    string           `json:"professor_id"`
+
+	// Aggregated metadata
+	StudentCount   int              `json:"studentCount"`
+	EnrolledCount  int              `json:"enrolledCount"`
 }

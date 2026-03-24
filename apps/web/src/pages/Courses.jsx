@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import client from '../api/client';
+import Swal from 'sweetalert2';
 import { 
     BookOpen, 
     Plus, 
@@ -13,7 +14,8 @@ import {
     Users,
     Key,
     AlertCircle,
-    RotateCcw
+    RotateCcw,
+    Trash2
 } from 'lucide-react';
 import './Courses.css';
 
@@ -24,21 +26,59 @@ const Courses = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
+    const fetchCourses = async () => {
+        try {
+            const scope = (user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin') ? '?scope=owned' : '';
+            const { data } = await client.get(`/courses${scope}`);
+            setCourses(Array.isArray(data) ? data : (data?.items || []));
+        } catch (err) {
+            console.error('Error loading courses:', err);
+            setError('No se pudieron cargar los cursos. Por favor, intenta de nuevo.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchCourses = async () => {
-            try {
-                const scope = (user?.role === 'professor' || user?.role === 'teacher') ? '?scope=owned' : '';
-                const { data } = await client.get(`/courses${scope}`);
-                setCourses(Array.isArray(data) ? data : (data.items || []));
-            } catch (err) {
-                console.error('Error loading courses:', err);
-                setError('No se pudieron cargar los cursos. Por favor, intenta de nuevo.');
-            } finally {
-                setLoading(false);
-            }
-        };
         if (user) fetchCourses();
     }, [user]);
+
+    const handleDeleteCourse = async (e, id) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Eliminar curso?',
+            text: 'Esta acción borrará todos los datos asociados. Es irreversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminar curso',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!isConfirmed) return;
+        
+        try {
+            await client.delete(`/courses/${id}`);
+            Swal.fire({
+                icon: 'success',
+                title: 'Curso Eliminado',
+                timer: 1000,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false
+            });
+            await fetchCourses();
+        } catch (err) {
+            console.error('Error deleting course:', err);
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Error', 
+                text: 'No se pudo eliminar el curso. Verifica si tiene estudiantes inscritos.' 
+            });
+        }
+    };
 
     if (loading) return (
         <div className="courses-page-new">
@@ -87,11 +127,6 @@ const Courses = () => {
                             </button>
                         </>
                     )}
-                    {(user?.role === 'professor' || user?.role === 'teacher') && (
-                        <button onClick={() => navigate('/courses/create')} className="btn-action-filled">
-                            <Plus size={18} /> Crear Nuevo Curso
-                        </button>
-                    )}
                 </div>
             </header>
 
@@ -104,11 +139,13 @@ const Courses = () => {
                     <p>
                         {user?.role === 'student' 
                             ? 'No te has unido a ningún curso. Revisa la sección de explorar o solicita un código a tu docente.' 
-                            : 'No has creado ningún curso todavía. Comienza creando uno para tus estudiantes.'}
+                            : 'No tienes cursos asignados todavía. Contacta al administrador para que te asigne uno.'}
                     </p>
-                    <button onClick={() => navigate(user?.role === 'student' ? '/courses/browse' : '/courses/create')} className="btn-cta-link">
-                        Empezar ahora <ChevronRight size={16} />
-                    </button>
+                    {user?.role === 'student' && (
+                        <button onClick={() => navigate('/courses/browse')} className="btn-cta-link">
+                            Empezar ahora <ChevronRight size={16} />
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="courses-grid-new">
@@ -127,7 +164,7 @@ const Courses = () => {
                                         </div>
                                         <div className="meta-item-new">
                                             <Calendar size={14} />
-                                            <span>{course.period || '2026-10'}</span>
+                                            <span>{course.period ? `${course.period.year}-${course.period.semester}` : 'S/P'}</span>
                                         </div>
                                         <div className="meta-item-new">
                                             <Users size={14} />
@@ -137,7 +174,7 @@ const Courses = () => {
                                 </div>
                             </Link>
                             
-                            {(user?.role === 'professor' || user?.role === 'teacher') && (
+                            {(user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin') && (
                                 <div className="card-admin-actions">
                                     <button 
                                         onClick={(e) => {
@@ -149,6 +186,13 @@ const Courses = () => {
                                         title="Configurar curso"
                                     >
                                         <Settings size={18} />
+                                    </button>
+                                    <button 
+                                        onClick={(e) => handleDeleteCourse(e, course.id)}
+                                        className="btn-delete-course"
+                                        title="Eliminar curso"
+                                    >
+                                        <Trash2 size={18} />
                                     </button>
                                 </div>
                             )}

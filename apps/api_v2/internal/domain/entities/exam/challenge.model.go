@@ -20,26 +20,27 @@ const (
 
 
 type Challenge struct {
-	ID          string
-	Title       string
-	Description string
-	Tags        []string
+	ID          string            `json:"id"`
+	Title       string            `json:"title"`
+	Description string            `json:"description"`
+	Tags        []string          `json:"tags"`
 
 	// State and Access Control
-	Status       ChallengeStatus // state machine: draft -> published -> archived
-	Difficulty   ChallengeDifficulty
+	Status       ChallengeStatus `json:"status"` // state machine: draft -> published -> archived
+	Difficulty   ChallengeDifficulty `json:"difficulty"`
 
 	// Worker Constraints
-	WorkerTimeLimit    int // in ms
-	WorkerMemoryLimit  int // in MB
+	WorkerTimeLimit    int `json:"timeLimit"` // in ms
+	WorkerMemoryLimit  int `json:"memoryLimit"` // in MB
 	
 	// I/O Considerations
-	InputVariables  []IOVariable
-	OutputVariable  IOVariable
-	Constraints     string
+	InputVariables  []IOVariable `json:"inputVariables"`
+	OutputVariable  IOVariable   `json:"outputVariable"`
+	Constraints     string       `json:"constraints"`
 
 	// Metadata
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	ExamID		    string
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+	ExamID		    string    `json:"examId"`
+	CourseID	    string    `json:"courseId"`
 }

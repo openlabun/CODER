@@ -3,7 +3,6 @@ package courses_usescases
 import (
 	"context"
 	"fmt"
-
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
@@ -34,18 +33,26 @@ func (uc *GetOwnedCoursesUseCase) Execute(ctx context.Context, input dtos.GetOwn
 		return nil, err
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to view owned courses")
+	// Allow both professor and teacher roles for compatibility
+	if user.Role != user_entities.UserRoleProfessor && user.Role != "teacher" {
+		return nil, fmt.Errorf("user role '%s' does not have permissions to view owned courses", user.Role)
+	}
+
+	// Use user ID from context if TeacherID is not provided in query
+	teacherID := input.TeacherID
+	if teacherID == "" {
+		teacherID = user.ID
 	}
 
 	// Get owned courses for the teacher
-	courses, err := uc.courseRepository.GetCoursesByTeacherID(ctx, input.TeacherID)
+	courses, err := uc.courseRepository.GetCoursesByTeacherID(ctx, teacherID)
 	if err != nil {
 		return nil, err
 	}
 
+	// Return empty list instead of nil if no courses found
 	if courses == nil {
-		return nil, fmt.Errorf("no owned courses found")
+		return []*Entities.Course{}, nil
 	}
 
 	return courses, nil

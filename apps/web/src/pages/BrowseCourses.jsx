@@ -159,7 +159,7 @@ const BrowseCourses = () => {
                                         </div>
                                         <div className="meta-row-premium">
                                             <Calendar size={18} />
-                                            <span>Periodo {course.period}</span>
+                                            <span>Periodo {course.period ? `${course.period.year}-${course.period.semester}` : 'S/P'}</span>
                                         </div>
                                         <div className="meta-row-premium" style={{borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '1rem', marginTop: '0.5rem'}}>
                                             <User size={18} />

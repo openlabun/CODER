@@ -33,7 +33,6 @@ const Sidebar = () => {
         { path: '/challenges', label: 'Retos', icon: <Trophy size={20} /> },
         { path: '/challenges/create', label: 'Crear Reto', icon: <PlusCircle size={20} /> },
         { path: '/courses', label: 'Cursos', icon: <BookOpen size={20} /> },
-        { path: '/courses/create', label: 'Crear Curso', icon: <PlusCircle size={20} /> },
         { path: '/submissions', label: 'Envíos', icon: <FileText size={20} /> },
         { path: '/leaderboard', label: 'Clasificación', icon: <BarChart3 size={20} /> },
     ];

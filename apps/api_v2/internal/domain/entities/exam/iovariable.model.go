@@ -8,8 +8,8 @@ const (
 )
 
 type IOVariable struct {
-	ID 	   string
-	Name   string
-	Type   VariableFormat
-	Value  string
+	ID 	   string          `json:"id"`
+	Name   string          `json:"name"`
+	Type   VariableFormat  `json:"type"`
+	Value  string          `json:"value"`
 }

@@ -35,7 +35,7 @@ func (uc *GetEnrolledCoursesUseCase) Execute(ctx context.Context, input dtos.Get
 	}
 
 	if user.Role != user_entities.UserRoleStudent {
-		return nil, fmt.Errorf("user does not have permissions to view enrolled courses")
+		return nil, fmt.Errorf("user role '%s' does not have permissions to view enrolled courses", user.Role)
 	}
 
 	// Get enrolled courses for the student
@@ -49,8 +49,9 @@ func (uc *GetEnrolledCoursesUseCase) Execute(ctx context.Context, input dtos.Get
 		return nil, err
 	}
 
+	// Return empty list instead of nil if no courses found
 	if courses == nil {
-		return nil, fmt.Errorf("no enrolled courses found")
+		return []*Entities.Course{}, nil
 	}
 
 	return courses, nil

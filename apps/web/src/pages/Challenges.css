@@ -302,3 +302,91 @@
 @media (max-width: 480px) {
     .challenges-grid-compact { grid-template-columns: 1fr; }
 }
+
+/* Management Actions & Status */
+.badge-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-badge {
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.status-badge.published {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #d1fae5;
+}
+
+.status-badge.draft {
+    background: #fffbeb;
+    color: #d97706;
+    border-color: #fef3c7;
+}
+
+.status-badge.archived {
+    background: #f8fafc;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+}
+
+.actions-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.teacher-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #64748b;
+}
+
+.action-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+    color: #1e293b;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-btn.publish:hover { background: #ecfdf5; color: #059669; border-color: #10b981; }
+.action-btn.archive:hover { background: #f8fafc; color: #475569; border-color: #94a3b8; }
+.action-btn.edit:hover { background: #eff6ff; color: #2563eb; border-color: #3b82f6; }
+.action-btn.delete:hover { background: #fff1f2; color: #e11d48; border-color: #f43f5e; }
+
+.challenge-card-mini.archived {
+    opacity: 0.7;
+    filter: grayscale(0.5);
+}
+
+.challenge-card-mini.archived:hover {
+    filter: grayscale(0);
+    opacity: 1;
+}

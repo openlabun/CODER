@@ -33,7 +33,26 @@ const ExamRunner = () => {
                 setLoading(false);
             }
         };
+
         fetchExam();
+
+        // Setup session heartbeat
+        const sessionId = localStorage.getItem('session_id');
+        let heartbeatInterval;
+        
+        if (sessionId) {
+            heartbeatInterval = setInterval(async () => {
+                try {
+                    await client.put(`/sessions/${sessionId}/heartbeat`);
+                } catch (err) {
+                    console.warn('Heartbeat failed:', err);
+                }
+            }, 120000); // Pulse every 2 minutes
+        }
+
+        return () => {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+        };
     }, [id, token, navigate]);
 
     const handleSubmit = async () => {

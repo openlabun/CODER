@@ -152,6 +152,29 @@ func (r *ChallengeRepository) GetChallengesByExamID(ctx context.Context, examID 
 	return challenges, nil
 }
 
+func (r *ChallengeRepository) GetChallengesByCourseID(ctx context.Context, courseID string) ([]*Entities.Challenge, error) {
+	normalizedID := strings.TrimSpace(courseID)
+	if normalizedID == "" {
+		return nil, fmt.Errorf("courseID is required")
+	}
+
+	// Since Roble doesn't have a CourseID column for Challenge, 
+	// we fetch all and filter in memory (CourseID was mapped to tags)
+	all, err := r.GetAllChallenges(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	filtered := make([]*Entities.Challenge, 0)
+	for _, challenge := range all {
+		if challenge.CourseID == normalizedID {
+			filtered = append(filtered, challenge)
+		}
+	}
+
+	return filtered, nil
+}
+
 func (r *ChallengeRepository) GetAllChallenges(ctx context.Context) ([]*Entities.Challenge, error) {
 	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
 		return nil, err

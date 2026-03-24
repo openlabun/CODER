@@ -3,34 +3,47 @@ package courses_usescases
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course/mapper"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
-	userRepositoty "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 )
 
 type EnrollInCourseUseCase struct {
 	courseRepository repositories.CourseRepository
-	userRepository userRepositoty.UserRepository
+	userRepository userRepository.UserRepository
 }
 
-func NewEnrollInCourseUseCase(courseRepository repositories.CourseRepository, userRepository userRepositoty.UserRepository) *EnrollInCourseUseCase {
+func NewEnrollInCourseUseCase(courseRepository repositories.CourseRepository, userRepository userRepository.UserRepository) *EnrollInCourseUseCase {
 	return &EnrollInCourseUseCase{courseRepository: courseRepository, userRepository: userRepository}
 }
 
 func (uc *EnrollInCourseUseCase) Execute(ctx context.Context, input dtos.EnrolledInCourseInput) (*Entities.Course, error) {
-	// Check if student exists
-	student, err := uc.userRepository.GetUserByID(ctx, input.StudentID)
+	var student *user_entities.User
+	var err error
+
+	// Find student by ID or Email
+	if strings.Contains(input.StudentID, "@") {
+		student, err = uc.userRepository.GetUserByEmail(ctx, input.StudentID)
+	} else {
+		student, err = uc.userRepository.GetUserByID(ctx, input.StudentID)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	if student == nil {
-		return nil, fmt.Errorf("student not found")
+		return nil, fmt.Errorf("estudiante no encontrado")
 	}
+
+	// Override student ID if found by email
+	input.StudentID = student.ID
 
 	// Check if course exists
 	course, err := uc.courseRepository.GetCourseByID(ctx, input.CourseID)
@@ -39,7 +52,7 @@ func (uc *EnrollInCourseUseCase) Execute(ctx context.Context, input dtos.Enrolle
 	}
 
 	if course == nil {
-		return nil, fmt.Errorf("course not found")
+		return nil, fmt.Errorf("curso no encontrado")
 	}
 
 	// Check if student is already enrolled in course
@@ -49,7 +62,7 @@ func (uc *EnrollInCourseUseCase) Execute(ctx context.Context, input dtos.Enrolle
 	}
 
 	if studentAlreadyEnrolled(enrollment, input.CourseID) {
-		return nil, fmt.Errorf("student is already enrolled in this course")
+		return nil, fmt.Errorf("el estudiante ya está inscrito en este curso")
 	}
 
 	// Enroll student in course

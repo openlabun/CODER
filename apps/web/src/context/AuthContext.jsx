@@ -19,17 +19,19 @@ export const AuthProvider = ({ children }) => {
                         headers: { 'X-User-Email': email }
                     });
                     setUser({ 
-                        id: data.ID || data.UserID || email,
+                        id: data.id || data.ID || email,
                         token, 
-                        username: data.Username || data.Email, 
-                        role: String(data.Role).toLowerCase() || 'student', 
-                        email: data.Email 
+                        username: data.username || data.Username || data.email || data.Email, 
+                        role: String(data.role || data.Role || 'student').toLowerCase(), 
+                        email: data.email || data.Email 
                     });
                 } catch (error) {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user_email');
+                    localStorage.removeItem('session_id');
                 }
             }
+
             setLoading(false);
         };
         checkAuth();
@@ -54,12 +56,13 @@ export const AuthProvider = ({ children }) => {
             });
             
             setUser({ 
-                id: profile.ID || profile.UserID || userData?.ID || email,
+                id: profile.id || profile.ID || userData?.id || userData?.ID || email,
                 token: token, 
-                username: profile.Username || profile.Email || userData?.Username, 
-                role: String(profile.Role || userData?.Role).toLowerCase() || 'student',
+                username: profile.username || profile.Username || profile.email || profile.Email || userData?.username || userData?.Username, 
+                role: String(profile.role || profile.Role || userData?.role || userData?.Role || 'student').toLowerCase(),
                 email: email
             });
+
         } catch (error) {
             if (!error.response) {
                 throw new Error('Error de conexión: No se pudo contactar con el servidor.');
@@ -82,12 +85,13 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('user_email', email);
             
             setUser({ 
-                id: userData?.ID || userData?.UserID || email,
+                id: userData?.id || userData?.ID || email,
                 token, 
-                username: userData?.Username || name, 
-                role: String(userData?.Role || 'student').toLowerCase(), 
+                username: userData?.username || userData?.Username || name, 
+                role: String(userData?.role || userData?.Role || 'student').toLowerCase(), 
                 email: email 
             });
+
         } catch (error) {
             if (!error.response) {
                 throw new Error('Error de conexión: No se pudo contactar con el servidor.');

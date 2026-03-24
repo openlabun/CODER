@@ -10,6 +10,12 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const handleAuthLogout = () => setUser(null);
+        window.addEventListener('auth:logout', handleAuthLogout);
+        return () => window.removeEventListener('auth:logout', handleAuthLogout);
+    }, []);
+
+    useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem('token');
             const email = localStorage.getItem('user_email');
@@ -27,6 +33,7 @@ export const AuthProvider = ({ children }) => {
                     });
                 } catch (error) {
                     localStorage.removeItem('token');
+                    localStorage.removeItem('refresh_token');
                     localStorage.removeItem('user_email');
                     localStorage.removeItem('session_id');
                 }
@@ -43,12 +50,16 @@ export const AuthProvider = ({ children }) => {
             
             // Go API structure: data.token.access_token and data.user_data
             const token = data.token?.access_token;
+            const refreshToken = data.token?.refresh_token;
             const userData = data.user_data;
 
             if (!token) throw new Error('Token no recibido del servidor');
 
             localStorage.setItem('token', token);
             localStorage.setItem('user_email', email);
+            if (refreshToken) {
+                localStorage.setItem('refresh_token', refreshToken);
+            }
 
             // Fetch user details including role using the required header
             const { data: profile } = await client.get('/auth/me', {
@@ -78,11 +89,15 @@ export const AuthProvider = ({ children }) => {
             const { data } = await client.post('/auth/register', { name, email, password });
             
             const token = data.token?.access_token;
+            const refreshToken = data.token?.refresh_token;
             const userData = data.user_data;
             if (!token) throw new Error('Token no recibido tras el registro');
 
             localStorage.setItem('token', token);
             localStorage.setItem('user_email', email);
+            if (refreshToken) {
+                localStorage.setItem('refresh_token', refreshToken);
+            }
             
             setUser({ 
                 id: userData?.id || userData?.ID || email,
@@ -104,7 +119,9 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user_email');
+        localStorage.removeItem('session_id');
         setUser(null);
     };
 

@@ -15,7 +15,7 @@ const (
 )
 
 type Session struct {
-	ID           string
+	ID           string `json:"id"`
 	StudentID    string
 	ExamID       string
 

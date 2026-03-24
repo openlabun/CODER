@@ -3,7 +3,7 @@ package challenge_entities
 import "time"
 
 type TestCase struct {
-	ID             string
+	ID             string `json:"id"`
 	Name           string
 
 	// I/O Configuration

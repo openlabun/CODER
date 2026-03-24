@@ -13,7 +13,7 @@ const (
 )
 
 type Submission struct {
-	ID          string
+	ID          string `json:"id"`
 	Code        string
 	Function    string
 	Language    ProgrammingLanguage

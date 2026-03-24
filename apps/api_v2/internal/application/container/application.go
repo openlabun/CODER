@@ -7,13 +7,13 @@ import (
 	course_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/course/crud"
 	user_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/user"
 
+	"github.com/openlabun/CODER/apps/api_v2/internal/application/services"
+	ai_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/ai"
 	challenge_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/challenge_crud"
 	exam_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/exam_crud"
 	test_case_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/test_case_crud"
 	submission_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission"
 	session_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission/session"
-	ai_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/ai"
-	"github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 )
 
 // UserUseCases holds all user-related use cases available in the application.
@@ -69,6 +69,7 @@ type SessionUseCases struct {
 	CreateSession    *session_usecases.CreateSessionUseCase
 	GetSession       *session_usecases.GetSessionUseCase
 	HeartBeatSession *session_usecases.HeartBeatSessionUseCase
+	CloseSession     *session_usecases.CloseSessionUseCase
 }
 
 type ExamUseCases struct {
@@ -81,7 +82,7 @@ type ExamUseCases struct {
 
 type AIUseCases struct {
 	GenerateFullChallenge *ai_usecases.GenerateFullChallengeUseCase
-	GenerateExam         *ai_usecases.GenerateExamUseCase
+	GenerateExam          *ai_usecases.GenerateExamUseCase
 }
 
 type Application struct {
@@ -111,7 +112,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		GetCourseDetails:        course_crud_usecases.NewGetCourseDetailsUseCase(deps.CourseRepository, deps.UserRepository),
 		GetEnrolledCourses:      course_crud_usecases.NewGetEnrolledCoursesUseCase(deps.CourseRepository, deps.UserRepository),
 		GetOwnedCourses:         course_crud_usecases.NewGetOwnedCoursesUseCase(deps.CourseRepository, deps.UserRepository),
-		GetAllCourses:          course_crud_usecases.NewGetAllCoursesUseCase(deps.CourseRepository, deps.UserRepository),
+		GetAllCourses:           course_crud_usecases.NewGetAllCoursesUseCase(deps.CourseRepository, deps.UserRepository),
 		GetCourseStudents:       course_usecases.NewGetCourseStudentsUseCase(deps.CourseRepository, deps.UserRepository),
 		EnrollInCourse:          course_usecases.NewEnrollInCourseUseCase(deps.CourseRepository, deps.UserRepository),
 		RemoveStudentFromCourse: course_usecases.NewRemoveStudentFromCourseUseCase(deps.CourseRepository, deps.UserRepository),
@@ -140,6 +141,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		CreateSession:    session_usecases.NewCreateSessionUseCase(deps.UserRepository, deps.SessionRepository, deps.ExamRepository),
 		GetSession:       session_usecases.NewGetSessionUseCase(deps.SessionRepository, deps.UserRepository),
 		HeartBeatSession: session_usecases.NewHeartBeatSessionUseCase(deps.UserRepository, deps.SessionRepository),
+		CloseSession:     session_usecases.NewCloseSessionUseCase(deps.UserRepository, deps.SessionRepository, deps.ExamRepository),
 	}
 
 	app.SubmissionUseCases = SubmissionUseCases{

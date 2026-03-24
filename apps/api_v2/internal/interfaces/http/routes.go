@@ -16,6 +16,7 @@ import (
 	challenge_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/delete-by-id"
 	challenge_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-by-id"
 	challenge_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-list"
+	challenge_get_mine "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-mine"
 	challenge_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/patch-update"
 	challenge_post_archive "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-archive"
 	challenge_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-create"
@@ -35,6 +36,7 @@ import (
 	exam_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/delete-by-id"
 	exam_get_by_course_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-course-id"
 	exam_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-id"
+	exam_get_owned "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-owned"
 	exam_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/patch-update"
 	exam_post_change_visibility "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-change-visibility"
 	exam_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-close"
@@ -137,6 +139,7 @@ func registerChallengesRoutes(app *fiber.App, appContainer *container.Applicatio
 	challenges := app.Group("/challenges")
 	challenges.Post("/", challenge_post_create.Handler(appContainer))
 	challenges.Get("/", challenge_get_list.Handler(appContainer))
+	challenges.Get("/mine", challenge_get_mine.Handler(appContainer))
 	challenges.Get("/:id", challenge_get_by_id.Handler(appContainer))
 	challenges.Patch("/:id", challenge_patch_update.Handler(appContainer))
 	challenges.Delete("/:id", challenge_delete_by_id.Handler(appContainer))
@@ -172,6 +175,7 @@ func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 	exams := app.Group("/exams")
 	exams.Post("/", exam_post_create.Handler(appContainer))
 	exams.Get("/course/:courseId", exam_get_by_course_id.Handler(appContainer))
+	exams.Get("/owned", exam_get_owned.Handler(appContainer))
 	exams.Get("/:id", exam_get_by_id.Handler(appContainer))
 	exams.Patch("/:id", exam_patch_update.Handler(appContainer))
 	exams.Delete("/:id", exam_delete_by_id.Handler(appContainer))

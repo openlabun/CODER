@@ -38,7 +38,7 @@ const Dashboard = () => {
                 const submissionsRes = await client.get(`/submissions/user/${user.id}`);
                 const submissions = Array.isArray(submissionsRes.data) ? submissionsRes.data : (submissionsRes.data.items || []);
 
-                const challengesRes = await client.get('/challenges');
+                const challengesRes = await client.get('/challenges/mine');
                 const challenges = Array.isArray(challengesRes.data) ? challengesRes.data : (challengesRes.data.items || []);
 
                 setStats({

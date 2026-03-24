@@ -33,7 +33,7 @@ const Challenges = () => {
 
     const fetchChallenges = async () => {
         try {
-            const { data } = await client.get('/challenges');
+            const { data } = await client.get('/challenges/mine');
             setChallenges(Array.isArray(data) ? data : (data.items || []));
         } catch (err) {
             console.error('Error loading challenges:', err);

@@ -27,6 +27,11 @@ export const getExamDetails = async (examId) => {
   return unwrapPayload(res.data);
 };
 
+export const getOwnedExams = async () => {
+  const res = await client.get('/exams/owned');
+  return unwrapPayload(res.data);
+};
+
 export const getPublicExams = async () => {
   const res = await client.get('/exams/public');
   return unwrapPayload(res.data);

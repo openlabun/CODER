@@ -16,15 +16,15 @@ import (
 	submission_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission"
 
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
-	submission_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	submission_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 
-	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitmq"
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 	course_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
 	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 	submission_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
+	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitmq"
 	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 )
 
@@ -342,7 +342,7 @@ func TestSubmissions(t *testing.T) {
 		},
 		OutputVariable: exam_dtos.IOVariableDTO{Name: "sum", Type: "int", Value: "5"},
 		Constraints:    "1 <= a,b <= 1000",
-		ExamID:          examID,
+		ExamID:         examID,
 	})
 	if err != nil {
 		t.Fatalf("create challenge failed: %v", err)
@@ -504,7 +504,7 @@ func mustLoginSubmissionTeacher(t *testing.T, app *container.Application) *user_
 	t.Helper()
 
 	email := "test@test.com"
-	password := "Testing123!"
+	password := "Password123!"
 
 	access, err := app.Dependencies.LoginService.LoginUser(email, password)
 	if err != nil {
@@ -524,7 +524,7 @@ func ensureSubmissionStudentAccess(t *testing.T, app *container.Application) *us
 	t.Helper()
 
 	email := "stud@test.com"
-	password := "Testing123!"
+	password := "Password123!"
 
 	access, err := app.Dependencies.LoginService.LoginUser(email, password)
 	if err == nil && access != nil && access.UserData != nil && access.UserData.ID != "" && access.Token != nil && access.Token.AccessToken != "" {

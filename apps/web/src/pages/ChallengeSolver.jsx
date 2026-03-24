@@ -37,7 +37,7 @@ const ChallengeSolver = () => {
                 const response = await client.get(`/challenges/${id}`);
                 setChallenge(response.data);
                 // Set default code template
-                setCode('// Escribe tu solución aquí\n');
+                setCode('# Escribe tu solucion aqui\ndef solve(a, b):\n    return a + b\n');
             } catch (error) {
                 console.error('Error fetching challenge:', error);
                 // If 404, maybe it's not published
@@ -52,6 +52,30 @@ const ChallengeSolver = () => {
     }, [id]);
 
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const extractPythonFunctionSignature = (sourceCode) => {
+        const match = sourceCode.match(/^\s*(?:async\s+)?def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)\s*(?:->\s*[^:]+)?\s*:/m);
+        if (!match) return '';
+
+        const functionName = match[1];
+        const rawArgs = match[2].trim();
+
+        if (!rawArgs) {
+            return `${functionName}()`;
+        }
+
+        const normalizedArgs = rawArgs
+            .split(',')
+            .map((arg) => arg.trim())
+            .filter(Boolean)
+            .map((arg) => arg.replace(/^\*+/, ''))
+            .map((arg) => arg.split(':')[0])
+            .map((arg) => arg.split('=')[0])
+            .map((arg) => arg.trim())
+            .filter(Boolean);
+
+        return `${functionName}(${normalizedArgs.join(', ')})`;
+    };
 
     const formatResultsOutput = (submission, results) => {
         if (!results.length) {
@@ -87,10 +111,17 @@ const ChallengeSolver = () => {
         setOutput('Enviando solucion...');
 
         try {
+            const functionSignature = extractPythonFunctionSignature(code);
+            if (!functionSignature) {
+                setOutput('Debes definir una funcion en Python antes de enviar. Ejemplo: def solve(a, b):');
+                return;
+            }
+
             const sessionId = localStorage.getItem('session_id') || undefined;
             const payload = {
                 challengeID: id,
                 code,
+                function: functionSignature,
                 language,
             };
 

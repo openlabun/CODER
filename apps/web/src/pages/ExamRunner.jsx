@@ -16,6 +16,30 @@ const ExamRunner = () => {
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState(null);
 
+    const extractPythonFunctionSignature = (sourceCode) => {
+        const match = sourceCode.match(/^\s*(?:async\s+)?def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)\s*(?:->\s*[^:]+)?\s*:/m);
+        if (!match) return '';
+
+        const functionName = match[1];
+        const rawArgs = match[2].trim();
+
+        if (!rawArgs) {
+            return `${functionName}()`;
+        }
+
+        const normalizedArgs = rawArgs
+            .split(',')
+            .map((arg) => arg.trim())
+            .filter(Boolean)
+            .map((arg) => arg.replace(/^\*+/, ''))
+            .map((arg) => arg.split(':')[0])
+            .map((arg) => arg.split('=')[0])
+            .map((arg) => arg.trim())
+            .filter(Boolean);
+
+        return `${functionName}(${normalizedArgs.join(', ')})`;
+    };
+
     useEffect(() => {
         const fetchExam = async () => {
             try {
@@ -80,9 +104,16 @@ const ExamRunner = () => {
         setSubmitting(true);
         setResult(null);
         try {
+            const functionSignature = extractPythonFunctionSignature(code);
+            if (!functionSignature) {
+                alert('Debes definir una funcion en Python antes de enviar. Ejemplo: def solve(a, b):');
+                return;
+            }
+
             const { data } = await client.post('/submissions', {
                 challengeID: challengeId,
                 code,
+                function: functionSignature,
                 language,
                 sessionID: sessionId,
             });

@@ -1512,6 +1512,35 @@ paths:
                   id: session-123
                   status: active
                   lastHeartbeat: 2026-03-22T12:00:00Z
+  /submissions/sessions/{id}/close:
+    post:
+      tags:
+        - submissions
+      summary: Close session
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/submissions/post-close-session/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/submissions/post-close-session/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Close session response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionsPostCloseSessionOutput200"
+              example: &a54b
+                statusCode: 200
+                body:
+                  id: session-123
+                  studentID: usr-student-123
+                  examID: exam-123
+                  status: completed
   /leaderboard/challenge/{id}:
     get:
       tags:
@@ -3565,6 +3594,31 @@ components:
         - statusCode
         - body
       example: *a54
+    SubmissionsPostCloseSessionOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+          properties:
+            id:
+              type: string
+            studentID:
+              type: string
+            examID:
+              type: string
+            status:
+              type: string
+          required:
+            - id
+            - studentID
+            - examID
+            - status
+      required:
+        - statusCode
+        - body
+      example: *a54b
     LeaderboardGetChallengeIdOutput200:
       type: object
       properties:

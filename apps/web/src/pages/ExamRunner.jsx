@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getExamDetails } from '../api/exams';
+import { getExamDetails, getChallengesByExam } from '../api/exams';
 import client from '../api/client';
 import './ChallengeSolver.css'; // Reuse styles
 
@@ -8,6 +8,7 @@ const ExamRunner = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [exam, setExam] = useState(null);
+    const [challenges, setChallenges] = useState([]);
     const [currentChallenge, setCurrentChallenge] = useState(null);
     const [code, setCode] = useState('');
     const [language, setLanguage] = useState('python');
@@ -20,9 +21,15 @@ const ExamRunner = () => {
             try {
                 const data = await getExamDetails(id);
                 setExam(data);
-                const challenges = data?.challenges || data?.Challenges || [];
-                if (challenges.length > 0) {
-                    setCurrentChallenge(challenges[0]);
+
+                const challengeData = await getChallengesByExam(id);
+                const challengeList = Array.isArray(challengeData)
+                    ? challengeData
+                    : (challengeData?.challenges || challengeData?.Challenges || []);
+
+                setChallenges(challengeList);
+                if (challengeList.length > 0) {
+                    setCurrentChallenge(challengeList[0]);
                 }
             } catch (err) {
                 console.error(err);
@@ -138,7 +145,7 @@ const ExamRunner = () => {
                 <div className="problem-description">
                     <h3>Challenges</h3>
                     <ul className="exam-challenge-list">
-                        {(exam.challenges || exam.Challenges || []).map(ch => (
+                        {challenges.map(ch => (
                             <li
                                 key={ch.id || ch.ID}
                                 className={(currentChallenge?.id || currentChallenge?.ID) === (ch.id || ch.ID) ? 'active' : ''}

@@ -2,6 +2,19 @@ import { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import client from '../api/client';
+import { 
+    BookOpen, 
+    Plus, 
+    Compass, 
+    Hash, 
+    Calendar, 
+    Settings, 
+    ChevronRight,
+    Users,
+    Key,
+    AlertCircle,
+    RotateCcw
+} from 'lucide-react';
 import './Courses.css';
 
 const Courses = () => {
@@ -14,74 +27,135 @@ const Courses = () => {
     useEffect(() => {
         const fetchCourses = async () => {
             try {
-                const { data } = await client.get('/courses');
-                setCourses(data);
+                const scope = (user?.role === 'professor' || user?.role === 'teacher') ? '?scope=owned' : '';
+                const { data } = await client.get(`/courses${scope}`);
+                setCourses(Array.isArray(data) ? data : (data.items || []));
             } catch (err) {
-                setError('Failed to load courses');
+                console.error('Error loading courses:', err);
+                setError('No se pudieron cargar los cursos. Por favor, intenta de nuevo.');
             } finally {
                 setLoading(false);
             }
         };
-        fetchCourses();
-    }, []);
+        if (user) fetchCourses();
+    }, [user]);
 
-    if (loading) return <div className="loading">Loading courses...</div>;
-    if (error) return <div className="error">{error}</div>;
+    if (loading) return (
+        <div className="courses-page-new">
+            <header className="courses-header-new">
+                <div className="skeleton title-skeleton"></div>
+            </header>
+            <div className="courses-grid-new">
+                {[...Array(3)].map((_, i) => (
+                    <div key={i} className="course-card-new skeleton-card">
+                        <div className="skeleton card-content-skeleton"></div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    if (error) return (
+        <div className="courses-page-new">
+            <div className="error-container">
+                <AlertCircle size={48} />
+                <h3>Error en la carga</h3>
+                <p>{error}</p>
+                <button onClick={() => window.location.reload()} className="btn-retry">
+                    <RotateCcw size={16} /> Reintentar carga
+                </button>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="courses-page">
-            <div className="page-header">
-                <h1>My Courses</h1>
-                <div className="header-actions">
-                    {user?.role === 'student' && (
+        <div className="courses-page-new">
+            <header className="courses-header-new">
+                <div className="header-info-new">
+                    <h1>Mis Cursos</h1>
+                    <p>Gestiona tus asignaturas y accede a los retos programados</p>
+                </div>
+                
+                <div className="header-actions-new">
+                    {(user?.role === 'student') && (
                         <>
-                            <button onClick={() => navigate('/courses/browse')} className="btn-secondary" style={{ marginRight: '1rem' }}>
-                                🔍 Browse Courses
+                            <button onClick={() => navigate('/courses/browse')} className="btn-action-outline">
+                                <Compass size={18} /> Explorar Cursos
                             </button>
-                            <button onClick={() => navigate('/courses/join')} className="btn-primary">
-                                🔑 Join Course
+                            <button onClick={() => navigate('/courses/join')} className="btn-action-filled">
+                                <Key size={18} /> Unirse con Código
                             </button>
                         </>
                     )}
-                    {user?.role === 'professor' && (
-                        <button onClick={() => navigate('/courses/create')} className="btn-primary">
-                            ➕ Create Course
+                    {(user?.role === 'professor' || user?.role === 'teacher') && (
+                        <button onClick={() => navigate('/courses/create')} className="btn-action-filled">
+                            <Plus size={18} /> Crear Nuevo Curso
                         </button>
                     )}
                 </div>
-            </div>
+            </header>
+
             {courses.length === 0 ? (
-                <div className="empty-state">
-                    <h3>📚 No Courses Available</h3>
-                    {user?.role === 'student' ? (
-                        <p>You haven't joined any courses yet. Click "Browse Courses" to find open courses or "Join Course" to enroll with a code.</p>
-                    ) : (
-                        <p>You haven't created any courses yet. Click "Create Course" to get started.</p>
-                    )}
+                <div className="empty-state-new">
+                    <div className="icon-circle">
+                        <BookOpen size={40} />
+                    </div>
+                    <h3>Aún no tienes cursos</h3>
+                    <p>
+                        {user?.role === 'student' 
+                            ? 'No te has unido a ningún curso. Revisa la sección de explorar o solicita un código a tu docente.' 
+                            : 'No has creado ningún curso todavía. Comienza creando uno para tus estudiantes.'}
+                    </p>
+                    <button onClick={() => navigate(user?.role === 'student' ? '/courses/browse' : '/courses/create')} className="btn-cta-link">
+                        Empezar ahora <ChevronRight size={16} />
+                    </button>
                 </div>
             ) : (
-                <div className="courses-grid">
+                <div className="courses-grid-new">
                     {courses.map((course) => (
-                        <Link key={course.id} to={`/courses/${course.id}`} className="course-card">
-                            <h3>{course.name}</h3>
-                            <p>Code: {course.code}</p>
-                            <p>Period: {course.period}</p>
-                            {user?.role === 'professor' && course.enrollmentCode && (
-                                <p className="enrollment-code">🔑 {course.enrollmentCode}</p>
+                        <div key={course.id} className="course-card-new">
+                            <Link to={`/courses/${course.id}`} className="card-clickable-area">
+                                <div className="card-icon-area">
+                                    <BookOpen className="course-icon" />
+                                </div>
+                                <div className="card-info-area">
+                                    <h3>{course.name || 'Sin nombre'}</h3>
+                                    <div className="course-metadata-new">
+                                        <div className="meta-item-new">
+                                            <Hash size={14} />
+                                            <span>{course.code || 'S/N'}</span>
+                                        </div>
+                                        <div className="meta-item-new">
+                                            <Calendar size={14} />
+                                            <span>{course.period || '2026-10'}</span>
+                                        </div>
+                                        <div className="meta-item-new">
+                                            <Users size={14} />
+                                            <span>{course.studentCount || 0} inscritos</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                            
+                            {(user?.role === 'professor' || user?.role === 'teacher') && (
+                                <div className="card-admin-actions">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            navigate(`/courses/edit/${course.id}`);
+                                        }}
+                                        className="btn-settings"
+                                        title="Configurar curso"
+                                    >
+                                        <Settings size={18} />
+                                    </button>
+                                </div>
                             )}
-                            {user?.role === 'professor' && (
-                                <button
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        navigate(`/courses/edit/${course.id}`);
-                                    }}
-                                    className="btn-edit"
-                                    style={{ marginTop: '1rem', width: '100%', padding: '0.5rem', background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}
-                                >
-                                    ✏️ Edit Course
-                                </button>
-                            )}
-                        </Link>
+                            <Link to={`/courses/${course.id}`} className="card-arrow-link">
+                                <ChevronRight size={20} />
+                            </Link>
+                        </div>
                     ))}
                 </div>
             )}

@@ -2,6 +2,21 @@ import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import client from '../api/client';
+import { 
+    Trophy, 
+    BookOpen, 
+    FileText, 
+    CheckCircle, 
+    Target, 
+    BarChart3, 
+    History, 
+    Rocket,
+    ArrowRight,
+    Clock,
+    Zap,
+    TrendingUp,
+    Star
+} from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -16,16 +31,18 @@ const Dashboard = () => {
 
     useEffect(() => {
         const fetchDashboardData = async () => {
+            if (!user?.id) return;
+            
             try {
-                // Fetch submissions for stats
-                const { data } = await client.get('/submissions');
-                const submissions = data.items || [];
+                // Fetch user-specific submissions to avoid 400 error on broad list
+                const { data } = await client.get(`/submissions/user/${user.id}`);
+                const submissions = Array.isArray(data) ? data : (data.items || []);
 
                 setStats({
                     totalSubmissions: submissions.length,
                     acceptedSubmissions: submissions.filter(s => s.status === 'accepted').length,
-                    activeChallenges: 0, // Will be populated when challenges endpoint is ready
-                    recentSubmissions: submissions.slice(0, 5)
+                    activeChallenges: 0, 
+                    recentSubmissions: submissions.slice(0, 4)
                 });
             } catch (err) {
                 console.error('Error fetching dashboard data:', err);
@@ -34,107 +51,145 @@ const Dashboard = () => {
             }
         };
 
-        fetchDashboardData();
-    }, []);
+        if (user) {
+            fetchDashboardData();
+        }
+    }, [user]);
 
     if (loading) {
-        return <div className="loading">Cargando panel...</div>;
+        return (
+            <div className="dashboard-loading">
+                <div className="loader-orbit">
+                    <div className="orbit-dot"></div>
+                </div>
+                <p>Cargando panel...</p>
+            </div>
+        );
     }
 
+    const successRate = stats.totalSubmissions > 0
+        ? Math.round((stats.acceptedSubmissions / stats.totalSubmissions) * 100)
+        : 0;
+
     return (
-        <div className="dashboard-page">
-            <div className="page-header">
-                <h1>Panel Principal</h1>
-                <p className="welcome-text">¡Bienvenido de nuevo, {user?.username}!</p>
-            </div>
+        <div className="dashboard-compact">
+            {/* Horizontal Hero & Metrics Combined for Compactness */}
+            <div className="dashboard-top-section">
+                <section className="dashboard-hero-min">
+                    <div className="hero-content">
+                        <div className="hero-badge">
+                            <Zap size={12} fill="#ffc72c" color="#ffc72c" />
+                            <span>Dashboard Académico</span>
+                        </div>
+                        <h1>Hola, <span className="text-highlight">{user?.username}</span></h1>
+                        <p>Continúa mejorando tus habilidades de programación.</p>
+                    </div>
+                    <div className="hero-progress">
+                        <div className="progress-mini" style={{ '--progress': `${successRate}%` }}>
+                            <span className="val">{successRate}%</span>
+                        </div>
+                    </div>
+                </section>
 
-            <div className="stats-grid">
-                <div className="stat-card">
-                    <div className="stat-icon">📝</div>
-                    <div className="stat-content">
-                        <h3>Envíos Totales</h3>
-                        <div className="stat-value">{stats.totalSubmissions}</div>
+                <div className="metrics-compact-bar">
+                    <div className="m-item">
+                        <FileText size={18} className="blue" />
+                        <div className="m-data">
+                            <span className="v">{stats.totalSubmissions}</span>
+                            <span className="l">Envíos</span>
+                        </div>
                     </div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-icon">✅</div>
-                    <div className="stat-content">
-                        <h3>Aceptados</h3>
-                        <div className="stat-value">{stats.acceptedSubmissions}</div>
+                    <div className="m-item">
+                        <CheckCircle size={18} className="green" />
+                        <div className="m-data">
+                            <span className="v">{stats.acceptedSubmissions}</span>
+                            <span className="l">Aceptados</span>
+                        </div>
                     </div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-icon">🎯</div>
-                    <div className="stat-content">
-                        <h3>Retos Activos</h3>
-                        <div className="stat-value">{stats.activeChallenges}</div>
+                    <div className="m-item">
+                        <Target size={18} className="red" />
+                        <div className="m-data">
+                            <span className="v">{stats.activeChallenges}</span>
+                            <span className="l">Retos</span>
+                        </div>
                     </div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-icon">📊</div>
-                    <div className="stat-content">
-                        <h3>Tasa de Éxito</h3>
-                        <div className="stat-value">
-                            {stats.totalSubmissions > 0
-                                ? Math.round((stats.acceptedSubmissions / stats.totalSubmissions) * 100)
-                                : 0}%
+                    <div className="m-item">
+                        <TrendingUp size={18} className="purple" />
+                        <div className="m-data">
+                            <span className="v">0</span>
+                            <span className="l">Puntos</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="dashboard-content">
-                <div className="quick-actions-section">
-                    <h2>Acciones Rápidas</h2>
-                    <div className="actions-grid">
-                        <Link to="/challenges" className="action-card">
-                            <span className="action-icon">🚀</span>
-                            <h3>Explorar Retos</h3>
-                            <p>Explora y resuelve retos de programación</p>
-                        </Link>
-                        <Link to="/courses" className="action-card">
-                            <span className="action-icon">📚</span>
-                            <h3>Mis Cursos</h3>
-                            <p>Mira tus cursos inscritos</p>
-                        </Link>
-                        <Link to="/leaderboard" className="action-card">
-                            <span className="action-icon">🏆</span>
-                            <h3>Clasificación</h3>
-                            <p>Revisa tu posición en el ranking</p>
-                        </Link>
-                        <Link to="/submissions" className="action-card">
-                            <span className="action-icon">📋</span>
-                            <h3>Mis Envíos</h3>
-                            <p>Revisa tu historial de envíos</p>
+            {/* Main Content Areas */}
+            <div className="dashboard-main-columns">
+                
+                {/* Activity List Section */}
+                <section className="dashboard-card recent-activity">
+                    <div className="card-header">
+                        <div className="header-label">
+                            <Clock size={16} />
+                            <h2>Envíos Recientes</h2>
+                        </div>
+                        <Link to="/submissions" className="link-more">
+                            Ver historial <ArrowRight size={12} />
                         </Link>
                     </div>
-                </div>
 
-                {stats.recentSubmissions.length > 0 && (
-                    <div className="recent-activity-section">
-                        <h2>Envíos Recientes</h2>
-                        <div className="submissions-list">
-                            {stats.recentSubmissions.map(sub => (
-                                <div key={sub.id} className="submission-item">
-                                    <span className={`status-badge ${sub.status}`}>{sub.status}</span>
-                                    <span className="submission-challenge">{sub.challengeId}</span>
-                                    <span className="submission-lang">{sub.language}</span>
-                                    <span className="submission-date">
-                                        {new Date(sub.createdAt).toLocaleDateString()}
-                                    </span>
+                    <div className="compact-list">
+                        {stats.recentSubmissions.length > 0 ? (
+                            stats.recentSubmissions.map((sub, idx) => (
+                                <div key={sub.id || idx} className="c-row">
+                                    <div className={`c-dot ${sub.status}`}></div>
+                                    <div className="c-info">
+                                        <span className="c-name">{sub.challengeId || 'Desafío'}</span>
+                                        <span className="c-meta">{sub.language} | {new Date(sub.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                    <span className={`c-status ${sub.status}`}>{sub.status}</span>
                                 </div>
-                            ))}
-                        </div>
+                            ))
+                        ) : (
+                            <div className="empty-compact">
+                                <Rocket size={24} />
+                                <p>Sin actividad reciente</p>
+                            </div>
+                        )}
                     </div>
-                )}
+                </section>
 
-                {stats.totalSubmissions === 0 && (
-                    <div className="empty-state">
-                        <h3>🎯 ¿Listo para empezar?</h3>
-                        <p>Aún no has enviado ninguna solución. ¡Explora los retos y empieza a programar!</p>
-                        <Link to="/challenges" className="btn-primary">Explorar Retos</Link>
-                    </div>
-                )}
+                {/* Quick Side Actions */}
+                <div className="side-actions-group">
+                    <section className="dashboard-card quick-links">
+                        <div className="header-label smaller">
+                            <Star size={14} />
+                            <h2>Acceso Rápido</h2>
+                        </div>
+                        <div className="links-grid">
+                            <Link to="/challenges" className="l-box brand">
+                                <Zap size={18} />
+                                <span>Retos</span>
+                            </Link>
+                            <Link to="/courses" className="l-box yellow">
+                                <BookOpen size={18} />
+                                <span>Cursos</span>
+                            </Link>
+                            <Link to="/leaderboard" className="l-box purple">
+                                <Trophy size={18} />
+                                <span>Ranking</span>
+                            </Link>
+                            <Link to="/submissions" className="l-box blue">
+                                <History size={18} />
+                                <span>Envíos</span>
+                            </Link>
+                        </div>
+                    </section>
+
+                    <section className="tip-compact">
+                        <p><Zap size={14} /> Modulariza tu código para mejorar la legibilidad y facilitar pruebas.</p>
+                    </section>
+                </div>
             </div>
         </div>
     );

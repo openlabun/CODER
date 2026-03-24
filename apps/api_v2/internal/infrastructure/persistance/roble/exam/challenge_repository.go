@@ -152,6 +152,67 @@ func (r *ChallengeRepository) GetChallengesByExamID(ctx context.Context, examID 
 	return challenges, nil
 }
 
+func (r *ChallengeRepository) GetAllChallenges(ctx context.Context) ([]*Entities.Challenge, error) {
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
+
+	res, err := r.adapter.Read(challengeTableName, map[string]string{})
+	if err != nil {
+		return nil, err
+	}
+
+	records := extractRecords(res)
+	if len(records) == 0 {
+		return []*Entities.Challenge{}, nil
+	}
+
+	// Bulk fetch all IO variables to avoid N+1 problem
+	ioRes, err := r.adapter.Read(ioVariableTableName, map[string]string{})
+	if err != nil {
+		return nil, err
+	}
+	ioRecords := extractRecords(ioRes)
+	ioMap := make(map[string]Entities.IOVariable)
+	for _, rec := range ioRecords {
+		if variable, mapErr := recordToIOVariable(rec); mapErr == nil && variable != nil {
+			ioMap[variable.ID] = *variable
+		}
+	}
+
+	challenges := make([]*Entities.Challenge, 0, len(records))
+	for _, record := range records {
+		inputIDs := asStringList(record["Input"])
+		if len(inputIDs) == 0 {
+			inputIDs = asStringList(record["InputVariables"])
+		}
+
+		outputID := asString(record["Output"])
+		if strings.TrimSpace(outputID) == "" {
+			outputID = asString(record["OutputVariable"])
+		}
+
+		inputVariables := make([]Entities.IOVariable, 0, len(inputIDs))
+		for _, id := range inputIDs {
+			if v, ok := ioMap[id]; ok {
+				inputVariables = append(inputVariables, v)
+			}
+		}
+
+		var outputVariable *Entities.IOVariable
+		if v, ok := ioMap[outputID]; ok {
+			outputVariable = &v
+		}
+
+		challenge, mapErr := recordToChallenge(record, inputVariables, outputVariable)
+		if mapErr == nil && challenge != nil {
+			challenges = append(challenges, challenge)
+		}
+	}
+
+	return challenges, nil
+}
+
 func (r *ChallengeRepository) GetChallengesByTag(ctx context.Context, tag string) ([]*Entities.Challenge, error) {
 	normalizedTag := strings.TrimSpace(tag)
 	if normalizedTag == "" {

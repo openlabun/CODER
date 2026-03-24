@@ -12,6 +12,8 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "axios": "^1.13.2",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^1.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6"

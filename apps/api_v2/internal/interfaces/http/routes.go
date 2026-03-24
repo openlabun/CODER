@@ -21,6 +21,7 @@ import (
 	course_delete_course "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/delete-course"
 	course_delete_student "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/delete-student"
 	course_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-by-id"
+	course_get_browse "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-browse"
 	course_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-list"
 	course_get_students "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-students"
 	course_post_add_student "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-add-student"
@@ -148,7 +149,7 @@ func registerCoursesRoutes(app *fiber.App, appContainer *container.Application) 
 	courses := app.Group("/courses")
 	courses.Post("/enroll", course_post_enroll.Handler(appContainer))
 	courses.Post("/", course_post_create.Handler(appContainer))
-	courses.Get("/browse", mockHandler("courses/get-browse/mockup/output.json", fiber.StatusOK))
+	courses.Get("/browse", course_get_browse.Handler(appContainer))
 	courses.Get("/", course_get_list.Handler(appContainer))
 	courses.Get("/:id", course_get_by_id.Handler(appContainer))
 	courses.Post("/:id", course_post_update.Handler(appContainer))

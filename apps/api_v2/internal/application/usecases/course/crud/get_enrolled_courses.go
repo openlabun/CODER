@@ -39,7 +39,12 @@ func (uc *GetEnrolledCoursesUseCase) Execute(ctx context.Context, input dtos.Get
 	}
 
 	// Get enrolled courses for the student
-	courses, err := uc.courseRepository.GetCoursesByStudentID(ctx, input.StudentID)
+	studentID := input.StudentID
+	if studentID == "" {
+		studentID = user.ID
+	}
+
+	courses, err := uc.courseRepository.GetCoursesByStudentID(ctx, studentID)
 	if err != nil {
 		return nil, err
 	}

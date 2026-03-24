@@ -304,6 +304,35 @@ func (r *CourseRepository) GetStudentsByCourseID(ctx context.Context, courseID s
 	return students, nil
 }
 
+func (r *CourseRepository) GetAllCourses(ctx context.Context) ([]*Entities.Course, error) {
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
+
+	res, err := r.adapter.Read(courseTableName, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	records := extractRecords(res)
+	if len(records) == 0 {
+		return []*Entities.Course{}, nil
+	}
+
+	courses := make([]*Entities.Course, 0, len(records))
+	for _, record := range records {
+		course, err := recordToCourse(record)
+		if err != nil {
+			return nil, err
+		}
+		if course != nil {
+			courses = append(courses, course)
+		}
+	}
+
+	return courses, nil
+}
+
 
 func firstRecord(res map[string]any) (map[string]any, error) {
 	if data, ok := res["data"]; ok {

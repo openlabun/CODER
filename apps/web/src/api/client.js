@@ -6,9 +6,16 @@ const client = axios.create({
 
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
+  const email = localStorage.getItem('user_email');
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  if (email) {
+    config.headers['X-User-Email'] = email;
+  }
+  
   return config;
 });
 

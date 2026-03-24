@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
+import { 
+    Key, 
+    BookOpen, 
+    ArrowRight, 
+    ShieldCheck, 
+    AlertCircle, 
+    CheckCircle2,
+    Loader2,
+    ChevronLeft,
+    HelpCircle
+} from 'lucide-react';
 import './JoinCourse.css';
 
 const JoinCourse = () => {
@@ -16,88 +27,116 @@ const JoinCourse = () => {
         setSuccess('');
 
         if (!enrollmentCode.trim()) {
-            setError('Please enter an enrollment code');
+            setError('Por favor, ingresa un código de inscripción');
             return;
         }
 
         setLoading(true);
         try {
             await client.post('/courses/enroll', { enrollmentCode });
-            setSuccess('Successfully enrolled in the course!');
+            setSuccess('¡Te has inscrito correctamente en el curso!');
             setTimeout(() => {
                 navigate('/courses');
             }, 2000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Invalid enrollment code or course not found');
+            setError(err.response?.data?.message || 'Código de inscripción inválido o curso no encontrado');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="join-course-page">
-            <div className="page-header">
-                <h1>Join a Course</h1>
-                <p className="subtitle">Enter the enrollment code provided by your professor</p>
+        <div className="join-course-page-new">
+            <div className="join-header-compact">
+                <button onClick={() => navigate('/courses')} className="btn-back-mini">
+                    <ChevronLeft size={18} />
+                    <span>Volver a mis cursos</span>
+                </button>
             </div>
 
-            <div className="join-course-container">
-                <div className="join-method-card">
-                    <div className="method-icon">🔑</div>
-                    <h2>Enrollment Code</h2>
-                    <p>Enter the unique code shared by your professor to join the course</p>
-
-                    {error && <div className="error-message">{error}</div>}
-                    {success && <div className="success-message">{success}</div>}
-
-                    <form onSubmit={handleJoinWithCode} className="join-form">
-                        <div className="form-group">
-                            <label htmlFor="enrollmentCode">Enrollment Code</label>
-                            <input
-                                type="text"
-                                id="enrollmentCode"
-                                value={enrollmentCode}
-                                onChange={(e) => setEnrollmentCode(e.target.value.toUpperCase())}
-                                placeholder="e.g., CS101-20251G1"
-                                className="code-input"
-                                disabled={loading}
-                                autoFocus
-                            />
-                            <small>Format: COURSE-PERIODG# (e.g., CS101-20251G1)</small>
+            <div className="join-container-centered">
+                <div className="join-card-premium">
+                    <div className="join-card-glow"></div>
+                    
+                    <div className="card-top-icon">
+                        <div className="icon-ring">
+                            <Key size={32} className="main-icon" />
                         </div>
+                    </div>
 
-                        <div className="form-actions">
-                            <button
-                                type="button"
-                                onClick={() => navigate('/courses')}
-                                className="btn-secondary"
-                                disabled={loading}
+                    <div className="card-content-join">
+                        <h2>Unirse a un Curso</h2>
+                        <p>Ingresa el código único proporcionado por tu profesor para inscribirte automáticamente.</p>
+
+                        <form onSubmit={handleJoinWithCode} className="modern-join-form">
+                            <div className="form-field-group">
+                                <label>Código de Inscripción</label>
+                                <div className="input-with-icon-unique">
+                                    <ShieldCheck size={20} className="input-prefix-icon" />
+                                    <input
+                                        type="text"
+                                        value={enrollmentCode}
+                                        onChange={(e) => setEnrollmentCode(e.target.value.toUpperCase())}
+                                        placeholder="Ej: CS101-20251G1"
+                                        disabled={loading || success}
+                                        autoFocus
+                                    />
+                                </div>
+                                <span className="input-hint-mini">Formato: CODIGO-PERIODO-GRUPO</span>
+                            </div>
+
+                            {error && (
+                                <div className="feedback-alert error-unique">
+                                    <AlertCircle size={18} />
+                                    <span>{error}</span>
+                                </div>
+                            )}
+
+                            {success && (
+                                <div className="feedback-alert success-unique">
+                                    <CheckCircle2 size={18} />
+                                    <span>{success}</span>
+                                </div>
+                            )}
+
+                            <button 
+                                type="submit" 
+                                className={`btn-join-primary ${loading ? 'loading' : ''}`}
+                                disabled={loading || success}
                             >
-                                Cancel
+                                {loading ? (
+                                    <>
+                                        <Loader2 size={18} className="spin-icon" />
+                                        <span>Procesando...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>Confirmar Inscripción</span>
+                                        <ArrowRight size={18} />
+                                    </>
+                                )}
                             </button>
-                            <button
-                                type="submit"
-                                className="btn-primary"
-                                disabled={loading}
-                            >
-                                {loading ? 'Joining...' : 'Join Course'}
-                            </button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
+
+                    <div className="card-footer-help">
+                        <HelpCircle size={16} />
+                        <p>¿No tienes un código? Contacta a tu docente.</p>
+                    </div>
                 </div>
 
-                <div className="info-section">
-                    <h3>📚 How to Join</h3>
-                    <ol>
-                        <li>Get the enrollment code from your professor</li>
-                        <li>Enter the code in the field above</li>
-                        <li>Click "Join Course" to enroll</li>
-                        <li>Access course materials and challenges</li>
-                    </ol>
-
-                    <div className="help-box">
-                        <h4>Need Help?</h4>
-                        <p>If you don't have an enrollment code, contact your professor or course administrator.</p>
+                <div className="join-instructions-mini">
+                    <div className="instruction-step-mini">
+                        <div className="step-num-mini">1</div>
+                        <p>Obtén el código de tu profesor</p>
+                    </div>
+                    <div className="instruction-step-mini">
+                        <div className="step-num-mini">2</div>
+                        <p>Ingresa el código en el campo de arriba</p>
+                    </div>
+                    <div className="instruction-step-mini">
+                        <div className="step-num-mini">3</div>
+                        <p>Accede a tus nuevos desafíos</p>
                     </div>
                 </div>
             </div>

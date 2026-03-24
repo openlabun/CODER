@@ -29,6 +29,7 @@ type CourseUseCases struct {
 	GetCourseDetails   *course_crud_usecases.GetCourseDetailsUseCase
 	GetEnrolledCourses *course_crud_usecases.GetEnrolledCoursesUseCase
 	GetOwnedCourses    *course_crud_usecases.GetOwnedCoursesUseCase
+	GetAllCourses      *course_crud_usecases.GetAllCoursesUseCase
 
 	GetCourseStudents       *course_usecases.GetCourseStudentsUseCase
 	EnrollInCourse          *course_usecases.EnrollInCourseUseCase
@@ -100,6 +101,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		GetCourseDetails:        course_crud_usecases.NewGetCourseDetailsUseCase(deps.CourseRepository, deps.UserRepository),
 		GetEnrolledCourses:      course_crud_usecases.NewGetEnrolledCoursesUseCase(deps.CourseRepository, deps.UserRepository),
 		GetOwnedCourses:         course_crud_usecases.NewGetOwnedCoursesUseCase(deps.CourseRepository, deps.UserRepository),
+		GetAllCourses:          course_crud_usecases.NewGetAllCoursesUseCase(deps.CourseRepository, deps.UserRepository),
 		GetCourseStudents:       course_usecases.NewGetCourseStudentsUseCase(deps.CourseRepository, deps.UserRepository),
 		EnrollInCourse:          course_usecases.NewEnrollInCourseUseCase(deps.CourseRepository, deps.UserRepository),
 		RemoveStudentFromCourse: course_usecases.NewRemoveStudentFromCourseUseCase(deps.CourseRepository, deps.UserRepository),

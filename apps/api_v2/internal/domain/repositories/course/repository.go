@@ -21,4 +21,5 @@ type CourseRepository interface {
 	GetCoursesByTeacherID(ctx context.Context, teacherID string) ([]*Entities.Course, error)
 
 	GetStudentsByCourseID(ctx context.Context, courseID string) ([]*UserEntities.User, error)
+	GetAllCourses(ctx context.Context) ([]*Entities.Course, error)
 }

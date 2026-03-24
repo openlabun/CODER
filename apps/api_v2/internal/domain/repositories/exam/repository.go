@@ -23,6 +23,7 @@ type ChallengeRepository interface {
 
 	GetChallengeByID(ctx context.Context, challengeID string) (*Entities.Challenge, error)
 	GetChallengesByExamID(ctx context.Context, examID string) ([]*Entities.Challenge, error)
+	GetAllChallenges(ctx context.Context) ([]*Entities.Challenge, error)
 	GetChallengesByTag(ctx context.Context, tag string) ([]*Entities.Challenge, error)
 	GetInputVariablesByChallengeID(ctx context.Context, challengeID string) ([]*Entities.IOVariable, error)
 	GetOutputVariablesByChallengeID(ctx context.Context, challengeID string) ([]*Entities.IOVariable, error)

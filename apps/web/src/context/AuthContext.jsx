@@ -12,12 +12,22 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem('token');
-            if (token) {
+            const email = localStorage.getItem('user_email');
+            if (token && email) {
                 try {
-                    const { data } = await client.get('/auth/me');
-                    setUser({ token, username: data.username, role: data.role });
+                    const { data } = await client.get('/auth/me', {
+                        headers: { 'X-User-Email': email }
+                    });
+                    setUser({ 
+                        id: data.ID || data.UserID || email,
+                        token, 
+                        username: data.Username || data.Email, 
+                        role: String(data.Role).toLowerCase() || 'student', 
+                        email: data.Email 
+                    });
                 } catch (error) {
                     localStorage.removeItem('token');
+                    localStorage.removeItem('user_email');
                 }
             }
             setLoading(false);
@@ -25,23 +35,72 @@ export const AuthProvider = ({ children }) => {
         checkAuth();
     }, []);
 
-    const login = async (username, password) => {
-        const { data } = await client.post('/auth/login', { username, password });
-        localStorage.setItem('token', data.accessToken);
+    const login = async (email, password) => {
+        try {
+            const { data } = await client.post('/auth/login', { email, password });
+            
+            // Go API structure: data.token.access_token and data.user_data
+            const token = data.token?.access_token;
+            const userData = data.user_data;
 
-        // Fetch user details including role
-        const userResponse = await client.get('/auth/me');
-        setUser({ token: data.accessToken, username: userResponse.data.username, role: userResponse.data.role });
+            if (!token) throw new Error('Token no recibido del servidor');
+
+            localStorage.setItem('token', token);
+            localStorage.setItem('user_email', email);
+
+            // Fetch user details including role using the required header
+            const { data: profile } = await client.get('/auth/me', {
+                headers: { 'X-User-Email': email }
+            });
+            
+            setUser({ 
+                id: profile.ID || profile.UserID || userData?.ID || email,
+                token: token, 
+                username: profile.Username || profile.Email || userData?.Username, 
+                role: String(profile.Role || userData?.Role).toLowerCase() || 'student',
+                email: email
+            });
+        } catch (error) {
+            if (!error.response) {
+                throw new Error('Error de conexión: No se pudo contactar con el servidor.');
+            }
+            const data = error.response.data;
+            const message = data?.error || data?.message || 'Error al iniciar sesión. Verifica tus credenciales.';
+            throw new Error(message);
+        }
     };
 
-    const register = async (username, password, role) => {
-        const { data } = await client.post('/auth/register', { username, password, role });
-        localStorage.setItem('token', data.accessToken);
-        setUser({ token: data.accessToken, username, role });
+    const register = async (name, email, password) => {
+        try {
+            const { data } = await client.post('/auth/register', { name, email, password });
+            
+            const token = data.token?.access_token;
+            const userData = data.user_data;
+            if (!token) throw new Error('Token no recibido tras el registro');
+
+            localStorage.setItem('token', token);
+            localStorage.setItem('user_email', email);
+            
+            setUser({ 
+                id: userData?.ID || userData?.UserID || email,
+                token, 
+                username: userData?.Username || name, 
+                role: String(userData?.Role || 'student').toLowerCase(), 
+                email: email 
+            });
+        } catch (error) {
+            if (!error.response) {
+                throw new Error('Error de conexión: No se pudo contactar con el servidor.');
+            }
+            const data = error.response.data;
+            const message = data?.error || data?.message || 'Error al registrar el usuario.';
+            throw new Error(message);
+        }
     };
 
     const logout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('user_email');
         setUser(null);
     };
 

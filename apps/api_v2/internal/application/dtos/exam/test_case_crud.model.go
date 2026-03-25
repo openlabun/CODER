@@ -20,6 +20,7 @@ type UpdateTestCaseInput struct {
 
 type GetTestCasesByChallengeInput struct {
 	ChallengeID string `json:"challenge_id"`
+	ExamID 		*string `json:"exam_id"`
 }
 
 type DeleteTestCaseInput struct {

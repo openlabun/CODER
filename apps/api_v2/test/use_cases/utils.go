@@ -1,0 +1,73 @@
+package test_utils
+
+import (
+	"context"
+	"testing"
+
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
+	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
+	user_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
+)
+
+func EnsureAuthUserAccess(t *testing.T, app *container.Application, email, password, name string) *user_dtos.UserAccess {
+	t.Helper()
+
+	t.Logf("[STEP] Attempt login for %s", email)
+	t.Logf("password: %s", password)
+	access, err := app.UserModule.Login.Execute(email, password)
+	if err != nil {
+		t.Logf("login failed for %s: %v", email, err)
+	}
+
+	if err == nil && access != nil && access.UserData != nil && access.UserData.ID != "" && access.Token != nil && access.Token.AccessToken != "" {
+		return access
+	}
+
+	registered, registerErr := app.UserModule.Register.Execute(email, name, password)
+	if registerErr != nil {
+		t.Fatalf("register user failed for %s: %v", email, registerErr)
+	}
+	if registered == nil || registered.UserData == nil || registered.UserData.ID == "" || registered.Token == nil || registered.Token.AccessToken == "" {
+		t.Fatalf("expected registered user with valid access for %s", email)
+	}
+
+	return registered
+}
+
+func BuildContext(token string, email string) context.Context {
+	ctx := context.Background()
+	ctx = services.WithAccessToken(ctx, token)
+	ctx = services.WithUserEmail(ctx, email)
+	return ctx
+}
+
+func TeacherCourseCtx(teacherAccess *user_dtos.UserAccess) context.Context {
+	return BuildContext(teacherAccess.Token.AccessToken, teacherAccess.UserData.Email)
+}
+
+func StudentCtx (studentAccess *user_dtos.UserAccess) context.Context {
+	return BuildContext(studentAccess.Token.AccessToken, studentAccess.UserData.Email)
+}
+
+
+func EnsureTeacherAccess(t *testing.T, app *container.Application) *user_dtos.UserAccess {
+	t.Helper()
+	t.Log("[AUTH] Intentando login de profesor")
+
+	email := "test@test.com"
+	password := "Password123!"
+
+	return EnsureAuthUserAccess(t, app, email, password, "Teacher Test")
+}
+
+
+func EnsureStudentAccess(t *testing.T, app *container.Application) *user_dtos.UserAccess {
+	t.Helper()
+	t.Log("[AUTH] Intentando login de estudiante")
+
+	email := "stud@test.com"
+	password := "Password123!"
+
+	return EnsureAuthUserAccess(t, app, email, password, "Student Test")
+}
+

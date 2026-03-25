@@ -23,7 +23,7 @@ func NewGetCourseDetailsUseCase(courseRepository repositories.CourseRepository, 
 }
 
 func (uc *GetCourseDetailsUseCase) Execute(ctx context.Context, input dtos.GetCourseDetailsInput) (*Entities.Course, error) {
-	// Verify user is teacher and has permissions to create a course
+	// [STEP 1] Verify user is teacher and has permissions to create a course
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func (uc *GetCourseDetailsUseCase) Execute(ctx context.Context, input dtos.GetCo
 		return nil, fmt.Errorf("user does not have permissions to create a course")
 	}
 
-	// Get course details with user provided values
+	// [STEP 2] Get course details with user provided values
 	course, err := uc.courseRepository.GetCourseByID(ctx, input.CourseID)
 	if err != nil {
 		return nil, err

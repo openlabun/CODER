@@ -44,7 +44,7 @@ func (uc *GetOwnedCoursesUseCase) Execute(ctx context.Context) ([]*Entities.Cour
 	}
 
 	if courses == nil {
-		return nil, fmt.Errorf("no owned courses found")
+		return []*Entities.Course{}, nil
 	}
 
 	return courses, nil

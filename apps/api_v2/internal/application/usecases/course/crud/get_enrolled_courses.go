@@ -44,7 +44,7 @@ func (uc *GetEnrolledCoursesUseCase) Execute(ctx context.Context) ([]*Entities.C
 	}
 
 	if courses == nil {
-		return nil, fmt.Errorf("no enrolled courses found")
+		return []*Entities.Course{}, nil
 	}
 
 	return courses, nil

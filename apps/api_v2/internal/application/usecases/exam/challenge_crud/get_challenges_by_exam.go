@@ -39,13 +39,7 @@ func (uc *GetChallengesByExamUseCase) Execute(ctx context.Context, input dtos.Ge
 
 	role := user.Role
 
-	// [STEP 2] Verify challenge exists
-	challenges, err := uc.challengeRepository.GetChallengesByExamID(ctx, input.ExamID)
-	if err != nil {
-		return nil, err
-	}
-
-	// [STEP 3] Verify exam exists
+	// [STEP 2] Verify exam exists
 	exam, err := uc.examRepository.GetExamByID(ctx, input.ExamID)
 	if err != nil {
 		return nil, err
@@ -54,7 +48,6 @@ func (uc *GetChallengesByExamUseCase) Execute(ctx context.Context, input dtos.Ge
 	if exam == nil {
 		return nil, fmt.Errorf("exam with id %q does not exist", input.ExamID)
 	}
-	
 
 	// [STEP 3] If user is teacher Verify that exam belongs to the teacher or exam is public/teachers
 	if role == user_entities.UserRoleProfessor {
@@ -63,7 +56,13 @@ func (uc *GetChallengesByExamUseCase) Execute(ctx context.Context, input dtos.Ge
 		}
 	}
 
-	// [STEP 4] If user is student verify that exam is accessible and filter challenges to only return published ones
+	// [STEP 4] Get challenges of the exam
+	challenges, err := uc.challengeRepository.GetChallengesByExamID(ctx, input.ExamID)
+	if err != nil {
+		return nil, err
+	}	
+
+	// [STEP 5] If user is student verify that exam is accessible and filter challenges to only return published ones
 	if role == user_entities.UserRoleStudent {
 		if exam.Visibility == Entities.VisibilityPrivate || exam.Visibility == Entities.VisibilityTeachers {
 			return nil, fmt.Errorf("user does not have permissions to access this exam")

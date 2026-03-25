@@ -57,6 +57,7 @@ type SubmissionUseCases struct {
 	GetSubmissionStatus     *submission_usecases.GetSubmissionStatusUseCase
 	GetChallengeSubmissions *submission_usecases.GetChallengeSubmissionsUseCase
 	GetUserSubmissions      *submission_usecases.GetUserSubmissionsUseCase
+	GetSessionSubmissions   *submission_usecases.GetSessionSubmissionsUseCase
 	UpdateResult            *submission_usecases.UpdateResultUseCase
 }
 
@@ -132,6 +133,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.PublisherPort),
 		GetSubmissionStatus:     submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
 		GetChallengeSubmissions: submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
+		GetSessionSubmissions:   submission_usecases.NewGetSessionSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository, deps.SessionRepository),
 		GetUserSubmissions:      submission_usecases.NewGetUserSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository),
 		UpdateResult:            submission_usecases.NewUpdateResultUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.LoginService, deps.PasswordHasher),
 	}

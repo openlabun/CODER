@@ -38,6 +38,13 @@ type GetChallengeSubmissionsInput struct {
 	TestID      *string
 }
 
+type GetSessionSubmissionsInput struct {
+	SessionID   string
+	Status      *string
+	TestID      *string
+	ChallengeID *string
+}
+
 type SubmissionOutputDTO struct {
 	Submission Entities.Submission
 	Results    []Entities.SubmissionResult

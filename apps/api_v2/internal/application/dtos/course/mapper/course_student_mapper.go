@@ -6,9 +6,9 @@ import (
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 )
 
-func MapCourseStudentInputToEntity(input dtos.EnrolledInCourseInput) (*Entities.CourseStudent, error) {
+func MapCourseStudentInputToEntity(input dtos.EnrolledInCourseInput, studentID string) (*Entities.CourseStudent, error) {
 	return factory.NewCourseStudent(
 		input.CourseID,
-		input.StudentID,
+		studentID,
 	)
 }

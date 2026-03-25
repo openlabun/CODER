@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
-	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course/mapper"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	userEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
@@ -66,7 +65,6 @@ func (uc *EnrollInCourseUseCase) Execute(ctx context.Context, input dtos.Enrolle
 	}
 
 	// [STEP 4] Enroll student in course
-	mapper.MapCourseStudentInputToEntity(input)
 	err = uc.courseRepository.AddStudentToCourse(ctx, input.CourseID, student.ID)
 	if err != nil {
 		return nil, err

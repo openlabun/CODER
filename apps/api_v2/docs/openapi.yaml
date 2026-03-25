@@ -1391,48 +1391,6 @@ paths:
                   challengeID: challenge-123
                   sessionID: session-123
                   status: queued
-    get:
-      tags:
-        - submissions
-      summary: List submissions
-      x-implementation: usecase
-      x-mockup:
-        input: apps/api_v2/internal/interfaces/http/submissions/get-list/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/submissions/get-list/mockup/output.json
-      parameters:
-        - in: query
-          name: challengeId
-          required: false
-          schema:
-            type: string
-        - in: query
-          name: status
-          required: false
-          schema:
-            type: string
-        - in: query
-          name: testId
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Submissions list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SubmissionsGetListOutput200"
-              example: &a49
-                statusCode: 200
-                body:
-                  - submission:
-                      id: submission-123
-                      challengeID: challenge-123
-                      sessionID: session-123
-                      userID: usr-student-123
-                    results:
-                      - id: result-1
-                        status: queued
   /submissions/{id}:
     get:
       tags:
@@ -3491,7 +3449,17 @@ components:
       required:
         - statusCode
         - body
-      example: *a49
+      example:
+        statusCode: 200
+        body:
+          - submission:
+              id: submission-123
+              challengeID: challenge-123
+              sessionID: session-123
+              userID: usr-student-123
+            results:
+              - id: result-1
+                status: queued
     SubmissionsGetByIdOutput200:
       type: object
       properties:

@@ -316,15 +316,15 @@ func TestSubmissionCRUD(t *testing.T) {
 	}
 	t.Logf("[OK] Submission actualizada. score=%d timeMsTotal=%d", updatedSubmission.Score, updatedSubmission.TimeMsTotal)
 
-	bySession, err := submissionRepository.GetSubmissionsBySessionID(ctx, sessionID)
+	bySession, err := submissionRepository.GetSubmissionsBySessionID(ctx, sessionID, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("get submissions by session failed: %v", err)
 	}
-	byUser, err := submissionRepository.GetSubmissionsByUserID(ctx, teacherID)
+	byUser, err := submissionRepository.GetSubmissionsByUserID(ctx, teacherID, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("get submissions by user failed: %v", err)
 	}
-	byChallenge, err := submissionRepository.GetSubmissionsByChallengeID(ctx, challengeID)
+	byChallenge, err := submissionRepository.GetSubmissionsByChallengeID(ctx, challengeID, nil, nil)
 	if err != nil {
 		t.Fatalf("get submissions by challenge failed: %v", err)
 	}

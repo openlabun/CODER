@@ -5,23 +5,27 @@ import (
 	"testing"
 	"time"
 
+	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
+
 	course_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+
+	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
 
 func TestTestCasesCRUD(t *testing.T) {
 	t.Log("[STEP 1] Inicializando application container y dependencias")
-	app, err := buildExamApplication()
+	app, err := container.BuildApplicationContainer()
 	if err != nil {
 		t.Fatalf("failed to build application: %v", err)
 	}
 	t.Log("[OK] Application container inicializado")
 
 	t.Log("[STEP 2] Login de profesor y obtencion de contexto autenticado")
-	teacherAccess := mustLoginExamTeacher(t, app)
-	teacherCtx := teacherExamCtx(teacherAccess)
+	teacherAccess := utils.EnsureTeacherAccess(t, app)
+	teacherCtx := utils.TeacherCourseCtx(teacherAccess)
 	teacherID := teacherAccess.UserData.ID
 	t.Logf("[OK] Login profesor exitoso. teacherID=%s", teacherID)
 
@@ -86,7 +90,6 @@ func TestTestCasesCRUD(t *testing.T) {
 		},
 		OutputVariable: exam_dtos.IOVariableDTO{Name: "sum", Type: "int", Value: "5"},
 		Constraints:    "1 <= a,b <= 1000",
-		ExamID:          examID,
 	})
 	if err != nil {
 		t.Fatalf("create challenge failed: %v", err)
@@ -195,15 +198,15 @@ func TestTestCasesCRUD(t *testing.T) {
 
 func TestTestCasesFromStudentView(t *testing.T) {
 	t.Log("[STEP 1] Inicializando application container y dependencias")
-	app, err := buildExamApplication()
+	app, err := container.BuildApplicationContainer()
 	if err != nil {
 		t.Fatalf("failed to build application: %v", err)
 	}
 	t.Log("[OK] Application container inicializado")
 
 	t.Log("[STEP 2] Login de profesor y contexto autenticado")
-	teacherAccess := mustLoginExamTeacher(t, app)
-	teacherCtx := teacherExamCtx(teacherAccess)
+	teacherAccess := utils.EnsureTeacherAccess(t, app)
+	teacherCtx := utils.TeacherCourseCtx(teacherAccess)
 	teacherID := teacherAccess.UserData.ID
 	t.Logf("[OK] Login profesor exitoso. teacherID=%s", teacherID)
 
@@ -300,7 +303,6 @@ func TestTestCasesFromStudentView(t *testing.T) {
 		},
 		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: "int", Value: "1"},
 		Constraints:    "1 <= x <= 10",
-		ExamID:          examID,
 	})
 	if err != nil {
 		t.Fatalf("create challenge failed: %v", err)
@@ -310,6 +312,18 @@ func TestTestCasesFromStudentView(t *testing.T) {
 	}
 	challengeID = createdChallenge.ID
 	t.Logf("[OK] Challenge creado. challengeID=%s", challengeID)
+
+	t.Logf("[STEP 5.1] Crear un ExamItem para publicar el challenge en el examen")
+	_, err = app.ExamItemModule.CreateExamItem.Execute(teacherCtx, exam_dtos.CreateExamItemInput{
+		ExamID:      examID,
+		ChallengeID: challengeID,
+		Order:       1,
+		Points:      100,
+	})
+	if err != nil {
+		t.Fatalf("create exam item failed: %v", err)
+	}
+	t.Log("[OK] ExamItem creado para publicar challenge en examen")
 
 	t.Log("[STEP 6][TEST 1] Creando 3 test cases: 2 publicos (IsSample=true) y 1 privado (IsSample=false)")
 	createTestCase := func(name string, isSample bool) string {
@@ -339,14 +353,15 @@ func TestTestCasesFromStudentView(t *testing.T) {
 	t.Logf("[OK] Test cases creados. public1=%s public2=%s private=%s", publicTC1, publicTC2, privateTC)
 
 	t.Log("[STEP 7] Login/registro de estudiante y contexto autenticado")
-	studentAccess := ensureExamStudentAccess(t, app)
-	studentCtx := studentExamCtx(studentAccess)
+	studentAccess := utils.EnsureStudentAccess(t, app)
+	studentCtx := utils.StudentCtx(studentAccess)
 	t.Logf("[OK] Estudiante listo. studentID=%s", studentAccess.UserData.ID)
 
 	t.Log("[STEP 8] Matriculando estudiante en el curso")
 	_, err = app.CourseModule.EnrollInCourse.Execute(studentCtx, course_dtos.EnrolledInCourseInput{
 		CourseID:  courseID,
-		StudentID: studentAccess.UserData.ID,
+		StudentID: &studentAccess.UserData.ID,
+		StudentEmail: nil,
 	})
 	if err != nil {
 		t.Fatalf("enroll student failed: %v", err)
@@ -354,7 +369,7 @@ func TestTestCasesFromStudentView(t *testing.T) {
 	t.Log("[OK] Estudiante matriculado")
 
 	t.Log("[STEP 9][TEST 2] Obteniendo test cases desde vista de estudiante y validando restricciones")
-	studentTestCases, err := app.TestCaseModule.GetTestCasesByChallenge.Execute(studentCtx, exam_dtos.GetTestCasesByChallengeInput{ChallengeID: challengeID})
+	studentTestCases, err := app.TestCaseModule.GetTestCasesByChallenge.Execute(studentCtx, exam_dtos.GetTestCasesByChallengeInput{ChallengeID: challengeID, ExamID: &examID})
 	if err != nil {
 		t.Fatalf("get test cases by challenge as student failed: %v", err)
 	}

@@ -37,7 +37,6 @@ import (
 	sub_get_by_challenge_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-challenge-id"
 	sub_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-id"
 	sub_get_by_user_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-user-id"
-	sub_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-list"
 	sub_patch_update_result "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/patch-update-result"
 	sub_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create"
 	sub_get_by_session_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/get-by-session-id"
@@ -180,7 +179,6 @@ func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Applicati
 	submissions.Get("/session/:sessionId", sub_get_by_session_id.Handler(appContainer))
 	submissions.Get("/challenge/:challengeId", sub_get_by_challenge_id.Handler(appContainer))
 	submissions.Get("/:id", sub_get_by_id.Handler(appContainer))
-	submissions.Get("/", sub_get_list.Handler(appContainer))
 	sessions := submissions.Group("/sessions")
 	sessions.Post("/", sub_post_session.Handler(appContainer))
 	sessions.Get("/:id", sub_get_by_session_id.Handler(appContainer))

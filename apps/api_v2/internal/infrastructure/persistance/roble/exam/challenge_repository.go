@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	challengeTableName  = "Challenge"
+	challengeTableName = "Challenge"
 )
 
 type ChallengeRepository struct {
@@ -128,27 +128,46 @@ func (r *ChallengeRepository) GetChallengesByExamID(ctx context.Context, examID 
 		return nil, err
 	}
 
-	res, err := r.adapter.Read(challengeTableName, map[string]string{"ExamID": normalizedID})
+	// 1. Obtener ExamItems por ExamID
+	examItemRes, err := r.adapter.Read("ExamItem", map[string]string{"ExamID": normalizedID})
 	if err != nil {
 		return nil, err
 	}
-
-	records := extractRecords(res)
-	if len(records) == 0 {
+	examItemRecords := extractRecords(examItemRes)
+	if len(examItemRecords) == 0 {
 		return []*Entities.Challenge{}, nil
 	}
 
-	challenges := make([]*Entities.Challenge, 0, len(records))
-	for _, record := range records {
-		challenge, mapErr := r.recordToHydratedChallenge(ctx, record)
-		if mapErr != nil {
-			return nil, mapErr
-		}
-		if challenge != nil {
-			challenges = append(challenges, challenge)
+	// 2. Extraer ChallengeIDs únicos
+	challengeIDSet := make(map[string]struct{})
+	for _, item := range examItemRecords {
+		id := asString(item["ChallengeID"])
+		if id != "" {
+			challengeIDSet[id] = struct{}{}
 		}
 	}
+	if len(challengeIDSet) == 0 {
+		return []*Entities.Challenge{}, nil
+	}
 
+	// 3. Consultar Challenge por cada ChallengeID
+	challenges := make([]*Entities.Challenge, 0, len(challengeIDSet))
+	for challengeID := range challengeIDSet {
+		res, err := r.adapter.Read(challengeTableName, map[string]string{"ID": challengeID})
+		if err != nil {
+			return nil, err
+		}
+		records := extractRecords(res)
+		for _, record := range records {
+			challenge, mapErr := r.recordToHydratedChallenge(ctx, record)
+			if mapErr != nil {
+				return nil, mapErr
+			}
+			if challenge != nil {
+				challenges = append(challenges, challenge)
+			}
+		}
+	}
 	return challenges, nil
 }
 

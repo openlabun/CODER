@@ -10,6 +10,36 @@ import (
 	exam_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
 )
 
+// ExamItem mappers
+func examItemToRecord(item *Entities.ExamItem) map[string]any {
+	return map[string]any{
+		"ID":          strings.TrimSpace(item.ID),
+		"ChallengeID": strings.TrimSpace(item.ChallengeID),
+		"ExamID":      strings.TrimSpace(item.ExamID),
+		"Order":       item.Order,
+		"Points":      item.Points,
+	}
+}
+
+func examItemToUpdates(item *Entities.ExamItem) map[string]any {
+	return map[string]any{
+		"ChallengeID": strings.TrimSpace(item.ChallengeID),
+		"ExamID":      strings.TrimSpace(item.ExamID),
+		"Order":       item.Order,
+		"Points":      item.Points,
+	}
+}
+
+func recordToExamItem(record map[string]any) (*Entities.ExamItem, error) {
+	return exam_factory.ExistingExamItem(
+		asString(record["ID"]),
+		asString(record["ChallengeID"]),
+		asString(record["ExamID"]),
+		asInt(record["Order"]),
+		asInt(record["Points"]),
+	)
+}
+
 func examToRecord(exam *Entities.Exam) map[string]any {
 	record := map[string]any{
 		"ID":                   strings.TrimSpace(exam.ID),
@@ -107,7 +137,7 @@ func challengeToRecord(challenge *Entities.Challenge) map[string]any {
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
 		"CreatedAt":         challenge.CreatedAt.UTC().Format(time.RFC3339),
 		"UpdatedAt":         challenge.UpdatedAt.UTC().Format(time.RFC3339),
-		"ExamID":            strings.TrimSpace(challenge.ExamID),
+		"UserID":            strings.TrimSpace(challenge.UserID),
 	}
 }
 
@@ -123,7 +153,7 @@ func challengeToUpdates(challenge *Entities.Challenge) map[string]any {
 		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
 		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
-		"ExamID":            strings.TrimSpace(challenge.ExamID),
+		"UserID":            strings.TrimSpace(challenge.UserID),
 	}
 }
 
@@ -159,7 +189,7 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 		inputVariables,
 		output,
 		asString(record["Constraints"]),
-		asString(record["ExamID"]),
+		asString(record["UserID"]),
 		createdAt,
 		updatedAt,
 	)

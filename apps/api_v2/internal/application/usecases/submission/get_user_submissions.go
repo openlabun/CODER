@@ -48,21 +48,16 @@ func (uc *GetUserSubmissionsUseCase) Execute(ctx context.Context, input dtos.Get
 
 	role := user.Role
 
-	// [STEP 2] Verify if user is a student, only query for his own submissions
-	if role == user_entities.UserRoleStudent || input.UserID != user.ID {
+	// [STEP 2] Verify if user is a student, only query for his own submissions | Teachers and Admins are allowed
+	if role == user_entities.UserRoleStudent || user.ID != input.UserID {
 		return nil, fmt.Errorf("user does not have permissions to view submissions for this user")
 	}
 
-	// [STEP 3] Get all submissions for the user
-	submissions, err := uc.submissionRepository.GetSubmissionsByUserID(ctx, user.ID)
-		
+	// [STEP 3] Get all submissions for the user  
+	submissions, err := uc.submissionRepository.GetSubmissionsByUserID(ctx, user.ID, input.Status, input.TestID, input.ChallengeID)
 	if err != nil {
 		return nil, err
 	}
-
-	
-
-	// [STEP 4]  
 
 	return submissions, nil
 }

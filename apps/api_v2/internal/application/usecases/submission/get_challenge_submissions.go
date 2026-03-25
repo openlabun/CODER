@@ -63,7 +63,7 @@ func (uc *GetChallengeSubmissionsUseCase) Execute(ctx context.Context, input dto
 	}
 
 	// [STEP 3] Get all submissions for the challenge
-	submissions, err := uc.submissionRepository.GetSubmissionsByChallengeID(ctx, input.ChallengeID)
+	submissions, err := uc.submissionRepository.GetSubmissionsByChallengeID(ctx, input.ChallengeID, input.Status, input.TestID)
 		
 	if err != nil {
 		return nil, err

@@ -34,14 +34,15 @@ import (
 	exam_post_change_visibility "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-change-visibility"
 	exam_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-close"
 	exam_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-create"
+	sub_get_by_challenge_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-challenge-id"
 	sub_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-id"
-	sub_get_by_session_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-session-id"
 	sub_get_by_user_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-user-id"
 	sub_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-list"
 	sub_patch_update_result "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/patch-update-result"
 	sub_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create"
-	sub_post_heartbeat "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-heartbeat"
-	sub_post_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-session"
+	sub_get_by_session_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/get-by-session-id"
+	sub_post_heartbeat "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-heartbeat"
+	sub_post_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-session"
 	tc_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/delete-by-id"
 	tc_get_by_challenge_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/get-by-challenge-id"
 	tc_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/patch-update"
@@ -176,6 +177,8 @@ func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Applicati
 	submissions.Post("/", sub_post_create.Handler(appContainer))
 	submissions.Patch("/results/:resultId", sub_patch_update_result.Handler(appContainer))
 	submissions.Get("/user/:userId", sub_get_by_user_id.Handler(appContainer))
+	submissions.Get("/session/:sessionId", sub_get_by_session_id.Handler(appContainer))
+	submissions.Get("/challenge/:challengeId", sub_get_by_challenge_id.Handler(appContainer))
 	submissions.Get("/:id", sub_get_by_id.Handler(appContainer))
 	submissions.Get("/", sub_get_list.Handler(appContainer))
 	sessions := submissions.Group("/sessions")

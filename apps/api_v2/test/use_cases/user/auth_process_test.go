@@ -1,48 +1,36 @@
 package auth_test
 
 import (
-	"context"
-	"net/http"
 	"testing"
-	"time"
 
 	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
-	user_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
-	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
-
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	course_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
-	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
-	submission_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
-	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
-	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitMQ"
-	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
+	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
 
 func TestAuthProcess(t *testing.T) {
 	t.Log("[STEP 1] Initialize application container with dependencies")
-	app, err := buildAuthApplication()
+	app, err := container.BuildApplicationContainer()
 	if err != nil {
 		t.Fatalf("failed to build application: %v", err)
 	}
 	t.Log("[OK] Application initialized")
 
 	t.Log("[STEP 2] Attempt teacher login and validate access payload")
-	teacherAccess := ensureAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
+	teacherAccess := utils.EnsureAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
 	if teacherAccess.UserData == nil || teacherAccess.UserData.Email != "test@test.com" {
 		t.Fatalf("expected teacher email=%s, got=%v", "test@test.com", teacherAccess.UserData)
 	}
 	t.Logf("[OK] Teacher access resolved. teacherID=%s", teacherAccess.UserData.ID)
 
 	t.Log("[STEP 3] Attempt student login and validate access payload")
-	studentAccess := ensureAuthUserAccess(t, app, "stud@test.com", "Password123!", "Student Test")
+	studentAccess := utils.EnsureAuthUserAccess(t, app, "stud@test.com", "Password123!", "Student Test")
 	if studentAccess.UserData == nil || studentAccess.UserData.Email != "stud@test.com" {
 		t.Fatalf("expected student email=%s, got=%v", "stud@test.com", studentAccess.UserData)
 	}
 	t.Logf("[OK] Student access resolved. studentID=%s", studentAccess.UserData.ID)
 
 	t.Log("[STEP 4] Get user data for teacher and verify consistency")
-	ctx := buildContext(teacherAccess.Token.AccessToken, teacherAccess.UserData.Email)
+	ctx := utils.BuildContext(teacherAccess.Token.AccessToken, teacherAccess.UserData.Email)
 	teacherData, err := app.UserModule.GetData.Execute(ctx, "test@test.com")
 	if err != nil {
 		t.Fatalf("teacher get data failed: %v", err)
@@ -59,7 +47,7 @@ func TestAuthProcess(t *testing.T) {
 	t.Log("[OK] Teacher get-data validated")
 
 	t.Log("[STEP 5] Get user data for student and verify consistency")
-	ctx = buildContext(studentAccess.Token.AccessToken, studentAccess.UserData.Email)
+	ctx = utils.BuildContext(studentAccess.Token.AccessToken, studentAccess.UserData.Email)
 	studentData, err := app.UserModule.GetData.Execute(ctx, "stud@test.com")
 	if err != nil {
 		t.Fatalf("student get data failed: %v", err)
@@ -82,80 +70,5 @@ func TestAuthProcess(t *testing.T) {
 	t.Log("[OK] Auth process finished successfully")
 }
 
-func buildAuthApplication() (*container.Application, error) {
-	httpClient := &http.Client{Timeout: 15 * time.Second}
-	robleClient, err := roble_infrastructure.NewRobleClient(httpClient)
-	if err != nil {
-		return nil, err
-	}
 
-	robleAdapter := roble_infrastructure.NewRobleDatabaseAdapter(robleClient)
-	userRepository := roble_user_infrastructure.NewUserRepository(robleAdapter)
-	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
-	passwordHasher := security_infrastructure.NewSecurityAdapter()
 
-	courseRepo := course_repository.NewCourseRepository(robleAdapter)
-	examRepo := exam_repository.NewExamRepository(robleAdapter)
-	challengeRepo := exam_repository.NewChallengeRepository(robleAdapter)
-	testCaseRepo := exam_repository.NewTestCaseRepository(robleAdapter)
-
-	submissionRepo := submission_repository.NewSubmissionRepository(robleAdapter)
-	sessionRepo := submission_repository.NewSessionRepository(robleAdapter)
-	resultRepo := submission_repository.NewSubmissionResultRepository(robleAdapter)
-
-	publisherAdapter, err := rabbitmq_infrastructure.NewRabbitMQAdapter()
-	if err != nil {
-		return nil, err
-	}
-
-	deps := container.NewApplicationDependencies(
-		authAdapter,
-		authAdapter,
-		userRepository,
-		authAdapter,
-		passwordHasher,
-		userRepository,
-		courseRepo,
-		examRepo,
-		challengeRepo,
-		testCaseRepo,
-		submissionRepo,
-		sessionRepo,
-		resultRepo,
-		publisherAdapter,
-	)
-
-	return container.NewApplication(deps)
-}
-
-func ensureAuthUserAccess(t *testing.T, app *container.Application, email, password, name string) *user_dtos.UserAccess {
-	t.Helper()
-
-	t.Logf("[STEP] Attempt login for %s", email)
-	t.Logf("password: %s", password)
-	access, err := app.UserModule.Login.Execute(email, password)
-	if err != nil {
-		t.Logf("login failed for %s: %v", email, err)
-	}
-
-	if err == nil && access != nil && access.UserData != nil && access.UserData.ID != "" && access.Token != nil && access.Token.AccessToken != "" {
-		return access
-	}
-
-	registered, registerErr := app.UserModule.Register.Execute(email, name, password)
-	if registerErr != nil {
-		t.Fatalf("register user failed for %s: %v", email, registerErr)
-	}
-	if registered == nil || registered.UserData == nil || registered.UserData.ID == "" || registered.Token == nil || registered.Token.AccessToken == "" {
-		t.Fatalf("expected registered user with valid access for %s", email)
-	}
-
-	return registered
-}
-
-func buildContext(token string, email string) context.Context {
-	ctx := context.Background()
-	ctx = services.WithAccessToken(ctx, token)
-	ctx = services.WithUserEmail(ctx, email)
-	return ctx
-}

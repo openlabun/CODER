@@ -26,6 +26,7 @@ type ApplicationDependencies struct {
 	CourseRepository           course_repositories.CourseRepository
 	ExamRepository             exam_repositories.ExamRepository
 	ChallengeRepository        exam_repositories.ChallengeRepository
+	ExamItemRepository 	   	exam_repositories.ExamItemRepository
 	TestCaseRepository         exam_repositories.TestCaseRepository
 	SubmissionRepository       submission_repositories.SubmissionRepository
 	SessionRepository          submission_repositories.SessionRepository
@@ -43,6 +44,7 @@ func NewApplicationDependencies(
 	examRepo exam_repositories.ExamRepository,
 	challengeRepo exam_repositories.ChallengeRepository,
 	testCaseRepo exam_repositories.TestCaseRepository,
+	examItemRepo exam_repositories.ExamItemRepository,
 	submissionRepo submission_repositories.SubmissionRepository,
 	sessionRepo submission_repositories.SessionRepository,
 	submissionResultRepo submission_repositories.SubmissionResultRepository,
@@ -60,6 +62,7 @@ func NewApplicationDependencies(
 		ExamRepository:             examRepo,
 		ChallengeRepository:        challengeRepo,
 		TestCaseRepository:         testCaseRepo,
+		ExamItemRepository:         examItemRepo,
 		SubmissionRepository:       submissionRepo,
 		SessionRepository:          sessionRepo,
 		SubmissionResultRepository: submissionResultRepo,
@@ -109,6 +112,10 @@ func (deps ApplicationDependencies) CheckDependencies() error {
 
 	if deps.TestCaseRepository == nil {
 		return fmt.Errorf("TestCaseRepository dependency is not provided")
+	}
+
+	if deps.ExamItemRepository == nil {
+		return fmt.Errorf("ExamItemRepository dependency is not provided")
 	}
 
 	if deps.SessionRepository == nil {

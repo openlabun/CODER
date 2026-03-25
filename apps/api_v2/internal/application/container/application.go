@@ -9,6 +9,7 @@ import (
 
 	challenge_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/challenge_crud"
 	exam_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/exam_crud"
+	exam_item_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/exam_item_crud"
 	test_case_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/test_case_crud"
 	submission_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission"
 	session_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission/session"
@@ -52,6 +53,12 @@ type TestCaseUseCases struct {
 	GetTestCasesByChallenge *test_case_crud_usecases.GetTestCasesByChallengeUseCase
 }
 
+type ExamItemUseCases struct {
+	CreateExamItem *exam_item_crud_usecases.CreateExamItemUseCase
+	UpdateExamItem *exam_item_crud_usecases.UpdateExamItemUseCase
+	DeleteExamItem *exam_item_crud_usecases.DeleteExamItemUseCase
+}
+
 type SubmissionUseCases struct {
 	CreateSubmission        *submission_usecases.CreateSubmissionUseCase
 	GetSubmissionStatus     *submission_usecases.GetSubmissionStatusUseCase
@@ -82,6 +89,7 @@ type Application struct {
 	ExamModule         ExamUseCases
 	ChallengeModule    ChallengeUseCases
 	TestCaseModule     TestCaseUseCases
+	ExamItemModule     ExamItemUseCases
 	SessionModule      SessionUseCases
 	SubmissionUseCases SubmissionUseCases
 }
@@ -120,7 +128,13 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		CreateTestCase:          test_case_crud_usecases.NewCreateTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
 		UpdateTestCase:          test_case_crud_usecases.NewUpdateTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
 		DeleteTestCase:          test_case_crud_usecases.NewDeleteTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
-		GetTestCasesByChallenge: test_case_crud_usecases.NewGetTestCasesByChallengeUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.CourseRepository),
+		GetTestCasesByChallenge: test_case_crud_usecases.NewGetTestCasesByChallengeUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.CourseRepository, deps.ExamItemRepository),
+	}
+
+	app.ExamItemModule = ExamItemUseCases{
+		CreateExamItem: exam_item_crud_usecases.NewCreateExamItemUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository, deps.ChallengeRepository, deps.TestCaseRepository),
+		UpdateExamItem: exam_item_crud_usecases.NewUpdateExamItemUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository, deps.ChallengeRepository),
+		DeleteExamItem: exam_item_crud_usecases.NewDeleteExamItemUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository, deps.ChallengeRepository),
 	}
 
 	app.SessionModule = SessionUseCases{

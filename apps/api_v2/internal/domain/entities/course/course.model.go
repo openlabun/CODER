@@ -30,31 +30,31 @@ const (
 )
 
 type Period struct {
-	Year   int
-	Semester AcademicPeriod
+	Year   int					`json:"year"`
+	Semester AcademicPeriod		`json:"semester"`
 }
 
 type Course struct {
-	ID             string
-	Name           string
-	Description    string // (Optional)
+	ID             string `json:"ID"`
+	Name           string `json:"name"`
+	Description    string `json:"description"` // (Optional)
 
 	// Access Control
-	Visibility     CourseVisibility
+	Visibility     CourseVisibility `json:"visibility"`
 
 	// Visual Identity
-	VisualIdentity CourseColour
+	VisualIdentity CourseColour `json:"visual_identity"` 
 
 	// Course Institution Data
-	Code           string
-	Period         *Period // Optional, won't be blocked after the period ends
+	Code           string `json:"code"` 
+	Period         *Period `json:"period"` // Optional, won't be blocked after the period ends
 
 	// Enrollment Details
-	EnrollmentCode string
-	EnrollmentURL  string
+	EnrollmentCode string `json:"enrollment_code"`
+	EnrollmentURL  string `json:"enrollment_url"`
 
 	// Metadata
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	ProfessorID    string
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	ProfessorID    string	 `json:"professor_id"`
 }

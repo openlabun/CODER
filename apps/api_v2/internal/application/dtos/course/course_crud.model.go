@@ -34,11 +34,3 @@ type UpdateCourseInput struct {
 type GetCourseDetailsInput struct {
 	CourseID string `json:"course_id"`
 }
-
-type GetEnrolledCoursesInput struct {
-	StudentID string `json:"student_id"`
-}
-
-type GetOwnedCoursesInput struct {
-	TeacherID string `json:"teacher_id"`
-}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
@@ -22,7 +21,7 @@ func NewGetOwnedCoursesUseCase(courseRepository repositories.CourseRepository, u
 	return &GetOwnedCoursesUseCase{courseRepository: courseRepository, userRepository: userRepository}
 }
 
-func (uc *GetOwnedCoursesUseCase) Execute(ctx context.Context, input dtos.GetOwnedCoursesInput) ([]*Entities.Course, error) {
+func (uc *GetOwnedCoursesUseCase) Execute(ctx context.Context) ([]*Entities.Course, error) {
 	// Verify user is a teacher
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
@@ -39,7 +38,7 @@ func (uc *GetOwnedCoursesUseCase) Execute(ctx context.Context, input dtos.GetOwn
 	}
 
 	// Get owned courses for the teacher
-	courses, err := uc.courseRepository.GetCoursesByTeacherID(ctx, input.TeacherID)
+	courses, err := uc.courseRepository.GetCoursesByTeacherID(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
@@ -22,7 +21,7 @@ func NewGetEnrolledCoursesUseCase(courseRepository repositories.CourseRepository
 	return &GetEnrolledCoursesUseCase{courseRepository: courseRepository, userRepository: userRepository}
 }
 
-func (uc *GetEnrolledCoursesUseCase) Execute(ctx context.Context, input dtos.GetEnrolledCoursesInput) ([]*Entities.Course, error) {
+func (uc *GetEnrolledCoursesUseCase) Execute(ctx context.Context) ([]*Entities.Course, error) {
 	// Verify user is a student
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
@@ -39,7 +38,7 @@ func (uc *GetEnrolledCoursesUseCase) Execute(ctx context.Context, input dtos.Get
 	}
 
 	// Get enrolled courses for the student
-	courses, err := uc.courseRepository.GetCoursesByStudentID(ctx, input.StudentID)
+	courses, err := uc.courseRepository.GetCoursesByStudentID(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}

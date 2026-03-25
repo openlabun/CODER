@@ -27,9 +27,9 @@ type GetSubmissionStatusInput struct {
 
 type GetUserSubmissionsInput struct {
 	UserID      string
-	Status      *string
-	TestID      *string
-	ChallengeID *string
+	Status      *string		// Optional
+	TestID      *string		// Optional
+	ChallengeID *string 	// Optional
 }
 
 type GetChallengeSubmissionsInput struct {

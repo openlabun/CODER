@@ -10,12 +10,12 @@ import (
 	user_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
-	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitmq"
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 	course_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
 	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 	submission_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
+	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitMQ"
 	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 )
 
@@ -153,10 +153,9 @@ func ensureAuthUserAccess(t *testing.T, app *container.Application, email, passw
 	return registered
 }
 
-func buildContext (token string, email string) context.Context {
+func buildContext(token string, email string) context.Context {
 	ctx := context.Background()
 	ctx = services.WithAccessToken(ctx, token)
 	ctx = services.WithUserEmail(ctx, email)
 	return ctx
 }
-

@@ -1,9 +1,7 @@
 package submission_test
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
@@ -11,34 +9,26 @@ import (
 	course_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	submission_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	user_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
-	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	submission_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission"
 
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	submission_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	course_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
-	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
-	submission_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
-	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
-	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitMQ"
-	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
+	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
 
 func TestCreateSession(t *testing.T) {
 	t.Log("[STEP 1] Initialize application container with dependencies")
-	app, err := buildSubmissionApplication()
+	app, err := container.BuildApplicationContainer()
 	if err != nil {
 		t.Fatalf("failed to build application: %v", err)
 	}
 	t.Log("[OK] Application initialized")
 
 	t.Log("[STEP 2] Login professor user and create context with credentials")
-	teacherAccess := mustLoginSubmissionTeacher(t, app)
-	teacherCtx := submissionCtx(teacherAccess)
+	teacherAccess := utils.EnsureTeacherAccess(t, app)
+	teacherCtx := utils.TeacherCourseCtx(teacherAccess)
 	teacherID := teacherAccess.UserData.ID
 	t.Logf("[OK] Teacher login successful. teacherID=%s", teacherID)
 
@@ -119,15 +109,16 @@ func TestCreateSession(t *testing.T) {
 	t.Logf("[OK] Exam created. examID=%s", examID)
 
 	t.Log("[STEP 5] Login student user and create context with credentials")
-	studentAccess := ensureSubmissionStudentAccess(t, app)
-	studentCtx := submissionCtx(studentAccess)
+	studentAccess := utils.EnsureStudentAccess(t, app)
+	studentCtx := utils.StudentCtx(studentAccess)
 	studentID := studentAccess.UserData.ID
 	t.Logf("[OK] Student access ready. studentID=%s", studentID)
 
 	t.Log("[STEP 6] Enroll student in course")
 	_, err = app.CourseModule.EnrollInCourse.Execute(studentCtx, course_dtos.EnrolledInCourseInput{
 		CourseID:  courseID,
-		StudentID: studentID,
+		StudentID: &studentID,
+		StudentEmail: nil,
 	})
 	if err != nil {
 		t.Fatalf("enroll student failed: %v", err)
@@ -210,15 +201,15 @@ func TestCreateSession(t *testing.T) {
 
 func TestSubmissions(t *testing.T) {
 	t.Log("[STEP 1] Initialize application container with dependencies")
-	app, err := buildSubmissionApplication()
+	app, err := container.BuildApplicationContainer()
 	if err != nil {
 		t.Fatalf("failed to build application: %v", err)
 	}
 	t.Log("[OK] Application initialized")
 
 	t.Log("[STEP 2] Login professor user and create context with credentials")
-	teacherAccess := mustLoginSubmissionTeacher(t, app)
-	teacherCtx := submissionCtx(teacherAccess)
+	teacherAccess := utils.EnsureTeacherAccess(t, app)
+	teacherCtx := utils.TeacherCourseCtx(teacherAccess)
 	teacherID := teacherAccess.UserData.ID
 	t.Logf("[OK] Teacher login successful. teacherID=%s", teacherID)
 
@@ -312,15 +303,16 @@ func TestSubmissions(t *testing.T) {
 	t.Logf("[OK] Exam created. examID=%s", examID)
 
 	t.Log("[STEP 5] Login student user and create context with credentials")
-	studentAccess := ensureSubmissionStudentAccess(t, app)
-	studentCtx := submissionCtx(studentAccess)
+	studentAccess := utils.EnsureStudentAccess(t, app)
+	studentCtx := utils.StudentCtx(studentAccess)
 	studentID := studentAccess.UserData.ID
 	t.Logf("[OK] Student access ready. studentID=%s", studentID)
 
 	t.Log("[STEP 6] Enroll student in course")
 	_, err = app.CourseModule.EnrollInCourse.Execute(studentCtx, course_dtos.EnrolledInCourseInput{
 		CourseID:  courseID,
-		StudentID: studentID,
+		StudentID: &studentID,
+		StudentEmail: nil,
 	})
 	if err != nil {
 		t.Fatalf("enroll student failed: %v", err)
@@ -342,7 +334,7 @@ func TestSubmissions(t *testing.T) {
 		},
 		OutputVariable: exam_dtos.IOVariableDTO{Name: "sum", Type: "int", Value: "5"},
 		Constraints:    "1 <= a,b <= 1000",
-		ExamID:         examID,
+		UserID: teacherID,
 	})
 	if err != nil {
 		t.Fatalf("create challenge failed: %v", err)
@@ -375,6 +367,14 @@ func TestSubmissions(t *testing.T) {
 
 	testCaseIDs = append(testCaseIDs, createTestCase("tc_submission_1", "5"), createTestCase("tc_submission_2", "5"))
 	t.Logf("[OK] Challenge and test cases created. challengeID=%s testCases=%d", challengeID, len(testCaseIDs))
+
+	t.Log("[STEP 6.2] Create ExamItem for the challenge")
+	_, err = app.ExamItemModule.CreateExamItem.Execute(teacherCtx, exam_dtos.CreateExamItemInput{
+		ExamID:      examID,
+		ChallengeID: challengeID,
+		Order:       1,
+		Points:      100,
+	})
 
 	t.Log("[STEP 7] Create Session for Student and Exam")
 	createdSession, err := app.SessionModule.CreateSession.Execute(teacherCtx, submission_dtos.CreateSessionInput{
@@ -447,103 +447,4 @@ func TestSubmissions(t *testing.T) {
 		t.Fatal("expected created submission to be present for the session")
 	}
 	t.Logf("[OK] Submission found in challenge submissions. total=%d", len(challengeSubmissions))
-}
-
-func buildSubmissionApplication() (*container.Application, error) {
-	httpClient := &http.Client{Timeout: 15 * time.Second}
-	robleClient, err := roble_infrastructure.NewRobleClient(httpClient)
-	if err != nil {
-		return nil, fmt.Errorf("initialize roble client: %w", err)
-	}
-
-	robleAdapter := roble_infrastructure.NewRobleDatabaseAdapter(robleClient)
-	userRepository := roble_user_infrastructure.NewUserRepository(robleAdapter)
-	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
-	passwordHasher := security_infrastructure.NewSecurityAdapter()
-
-	courseRepo := course_repository.NewCourseRepository(robleAdapter)
-	examRepo := exam_repository.NewExamRepository(robleAdapter)
-	challengeRepo := exam_repository.NewChallengeRepository(robleAdapter)
-	testCaseRepo := exam_repository.NewTestCaseRepository(robleAdapter)
-
-	submissionRepo := submission_repository.NewSubmissionRepository(robleAdapter)
-	sessionRepo := submission_repository.NewSessionRepository(robleAdapter)
-	resultRepo := submission_repository.NewSubmissionResultRepository(robleAdapter)
-
-	publisherAdapter, err := rabbitmq_infrastructure.NewRabbitMQAdapter()
-	if err != nil {
-		return nil, err
-	}
-
-	deps := container.NewApplicationDependencies(
-		authAdapter,
-		authAdapter,
-		userRepository,
-		authAdapter,
-		passwordHasher,
-		userRepository,
-		courseRepo,
-		examRepo,
-		challengeRepo,
-		testCaseRepo,
-		submissionRepo,
-		sessionRepo,
-		resultRepo,
-		publisherAdapter,
-	)
-
-	app, err := container.NewApplication(deps)
-	if err != nil {
-		return nil, fmt.Errorf("initialize application container: %w", err)
-	}
-
-	return app, nil
-}
-
-func mustLoginSubmissionTeacher(t *testing.T, app *container.Application) *user_dtos.UserAccess {
-	t.Helper()
-
-	email := "test@test.com"
-	password := "Testing123!"
-
-	access, err := app.Dependencies.LoginService.LoginUser(email, password)
-	if err != nil {
-		t.Fatalf("teacher login failed: %v", err)
-	}
-	if access == nil || access.UserData == nil || access.UserData.ID == "" {
-		t.Fatal("expected teacher user data with ID")
-	}
-	if access.Token == nil || access.Token.AccessToken == "" {
-		t.Fatal("expected teacher access token")
-	}
-
-	return access
-}
-
-func ensureSubmissionStudentAccess(t *testing.T, app *container.Application) *user_dtos.UserAccess {
-	t.Helper()
-
-	email := "stud@test.com"
-	password := "Testing123!"
-
-	access, err := app.Dependencies.LoginService.LoginUser(email, password)
-	if err == nil && access != nil && access.UserData != nil && access.UserData.ID != "" && access.Token != nil && access.Token.AccessToken != "" {
-		return access
-	}
-
-	registered, registerErr := app.Dependencies.RegisterService.RegisterUserDirect(email, password, "Student Test")
-	if registerErr != nil {
-		t.Fatalf("register student failed: %v", registerErr)
-	}
-	if registered == nil || registered.UserData == nil || registered.UserData.ID == "" || registered.Token == nil || registered.Token.AccessToken == "" {
-		t.Fatal("expected registered student with ID and access token")
-	}
-
-	return registered
-}
-
-func submissionCtx(access *user_dtos.UserAccess) context.Context {
-	ctx := services.WithAccessToken(context.Background(), access.Token.AccessToken)
-	ctx = services.WithUserEmail(ctx, access.UserData.Email)
-	return ctx
 }

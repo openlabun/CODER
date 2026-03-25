@@ -83,6 +83,7 @@ func (r *SubmissionRepository) GetSubmissionByID(ctx context.Context, submission
 	if normalizedID == "" {
 		return nil, fmt.Errorf("submissionID is required")
 	}
+
 	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
 		return nil, err
 	}
@@ -100,25 +101,85 @@ func (r *SubmissionRepository) GetSubmissionByID(ctx context.Context, submission
 	return recordToSubmission(record)
 }
 
-func (r *SubmissionRepository) GetSubmissionsBySessionID(ctx context.Context, sessionID string) ([]*Entities.Submission, error) {
-	return r.getSubmissionsByField(ctx, "SessionID", sessionID)
+func (r *SubmissionRepository) GetSubmissionsBySessionID(ctx context.Context, sessionID string, status *string, testID *string, challengeID *string) ([]*Entities.Submission, error) {
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
+	
+	conditions := r.buildConditions(nil, status, testID, challengeID, &sessionID)
+	return r.getSubmissionsByFields(conditions)
 }
 
-func (r *SubmissionRepository) GetSubmissionsByUserID(ctx context.Context, userID string) ([]*Entities.Submission, error) {
-	return r.getSubmissionsByField(ctx, "UserID", userID)
+func (r *SubmissionRepository) GetSubmissionsByUserID(ctx context.Context, userID string, status *string, testID *string, challengeID *string) ([]*Entities.Submission, error) {
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
+
+	conditions := r.buildConditions(&userID, status, testID, challengeID, nil)
+	return r.getSubmissionsByFields(conditions)
 }
 
-func (r *SubmissionRepository) GetSubmissionsByChallengeID(ctx context.Context, challengeID string) ([]*Entities.Submission, error) {
-	return r.getSubmissionsByField(ctx, "ChallengeID", challengeID)
+func (r *SubmissionRepository) GetSubmissionsByChallengeID(ctx context.Context, challengeID string, status *string, testID *string) ([]*Entities.Submission, error) {
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
+
+	conditions := r.buildConditions(nil, status, testID, &challengeID, nil)
+	return r.getSubmissionsByFields(conditions)
 }
 
-func (r *SubmissionRepository) getSubmissionsByField(ctx context.Context, field, value string) ([]*Entities.Submission, error) {
+func (r *SubmissionRepository) buildConditions(userID *string, status *string, testID *string, challengeID *string, sessionID *string) map[string]string {
+	conditions := map[string]string{}
+	if status != nil {
+		conditions["Status"] = *status
+	}
+	if testID != nil {
+		conditions["TestID"] = *testID
+	}
+	if challengeID != nil {
+		conditions["ChallengeID"] = *challengeID
+	}
+	if userID != nil {
+		conditions["UserID"] = *userID
+	}
+
+	if sessionID != nil {
+		conditions["SessionID"] = *sessionID
+	}
+
+	return conditions
+}
+
+func (r *SubmissionRepository) getSubmissionsByFields(fields map[string]string) ([]*Entities.Submission, error) {
+
+	res, err := r.adapter.Read(submissionTableName, fields)
+	if err != nil {
+		return nil, err
+	}
+
+	records := extractRecords(res)
+	if len(records) == 0 {
+		return []*Entities.Submission{}, nil
+	}
+
+	submissions := make([]*Entities.Submission, 0, len(records))
+	for _, record := range records {
+		submission, mapErr := recordToSubmission(record)
+		if mapErr != nil {
+			return nil, mapErr
+		}
+		if submission != nil {
+			submissions = append(submissions, submission)
+		}
+	}
+
+	return submissions, nil
+}
+
+func (r *SubmissionRepository) getSubmissionsByField(field, value string) ([]*Entities.Submission, error) {
 	normalizedValue := strings.TrimSpace(value)
 	if normalizedValue == "" {
 		return nil, fmt.Errorf("%s is required", field)
-	}
-	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
-		return nil, err
 	}
 
 	res, err := r.adapter.Read(submissionTableName, map[string]string{field: normalizedValue})

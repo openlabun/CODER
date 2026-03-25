@@ -44,18 +44,13 @@ func (uc *DeleteChallengeUseCase) Execute(ctx context.Context, input dtos.Delete
 	if err != nil {
 		return err
 	}
+
+	if existingChallenge == nil {
+		return fmt.Errorf("challenge with id %s does not exist", input.ChallengeID)
+	}
 	
-	// [STEP 3] Validate that exam exists and belongs to the teacher
-	exam, err := uc.examRepository.GetExamByID(ctx, existingChallenge.ExamID)
-	if err != nil {
-		return err
-	}
-
-	if exam == nil {
-		return fmt.Errorf("exam with id %q does not exist", existingChallenge.ExamID)
-	}
-
-	if exam.ProfessorID != user.ID {
+	// [STEP 3] Validate that challenge belongs to teacher
+	if existingChallenge.UserID != user.ID {
 		return fmt.Errorf("user does not have permissions to delete this challenge")
 	}
 

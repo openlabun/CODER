@@ -44,13 +44,16 @@ func (uc *CreateChallengeUseCase) Execute(ctx context.Context, input dtos.Create
 		return nil, fmt.Errorf("user does not have permissions to create an exam")
 	}
 
-	// [STEP 2] Create challenge entity with user provided values
+	// [STEP 2] Set userID in input to create challenge with the authenticated user as owner
+	input.UserID = user.ID
+
+	// [STEP 3] Create challenge entity with user provided values
 	challenge, err := mapper.MapCreateChallengeInputToChallengeEntity(input)
 	if err != nil {
 		return nil, err
 	}
 
-	// [STEP 3] Create challenge with user provided values
+	// [STEP 4] Create challenge with user provided values
 	createdChallenge, err := uc.challengeRepository.CreateChallenge(ctx, challenge)
 	if err != nil {
 		return nil, err

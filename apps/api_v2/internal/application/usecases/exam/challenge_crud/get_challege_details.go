@@ -47,21 +47,14 @@ func (uc *GetChallengeDetailsUseCase) Execute(ctx context.Context, input dtos.Ge
 		return nil, err
 	}
 
-	// [STEP 3] Verify that exam exists and belongs to the teacher
-	exam, err := uc.examRepository.GetExamByID(ctx, challenge.ExamID)
-	if err != nil {
-		return nil, err
+	if challenge == nil {
+		return nil, fmt.Errorf("challenge with id %s does not exist", input.ChallengeID)
 	}
 
-	if exam == nil {
-		return nil, fmt.Errorf("exam with id %q does not exist", challenge.ExamID)
+	// [STEP 3] Verify that challenge belongs to teacher
+	if challenge.UserID != user.ID {
+		return nil, fmt.Errorf("user does not have permissions to access this challenge")
 	}
-
-	if exam.ProfessorID != user.ID {
-		return nil, fmt.Errorf("user does not have permissions to access this exam")
-	}
-
-	// [STEP 4] Return challenge details
 
 	return challenge, nil
 }

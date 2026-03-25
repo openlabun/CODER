@@ -20,6 +20,108 @@ tags:
   - name: metrics
   - name: health
 paths:
+  /submissions/challenge/{challengeId}:
+      get:
+        tags:
+          - submissions
+        summary: List submissions by challenge
+        description: |
+          Devuelve todas las submissions asociadas a un challenge. Permite filtrar por status y testId.
+          Requiere autenticación y permisos adecuados (ver lógica de roles en backend).
+        x-implementation: usecase
+        x-mockup:
+          input: apps/api_v2/internal/interfaces/http/submissions/get-by-challenge-id/mockup/input.json
+          output: apps/api_v2/internal/interfaces/http/submissions/get-by-challenge-id/mockup/output.json
+        parameters:
+          - in: path
+            name: challengeId
+            required: true
+            schema:
+              type: string
+          - in: query
+            name: status
+            required: false
+            schema:
+              type: string
+          - in: query
+            name: testId
+            required: false
+            schema:
+              type: string
+        responses:
+          "200":
+            description: Lista de submissions para el challenge.
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/SubmissionOutputDTO"
+                example:
+                  - submission:
+                      id: sub-1
+                      userID: usr-1
+                      challengeID: chal-1
+                      sessionID: sess-1
+                      code: print(1)
+                      language: python
+                    results:
+                      - id: res-1
+                        status: passed
+
+  /submissions/session/{sessionId}:
+      get:
+        tags:
+          - submissions
+        summary: List submissions by session
+        description: |
+          Devuelve todas las submissions asociadas a una sesión. Permite filtrar por status, testId y challengeId.
+          Requiere autenticación y permisos adecuados (ver lógica de roles en backend).
+        x-implementation: usecase
+        x-mockup:
+          input: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/input.json
+          output: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/output.json
+        parameters:
+          - in: path
+            name: sessionId
+            required: true
+            schema:
+              type: string
+          - in: query
+            name: status
+            required: false
+            schema:
+              type: string
+          - in: query
+            name: testId
+            required: false
+            schema:
+              type: string
+          - in: query
+            name: challengeId
+            required: false
+            schema:
+              type: string
+        responses:
+          "200":
+            description: Lista de submissions para la sesión.
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/SubmissionOutputDTO"
+                example:
+                  - submission:
+                      id: sub-1
+                      userID: usr-1
+                      challengeID: chal-1
+                      sessionID: sess-1
+                      code: print(1)
+                      language: python
+                    results:
+                      - id: res-1
+                        status: passed
   /auth/register:
     post:
       tags:
@@ -1674,6 +1776,46 @@ paths:
                   timestamp: 2026-03-22T12:00:00Z
 components:
   schemas:
+    SubmissionOutputDTO:
+      type: object
+      properties:
+        submission:
+          type: object
+          properties:
+            id:
+              type: string
+            userID:
+              type: string
+            challengeID:
+              type: string
+            sessionID:
+              type: string
+            code:
+              type: string
+            language:
+              type: string
+          required:
+            - id
+            - userID
+            - challengeID
+            - sessionID
+            - code
+            - language
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              status:
+                type: string
+            required:
+              - id
+              - status
+      required:
+        - submission
+        - results
     AuthPostRegisterInput:
       type: object
       properties:

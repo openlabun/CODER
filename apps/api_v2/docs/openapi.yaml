@@ -138,14 +138,9 @@ paths:
             schema:
               $ref: "#/components/schemas/AuthPostRegisterInput"
             example: &a1
-              method: POST
-              path: /auth/register
-              pathParams: {}
-              query: {}
-              body:
-                email: student@example.com
-                name: Student Test
-                password: Testing123!
+              email: student@example.com
+              name: Student Test
+              password: Testing123!
       responses:
         "201":
           description: Register response
@@ -154,8 +149,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthPostRegisterOutput201"
               example: &a2
-                statusCode: 201
-                body:
                   token:
                     access_token: jwt-access-token
                     refresh_token: jwt-refresh-token
@@ -180,13 +173,8 @@ paths:
             schema:
               $ref: "#/components/schemas/AuthPostLoginInput"
             example: &a3
-              method: POST
-              path: /auth/login
-              pathParams: {}
-              query: {}
-              body:
-                email: student@example.com
-                password: Testing123!
+              email: student@example.com
+              password: Testing123!
       responses:
         "200":
           description: Login response
@@ -195,8 +183,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthPostLoginOutput200"
               example: &a4
-                statusCode: 200
-                body:
                   token:
                     access_token: jwt-access-token
                     refresh_token: jwt-refresh-token
@@ -222,8 +208,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthGetMeOutput200"
               example: &a5
-                statusCode: 200
-                body:
                   id: usr-123
                   username: Student Test
                   email: student@example.com
@@ -266,14 +250,9 @@ paths:
             schema:
               $ref: "#/components/schemas/AiPostGenerateChallengeIdeasInput"
             example: &a6
-              method: POST
-              path: /ai/generate-challenge-ideas
-              pathParams: {}
-              query: {}
-              body:
-                topic: sorting
-                difficulty: easy
-                count: 3
+              topic: sorting
+              difficulty: easy
+              count: 3
       responses:
         "200":
           description: Mock AI challenge ideas
@@ -282,8 +261,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiPostGenerateChallengeIdeasOutput200"
               example: &a7
-                statusCode: 501
-                body:
                   message: AI challenge idea generation not implemented in application usecases
   /ai/generate-test-cases:
     post:
@@ -301,16 +278,11 @@ paths:
             schema:
               $ref: "#/components/schemas/AiPostGenerateTestCasesInput"
             example: &a8
-              method: POST
-              path: /ai/generate-test-cases
-              pathParams: {}
-              query: {}
-              body:
-                challengeDescription: Sum two integers
-                inputFormat: a b
-                outputFormat: a+b
-                publicCount: 2
-                hiddenCount: 3
+              challengeDescription: Sum two integers
+              inputFormat: a b
+              outputFormat: a+b
+              publicCount: 2
+              hiddenCount: 3
       responses:
         "200":
           description: Mock AI test cases
@@ -319,8 +291,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiPostGenerateTestCasesOutput200"
               example: &a9
-                statusCode: 501
-                body:
                   message: AI test case generation not implemented in application usecases
   /challenges:
     post:
@@ -338,11 +308,6 @@ paths:
             schema:
               $ref: "#/components/schemas/ChallengesPostCreateInput"
             example: &a10
-              method: POST
-              path: /challenges
-              pathParams: {}
-              query: {}
-              body:
                 title: Two Sum
                 description: Return indexes of two numbers that add up to target
                 tags:
@@ -373,8 +338,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesPostCreateOutput201"
               example: &a11
-                statusCode: 201
-                body:
                   id: challenge-123
                   title: Two Sum
                   status: draft
@@ -402,8 +365,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesGetListOutput200"
               example: &a12
-                statusCode: 200
-                body:
                   - id: challenge-123
                     title: Two Sum
                     status: published
@@ -432,8 +393,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesGetByIdOutput200"
               example: &a13
-                statusCode: 200
-                body:
                   id: challenge-123
                   title: Two Sum
                   description: Return indexes of two numbers that add up to target
@@ -461,12 +420,6 @@ paths:
             schema:
               $ref: "#/components/schemas/ChallengesPatchUpdateInput"
             example: &a14
-              method: PATCH
-              path: /challenges/{id}
-              pathParams:
-                id: challenge-123
-              query: {}
-              body:
                 title: Two Sum Updated
                 difficulty: medium
                 workerTimeLimit: 2000
@@ -478,8 +431,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesPatchUpdateOutput200"
               example: &a15
-                statusCode: 200
-                body:
                   id: challenge-123
                   title: Two Sum Updated
     delete:
@@ -526,8 +477,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesPostPublishOutput200"
               example: &a16
-                statusCode: 200
-                body:
                   id: challenge-123
                   status: published
   /challenges/{id}/archive:
@@ -553,8 +502,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesPostArchiveOutput200"
               example: &a17
-                statusCode: 200
-                body:
                   id: challenge-123
                   status: archived
   /test-cases:
@@ -573,11 +520,6 @@ paths:
             schema:
               $ref: "#/components/schemas/TestCasesPostCreateInput"
             example: &a18
-              method: POST
-              path: /test-cases
-              pathParams: {}
-              query: {}
-              body:
                 name: tc_add_1
                 input:
                   - name: a
@@ -601,8 +543,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/TestCasesPostCreateOutput201"
               example: &a19
-                statusCode: 201
-                body:
                   id: test-case-123
                   challengeID: challenge-123
                   isSample: true
@@ -635,8 +575,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/TestCasesGetByChallengeIdOutput200"
               example: &a20
-                statusCode: 200
-                body:
                   - id: test-case-123
                     name: tc_add_1
                     isSample: true
@@ -692,8 +630,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/TestCasesDeleteByIdOutput200"
               example: &a21
-                statusCode: 200
-                body:
                   deleted: true
                   testCaseID: test-case-123
   /courses/enroll:
@@ -742,11 +678,6 @@ paths:
             schema:
               $ref: "#/components/schemas/CoursesPostCreateInput"
             example: &a24
-              method: POST
-              path: /courses
-              pathParams: {}
-              query: {}
-              body:
                 name: Algorithms 1
                 description: Intro to algorithms
                 visibility: public
@@ -765,8 +696,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesPostCreateOutput201"
               example: &a25
-                statusCode: 201
-                body:
                   id: course-123
                   name: Algorithms 1
                   code: ALG-101
@@ -814,8 +743,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesGetListOutput200"
               example:
-                statusCode: 200
-                body:
                   - id: course-123
                     name: Algorithms 1
                     visibility: public
@@ -851,8 +778,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesGetByIdOutput200"
               example: &a28
-                statusCode: 200
-                body:
                   id: course-123
                   name: Algorithms 1
                   description: Intro to algorithms
@@ -878,12 +803,6 @@ paths:
             schema:
               $ref: "#/components/schemas/CoursesPostUpdateInput"
             example: &a29
-              method: POST
-              path: /courses/{id}
-              pathParams:
-                id: course-123
-              query: {}
-              body:
                 name: Algorithms 1 - Updated
                 description: Updated description
       responses:
@@ -894,8 +813,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesPostUpdateOutput200"
               example: &a30
-                statusCode: 200
-                body:
                   id: course-123
                   name: Algorithms 1 - Updated
     delete:
@@ -920,8 +837,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesDeleteCourseOutput200"
               example: &a30_delete
-                statusCode: 200
-                body:
                   removed: true
   /courses/{id}/students:
     post:
@@ -945,13 +860,7 @@ paths:
             schema:
               $ref: "#/components/schemas/CoursesPostAddStudentInput"
             example: &a31
-              method: POST
-              path: /courses/{id}/students
-              pathParams:
-                id: course-123
-              query: {}
-              body:
-                studentID: usr-student-123
+              studentID: usr-student-123
       responses:
         "200":
           description: Add student response
@@ -960,8 +869,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesPostAddStudentOutput200"
               example: &a32
-                statusCode: 200
-                body:
                   enrolled: true
                   courseID: course-123
                   studentID: usr-student-123
@@ -987,8 +894,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesGetStudentsOutput200"
               example: &a33
-                statusCode: 200
-                body:
                   - id: usr-student-123
                     username: Student Test
                     email: student@example.com
@@ -1021,8 +926,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesDeleteStudentOutput200"
               example: &a34
-                statusCode: 200
-                body:
+ 
                   removed: true
                   courseID: course-123
                   studentID: usr-student-123
@@ -1042,11 +946,6 @@ paths:
             schema:
               $ref: "#/components/schemas/ExamsPostCreateInput"
             example: &a38
-              method: POST
-              path: /exams
-              pathParams: {}
-              query: {}
-              body:
                 course_id: course-123
                 title: Midterm 1
                 description: Midterm exam
@@ -1065,8 +964,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsPostCreateOutput201"
               example: &a39
-                statusCode: 201
-                body:
+
                   id: exam-123
                   title: Midterm 1
                   course_id: course-123
@@ -1094,8 +992,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsGetByCourseIdOutput200"
               example: &a40
-                statusCode: 200
-                body:
+ 
                   - id: exam-123
                     title: Midterm 1
                     course_id: course-123
@@ -1122,8 +1019,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsGetByIdOutput200"
               example: &a41
-                statusCode: 200
-                body:
+ 
                   id: exam-123
                   title: Midterm 1
                   description: Midterm exam
@@ -1150,12 +1046,6 @@ paths:
             schema:
               $ref: "#/components/schemas/ExamsPatchUpdateInput"
             example: &a42
-              method: PATCH
-              path: /exams/{id}
-              pathParams:
-                id: exam-123
-              query: {}
-              body:
                 title: Midterm 1 Updated
                 description: Updated description
                 try_limit: 3
@@ -1167,8 +1057,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsPatchUpdateOutput200"
               example: &a43
-                statusCode: 200
-                body:
                   id: exam-123
                   title: Midterm 1 Updated
                   try_limit: 3
@@ -1215,12 +1103,6 @@ paths:
             schema:
               $ref: "#/components/schemas/ExamsPostChangeVisibilityInput"
             example: &a44
-              method: POST
-              path: /exams/{id}/visibility
-              pathParams:
-                id: exam-123
-              query: {}
-              body:
                 visibility: private
       responses:
         "200":
@@ -1230,8 +1112,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsPostChangeVisibilityOutput200"
               example: &a45
-                statusCode: 200
-                body:
                   id: exam-123
                   visibility: private
   /exams/{id}/close:
@@ -1257,8 +1137,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsPostCloseOutput200"
               example: &a46
-                statusCode: 200
-                body:
+ 
                   id: exam-123
                   status: closed
   /submissions:
@@ -1277,11 +1156,6 @@ paths:
             schema:
               $ref: "#/components/schemas/SubmissionsPostCreateInput"
             example: &a47
-              method: POST
-              path: /submissions
-              pathParams: {}
-              query: {}
-              body:
                 code: "def solve(a,b): return a+b"
                 language: python
                 challengeID: challenge-123
@@ -1294,8 +1168,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubmissionsPostCreateOutput201"
               example: &a48
-                statusCode: 201
-                body:
                   id: submission-123
                   challengeID: challenge-123
                   sessionID: session-123
@@ -1323,8 +1195,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubmissionsGetByIdOutput200"
               example: &a50
-                statusCode: 200
-                body:
+ 
                   submission:
                     id: submission-123
                     challengeID: challenge-123
@@ -1421,11 +1292,6 @@ paths:
             schema:
               $ref: "#/components/schemas/SubmissionsPostSessionInput"
             example: &a51
-              method: POST
-              path: /submissions/sessions
-              pathParams: {}
-              query: {}
-              body:
                 userID: usr-student-123
                 examID: exam-123
       responses:
@@ -1436,8 +1302,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubmissionsPostSessionOutput201"
               example: &a52
-                statusCode: 201
-                body:
                   id: session-123
                   studentID: usr-student-123
                   examID: exam-123
@@ -1465,8 +1329,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubmissionsGetBySessionIdOutput200"
               example: &a53
-                statusCode: 200
-                body:
+ 
                   id: session-123
                   studentID: usr-student-123
                   examID: exam-123
@@ -1496,8 +1359,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubmissionsPostHeartbeatOutput200"
               example: &a54
-                statusCode: 200
-                body:
+ 
                   id: session-123
                   status: active
                   lastHeartbeat: 2026-03-22T12:00:00Z
@@ -1524,8 +1386,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/LeaderboardGetChallengeIdOutput200"
               example: &a55
-                statusCode: 501
-                body:
+
                   message: Challenge leaderboard use case is not implemented
   /leaderboard/course/{id}:
     get:
@@ -1550,8 +1411,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/LeaderboardGetCourseIdOutput200"
               example: &a56
-                statusCode: 501
-                body:
+
                   message: Course leaderboard use case is not implemented
   /metrics:
     get:
@@ -1570,8 +1430,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/MetricsGetOutput200"
               example: &a57
-                statusCode: 200
-                body:
                   uptime_seconds: 12345
                   requests_total: 987
                   errors_total: 3
@@ -1592,8 +1450,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthGetOutput200"
               example: &a58
-                statusCode: 200
-                body:
                   status: ok
                   service: api_v2
                   timestamp: 2026-03-22T12:00:00Z
@@ -1614,8 +1470,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CacheGetHealthOutput200"
               example: &a59
-                statusCode: 200
-                body:
                   status: ok
                   component: cache
                   timestamp: 2026-03-22T12:00:00Z
@@ -1636,8 +1490,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/DbGetHealthOutput200"
               example: &a60
-                statusCode: 200
-                body:
                   status: ok
                   component: database
                   timestamp: 2026-03-22T12:00:00Z
@@ -1905,8 +1757,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           access_token: jwt-access-token-new
           refresh_token: jwt-refresh-token-new
     AiPostGenerateChallengeIdeasInput:
@@ -2263,8 +2113,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           removed: true
     ChallengesPostPublishOutput200:
       type: object
@@ -2525,8 +2373,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           id: test-case-123
           name: tc_add_1_updated
           points: 15
@@ -2668,8 +2514,7 @@ components:
               schema:
                 $ref: "#/components/schemas/CoursesGetBrowseOutput200"
               example: &a27
-                statusCode: 501
-                body:
+
                   message: Browse courses endpoint does not have a dedicated use case yet
     CoursesGetListOutput200:
       type: object
@@ -2695,8 +2540,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           - id: course-123
             name: Algorithms 1
             visibility: public
@@ -2950,12 +2793,6 @@ components:
             schema:
               $ref: "#/components/schemas/CoursesPostAssignChallengeInput"
             example: &a35
-              method: POST
-              path: /courses/{id}/challenges
-              pathParams:
-                id: course-123
-              query: {}
-              body:
                 challengeID: challenge-123
     CoursesPostAssignChallengeOutput200:
       type: object
@@ -2980,8 +2817,6 @@ components:
               schema:
                 $ref: "#/components/schemas/CoursesPostAssignChallengeOutput200"
               example: &a36
-                statusCode: 501
-                body:
                   message: Assign challenge to course use case is not implemented
     CoursesGetChallengesOutput200:
       type: object
@@ -3006,8 +2841,6 @@ components:
               schema:
                 $ref: "#/components/schemas/CoursesGetChallengesOutput200"
               example:
-                statusCode: 501
-                body:
                   message: Get course challenges use case is not implemented
     ExamsPostCreateInput:
       type: object
@@ -3284,8 +3117,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           removed: true
     SubmissionsPostCreateInput:
       type: object
@@ -3403,8 +3234,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           - submission:
               id: submission-123
               challengeID: challenge-123
@@ -3494,8 +3323,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           - id: submission-123
             userID: usr-student-123
             challengeID: challenge-123

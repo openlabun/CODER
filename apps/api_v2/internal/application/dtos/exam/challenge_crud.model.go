@@ -19,7 +19,7 @@ type CreateChallengeInput struct {
 	Constraints       string            `json:"constraints"`
 	CreatedAt         string            `json:"createdAt"`
 	UpdatedAt         string            `json:"updatedAt"`
-	ExamID            string            `json:"examId"`
+	UserID            string            `json:"userId"`
 }
 
 type UpdateChallengeInput struct {
@@ -36,7 +36,7 @@ type UpdateChallengeInput struct {
 	Constraints       *string           `json:"constraints"`
 	CreatedAt         *string           `json:"createdAt"`
 	UpdatedAt         *string           `json:"updatedAt"`
-	ExamID            *string           `json:"examId"`
+	UserID            *string           `json:"userId"`
 }
 
 type DeleteChallengeInput struct {

@@ -63,7 +63,7 @@ func MapCreateChallengeInputToChallengeEntity(input dtos.CreateChallengeInput) (
 	 	inputVariables,
 		*outputVariable,
 		input.Constraints,
-		input.ExamID,
+		input.UserID,
 	)
 	if err != nil {
 		return nil, err

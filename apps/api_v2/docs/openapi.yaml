@@ -712,13 +712,9 @@ paths:
             schema:
               $ref: "#/components/schemas/CoursesPostEnrollInput"
             example: &a22
-              method: POST
-              path: /courses/enroll
-              pathParams: {}
-              query: {}
-              body:
                 courseID: course-123
                 studentID: usr-student-123
+                studentEmail: usr-student@test.com
       responses:
         "200":
           description: Enrollment response
@@ -727,11 +723,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesPostEnrollOutput200"
               example: &a23
-                statusCode: 200
-                body:
-                  enrolled: true
-                  courseID: course-123
-                  studentID: usr-student-123
+                enrolled: true
+                courseID: course-123
+                studentID: usr-student-123
   /courses:
     post:
       tags:
@@ -2838,8 +2832,9 @@ components:
           properties:
             studentID:
               type: string
-          required:
-            - studentID
+            studentEmail:
+              type: string
+          # No required fields, both are optional
       required:
         - method
         - path

@@ -678,7 +678,14 @@ paths:
     get:
       tags:
         - courses
-      summary: List courses
+      summary: List courses (owned, enrolled, or public)
+      description: |
+        Devuelve la lista de cursos según el alcance solicitado:
+        - `scope=owned`: cursos donde el usuario autenticado es profesor.
+        - `scope=enrolled`: cursos donde el usuario autenticado es estudiante.
+        - (sin scope o scope distinto): lista vacía o no implementado (futuro: cursos públicos).
+        
+        Requiere autenticación. El usuario debe tener el rol adecuado para cada scope.
       x-implementation: usecase
       x-mockup:
         input: apps/api_v2/internal/interfaces/http/courses/get-list/mockup/input.json
@@ -689,29 +696,42 @@ paths:
           required: false
           schema:
             type: string
+          description: |
+            Alcance de la consulta. Valores soportados: `owned`, `enrolled`.
         - in: query
           name: studentId
           required: false
           schema:
             type: string
+          description: (Reservado para uso futuro)
         - in: query
           name: teacherId
           required: false
           schema:
             type: string
+          description: (Reservado para uso futuro)
       responses:
         "200":
-          description: Courses list
+          description: Lista de cursos según el scope solicitado.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CoursesGetListOutput200"
-              example: &a26
+              example:
                 statusCode: 200
                 body:
                   - id: course-123
                     name: Algorithms 1
                     visibility: public
+        "501":
+          description: No implementado para el scope solicitado (por ejemplo, cursos públicos).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example: []
   /courses/browse:
     get:
       tags:
@@ -2655,7 +2675,12 @@ components:
       required:
         - statusCode
         - body
-      example: *a26
+      example:
+        statusCode: 200
+        body:
+          - id: course-123
+            name: Algorithms 1
+            visibility: public
     CoursesGetBrowseOutput200:
       type: object
       properties:

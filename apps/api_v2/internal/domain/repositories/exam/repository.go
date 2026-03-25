@@ -28,6 +28,14 @@ type ChallengeRepository interface {
 	GetOutputVariablesByChallengeID(ctx context.Context, challengeID string) ([]*Entities.IOVariable, error)
 }
 
+type ExamItemRepository interface {
+	CreateExamItem(ctx context.Context, examItem *Entities.ExamItem) (*Entities.ExamItem, error)
+	UpdateExamItem(ctx context.Context, examItem *Entities.ExamItem) (*Entities.ExamItem, error)
+	GetExamItemByID(ctx context.Context, examItemID string) (*Entities.ExamItem, error)
+	GetExamItem (ctx context.Context, examID *string, challengeID *string) ([]*Entities.ExamItem, error)
+	DeleteExamItem(ctx context.Context, examItemID string) error
+}
+
 type TestCaseRepository interface {
 	CreateTestCase(ctx context.Context, testCase *Entities.TestCase) (*Entities.TestCase, error)
 	UpdateTestCase(ctx context.Context, testCase *Entities.TestCase) (*Entities.TestCase, error)

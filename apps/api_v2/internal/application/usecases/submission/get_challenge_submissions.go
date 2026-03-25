@@ -62,40 +62,36 @@ func (uc *GetChallengeSubmissionsUseCase) Execute(ctx context.Context, input dto
 		return nil, fmt.Errorf("challenge with id %q does not exist", input.ChallengeID)
 	}
 
-	// [STEP 3] Get all submissions for the challenge
-	submissions, err := uc.submissionRepository.GetSubmissionsByChallengeID(ctx, input.ChallengeID, input.Status, input.TestID)
-		
-	if err != nil {
-		return nil, err
-	}
-
-	// [STEP 4] If user is a student, only query for his own submissions if challenge is published
+	// [STEP 3] If user is a student, check if the challenge is published
 	if role == user_entities.UserRoleStudent {
-
 		if challenge.Status != examEntities.ChallengeStatusPublished {
 			return nil, fmt.Errorf("challenge with id %q is not published yet or it was archived", input.ChallengeID)
 		}
-		
-		userSubmissions, err := uc.filterUserSubmissions(user.ID, submissions)
+	} 
+
+	// [STEP 4] If user is student only retrieve his own submissions
+	var submissions []*Entities.Submission
+	if role == user_entities.UserRoleStudent {
+		submissions, err = uc.submissionRepository.GetSubmissionsByUserID(ctx, user.ID, input.Status, input.TestID, &input.ChallengeID)
 		if err != nil {
 			return nil, err
 		}
 
-		return uc.createSubmissionsOutputDTO(ctx, userSubmissions)
-	} 
+		return uc.createSubmissionsOutputDTO(ctx, submissions)
+	}
 
 	// [STEP 5] If user is a teacher, query for all submissions for the challenge (only if he is owner)
-	exam, err := uc.examRepository.GetExamByID(ctx, challenge.ExamID)
+	if role == user_entities.UserRoleProfessor {
+		if challenge.UserID != user.ID {
+			return nil, fmt.Errorf("user with email %q is not the owner of the challenge with id %q", userEmail, input.ChallengeID)
+		}
+	}
+
+	// [STEP 6] Get all submissions for the challenge
+	submissions, err = uc.submissionRepository.GetSubmissionsByChallengeID(ctx, input.ChallengeID, input.Status, input.TestID)
+		
 	if err != nil {
 		return nil, err
-	}
-
-	if exam == nil {
-		return nil, fmt.Errorf("exam with id %q does not exist", challenge.ExamID)
-	}
-
-	if exam.ProfessorID != user.ID {
-		return nil, fmt.Errorf("user does not have permissions to view submissions for this challenge")
 	}
 
 	return uc.createSubmissionsOutputDTO(ctx, submissions)

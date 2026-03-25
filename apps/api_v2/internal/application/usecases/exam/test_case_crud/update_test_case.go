@@ -70,20 +70,11 @@ func (uc *UpdateTestCaseUseCase) Execute(ctx context.Context, input dtos.UpdateT
 		return nil, fmt.Errorf("challenge with id %q does not exist", testCase.ChallengeID)
 	}
 
-	// [STEP 4] Validate that challenge belongs to an exam owned by the teacher
-	exam, err := uc.examRepository.GetExamByID(ctx, challenge.ExamID)
-	if err != nil {
-		return nil, fmt.Errorf("exam with id %q does not exist", challenge.ExamID)
+	// [STEP 4] Validate that challenge belongs to the teacher
+	if challenge.UserID != user.ID {
+		return nil, fmt.Errorf("user does not have permissions to update a test case for this challenge")
 	}
-
-	if exam == nil {
-		return nil, fmt.Errorf("exam with id %q does not exist", challenge.ExamID)
-	}
-
-	if exam.ProfessorID != user.ID {
-		return nil, fmt.Errorf("user does not have permissions to update test cases for this challenge")
-	}
-
+	
 	// [STEP 5] Create update test case entity with user provided values and existing test case
 	updatedTestCase, err := mapper.MapUpdateTestCaseInputToTestCaseEntity(testCase, input)
 	if err != nil {

@@ -834,26 +834,6 @@ paths:
                 items:
                   type: string
               example: []
-  /courses/browse:
-    get:
-      tags:
-        - courses
-      summary: Browse courses
-      x-implementation: mock
-      x-mockup:
-        input: apps/api_v2/internal/interfaces/http/courses/get-browse/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/courses/get-browse/mockup/output.json
-      responses:
-        "200":
-          description: Browse response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CoursesGetBrowseOutput200"
-              example: &a27
-                statusCode: 501
-                body:
-                  message: Browse courses endpoint does not have a dedicated use case yet
   /courses/{id}:
     get:
       tags:
@@ -1052,71 +1032,6 @@ paths:
                   removed: true
                   courseID: course-123
                   studentID: usr-student-123
-  /courses/{id}/challenges:
-    post:
-      tags:
-        - courses
-      summary: Assign challenge to course
-      x-implementation: mock
-      x-mockup:
-        input: apps/api_v2/internal/interfaces/http/courses/post-assign-challenge/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/courses/post-assign-challenge/mockup/output.json
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CoursesPostAssignChallengeInput"
-            example: &a35
-              method: POST
-              path: /courses/{id}/challenges
-              pathParams:
-                id: course-123
-              query: {}
-              body:
-                challengeID: challenge-123
-      responses:
-        "200":
-          description: Assign challenge response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CoursesPostAssignChallengeOutput200"
-              example: &a36
-                statusCode: 501
-                body:
-                  message: Assign challenge to course use case is not implemented
-    get:
-      tags:
-        - courses
-      summary: List course challenges
-      x-implementation: mock
-      x-mockup:
-        input: apps/api_v2/internal/interfaces/http/courses/get-challenges/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/courses/get-challenges/mockup/output.json
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Course challenges list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CoursesGetChallengesOutput200"
-              example: &a37
-                statusCode: 501
-                body:
-                  message: Get course challenges use case is not implemented
   /exams:
     post:
       tags:
@@ -2751,7 +2666,17 @@ components:
       required:
         - statusCode
         - body
-      example: *a25
+      responses:
+        "200":
+          description: Browse response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesGetBrowseOutput200"
+              example: &a27
+                statusCode: 501
+                body:
+                  message: Browse courses endpoint does not have a dedicated use case yet
     CoursesGetListOutput200:
       type: object
       properties:
@@ -3023,7 +2948,20 @@ components:
         - pathParams
         - query
         - body
-      example: *a35
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoursesPostAssignChallengeInput"
+            example: &a35
+              method: POST
+              path: /courses/{id}/challenges
+              pathParams:
+                id: course-123
+              query: {}
+              body:
+                challengeID: challenge-123
     CoursesPostAssignChallengeOutput200:
       type: object
       properties:
@@ -3039,7 +2977,17 @@ components:
       required:
         - statusCode
         - body
-      example: *a36
+      responses:
+        "200":
+          description: Assign challenge response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesPostAssignChallengeOutput200"
+              example: &a36
+                statusCode: 501
+                body:
+                  message: Assign challenge to course use case is not implemented
     CoursesGetChallengesOutput200:
       type: object
       properties:
@@ -3055,7 +3003,17 @@ components:
       required:
         - statusCode
         - body
-      example: *a37
+      responses:
+        "200":
+          description: Course challenges list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesGetChallengesOutput200"
+              example:
+                statusCode: 501
+                body:
+                  message: Get course challenges use case is not implemented
     ExamsPostCreateInput:
       type: object
       properties:

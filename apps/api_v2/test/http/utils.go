@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
@@ -33,24 +32,6 @@ type requestMock struct {
 type responseMock struct {
 	StatusCode int `json:"statusCode"`
 	Body       any `json:"body"`
-}
-
-func ReadFileContent(path string) (string, error) {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	return string(content), nil
-}
-
-func ReadInputFileContent(module, endpoint string) (string, error) {
-	path := filepath.Join(apiV2RootDir(), "internal", "interfaces", "http", module, endpoint, "mockup", "input.json")
-	return ReadFileContent(path)
-}
-
-func ReadOutputFileContent(module, endpoint string) (string, error) {
-	path := filepath.Join(apiV2RootDir(), "internal", "interfaces", "http", module, endpoint, "mockup", "output.json")
-	return ReadFileContent(path)
 }
 
 func InitApp() (*fiber.App, error) {
@@ -117,112 +98,6 @@ func loadEnvFile(path string) error {
 	}
 
 	return scanner.Err()
-}
-
-func getRequest(method, url string, headers map[string]string, params []byte) (*fiber.Ctx, error) {
-	return runRequest(method, url, headers, params)
-}
-
-func postRequest(url string, headers map[string]string, body []byte) (*fiber.Ctx, error) {
-	return runRequest(http.MethodPost, url, headers, body)
-}
-
-func putRequest(url string, headers map[string]string, body []byte) (*fiber.Ctx, error) {
-	return runRequest(http.MethodPut, url, headers, body)
-}
-
-func deleteRequest(url string, headers map[string]string, params []byte) (*fiber.Ctx, error) {
-	return runRequest(http.MethodDelete, url, headers, params)
-}
-
-func CompareResponse(expected, actual string) bool {
-	var expectedJSON any
-	if err := json.Unmarshal([]byte(expected), &expectedJSON); err != nil {
-		return strings.TrimSpace(expected) == strings.TrimSpace(actual)
-	}
-
-	var actualJSON any
-	if err := json.Unmarshal([]byte(actual), &actualJSON); err != nil {
-		return false
-	}
-
-	left, err := json.Marshal(expectedJSON)
-	if err != nil {
-		return false
-	}
-	right, err := json.Marshal(actualJSON)
-	if err != nil {
-		return false
-	}
-
-	return bytes.Equal(left, right)
-}
-
-func RunEndpointMockupTest(t interface {
-	Helper()
-	Logf(format string, args ...any)
-	Fatalf(format string, args ...any)
-	Cleanup(func())
-}, module, endpoint string) {
-	t.Helper()
-
-	inputContent, err := ReadInputFileContent(module, endpoint)
-	if err != nil {
-		t.Fatalf("read input.json failed for %s/%s: %v", module, endpoint, err)
-	}
-
-	outputContent, err := ReadOutputFileContent(module, endpoint)
-	if err != nil {
-		t.Fatalf("read output.json failed for %s/%s: %v", module, endpoint, err)
-	}
-
-	var input requestMock
-	if err := json.Unmarshal([]byte(inputContent), &input); err != nil {
-		t.Fatalf("decode input.json failed for %s/%s: %v", module, endpoint, err)
-	}
-
-	var expected responseMock
-	if err := json.Unmarshal([]byte(outputContent), &expected); err != nil {
-		t.Fatalf("decode output.json failed for %s/%s: %v", module, endpoint, err)
-	}
-
-	requestPath := buildRequestPath(input.Path, input.PathParams, input.Query)
-	bodyBytes := []byte(nil)
-	if input.Body != nil {
-		bodyBytes, err = json.Marshal(input.Body)
-		if err != nil {
-			t.Fatalf("encode request body failed for %s/%s: %v", module, endpoint, err)
-		}
-	}
-
-	t.Logf("CHECK REQUEST module=%s endpoint=%s method=%s path=%s body=%s", module, endpoint, strings.ToUpper(input.Method), requestPath, string(bodyBytes))
-	t.Logf("CHECK EXPECTED module=%s endpoint=%s status=%d response=%s", module, endpoint, expected.StatusCode, outputContent)
-
-	ctx, err := getRequest(strings.ToUpper(input.Method), requestPath, map[string]string{"Content-Type": "application/json"}, bodyBytes)
-	if err != nil {
-		t.Fatalf("http request failed for %s/%s: %v", module, endpoint, err)
-	}
-	t.Cleanup(func() {
-		ctx.App().ReleaseCtx(ctx)
-	})
-
-	actualStatus := ctx.Response().StatusCode()
-	actualBody := string(ctx.Response().Body())
-
-	t.Logf("CHECK ACTUAL module=%s endpoint=%s status=%d response=%s", module, endpoint, actualStatus, actualBody)
-
-	if actualStatus != expected.StatusCode {
-		t.Fatalf("unexpected status for %s/%s: got=%d expected=%d", module, endpoint, actualStatus, expected.StatusCode)
-	}
-
-	expectedBodyBytes, err := json.Marshal(expected.Body)
-	if err != nil {
-		t.Fatalf("encode expected body failed for %s/%s: %v", module, endpoint, err)
-	}
-
-	if !CompareResponse(string(expectedBodyBytes), actualBody) {
-		t.Fatalf("unexpected response body for %s/%s: got=%s expected=%s", module, endpoint, actualBody, string(expectedBodyBytes))
-	}
 }
 
 func runRequest(method, requestURL string, headers map[string]string, body []byte) (*fiber.Ctx, error) {

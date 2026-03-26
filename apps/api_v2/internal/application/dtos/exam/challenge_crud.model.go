@@ -12,14 +12,12 @@ type CreateChallengeInput struct {
 	Tags              []string          `json:"tags"`
 	Status            string            `json:"status"`
 	Difficulty        string            `json:"difficulty"`
-	WorkerTimeLimit   int               `json:"workerTimeLimit"`
-	WorkerMemoryLimit int               `json:"workerMemoryLimit"`
-	InputVariables    []IOVariableDTO  `json:"inputVariables"`
-	OutputVariable    IOVariableDTO    `json:"outputVariable"`
+	WorkerTimeLimit   int               `json:"worker_time_limit"`
+	WorkerMemoryLimit int               `json:"worker_memory_limit"`
+	InputVariables    []IOVariableDTO   `json:"input_variables"`
+	OutputVariable    IOVariableDTO     `json:"output_variable"`
 	Constraints       string            `json:"constraints"`
-	CreatedAt         string            `json:"createdAt"`
-	UpdatedAt         string            `json:"updatedAt"`
-	UserID            string            `json:"userId"`
+	UserID            string            `json:"user_id"`
 }
 
 type UpdateChallengeInput struct {
@@ -29,18 +27,16 @@ type UpdateChallengeInput struct {
 	Tags              *[]string          `json:"tags"`
 	Status            *string           `json:"status"`
 	Difficulty        *string           `json:"difficulty"`
-	WorkerTimeLimit   *int              `json:"workerTimeLimit"`
-	WorkerMemoryLimit *int              `json:"workerMemoryLimit"`
-	InputVariables    *[]IOVariableDTO   `json:"inputVariables"`
-	OutputVariable    *IOVariableDTO     `json:"outputVariable"`
+	WorkerTimeLimit   *int              `json:"worker_time_limit"`
+	WorkerMemoryLimit *int              `json:"worker_memory_limit"`
+	InputVariables    *[]IOVariableDTO   `json:"input_variables"`
+	OutputVariable    *IOVariableDTO     `json:"output_variable"`
 	Constraints       *string           `json:"constraints"`
-	CreatedAt         *string           `json:"createdAt"`
-	UpdatedAt         *string           `json:"updatedAt"`
-	UserID            *string           `json:"userId"`
+	UserID            *string           `json:"user_id"`
 }
 
 type DeleteChallengeInput struct {
-	ChallengeID string `json:"challenge_id"`
+	ChallengeID string 	`json:"challenge_id"`
 }
 
 type PublishChallengeInput struct {

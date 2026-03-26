@@ -14,5 +14,5 @@ type UpdateExamItemInput struct {
 }
 
 type DeleteExamItemInput struct {
-	ID string `json:"id"`
+	ID string 			`json:"id"`
 }

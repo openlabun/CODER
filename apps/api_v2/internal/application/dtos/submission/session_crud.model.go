@@ -1,14 +1,14 @@
 package dtos
 
 type CreateSessionInput struct {
-	UserID string
-	ExamID string
+	UserID string		`json:"user_id"`
+	ExamID string		`json:"exam_id"`
 }
 
 type HeartbeatSessionInput struct {
-	SessionID string
+	SessionID string	`json:"session_id"`
 }
 
 type GetSessionInput struct {
-	SessionID string
+	SessionID string 	`json:"session_id"`
 }

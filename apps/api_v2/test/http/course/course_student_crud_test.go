@@ -19,13 +19,13 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 	t.Log("[OK] App inicializada")
 
 	t.Log("[STEP 2] Autenticando profesor")
-	teacherAccess := ensureCourseHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
-	teacherHeaders := authHeaders(teacherAccess)
+	teacherAccess := httputils.EnsureHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
+	teacherHeaders := httputils.AuthHeaders(teacherAccess)
 	t.Logf("[OK] Profesor autenticado. teacherID=%s", teacherAccess.UserData.ID)
 
 	t.Log("[STEP 3] Autenticando estudiante")
-	studentAccess := ensureCourseHTTPAuthUserAccess(t, app, "stud@test.com", "Testing123!", "Student Test")
-	studentHeaders := authHeaders(studentAccess)
+	studentAccess := httputils.EnsureHTTPAuthUserAccess(t, app, "stud@test.com", "Password123!", "Student Test")
+	studentHeaders := httputils.AuthHeaders(studentAccess)
 	t.Logf("[OK] Estudiante autenticado. studentID=%s", studentAccess.UserData.ID)
 
 	now := time.Now().UTC()
@@ -46,7 +46,7 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 		"teacher_id":      teacherAccess.UserData.ID,
 	}
 
-	status, body, err := httputils.DoJSONRequest(app, http.MethodPost, "/courses/", createBody, teacherHeaders)
+	status, body, err := httputils.PostCourses(teacherHeaders, createBody)
 	if err != nil {
 		t.Fatalf("create course request failed: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected create status=%d, got=%d body=%s", http.StatusCreated, status, string(body))
 	}
 
-	courseID := mapString(t, decodeMap(t, body, "create course"), "ID", "create course")
+	courseID := httputils.MapString(t, httputils.DecodeMap(t, body, "create course"), "ID", "create course")
 	t.Logf("[OK] Curso creado. courseID=%s", courseID)
 
 	t.Log("[STEP 5] Matricular estudiante vía POST /courses/enroll")
@@ -62,7 +62,7 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 		"course_id":  courseID,
 		"student_id": studentAccess.UserData.ID,
 	}
-	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/courses/enroll", enrollBody, studentHeaders)
+	status, body, err = httputils.PostCoursesEnroll(studentHeaders, enrollBody)
 	if err != nil {
 		t.Fatalf("enroll request failed: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 	t.Log("[OK] Estudiante matriculado")
 
 	t.Log("[STEP 6] Verificar estudiante en GET /courses/:id/students")
-	status, body, err = httputils.DoJSONRequest(app, http.MethodGet, "/courses/"+courseID+"/students", nil, studentHeaders)
+	status, body, err = httputils.GetCoursesStudents(studentHeaders, map[string]any{"id": courseID})
 	if err != nil {
 		t.Fatalf("get students request failed: %v", err)
 	}
@@ -86,22 +86,21 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 	t.Log("[OK] Estudiante presente en lista")
 
 	t.Log("[STEP 7] Remover estudiante via DELETE /courses/:id/students/:studentId")
-	removePath := fmt.Sprintf("/courses/%s/students/%s", courseID, studentAccess.UserData.ID)
-	status, body, err = httputils.DoJSONRequest(app, http.MethodDelete, removePath, nil, studentHeaders)
+	status, body, err = httputils.DeleteCoursesStudent(studentHeaders, map[string]any{"id": courseID, "studentId": studentAccess.UserData.ID})
 	if err != nil {
 		t.Fatalf("remove student request failed: %v", err)
 	}
 	if status != http.StatusOK {
 		t.Fatalf("expected remove status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
-	removed := decodeMap(t, body, "remove student")
+	removed := httputils.DecodeMap(t, body, "remove student")
 	if flag, ok := removed["removed"].(bool); !ok || !flag {
 		t.Fatalf("expected removed=true, got body=%s", string(body))
 	}
 	t.Log("[OK] Estudiante removido")
 
 	t.Log("[STEP 8] Validar que ya no aparece en lista de estudiantes")
-	status, body, err = httputils.DoJSONRequest(app, http.MethodGet, "/courses/"+courseID+"/students", nil, studentHeaders)
+	status, body, err = httputils.GetCoursesStudents(studentHeaders, map[string]any{"id": courseID})
 	if err != nil {
 		t.Fatalf("get students after removal request failed: %v", err)
 	}
@@ -114,7 +113,7 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 	t.Log("[OK] Validación post-remoción completada")
 
 	t.Log("[STEP 9] Eliminar curso via DELETE /courses/:id")
-	status, body, err = httputils.DoJSONRequest(app, http.MethodDelete, "/courses/"+courseID, nil, teacherHeaders)
+	status, body, err = httputils.DeleteCoursesById(teacherHeaders, map[string]any{"id": courseID})
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)
 	}
@@ -122,7 +121,7 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected delete status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 
-	deleted := decodeMap(t, body, "delete course")
+	deleted := httputils.DecodeMap(t, body, "delete course")
 	if flag, ok := deleted["removed"].(bool); !ok || !flag {
 		t.Fatalf("expected removed=true, got body=%s", string(body))
 	}

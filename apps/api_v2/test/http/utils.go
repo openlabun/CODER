@@ -310,3 +310,35 @@ func validateUserAccess(t *testing.T, access *dtos.UserAccess, expectedEmail str
 		t.Fatalf("expected email=%s in payload, got=%s", expectedEmail, access.UserData.Email)
 	}
 }
+
+func AuthHeaders(access *dtos.UserAccess) map[string]string {
+	return map[string]string{
+		"Authorization": "Bearer " + access.Token.AccessToken,
+		"X-User-Email":  access.UserData.Email,
+	}
+}
+
+func DecodeMap(t *testing.T, raw []byte, source string) map[string]any {
+	t.Helper()
+
+	var out map[string]any
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatalf("decode %s map response failed: %v body=%s", source, err, string(raw))
+	}
+
+	return out
+}
+
+func MapString(t *testing.T, m map[string]any, key, source string) string {
+	t.Helper()
+
+	v, ok := m[key]
+	if !ok {
+		t.Fatalf("missing key=%s in %s response", key, source)
+	}
+	s, ok := v.(string)
+	if !ok {
+		t.Fatalf("key=%s in %s response is not string (type=%T)", key, source, v)
+	}
+	return s
+}

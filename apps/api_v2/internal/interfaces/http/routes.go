@@ -27,6 +27,9 @@ import (
 	course_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-create"
 	course_post_enroll "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-enroll"
 	course_post_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-update"
+	exam_item_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exam-items/delete-by-id"
+	exam_item_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exam-items/patch-update"
+	exam_item_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exam-items/post-create"
 	exam_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/delete-by-id"
 	exam_get_by_course_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-course-id"
 	exam_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-id"
@@ -56,6 +59,7 @@ func RegisterRoutes(app *fiber.App, appContainer *container.Application) {
 	registerTestCasesRoutes(app, appContainer)
 	registerCoursesRoutes(app, appContainer)
 	registerExamsRoutes(app, appContainer)
+	registerExamItemsRoutes(app, appContainer)
 	registerSubmissionsRoutes(app, appContainer)
 	registerLeaderboardRoutes(app)
 	registerMetricsRoutes(app)
@@ -166,6 +170,13 @@ func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 	exams.Delete("/:id", exam_delete_by_id.Handler(appContainer))
 	exams.Post("/:id/visibility", exam_post_change_visibility.Handler(appContainer))
 	exams.Post("/:id/close", exam_post_close.Handler(appContainer))
+}
+
+func registerExamItemsRoutes(app *fiber.App, appContainer *container.Application) {
+	examItems := app.Group("/exam-items")
+	examItems.Post("/", exam_item_post_create.Handler(appContainer))
+	examItems.Patch("/:id", exam_item_patch_update.Handler(appContainer))
+	examItems.Delete("/:id", exam_item_delete_by_id.Handler(appContainer))
 }
 
 func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Application) {

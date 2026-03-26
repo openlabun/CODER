@@ -329,7 +329,7 @@ paths:
                   type: string
                   value: 0,1
                 constraints: 2 <= n <= 10000
-                examID: exam-123
+                userID: exam-123
       responses:
         "201":
           description: Challenge created
@@ -342,7 +342,7 @@ paths:
                   title: Two Sum
                   status: draft
                   difficulty: easy
-                  examID: exam-123
+                  userID: exam-123
     get:
       tags:
         - challenges
@@ -398,7 +398,7 @@ paths:
                   description: Return indexes of two numbers that add up to target
                   status: published
                   difficulty: easy
-                  examID: exam-123
+                  userID: exam-123
     patch:
       tags:
         - challenges
@@ -1493,8 +1493,172 @@ paths:
                   status: ok
                   component: database
                   timestamp: 2026-03-22T12:00:00Z
+
+  # --- NUEVOS ENDPOINTS EXAM-ITEMS ---
+  /exam-items:
+    post:
+      tags:
+        - exam-items
+      summary: Crear ExamItem
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exam-items/post-create/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exam-items/post-create/mockup/output.json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExamItemsPostCreateInput"
+            example:
+              order: 1
+              points: 10
+              exam_id: "exam-123"
+              challenge_id: "challenge-123"
+      responses:
+        "201":
+          description: ExamItem creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamItemsPostCreateOutput201"
+              example:
+                id: "examitem-123"
+                order: 1
+                points: 10
+                exam_id: "exam-123"
+                challenge_id: "challenge-123"
+
+  /exam-items/{id}:
+    patch:
+      tags:
+        - exam-items
+      summary: Actualizar ExamItem
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exam-items/patch-update/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exam-items/patch-update/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExamItemsPatchUpdateInput"
+            example:
+              order: 2
+              points: 15
+      responses:
+        "200":
+          description: ExamItem actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamItemsPatchUpdateOutput200"
+              example:
+                id: "examitem-123"
+                order: 2
+                points: 15
+    delete:
+      tags:
+        - exam-items
+      summary: Eliminar ExamItem
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exam-items/delete-by-id/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exam-items/delete-by-id/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ExamItem eliminado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamItemsDeleteByIdOutput200"
+              example:
+                deleted: true
+                id: "examitem-123"
 components:
   schemas:
+    # --- SCHEMAS PARA EXAM-ITEMS ---
+    ExamItemsPostCreateInput:
+      type: object
+      properties:
+        order:
+          type: integer
+        points:
+          type: integer
+        exam_id:
+          type: string
+        challenge_id:
+          type: string
+      required:
+        - order
+        - points
+        - exam_id
+        - challenge_id
+    ExamItemsPostCreateOutput201:
+      type: object
+      properties:
+        id:
+          type: string
+        order:
+          type: integer
+        points:
+          type: integer
+        exam_id:
+          type: string
+        challenge_id:
+          type: string
+      required:
+        - id
+        - order
+        - points
+        - exam_id
+        - challenge_id
+    ExamItemsPatchUpdateInput:
+      type: object
+      properties:
+        order:
+          type: integer
+        points:
+          type: integer
+      required:
+        - order
+        - points
+    ExamItemsPatchUpdateOutput200:
+      type: object
+      properties:
+        id:
+          type: string
+        order:
+          type: integer
+        points:
+          type: integer
+      required:
+        - id
+        - order
+        - points
+    ExamItemsDeleteByIdOutput200:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+        id:
+          type: string
+      required:
+        - deleted
+        - id
     SubmissionOutputDTO:
       type: object
       properties:
@@ -1866,86 +2030,73 @@ components:
     ChallengesPostCreateInput:
       type: object
       properties:
-        method:
+        title:
           type: string
-        path:
+        description:
           type: string
-        pathParams:
-          type: object
-          properties: {}
-        query:
-          type: object
-          properties: {}
-        body:
-          type: object
-          properties:
-            title:
-              type: string
-            description:
-              type: string
-            tags:
-              type: array
-              items:
-                type: string
-            status:
-              type: string
-            difficulty:
-              type: string
-            workerTimeLimit:
-              type: integer
-            workerMemoryLimit:
-              type: integer
-            inputVariables:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  type:
-                    type: string
-                  value:
-                    type: string
-                required:
-                  - name
-                  - type
-                  - value
-            outputVariable:
-              type: object
-              properties:
-                name:
-                  type: string
-                type:
-                  type: string
-                value:
-                  type: string
-              required:
-                - name
-                - type
-                - value
-            constraints:
-              type: string
-            examID:
-              type: string
-          required:
-            - title
-            - description
-            - tags
-            - status
-            - difficulty
-            - workerTimeLimit
-            - workerMemoryLimit
-            - inputVariables
-            - outputVariable
-            - constraints
-            - examID
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        difficulty:
+          type: string
+        workerTimeLimit:
+          type: integer
+        workerMemoryLimit:
+          type: integer
+        inputVariables:
+          type: array
+          items:
+            $ref: "#/components/schemas/IOVariableDTO"
+        outputVariable:
+          $ref: "#/components/schemas/IOVariableDTO"
+        constraints:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        userId:
+          type: string
       required:
-        - method
-        - path
-        - pathParams
-        - query
-        - body
-      example: *a10
+        - title
+        - description
+        - tags
+        - status
+        - difficulty
+        - workerTimeLimit
+        - workerMemoryLimit
+        - inputVariables
+        - outputVariable
+        - constraints
+        - createdAt
+        - updatedAt
+        - userId
+      example:
+        title: Two Sum
+        description: Return indexes of two numbers that add up to target
+        tags: [arrays, hashmap]
+        status: draft
+        difficulty: easy
+        workerTimeLimit: 1500
+        workerMemoryLimit: 256
+        inputVariables:
+          - name: nums
+            type: string
+            value: 2,7,11,15
+          - name: target
+            type: int
+            value: "9"
+        outputVariable:
+          name: indexes
+          type: string
+          value: 0,1
+        constraints: 2 <= n <= 10000
+        createdAt: "2026-03-25T10:00:00Z"
+        updatedAt: "2026-03-25T10:00:00Z"
+        userId: usr-123
     ChallengesPostCreateOutput201:
       type: object
       properties:
@@ -2155,69 +2306,43 @@ components:
     TestCasesPostCreateInput:
       type: object
       properties:
-        method:
+        name:
           type: string
-        path:
+        input:
+          type: array
+          items:
+            $ref: "#/components/schemas/IOVariableDTO"
+        expectedOutput:
+          $ref: "#/components/schemas/IOVariableDTO"
+        isSample:
+          type: boolean
+        points:
+          type: integer
+        challengeID:
           type: string
-        pathParams:
-          type: object
-          properties: {}
-        query:
-          type: object
-          properties: {}
-        body:
-          type: object
-          properties:
-            name:
-              type: string
-            input:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  type:
-                    type: string
-                  value:
-                    type: string
-                required:
-                  - name
-                  - type
-                  - value
-            expectedOutput:
-              type: object
-              properties:
-                name:
-                  type: string
-                type:
-                  type: string
-                value:
-                  type: string
-              required:
-                - name
-                - type
-                - value
-            isSample:
-              type: boolean
-            points:
-              type: integer
-            challengeID:
-              type: string
-          required:
-            - name
-            - input
-            - expectedOutput
-            - isSample
-            - points
-            - challengeID
       required:
-        - method
-        - path
-        - pathParams
-        - query
-        - body
-      example: *a18
+        - name
+        - input
+        - expectedOutput
+        - isSample
+        - points
+        - challengeID
+      example:
+        name: tc_add_1
+        input:
+          - name: a
+            type: int
+            value: "2"
+          - name: b
+            type: int
+            value: "3"
+        expectedOutput:
+          name: sum
+          type: int
+          value: "5"
+        isSample: true
+        points: 10
+        challengeID: challenge-123
     TestCasesPostCreateOutput201:
       type: object
       properties:
@@ -2845,57 +2970,60 @@ components:
     ExamsPostCreateInput:
       type: object
       properties:
-        method:
+        course_id:
           type: string
-        path:
+        title:
           type: string
-        pathParams:
-          type: object
-          properties: {}
-        query:
-          type: object
-          properties: {}
-        body:
+        description:
+          type: string
+        visibility:
+          type: string
+        start_time:
+          type: string
+        end_time:
+          type: string
+        allow_late_submissions:
+          type: boolean
+        time_limit:
+          type: integer
+        try_limit:
+          type: integer
+        professor_id:
+          type: string
+      required:
+        - course_id
+        - title
+        - description
+        - visibility
+        - start_time
+        - allow_late_submissions
+        - time_limit
+        - try_limit
+        - professor_id
+      example:
+        course_id: course-123
+        title: Midterm 1
+        description: Midterm exam
+        visibility: course
+        start_time: 2026-04-01T10:00:00Z
+        end_time: 2026-04-01T12:00:00Z
+        allow_late_submissions: false
+        time_limit: 7200
+        try_limit: 2
+        professor_id: usr-teacher-123
+        IOVariableDTO:
           type: object
           properties:
-            course_id:
+            name:
               type: string
-            title:
+            type:
               type: string
-            description:
-              type: string
-            visibility:
-              type: string
-            start_time:
-              type: string
-            end_time:
-              type: string
-            allow_late_submissions:
-              type: boolean
-            time_limit:
-              type: integer
-            try_limit:
-              type: integer
-            professor_id:
+            value:
               type: string
           required:
-            - course_id
-            - title
-            - description
-            - visibility
-            - start_time
-            - end_time
-            - allow_late_submissions
-            - time_limit
-            - try_limit
-            - professor_id
-      required:
-        - method
-        - path
-        - pathParams
-        - query
-        - body
-      example: *a38
+            - name
+            - type
+            - value
     ExamsPostCreateOutput201:
       type: object
       properties:

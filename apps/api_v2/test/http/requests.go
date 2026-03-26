@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"encoding/json"
+	"fmt"
 )
 
 // --- AUTH ---
@@ -179,18 +179,10 @@ func GetDbHealth(headers map[string]string) (int, []byte, error) {
 
 // --- CORE REQUEST FUNCTION ---
 func callEndpoint(method, path string, pathParams, queryParams map[string]any, headers map[string]string, body any) (int, []byte, error) {
-	fullPath := buildRequestPath(path, pathParams, queryParams)
-	var bodyBytes []byte
-	if body != nil {
-		var err error
-		bodyBytes, err = json.Marshal(body)
-		if err != nil {
-			return -1, nil, err
-		}
-	}
-	ctx, err := runRequest(method, fullPath, headers, bodyBytes)
+	app, err := InitApp()
 	if err != nil {
-		return -1, nil, err
+		return -1, nil, fmt.Errorf("init app: %w", err)
 	}
-	return ctx.Response().StatusCode(), ctx.Response().Body(), nil
+	fullPath := buildRequestPath(path, pathParams, queryParams)
+	return DoJSONRequest(app, method, fullPath, body, headers)
 }

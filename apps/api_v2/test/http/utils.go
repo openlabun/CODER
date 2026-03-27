@@ -342,3 +342,40 @@ func MapString(t *testing.T, m map[string]any, key, source string) string {
 	}
 	return s
 }
+
+
+func MapBool(t *testing.T, m map[string]any, key, source string) bool {
+	t.Helper()
+
+	v, ok := m[key]
+	if !ok {
+		t.Fatalf("missing key=%s in %s response", key, source)
+	}
+	b, ok := v.(bool)
+	if !ok {
+		t.Fatalf("key=%s in %s response is not bool (type=%T)", key, source, v)
+	}
+	return b
+}
+
+func DecodeSliceMap(t *testing.T, raw []byte, source string) []map[string]any {
+	t.Helper()
+
+	var out []map[string]any
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatalf("decode %s list response failed: %v body=%s", source, err, string(raw))
+	}
+	return out
+}
+
+func ContainsID(list []map[string]any, id string) bool {
+	for _, item := range list {
+		if v, ok := item["ID"].(string); ok && v == id {
+			return true
+		}
+		if v, ok := item["id"].(string); ok && v == id {
+			return true
+		}
+	}
+	return false
+}

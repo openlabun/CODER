@@ -10,12 +10,15 @@ import (
 
 func TestExamCRUDHTTP(t *testing.T) {
 	t.Log("[STEP 1] Inicializando app HTTP")
-	app := initExamHTTPApp(t)
+	app, err := httputils.InitApp()
+	if err != nil {
+		t.Fatalf("failed to initialize app: %v", err)
+	}
 	t.Log("[OK] App inicializada")
 
 	t.Log("[STEP 2] Login/registro de profesor por HTTP")
-	teacherAccess := ensureExamHTTPAuthUserAccess(t, app, "test@test.com", "Testing123!", "Teacher Test")
-	teacherHeaders := authHeaders(teacherAccess)
+	teacherAccess := httputils.EnsureHTTPAuthUserAccess(t, app, "test@test.com", "Password123!", "Teacher Test")
+	teacherHeaders := httputils.AuthHeaders(teacherAccess)
 	t.Logf("[OK] Profesor autenticado. teacherID=%s", teacherAccess.UserData.ID)
 
 	t.Log("[STEP 3] Crear curso para examenes")
@@ -40,8 +43,8 @@ func TestExamCRUDHTTP(t *testing.T) {
 	if status != http.StatusOK {
 		t.Fatalf("expected update status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
-	updated := decodeMap(t, body, "update exam")
-	if mapString(t, updated, "Title", "update exam") != updatedTitle {
+	updated := httputils.DecodeMap(t, body, "update exam")
+	if httputils.MapString(t, updated, "Title", "update exam") != updatedTitle {
 		t.Fatalf("expected updated title=%q, got body=%s", updatedTitle, string(body))
 	}
 	t.Logf("[OK] Examen 1 actualizado. title=%q", updatedTitle)
@@ -54,11 +57,11 @@ func TestExamCRUDHTTP(t *testing.T) {
 	if status != http.StatusOK {
 		t.Fatalf("expected get-by-id status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
-	reloaded := decodeMap(t, body, "get exam by id")
-	if mapString(t, reloaded, "ID", "get exam by id") != examID1 {
+	reloaded := httputils.DecodeMap(t, body, "get exam by id")
+	if httputils.MapString(t, reloaded, "ID", "get exam by id") != examID1 {
 		t.Fatalf("expected exam id=%s, got body=%s", examID1, string(body))
 	}
-	if mapString(t, reloaded, "Title", "get exam by id") != updatedTitle {
+	if httputils.MapString(t, reloaded, "Title", "get exam by id") != updatedTitle {
 		t.Fatalf("expected title=%q, got body=%s", updatedTitle, string(body))
 	}
 	t.Log("[OK] Detalle de examen 1 validado")
@@ -97,11 +100,11 @@ func TestExamCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected list status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 
-	exams := decodeSliceMap(t, body, "get exams by course")
-	if !containsID(exams, examID1) {
+	exams := httputils.DecodeSliceMap(t, body, "get exams by course")
+	if !httputils.ContainsID(exams, examID1) {
 		t.Fatalf("expected examID1=%s in course exam list, got body=%s", examID1, string(body))
 	}
-	if !containsID(exams, examID2) {
+	if !httputils.ContainsID(exams, examID2) {
 		t.Fatalf("expected examID2=%s in course exam list, got body=%s", examID2, string(body))
 	}
 	t.Logf("[OK] Listado validado. totalExams=%d", len(exams))
@@ -114,8 +117,8 @@ func TestExamCRUDHTTP(t *testing.T) {
 	if status != http.StatusOK {
 		t.Fatalf("expected course delete status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
-	deleted := decodeMap(t, body, "delete course")
-	if !mapBool(t, deleted, "removed", "delete course") {
+	deleted := httputils.DecodeMap(t, body, "delete course")
+	if !httputils.MapBool(t, deleted, "removed", "delete course") {
 		t.Fatalf("expected removed=true for course delete, got body=%s", string(body))
 	}
 	t.Logf("[OK] Curso eliminado tras flujo de examenes. courseID=%s", courseID)

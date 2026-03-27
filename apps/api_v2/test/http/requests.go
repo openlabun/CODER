@@ -54,7 +54,7 @@ func PostTestCases(headers map[string]string, body any) (int, []byte, error) {
 	return callEndpoint("POST", "/test-cases/", nil, nil, headers, body)
 }
 func GetTestCasesByChallenge(headers map[string]string, path map[string]any, query map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/test-cases/challenge/{challengeId}", path, query, headers, nil)
+	return callEndpoint("GET", "/test-cases/challenge/{id}", path, query, headers, nil)
 }
 func PatchTestCasesById(headers map[string]string, path map[string]any, body any) (int, []byte, error) {
 	return callEndpoint("PATCH", "/test-cases/{id}", path, nil, headers, body)
@@ -86,7 +86,7 @@ func PostCoursesAddStudent(headers map[string]string, path map[string]any, body 
 	return callEndpoint("POST", "/courses/{id}/students", path, nil, headers, body)
 }
 func DeleteCoursesStudent(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("DELETE", "/courses/{id}/students/{studentId}", path, nil, headers, nil)
+	return callEndpoint("DELETE", "/courses/{id}/students/{student_id}", path, nil, headers, nil)
 }
 func GetCoursesStudents(headers map[string]string, path map[string]any) (int, []byte, error) {
 	return callEndpoint("GET", "/courses/{id}/students", path, nil, headers, nil)
@@ -97,7 +97,7 @@ func PostExams(headers map[string]string, body any) (int, []byte, error) {
 	return callEndpoint("POST", "/exams/", nil, nil, headers, body)
 }
 func GetExamsByCourse(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/exams/course/{courseId}", path, nil, headers, nil)
+	return callEndpoint("GET", "/exams/course/{course_id}", path, nil, headers, nil)
 }
 func GetExamsById(headers map[string]string, path map[string]any) (int, []byte, error) {
 	return callEndpoint("GET", "/exams/{id}", path, nil, headers, nil)
@@ -113,6 +113,9 @@ func PostExamsVisibility(headers map[string]string, path map[string]any, body an
 }
 func PostExamsClose(headers map[string]string, path map[string]any) (int, []byte, error) {
 	return callEndpoint("POST", "/exams/{id}/close", path, nil, headers, nil)
+}
+func GetExamItems(headers map[string]string, path map[string]any) (int, []byte, error) {
+	return callEndpoint("GET", "/exams/{exam_id}/items", path, nil, headers, nil)
 }
 
 // --- EXAM ITEMS ---
@@ -131,16 +134,16 @@ func PostSubmissions(headers map[string]string, body any) (int, []byte, error) {
 	return callEndpoint("POST", "/submissions/", nil, nil, headers, body)
 }
 func PatchSubmissionsResult(headers map[string]string, path map[string]any, body any) (int, []byte, error) {
-	return callEndpoint("PATCH", "/submissions/results/{resultId}", path, nil, headers, body)
+	return callEndpoint("PATCH", "/submissions/results/{result_id}", path, nil, headers, body)
 }
 func GetSubmissionsUser(headers map[string]string, path map[string]any, query map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/submissions/user/{userId}", path, query, headers, nil)
+	return callEndpoint("GET", "/submissions/user/{user_id}", path, query, headers, nil)
 }
 func GetSubmissionsSession(headers map[string]string, path map[string]any, query map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/submissions/session/{sessionId}", path, query, headers, nil)
+	return callEndpoint("GET", "/submissions/session/{session_id}", path, query, headers, nil)
 }
 func GetSubmissionsChallenge(headers map[string]string, path map[string]any, query map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/submissions/challenge/{challengeId}", path, query, headers, nil)
+	return callEndpoint("GET", "/submissions/challenge/{challenge_id}", path, query, headers, nil)
 }
 func GetSubmissionsById(headers map[string]string, path map[string]any) (int, []byte, error) {
 	return callEndpoint("GET", "/submissions/{id}", path, nil, headers, nil)

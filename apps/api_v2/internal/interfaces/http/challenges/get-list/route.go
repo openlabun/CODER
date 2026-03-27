@@ -8,12 +8,13 @@ import (
 
 func Handler(appContainer *container.Application) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		result, err := appContainer.ChallengeModule.GetChallengesByExam.Execute(
-			shared.BuildRequestContext(c), 
-			ToInput(MapQuery(c.Query("examId"))),
+		examID := c.Query("examId", "")
+		result, err := appContainer.ChallengeModule.GetChallengesByUser.Execute(
+			shared.BuildRequestContext(c),
+			ToInput(MapQuery(examID)),
 		)
-		if err != nil { 
-			return shared.HandleError(c, err) 
+		if err != nil {
+			return shared.HandleError(c, err)
 		}
 		return c.Status(fiber.StatusOK).JSON(result)
 	}

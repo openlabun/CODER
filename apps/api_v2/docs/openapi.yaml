@@ -399,6 +399,24 @@ paths:
                   status: published
                   difficulty: easy
                   userID: exam-123
+                  challenge: 
+                    id: challenge-123
+                    title: Two Sum
+                    description: Return indexes of two numbers that add up to target
+                    status: published
+                    difficulty: easy
+                    inputVariables:
+                      - name: nums
+                        type: string
+                        value: 2,7,11,15
+                      - name: target
+                        type: int
+                        value: "9"
+                    outputVariable:
+                      name: indexes
+                      type: string
+                      value: 0,1
+                    constraints: 2 <= n <= 10000
     patch:
       tags:
         - challenges
@@ -1000,6 +1018,44 @@ paths:
                   - id: exam-123
                     title: Midterm 1
                     course_id: course-123
+  /exams/{examId}/items:
+    get:
+      tags:
+        - exams
+      summary: Obtener items de un examen
+      description: |
+        Devuelve los items (preguntas/desafíos) asociados a un examen específico. Requiere autenticación y permisos adecuados (profesor o visibilidad pública/teachers).
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exams/get-exam-items/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exams/get-exam-items/mockup/output.json
+      parameters:
+        - name: examId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del examen
+      responses:
+        "200":
+          description: Lista de items del examen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExamItemDTO'
+              example:
+                  - id: item-123
+                    exam_id: exam-123
+                    points: 100
+                    order: 1
+                    challenge: *a13
+
+        "404":
+          description: Examen no encontrado
+        "403":
+          description: Permisos insuficientes
   /exams/{id}:
     get:
       tags:
@@ -3028,6 +3084,30 @@ components:
             - name
             - type
             - value
+    ExamItemDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID del item del examen
+        order:
+          type: integer
+          description: Orden del item en el examen
+        points:
+          type: integer
+          description: Puntos asignados al item
+        exam_id:
+          type: string
+          description: ID del examen al que pertenece
+        challenge:
+          type: object
+          $ref: '#/components/schemas/ChallengesGetByIdOutput200'
+          description: Información del desafío asociado
+      required:
+        - id
+        - order
+        - points
+        - exam_id
     ExamsPostCreateOutput201:
       type: object
       properties:

@@ -51,6 +51,6 @@ type GetChallengeDetailsInput struct {
 	ChallengeID string `json:"challenge_id"`
 }
 
-type GetChallengesByExamInput struct {
-	ExamID string `json:"exam_id"`
+type GetChallengesByUserInput struct {
+	ExamID *string `json:"exam_id"`
 }

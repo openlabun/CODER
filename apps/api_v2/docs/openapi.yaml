@@ -552,6 +552,9 @@ paths:
       tags:
         - test-cases
       summary: List test cases by challenge
+      description: |
+        Devuelve los test cases asociados a un challenge. Si el usuario es estudiante, exam_id es obligatorio y filtra los test cases públicos del challenge para ese examen.
+        Si exam_id no se envía, se asume acceso de profesor o admin.
       x-implementation: usecase
       x-mockup:
         input: apps/api_v2/internal/interfaces/http/test-cases/get-by-challenge-id/mockup/input.json
@@ -563,10 +566,11 @@ paths:
           schema:
             type: string
         - in: query
-          name: samplesOnly
+          name: exam_id
           required: false
           schema:
-            type: boolean
+            type: string
+          description: ID del examen (obligatorio para estudiantes, opcional para profesores)
       responses:
         "200":
           description: Test cases list

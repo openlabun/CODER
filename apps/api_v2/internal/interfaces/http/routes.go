@@ -33,6 +33,7 @@ import (
 	exam_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/delete-by-id"
 	exam_get_by_course_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-course-id"
 	exam_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-id"
+	exam_get_exam_items "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-exam-items"
 	exam_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/patch-update"
 	exam_post_change_visibility "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-change-visibility"
 	exam_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-close"
@@ -170,6 +171,7 @@ func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 	exams.Delete("/:id", exam_delete_by_id.Handler(appContainer))
 	exams.Post("/:id/visibility", exam_post_change_visibility.Handler(appContainer))
 	exams.Post("/:id/close", exam_post_close.Handler(appContainer))
+	exams.Get("/:examId/items", exam_get_exam_items.Handler(appContainer))
 }
 
 func registerExamItemsRoutes(app *fiber.App, appContainer *container.Application) {

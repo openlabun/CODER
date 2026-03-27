@@ -172,7 +172,7 @@ func TestChallengeCRUD(t *testing.T) {
 	}
 
 	t.Logf("[STEP 8] Listando challenges del examen examID=%s", examID)
-	challengesByExam, err := app.ChallengeModule.GetChallengesByExam.Execute(teacherCtx, exam_dtos.GetChallengesByExamInput{ExamID: examID})
+	challengesByExam, err := app.ChallengeModule.GetChallengesByUser.Execute(teacherCtx, exam_dtos.GetChallengesByUserInput{ExamID: &examID})
 	if err != nil {
 		t.Fatalf("get challenges by exam failed: %v", err)
 	}
@@ -204,7 +204,7 @@ func TestChallengeCRUD(t *testing.T) {
 	}
 	challengeID = ""
 
-	challengesAfterDelete, err := app.ChallengeModule.GetChallengesByExam.Execute(teacherCtx, exam_dtos.GetChallengesByExamInput{ExamID: examID})
+	challengesAfterDelete, err := app.ChallengeModule.GetChallengesByUser.Execute(teacherCtx, exam_dtos.GetChallengesByUserInput{ExamID: &examID})
 	if err != nil {
 		t.Fatalf("get challenges after delete failed: %v", err)
 	}
@@ -416,7 +416,7 @@ func TestChallengeFromStudentView(t *testing.T) {
 	t.Log("[OK] Estudiante matriculado")
 
 	t.Log("[STEP 9] Obteniendo challenges desde vista de estudiante y validando restricciones")
-	studentChallenges, err := app.ChallengeModule.GetChallengesByExam.Execute(studentCtx, exam_dtos.GetChallengesByExamInput{ExamID: examID})
+	studentChallenges, err := app.ExamModule.GetExamItems.Execute(studentCtx, exam_dtos.GetExamItemsInput{ExamID: examID})
 	if err != nil {
 		t.Fatalf("get challenges by exam as student failed: %v", err)
 	}
@@ -424,10 +424,9 @@ func TestChallengeFromStudentView(t *testing.T) {
 	foundPublished := false
 	foundArchived := false
 	foundDraft := false
-	for _, ch := range studentChallenges {
-		if ch == nil {
-			continue
-		}
+	for _, item := range studentChallenges {
+		ch := item.Challenge
+
 		if ch.ID == publishedChallengeID {
 			foundPublished = true
 		}

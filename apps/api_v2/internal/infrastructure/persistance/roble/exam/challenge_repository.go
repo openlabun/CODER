@@ -119,6 +119,48 @@ func (r *ChallengeRepository) GetChallengeByID(ctx context.Context, challengeID 
 	return r.recordToHydratedChallenge(ctx, record)
 }
 
+func (r *ChallengeRepository) GetChallengesByUserID(ctx context.Context, userID string, examID *string) ([]*Entities.Challenge, error) {
+	normalizedUserID := strings.TrimSpace(userID)
+
+	if normalizedUserID == "" {
+		return nil, fmt.Errorf("userID is required")
+	}
+
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
+
+	// 1. Si examID es proporcionado, obtener los challenges relacionados a ese examID y userID
+	if examID != nil {
+		examChallenges, err := r.GetChallengesByExamID(ctx, *examID)
+		if err != nil {
+			return nil, err
+		}
+
+		return examChallenges, nil
+	}
+
+	// 2. Si examID no es proporcionado, obtener todos los challenges relacionados al userID
+	res, err := r.adapter.Read(challengeTableName, map[string]string{"UserID": normalizedUserID})
+	if err != nil {
+		return nil, err
+	}
+
+	records := extractRecords(res)
+	challenges := make([]*Entities.Challenge, 0, len(records))
+	for _, record := range records {
+		challenge, mapErr := r.recordToHydratedChallenge(ctx, record)
+		if mapErr != nil {
+			return nil, mapErr
+		}
+		if challenge != nil {
+			challenges = append(challenges, challenge)
+		}
+	}
+
+	return challenges, nil
+}
+
 func (r *ChallengeRepository) GetChallengesByExamID(ctx context.Context, examID string) ([]*Entities.Challenge, error) {
 	normalizedID := strings.TrimSpace(examID)
 	if normalizedID == "" {

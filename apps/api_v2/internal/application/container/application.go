@@ -43,7 +43,7 @@ type ChallengeUseCases struct {
 	ArchiveChallenge    *challenge_crud_usecases.ArchiveChallengeUseCase
 	DeleteChallenge     *challenge_crud_usecases.DeleteChallengeUseCase
 	GetChallengeDetails *challenge_crud_usecases.GetChallengeDetailsUseCase
-	GetChallengesByExam *challenge_crud_usecases.GetChallengesByExamUseCase
+	GetChallengesByUser *challenge_crud_usecases.GetChallengesByUserUseCase
 }
 
 type TestCaseUseCases struct {
@@ -80,6 +80,7 @@ type ExamUseCases struct {
 	DeleteExam       *exam_crud_usecases.DeleteExamUseCase
 	GetExamDetails   *exam_crud_usecases.GetExamDetailsUseCase
 	GetExamsByCourse *exam_crud_usecases.GetExamsByCourseUseCase
+	GetExamItems 	 *exam_crud_usecases.GetExamItemsUseCase
 }
 
 type Application struct {
@@ -121,7 +122,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		ArchiveChallenge:    challenge_crud_usecases.NewArchiveChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
 		DeleteChallenge:     challenge_crud_usecases.NewDeleteChallengeUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 		GetChallengeDetails: challenge_crud_usecases.NewGetChallengeDetailsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
-		GetChallengesByExam: challenge_crud_usecases.NewGetChallengesByExamUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
+		GetChallengesByUser: challenge_crud_usecases.NewGetChallengesByUserUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 	}
 
 	app.TestCaseModule = TestCaseUseCases{
@@ -174,6 +175,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		DeleteExam:       exam_crud_usecases.NewDeleteExamUseCase(deps.UserRepository, deps.ExamRepository),
 		GetExamDetails:   exam_crud_usecases.NewGetExamDetailsUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
 		GetExamsByCourse: exam_crud_usecases.NewGetExamsByCourseUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
+		GetExamItems: 	  exam_crud_usecases.NewGetExamItemsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
 	}
 
 	return app, nil

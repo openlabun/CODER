@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"fmt"
 	"time"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
@@ -97,4 +98,28 @@ func MapExamVisibilityInputToExamEntity (existingExam *Entities.Exam, input dtos
 func MapExamEndTimeInputToExamEntity (existingExam *Entities.Exam, now time.Time) (*Entities.Exam, error) {
 	existingExam.EndTime = &now
 	return existingExam, nil
+}
+
+func MapExamItemDTO(examItem *Entities.ExamItem, challenge *Entities.Challenge) (*dtos.ExamItemDTO, error) {
+	if examItem == nil {
+		return nil, fmt.Errorf("exam item is nil")
+	}
+
+	if challenge == nil {
+		return nil, fmt.Errorf("challenge is nil")
+	}
+
+	if challenge.ID != examItem.ChallengeID {
+		return nil, fmt.Errorf("challenge id does not match with exam item challenge id")
+	}
+	
+	dto := dtos.ExamItemDTO{
+		ID:        examItem.ID,
+		Order:     examItem.Order,
+		Points:    examItem.Points,
+		ExamID:    examItem.ExamID,
+		Challenge: challenge,
+	}
+
+	return &dto, nil
 }

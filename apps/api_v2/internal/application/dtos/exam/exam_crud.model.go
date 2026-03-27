@@ -1,5 +1,9 @@
 package dtos
 
+import (
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+)
+
 type CreateExamInput struct {
 	CourseID    		string 	`json:"course_id"`
 	Title           	string 	`json:"title"`
@@ -44,4 +48,16 @@ type GetExamDetailsInput struct {
 
 type GetExamsByCourseInput struct {
 	CourseID string `json:"course_id"`
+}
+
+type GetExamItemsInput struct {
+	ExamID string `json:"exam_id"`
+}
+
+type ExamItemDTO struct {
+	ID          string `json:"id"`
+	Order 	 	int    `json:"order"`
+	Points 	 	int    `json:"points"`
+	ExamID      string `json:"exam_id"`
+	Challenge   *Entities.Challenge `json:"challenge,omitempty"`
 }

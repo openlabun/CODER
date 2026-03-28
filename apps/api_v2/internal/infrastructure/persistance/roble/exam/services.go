@@ -86,6 +86,13 @@ func relatedIOVariableIDs(record map[string]any) []string {
 		}
 	}
 
+	if outputID := strings.TrimSpace(asString(record["ExpectedOutput"])); outputID != "" {
+		if _, exists := seen[outputID]; !exists {
+			seen[outputID] = struct{}{}
+			ids = append(ids, outputID)
+		}
+	}
+
 	if outputID := strings.TrimSpace(asString(record["OutputVariable"])); outputID != "" {
 		if _, exists := seen[outputID]; !exists {
 			seen[outputID] = struct{}{}

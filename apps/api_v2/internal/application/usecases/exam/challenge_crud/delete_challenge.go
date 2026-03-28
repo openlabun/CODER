@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
-	
+	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
 	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 
@@ -18,11 +19,16 @@ type DeleteChallengeUseCase struct {
 	challengeRepository repositories.ChallengeRepository
 	userRepository      userRepository.UserRepository
 	examRepository      examRepository.ExamRepository
+	testCaseRepository 	examRepository.TestCaseRepository
+	examItemRepository 	examRepository.ExamItemRepository
+	submissionRepository submissionRepository.SubmissionRepository
+	resultsRepository submissionRepository.SubmissionResultRepository
 }
 
-func NewDeleteChallengeUseCase(challengeRepository repositories.ChallengeRepository, userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository) *DeleteChallengeUseCase {
-	return &DeleteChallengeUseCase{challengeRepository: challengeRepository, userRepository: userRepository, examRepository: examRepository}
+func NewDeleteChallengeUseCase(challengeRepository repositories.ChallengeRepository, userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, testCaseRepository examRepository.TestCaseRepository, examItemRepository examRepository.ExamItemRepository, submissionRepository submissionRepository.SubmissionRepository, resultsRepository submissionRepository.SubmissionResultRepository) *DeleteChallengeUseCase {
+	return &DeleteChallengeUseCase{challengeRepository: challengeRepository, userRepository: userRepository, examRepository: examRepository, testCaseRepository: testCaseRepository, examItemRepository: examItemRepository, submissionRepository: submissionRepository, resultsRepository: resultsRepository}
 }
+
 func (uc *DeleteChallengeUseCase) Execute(ctx context.Context, input dtos.DeleteChallengeInput) error {
 	// [STEP 1] Verify user is teacher and has permissions to delete an exam
 	userEmail, err := services.UserEmailFromContext(ctx)
@@ -55,10 +61,10 @@ func (uc *DeleteChallengeUseCase) Execute(ctx context.Context, input dtos.Delete
 	}
 
 	// [STEP 4] Delete challenge with user provided values
-	err = uc.challengeRepository.DeleteChallenge(ctx, input.ChallengeID)
+	err = domain_services.RemoveChallenge(ctx, input.ChallengeID, uc.challengeRepository, uc.testCaseRepository, uc.examItemRepository, uc.submissionRepository, uc.resultsRepository)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete challenge with id %q: %v", input.ChallengeID, err)
 	}
-	
+
 	return nil
 }

@@ -67,7 +67,7 @@ func (uc *GetChallengeSubmissionsUseCase) Execute(ctx context.Context, input dto
 		if challenge.Status != examEntities.ChallengeStatusPublished {
 			return nil, fmt.Errorf("challenge with id %q is not published yet or it was archived", input.ChallengeID)
 		}
-	} 
+	}
 
 	// [STEP 4] If user is student only retrieve his own submissions
 	var submissions []*Entities.Submission
@@ -123,7 +123,7 @@ func (uc *GetChallengeSubmissionsUseCase) getSubmissionResults (ctx context.Cont
 }
 
 func (uc *GetChallengeSubmissionsUseCase) createSubmissionsOutputDTO (ctx context.Context, submission []*Entities.Submission) ([]*dtos.SubmissionOutputDTO, error) {
-	var dtos []*dtos.SubmissionOutputDTO
+	var subdtos []*dtos.SubmissionOutputDTO
 	for _, submission := range submission {
 		results, err := uc.getSubmissionResults(ctx, submission)
 		if err != nil {
@@ -135,8 +135,12 @@ func (uc *GetChallengeSubmissionsUseCase) createSubmissionsOutputDTO (ctx contex
 			return nil, fmt.Errorf("failed to map submission output DTO")
 		}
 
-		dtos = append(dtos, dto)
+		subdtos = append(subdtos, dto)
 	}
 
-	return dtos, nil
+	if len(subdtos) == 0 {
+		return []*dtos.SubmissionOutputDTO{}, nil
+	}
+
+	return subdtos, nil
 }

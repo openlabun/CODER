@@ -9,7 +9,6 @@ import (
 
 	Entity "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 )
 
@@ -39,10 +38,6 @@ func (uc *HeartBeatSessionUseCase) Execute(ctx context.Context, input dtos.Heart
 
 	if user == nil {
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
-	}
-
-	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
 	}
 
 	// [STEP 2] Verify existing student session

@@ -35,7 +35,7 @@ type Period struct {
 }
 
 type Course struct {
-	ID             string `json:"ID"`
+	ID             string `json:"id"`
 	Name           string `json:"name"`
 	Description    string `json:"description"` // (Optional)
 

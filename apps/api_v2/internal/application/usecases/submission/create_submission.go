@@ -56,17 +56,20 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
+	if user.Role == user_entities.UserRoleProfessor {
+		return nil, fmt.Errorf("only students have permissions to make submissions")
 	}
 
-	// [STEP 2] Verify existing student session
+	// [STEP 2] Verify existing student session and it belongs to student
 	session, err := uc.sessionRepository.GetSessionByID(ctx, input.SessionID)
 	if err != nil {
 		return nil, err
 	}
 	if session == nil {
 		return nil, fmt.Errorf("no active session found for student %q", user.Username)
+	}
+	if session.StudentID != user.ID {
+		return nil, fmt.Errorf("session with id %q does not belong to student %q", input.SessionID, user.Username)
 	}
 
 	// [STEP 3] Create submission with user provided values

@@ -3,18 +3,18 @@ package challenge_entities
 import "time"
 
 type TestCase struct {
-	ID             string
-	Name           string
+	ID             string		`json:"id"`
+	Name           string		`json:"name"`
 
 	// I/O Configuration
-	Input          []IOVariable
-	ExpectedOutput IOVariable
+	Input          []IOVariable	`json:"input"`
+	ExpectedOutput IOVariable	`json:"expected_output"`
 
 	// Scoring
-	IsSample       bool
-	Points         int
+	IsSample       bool			`json:"is_sample"`
+	Points         int			`json:"points"`
 
 	// Metadata
-	CreatedAt      time.Time
-	ChallengeID    string
+	CreatedAt      time.Time	`json:"created_at"`
+	ChallengeID    string		`json:"challenge_id"`
 }

@@ -12,23 +12,23 @@ const (
 )
 
 type Exam struct {
-	ID              string
-	Title           string
-	Description     string
+	ID              string			`json:"id"`
+	Title           string			`json:"title"`
+	Description     string			`json:"description"`
 
 	// Access Control
-	Visibility      Visibility
-	StartTime       time.Time
-	EndTime         *time.Time  // Optional, null means no end time
-	AllowLateSubmissions bool
+	Visibility      Visibility		`json:"visibility"` // public, course, teachers, private
+	StartTime       time.Time		`json:"start_time"`
+	EndTime         *time.Time		`json:"end_time"`  // Optional, null means no end time
+	AllowLateSubmissions bool		`json:"allow_late_submissions"`
 
 	// Exam Settings
-	TimeLimit int // Optional, in seconds, -1 for unlimited
-	TryLimit  int // Optional, -1 for unlimited
+	TimeLimit int					`json:"time_limit"` // Optional, in seconds, -1 for unlimited
+	TryLimit  int					`json:"try_limit"`  // Optional, -1 for unlimited
 
 	// Metadata
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	ProfessorID     string
-	CourseID        string // Optional
+	CreatedAt       time.Time		`json:"created_at"`
+	UpdatedAt       time.Time		`json:"updated_at"`
+	ProfessorID     string			`json:"professor_id"`
+	CourseID        string			`json:"course_id"` // Optional
 }

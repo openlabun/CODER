@@ -79,7 +79,7 @@ func TestTestCasesCRUDHTTP(t *testing.T) {
 	}
 	t.Log("[OK] Ausencia del test case validada")
 
-	t.Log("[STEP 8] Cleanup via DELETE /courses/:id")
+	t.Log("[STEP 8] Cleanup via Course DELETE /courses/:id")
 	status, body, err = httputils.DeleteCoursesById(teacherHeaders, map[string]any{"id": courseID})
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)
@@ -89,6 +89,14 @@ func TestTestCasesCRUDHTTP(t *testing.T) {
 	}
 	if !httputils.MapBool(t, httputils.DecodeMap(t, body, "delete course"), "removed", "delete course") {
 		t.Fatalf("expected removed=true for course delete, got body=%s", string(body))
+	}
+	t.Log("[STEP 9] Cleanup Challenges via DELETE /challenges/:id")
+	status, body, err = httputils.DeleteChallengesById(teacherHeaders, map[string]any{"id": challengeID})
+	if err != nil {
+		t.Fatalf("delete challenge request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected challenge delete status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 	t.Log("[OK] Cleanup completado")
 }
@@ -156,7 +164,7 @@ func TestTestCasesFromStudentViewHTTP(t *testing.T) {
 	}
 	t.Logf("[OK] Restricciones de vista estudiante validadas. visibleTestCases=%d", len(studentView))
 
-	t.Log("[STEP 8] Cleanup via DELETE /courses/:id")
+	t.Log("[STEP 8] Cleanup Course via DELETE /courses/:id")
 	status, body, err = httputils.DeleteCoursesById(teacherHeaders, map[string]any{"id": courseID})
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)
@@ -167,5 +175,11 @@ func TestTestCasesFromStudentViewHTTP(t *testing.T) {
 	if !httputils.MapBool(t, httputils.DecodeMap(t, body, "delete course"), "removed", "delete course") {
 		t.Fatalf("expected removed=true for course delete, got body=%s", string(body))
 	}
+	t.Log("[STEP 9] Clenaup Challenge via DELETE /challenges/:id")
+	status, body, err = httputils.DeleteChallengesById(teacherHeaders, map[string]any{"id": challengeID})
+	if err != nil {
+		t.Fatalf("delete challenge request failed: %v", err)
+	}
 	t.Log("[OK] Cleanup completado")
+
 }

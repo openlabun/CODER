@@ -36,7 +36,7 @@ func TestExamCRUDHTTP(t *testing.T) {
 		"description": "Updated by HTTP test",
 		"try_limit":   3,
 	}
-	status, body, err := httputils.DoJSONRequest(app, http.MethodPatch, "/exams/"+examID1, updateBody, teacherHeaders)
+	status, body, err := httputils.PatchExamsById(teacherHeaders, map[string]any{"id": examID1}, updateBody)
 	if err != nil {
 		t.Fatalf("update exam request failed: %v", err)
 	}
@@ -50,7 +50,7 @@ func TestExamCRUDHTTP(t *testing.T) {
 	t.Logf("[OK] Examen 1 actualizado. title=%q", updatedTitle)
 
 	t.Log("[STEP 6] Obtener examen 1 via GET /exams/:id")
-	status, body, err = httputils.DoJSONRequest(app, http.MethodGet, "/exams/"+examID1, nil, teacherHeaders)
+	status, body, err = httputils.GetExamsById(teacherHeaders, map[string]any{"id": examID1})
 	if err != nil {
 		t.Fatalf("get exam request failed: %v", err)
 	}
@@ -68,7 +68,7 @@ func TestExamCRUDHTTP(t *testing.T) {
 
 	t.Log("[STEP 7] Cambiar visibilidad del examen 1")
 	visibilityBody := map[string]any{"visibility": "private"}
-	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/exams/"+examID1+"/visibility", visibilityBody, teacherHeaders)
+	status, body, err = httputils.PostExamsVisibility(teacherHeaders, map[string]any{"id": examID1}, visibilityBody)
 	if err != nil {
 		t.Fatalf("change visibility request failed: %v", err)
 	}
@@ -78,7 +78,7 @@ func TestExamCRUDHTTP(t *testing.T) {
 	t.Log("[OK] Visibilidad actualizada")
 
 	t.Log("[STEP 8] Cerrar examen 1")
-	status, body, err = httputils.DoJSONRequest(app, http.MethodPost, "/exams/"+examID1+"/close", nil, teacherHeaders)
+	status, body, err = httputils.PostExamsClose(teacherHeaders, map[string]any{"id": examID1})
 	if err != nil {
 		t.Fatalf("close exam request failed: %v", err)
 	}
@@ -92,7 +92,7 @@ func TestExamCRUDHTTP(t *testing.T) {
 	t.Logf("[OK] Examen 2 creado. examID=%s", examID2)
 
 	t.Log("[STEP 10] Listar examenes por curso via GET /exams/course/:courseId")
-	status, body, err = httputils.DoJSONRequest(app, http.MethodGet, "/exams/course/"+courseID, nil, teacherHeaders)
+	status, body, err = httputils.GetExamsByCourse(teacherHeaders, map[string]any{"course_id": courseID})
 	if err != nil {
 		t.Fatalf("get exams by course request failed: %v", err)
 	}
@@ -109,8 +109,8 @@ func TestExamCRUDHTTP(t *testing.T) {
 	}
 	t.Logf("[OK] Listado validado. totalExams=%d", len(exams))
 
-	t.Log("[STEP 11] Cleanup via DELETE /courses/:id")
-	status, body, err = httputils.DoJSONRequest(app, http.MethodDelete, "/courses/"+courseID, nil, teacherHeaders)
+	t.Log("[STEP 11] Cleanup Course via DELETE /courses/:id")
+	status, body, err = httputils.DeleteCoursesById(teacherHeaders, map[string]any{"id": courseID})
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)
 	}

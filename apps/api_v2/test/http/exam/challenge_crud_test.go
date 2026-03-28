@@ -87,7 +87,7 @@ func TestChallengeCRUDHTTP(t *testing.T) {
 	}
 	t.Log("[OK] Challenge archivado")
 
-	t.Log("[STEP 9] Cleanup via DELETE /courses/:id")
+	t.Log("[STEP 9] Cleanup Course via DELETE /courses/:id")
 	status, body, err = httputils.DeleteCoursesById(teacherHeaders, map[string]any{"id": courseID})
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)
@@ -98,7 +98,16 @@ func TestChallengeCRUDHTTP(t *testing.T) {
 	if !httputils.MapBool(t, httputils.DecodeMap(t, body, "delete course"), "removed", "delete course") {
 		t.Fatalf("expected removed=true for course delete, got body=%s", string(body))
 	}
-	t.Log("[OK] Cleanup completado")
+
+	t.Log("[STEP 10] Cleanup Challenge via DELETE /challenges/:id")
+	status, body, err = httputils.DeleteChallengesById(teacherHeaders, map[string]any{"id": challengeID})
+	if err != nil {
+		t.Fatalf("delete challenge request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected challenge delete status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+	t.Log("[OK] Cleanup de challenges completado")
 }
 
 func TestChallengeFromStudentViewHTTP(t *testing.T) {
@@ -224,4 +233,30 @@ func TestChallengeFromStudentViewHTTP(t *testing.T) {
 		t.Fatalf("expected removed=true for course delete, got body=%s", string(body))
 	}
 	t.Log("[OK] Cleanup completado")
+
+	t.Log("[STEP 9] Cleanup Challenge via DELETE /challenges/:id")
+	status, body, err = httputils.DeleteChallengesById(teacherHeaders, map[string]any{"id": publishedID})
+	if err != nil {
+		t.Fatalf("delete challenge request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected challenge delete status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+
+	status, body, err = httputils.DeleteChallengesById(teacherHeaders, map[string]any{"id": archivedID})
+	if err != nil {
+		t.Fatalf("delete challenge request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected challenge delete status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+
+	status, body, err = httputils.DeleteChallengesById(teacherHeaders, map[string]any{"id": draftID})
+	if err != nil {
+		t.Fatalf("delete challenge request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected challenge delete status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+	t.Log("[OK] Cleanup de challenges completado")
 }

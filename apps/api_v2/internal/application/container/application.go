@@ -106,7 +106,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	app.CourseModule = CourseUseCases{
 		CreateCourse:            course_crud_usecases.NewCreateCourseUseCase(deps.CourseRepository, deps.UserRepository),
 		UpdateCourse:            course_crud_usecases.NewUpdateCourseUseCase(deps.CourseRepository, deps.UserRepository),
-		DeleteCourse:            course_crud_usecases.NewDeleteCourseUseCase(deps.CourseRepository, deps.UserRepository),
+		DeleteCourse:            course_crud_usecases.NewDeleteCourseUseCase(deps.CourseRepository, deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
 		GetCourseDetails:        course_crud_usecases.NewGetCourseDetailsUseCase(deps.CourseRepository, deps.UserRepository),
 		GetEnrolledCourses:      course_crud_usecases.NewGetEnrolledCoursesUseCase(deps.CourseRepository, deps.UserRepository),
 		GetOwnedCourses:         course_crud_usecases.NewGetOwnedCoursesUseCase(deps.CourseRepository, deps.UserRepository),
@@ -120,7 +120,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		UpdateChallenge:     challenge_crud_usecases.NewUpdateChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
 		PublishChallenge:    challenge_crud_usecases.NewPublishChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
 		ArchiveChallenge:    challenge_crud_usecases.NewArchiveChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
-		DeleteChallenge:     challenge_crud_usecases.NewDeleteChallengeUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
+		DeleteChallenge:     challenge_crud_usecases.NewDeleteChallengeUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository, deps.TestCaseRepository, deps.ExamItemRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
 		GetChallengeDetails: challenge_crud_usecases.NewGetChallengeDetailsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 		GetChallengesByUser: challenge_crud_usecases.NewGetChallengesByUserUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 	}
@@ -172,7 +172,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	app.ExamModule = ExamUseCases{
 		CreateExam:       exam_crud_usecases.NewCreateExamUseCase(deps.UserRepository, deps.ExamRepository),
 		UpdateExam:       exam_crud_usecases.NewUpdateExamUseCase(deps.UserRepository, deps.ExamRepository),
-		DeleteExam:       exam_crud_usecases.NewDeleteExamUseCase(deps.UserRepository, deps.ExamRepository),
+		DeleteExam:       exam_crud_usecases.NewDeleteExamUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
 		GetExamDetails:   exam_crud_usecases.NewGetExamDetailsUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
 		GetExamsByCourse: exam_crud_usecases.NewGetExamsByCourseUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
 		GetExamItems: 	  exam_crud_usecases.NewGetExamItemsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),

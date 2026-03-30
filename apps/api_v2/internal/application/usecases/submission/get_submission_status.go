@@ -45,10 +45,6 @@ func (uc *GetSubmissionStatusUseCase) Execute(ctx context.Context, input dtos.Ge
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
-	}
-
 	// [STEP 2] Verify that submission exists
 	submission, err := uc.submissionRepository.GetSubmissionByID(ctx, input.SubmissionID)
 	if err != nil {

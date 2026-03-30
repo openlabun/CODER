@@ -78,6 +78,10 @@ func (uc *UpdateResultUseCase) Execute(ctx context.Context, input dtos.UpdateRes
 		return nil, fmt.Errorf("failed to retrieve submission result: %w", err)
 	}
 
+	if submissionResult == nil {
+		return nil, fmt.Errorf("submission result with id %q does not exist", input.ResultID)
+	}
+
 	// [STEP 4] Get submission test case
 	testCase, err := uc.testCaseRepository.GetTestCaseByID(ctx, submissionResult.TestCaseID)
 	if err != nil {

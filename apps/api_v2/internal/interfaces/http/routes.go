@@ -14,9 +14,11 @@ import (
 	challenge_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/delete-by-id"
 	challenge_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-by-id"
 	challenge_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-list"
+	challenge_get_public "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-public"
 	challenge_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/patch-update"
 	challenge_post_archive "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-archive"
 	challenge_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-create"
+	challenge_post_fork "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-fork"
 	challenge_post_publish "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-publish"
 	course_delete_course "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/delete-course"
 	course_delete_student "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/delete-student"
@@ -34,6 +36,7 @@ import (
 	exam_get_by_course_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-course-id"
 	exam_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-id"
 	exam_get_exam_items "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-exam-items"
+	exam_get_public "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-public"
 	exam_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/patch-update"
 	exam_post_change_visibility "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-change-visibility"
 	exam_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-close"
@@ -140,6 +143,8 @@ func registerChallengesRoutes(app *fiber.App, appContainer *container.Applicatio
 	challenges.Patch("/:id", challenge_patch_update.Handler(appContainer))
 	challenges.Delete("/:id", challenge_delete_by_id.Handler(appContainer))
 	challenges.Post("/:id/publish", challenge_post_publish.Handler(appContainer))
+	challenges.Get("/public", challenge_get_public.Handler(appContainer))
+	challenges.Post("/:id/fork", challenge_post_fork.Handler(appContainer))
 	challenges.Post("/:id/archive", challenge_post_archive.Handler(appContainer))
 }
 
@@ -173,6 +178,7 @@ func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 	exams.Delete("/:id", exam_delete_by_id.Handler(appContainer))
 	exams.Post("/:id/visibility", exam_post_change_visibility.Handler(appContainer))
 	exams.Post("/:id/close", exam_post_close.Handler(appContainer))
+	exams.Get("/public", exam_get_public.Handler(appContainer))
 	exams.Get("/:examId/items", exam_get_exam_items.Handler(appContainer))
 }
 

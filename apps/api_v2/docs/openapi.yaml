@@ -69,59 +69,37 @@ paths:
                       - id: res-1
                         status: passed
 
-  /submissions/session/{sessionId}:
-      get:
-        tags:
-          - submissions
-        summary: List submissions by session
-        description: |
-          Devuelve todas las submissions asociadas a una sesión. Permite filtrar por status, testId y challengeId.
-          Requiere autenticación y permisos adecuados (ver lógica de roles en backend).
-        x-implementation: usecase
-        x-mockup:
-          input: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/input.json
-          output: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/output.json
-        parameters:
-          - in: path
-            name: sessionId
-            required: true
-            schema:
-              type: string
-          - in: query
-            name: status
-            required: false
-            schema:
-              type: string
-          - in: query
-            name: testId
-            required: false
-            schema:
-              type: string
-          - in: query
-            name: challengeId
-            required: false
-            schema:
-              type: string
-        responses:
-          "200":
-            description: Lista de submissions para la sesión.
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/SubmissionOutputDTO"
-                example:
-                  - submission:
-                      id: sub-1
-                      userID: usr-1
-                      challengeID: chal-1
-                      sessionID: sess-1
-                      code: print(1)
-                      language: python
-                    results:
-                      - id: res-1
-                        status: passed
+  /submissions/sessions/active:
+    get:
+      tags:
+        - submissions
+      summary: Get active session
+      description: |
+        Devuelve la sesión activa del usuario actual. Si el llamador es profesor, puede pasar `user_id` en query para obtener la sesión activa de un estudiante.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/output.json
+      parameters:
+        - in: query
+          name: user_id
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Active session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionsGetBySessionIdOutput200"
+              example:
+                  id: session-123
+                  studentID: usr-student-123
+                  examID: exam-123
+                  status: active
+                  attempts: 0
+                  timeLeft: 3600
   /auth/register:
     post:
       tags:
@@ -1366,36 +1344,6 @@ paths:
                   studentID: usr-student-123
                   examID: exam-123
                   status: active
-  /submissions/sessions/{id}:
-    get:
-      tags:
-        - submissions
-      summary: Get session by ID
-      x-implementation: usecase
-      x-mockup:
-        input: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/output.json
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Session details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SubmissionsGetBySessionIdOutput200"
-              example: &a53
- 
-                  id: session-123
-                  studentID: usr-student-123
-                  examID: exam-123
-                  status: active
-                  attempts: 0
-                  timeLeft: 3600
   /submissions/sessions/{id}/heartbeat:
     post:
       tags:
@@ -3669,7 +3617,13 @@ components:
       required:
         - statusCode
         - body
-      example: *a53
+      example:
+          id: session-123
+          studentID: usr-student-123
+          examID: exam-123
+          status: active
+          attempts: 0
+          timeLeft: 3600
     SubmissionsPostHeartbeatOutput200:
       type: object
       properties:

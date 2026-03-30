@@ -13,3 +13,10 @@ type GetActiveSessionInput struct {
 	UserID *string 	`json:"user_id"`
 }
 
+type CloseSessionInput struct {
+	SessionID string 	`json:"session_id"`
+}
+
+type BlockSessionInput struct {
+	SessionID string 	`json:"session_id"`
+}

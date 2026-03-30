@@ -13,19 +13,19 @@ import (
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 )
 
-type GetSessionUseCase struct {
+type GetActiveSessionUseCase struct {
 	sessionRepository submissionRepository.SessionRepository
 	userRepository userRepository.UserRepository
 }
 
-func NewGetSessionUseCase(sessionRepository submissionRepository.SessionRepository, userRepository userRepository.UserRepository) *GetSessionUseCase {
-	return &GetSessionUseCase{
+func NewGetActiveSessionUseCase(sessionRepository submissionRepository.SessionRepository, userRepository userRepository.UserRepository) *GetActiveSessionUseCase {
+	return &GetActiveSessionUseCase{
 		sessionRepository: sessionRepository,
 		userRepository: userRepository,
 	}
 }
 
-func (uc *GetSessionUseCase) Execute(ctx context.Context, input dtos.GetSessionInput) (*Entity.Session, error) {
+func (uc *GetActiveSessionUseCase) Execute(ctx context.Context, input dtos.GetActiveSessionInput) (*Entity.Session, error) {
 	// [STEP 1] Verify user is student and has permissions to submit
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
@@ -41,19 +41,36 @@ func (uc *GetSessionUseCase) Execute(ctx context.Context, input dtos.GetSessionI
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
+	role := user.Role
+
+	// [STEP 2] If user is teacher get user id from input
+	studentID := user.ID
+	if role == user_entities.UserRoleProfessor {
+		if input.UserID == nil {
+			return nil, fmt.Errorf("student_id is required for teachers to get a student session")
+		}
+
+		studentID = *input.UserID
+
+		// [STEP 2.1] Get student by id and verify it exists
+		student, err := uc.userRepository.GetUserByID(ctx, studentID)
+		if err != nil {
+			return nil, err
+		}
+		if student == nil {
+			return nil, fmt.Errorf("student with id %q does not exist", studentID)
+		}
 	}
-	
-	// [STEP 2] Verify existing student session
-	sessions, err := uc.sessionRepository.GetSessionsByStudentID(ctx, user.ID)
+
+	// [STEP 3] Verify existing student session
+	sessions, err := uc.sessionRepository.GetSessionsByStudentID(ctx, studentID)
 	if err != nil {
 		return nil, err
 	}
 
 	active_session := getExistingSession(sessions)
 
-	// [STEP 3] If there is an active session, return it. Else, throw error
+	// [STEP 4] If there is an active session, return it. Else, throw error
 	if active_session == nil {
 		return nil, fmt.Errorf("no active session found for student")
 	}

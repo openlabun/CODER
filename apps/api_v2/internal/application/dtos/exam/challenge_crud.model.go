@@ -54,3 +54,9 @@ type GetChallengeDetailsInput struct {
 type GetChallengesByUserInput struct {
 	ExamID *string `json:"exam_id"`
 }
+
+type GetPublicChallengesInput struct {
+	Tag 		 *string `json:"tag"`
+	Difficulty   *string `json:"difficulty"`
+}
+

@@ -158,6 +158,14 @@ func PostSubmissionsSessionsHeartbeat(headers map[string]string, path map[string
 	return callEndpoint("POST", "/submissions/sessions/{id}/heartbeat", path, nil, headers, nil)
 }
 
+func PostSubmissionsSessionsBlock(headers map[string]string, path map[string]any) (int, []byte, error) {
+	return callEndpoint("POST", "/submissions/sessions/{id}/block", path, nil, headers, nil)
+}
+
+func PostSubmissionsSessionsClose(headers map[string]string, path map[string]any) (int, []byte, error) {
+	return callEndpoint("POST", "/submissions/sessions/{id}/close", path, nil, headers, nil)
+}
+
 // --- LEADERBOARD ---
 func GetLeaderboardChallenge(headers map[string]string, path map[string]any) (int, []byte, error) {
 	return callEndpoint("GET", "/leaderboard/challenge/{id}", path, nil, headers, nil)

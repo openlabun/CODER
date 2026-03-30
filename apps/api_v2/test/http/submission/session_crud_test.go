@@ -49,6 +49,20 @@ func TestCreateSessionHTTP(t *testing.T) {
 	t.Log("Session:", string(body))
 	studentSession := httputils.DecodeMap(t, body, "create student session")
 	studentSessionID := httputils.MapString(t, studentSession, "id", "create student session")
+
+	defer func() {
+		if studentSessionID == "" {
+			return
+		}
+		status, body, err := httputils.PostSubmissionsSessionsClose(teacherHeaders, map[string]any{"id": studentSessionID})
+		if err != nil {
+			t.Logf("close session request failed: %v", err)
+			return
+		}
+		if status != http.StatusOK {
+			t.Logf("unexpected close session status=%d body=%s", status, string(body))
+		}
+	}()
 	if httputils.MapString(t, studentSession, "user_id", "create student session") != studentID {
 		t.Fatalf("expected student session UserID=%s, got body=%s", studentID, string(body))
 	}
@@ -103,5 +117,15 @@ func TestCreateSessionHTTP(t *testing.T) {
 		t.Fatalf("expected removed=true, got body=%s", string(body))
 	}
 
-	_ = studentSessionID
+	t.Log("[STEP 11] Cerrar Session")
+	status, body, err = httputils.PostSubmissionsSessionsClose(teacherHeaders, map[string]any{"id": studentSessionID})
+	if err != nil {
+		t.Logf("close session request failed: %v", err)
+		return
+	}
+	if status != http.StatusOK {
+		t.Logf("unexpected close session status=%d body=%s", status, string(body))
+	}
+
+	t.Log("[OK] Cleanup completado")
 }

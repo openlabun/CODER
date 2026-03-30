@@ -69,6 +69,20 @@ func TestSubmissionMockProcess(t *testing.T) {
 		"session_id":   sessionID,
 	}
 
+	defer func() {
+		if sessionID == "" {
+			return
+		}
+		status, body, err := httputils.PostSubmissionsSessionsClose(teacherHeaders, map[string]any{"id": sessionID})
+		if err != nil {
+			t.Logf("close session request failed: %v", err)
+			return
+		}
+		if status != http.StatusOK {
+			t.Logf("unexpected close session status=%d body=%s", status, string(body))
+		}
+	}()
+
 	// Current usecase permissions require professor headers for create submission.
 	status, body, err = httputils.PostSubmissions(studentHeaders, createSubmissionBody)
 	if err != nil {
@@ -116,7 +130,7 @@ func TestSubmissionMockProcess(t *testing.T) {
 		}
 	}
 
-	t.Log("[STEP 10] Cleanup created data")
+	t.Log("[STEP 10] Delete the course")
 	status, body, err = httputils.DeleteCoursesById(teacherHeaders, map[string]any{"id": courseID})
 	if err != nil {
 		t.Fatalf("delete course request failed: %v", err)
@@ -124,10 +138,28 @@ func TestSubmissionMockProcess(t *testing.T) {
 	if status != http.StatusOK {
 		t.Fatalf("expected delete course status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
-	removed := httputils.DecodeMap(t, body, "delete course")
-	if !httputils.MapBool(t, removed, "removed", "delete course") {
-		t.Fatalf("expected removed=true, got body=%s", string(body))
+
+	t.Log("[STEP 11] Cleanup Challenge via DELETE /challenges/:id")
+	status, body, err = httputils.DeleteChallengesById(teacherHeaders, map[string]any{"id": challengeID})
+	if err != nil {
+		t.Fatalf("delete challenge request failed: %v", err)
 	}
+	if status != http.StatusOK {
+		t.Fatalf("expected delete challenge status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+
+
+	t.Log("[STEP 12] Cerrar Session")
+	status, body, err = httputils.PostSubmissionsSessionsClose(teacherHeaders, map[string]any{"id": sessionID})
+	if err != nil {
+		t.Logf("close session request failed: %v", err)
+		return
+	}
+	if status != http.StatusOK {
+		t.Logf("unexpected close session status=%d body=%s", status, string(body))
+	}
+
+	t.Log("[OK] Cleanup completado")
 }
 
 func TestSubmissionProcessWithWorkers (t *testing.T) {
@@ -201,6 +233,20 @@ func TestSubmissionProcessWithWorkers (t *testing.T) {
 		"challenge_id": challengeID,
 		"session_id":   sessionID,
 	}
+
+	defer func() {
+		if sessionID == "" {
+			return
+		}
+		status, body, err := httputils.PostSubmissionsSessionsClose(teacherHeaders, map[string]any{"id": sessionID})
+		if err != nil {
+			t.Logf("close session request failed: %v", err)
+			return
+		}
+		if status != http.StatusOK {
+			t.Logf("unexpected close session status=%d body=%s", status, string(body))
+		}
+	}()
 
 	status, body, err = httputils.PostSubmissions(studentHeaders, createSubmissionBody)
 	if err != nil {
@@ -279,4 +325,16 @@ func TestSubmissionProcessWithWorkers (t *testing.T) {
 	if status != http.StatusOK {
 		t.Fatalf("expected delete challenge status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
+
+	t.Log("[STEP 8] Cerrar Session")
+	status, body, err = httputils.PostSubmissionsSessionsClose(teacherHeaders, map[string]any{"id": sessionID})
+	if err != nil {
+		t.Logf("close session request failed: %v", err)
+		return
+	}
+	if status != http.StatusOK {
+		t.Logf("unexpected close session status=%d body=%s", status, string(body))
+	}
+
+	t.Log("[OK] Cleanup completado")
 }

@@ -51,10 +51,10 @@ func TestSubmissionsCRUDHTTP(t *testing.T) {
 	}
 
 	status, body, err = httputils.PostExamItems(teacherHeaders, map[string]any{
-		"exam_id":     examID,
+		"exam_id":      examID,
 		"challenge_id": challengeID,
-		"order":       1,
-		"points":      10,
+		"order":        1,
+		"points":       10,
 	})
 	if err != nil {
 		t.Fatalf("create exam item request failed: %v", err)
@@ -74,10 +74,24 @@ func TestSubmissionsCRUDHTTP(t *testing.T) {
 	}
 	sessionID := httputils.MapString(t, httputils.DecodeMap(t, body, "create session"), "id", "create session")
 
+	defer func() {
+		if sessionID == "" {
+			return
+		}
+		status, body, err := httputils.PostSubmissionsSessionsClose(teacherHeaders, map[string]any{"id": sessionID})
+		if err != nil {
+			t.Logf("close session request failed: %v", err)
+			return
+		}
+		if status != http.StatusOK {
+			t.Logf("unexpected close session status=%d body=%s", status, string(body))
+		}
+	}()
+
 	t.Log("[STEP 8] Crear submission")
 	createSubmissionBody := map[string]any{
-		"code":        "def solve(a, b):\n    return a + b",
-		"language":    "python",
+		"code":         "def solve(a, b):\n    return a + b",
+		"language":     "python",
 		"challenge_id": challengeID,
 		"session_id":   sessionID,
 	}
@@ -149,6 +163,18 @@ func TestSubmissionsCRUDHTTP(t *testing.T) {
 	if err != nil {
 		t.Fatalf("delete challenge request failed: %v", err)
 	}
+
+	t.Log("[STEP 12] Cerrar Session")
+	status, body, err = httputils.PostSubmissionsSessionsClose(teacherHeaders, map[string]any{"id": sessionID})
+	if err != nil {
+		t.Logf("close session request failed: %v", err)
+		return
+	}
+	if status != http.StatusOK {
+		t.Logf("unexpected close session status=%d body=%s", status, string(body))
+	}
+
+	t.Log("[OK] Cleanup completado")
 
 	_ = teacherID
 }

@@ -50,7 +50,7 @@ func TestCoursesCRUDHTTP(t *testing.T) {
 	}
 
 	created := httputils.DecodeMap(t, body, "create course")
-	courseID := httputils.MapString(t, created, "ID", "create course")
+	courseID := httputils.MapString(t, created, "id", "create course")
 	t.Logf("[OK] Curso creado. courseID=%s", courseID)
 
 	t.Log("[STEP 4] Actualizar curso via POST /courses/:id")
@@ -85,7 +85,7 @@ func TestCoursesCRUDHTTP(t *testing.T) {
 	}
 
 	reloaded := httputils.DecodeMap(t, body, "get course by id")
-	if httputils.MapString(t, reloaded, "ID", "get course by id") != courseID {
+	if httputils.MapString(t, reloaded, "id", "get course by id") != courseID {
 		t.Fatalf("expected course id=%s, got body=%s", courseID, string(body))
 	}
 	if httputils.MapString(t, reloaded, "name", "get course by id") != updatedName {
@@ -132,7 +132,7 @@ func containsCourseID(t *testing.T, raw []byte, courseID string) bool {
 	}
 
 	for _, item := range list {
-		if id, ok := item["ID"].(string); ok && id == courseID {
+		if id, ok := item["id"].(string); ok && id == courseID {
 			return true
 		}
 	}

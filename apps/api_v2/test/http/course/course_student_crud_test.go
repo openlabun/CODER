@@ -54,7 +54,7 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected create status=%d, got=%d body=%s", http.StatusCreated, status, string(body))
 	}
 
-	courseID := httputils.MapString(t, httputils.DecodeMap(t, body, "create course"), "ID", "create course")
+	courseID := httputils.MapString(t, httputils.DecodeMap(t, body, "create course"), "id", "create course")
 	t.Logf("[OK] Curso creado. courseID=%s", courseID)
 
 	t.Log("[STEP 5] Matricular estudiante vía POST /courses/enroll")
@@ -86,7 +86,7 @@ func TestCoursesWithStudentsCRUDHTTP(t *testing.T) {
 	t.Log("[OK] Estudiante presente en lista")
 
 	t.Log("[STEP 7] Remover estudiante via DELETE /courses/:id/students/:studentId")
-	status, body, err = httputils.DeleteCoursesStudent(studentHeaders, map[string]any{"id": courseID, "studentId": studentAccess.UserData.ID})
+	status, body, err = httputils.DeleteCoursesStudent(studentHeaders, map[string]any{"id": courseID, "student_id": studentAccess.UserData.ID})
 	if err != nil {
 		t.Fatalf("remove student request failed: %v", err)
 	}
@@ -137,7 +137,7 @@ func containsStudentID(t *testing.T, raw []byte, studentID string) bool {
 	}
 
 	for _, item := range list {
-		if id, ok := item["ID"].(string); ok && id == studentID {
+		if id, ok := item["id"].(string); ok && id == studentID {
 			return true
 		}
 	}

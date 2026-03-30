@@ -70,7 +70,7 @@ type SubmissionUseCases struct {
 
 type SessionUseCases struct {
 	CreateSession    *session_usecases.CreateSessionUseCase
-	GetSession       *session_usecases.GetSessionUseCase
+	GetActiveSession       *session_usecases.GetActiveSessionUseCase
 	HeartBeatSession *session_usecases.HeartBeatSessionUseCase
 }
 
@@ -140,7 +140,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 
 	app.SessionModule = SessionUseCases{
 		CreateSession:    session_usecases.NewCreateSessionUseCase(deps.UserRepository, deps.SessionRepository, deps.ExamRepository),
-		GetSession:       session_usecases.NewGetSessionUseCase(deps.SessionRepository, deps.UserRepository),
+		GetActiveSession:       session_usecases.NewGetActiveSessionUseCase(deps.SessionRepository, deps.UserRepository),
 		HeartBeatSession: session_usecases.NewHeartBeatSessionUseCase(deps.UserRepository, deps.SessionRepository),
 	}
 

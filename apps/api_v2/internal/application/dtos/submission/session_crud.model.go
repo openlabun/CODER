@@ -9,6 +9,7 @@ type HeartbeatSessionInput struct {
 	SessionID string	`json:"session_id"`
 }
 
-type GetSessionInput struct {
-	SessionID string 	`json:"session_id"`
+type GetActiveSessionInput struct {
+	UserID *string 	`json:"user_id"`
 }
+

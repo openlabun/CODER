@@ -60,3 +60,6 @@ type GetPublicChallengesInput struct {
 	Difficulty   *string `json:"difficulty"`
 }
 
+type ForkChallengeInput struct {
+	ChallengeID string `json:"challenge_id"`
+}

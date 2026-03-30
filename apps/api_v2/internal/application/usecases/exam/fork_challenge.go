@@ -53,7 +53,12 @@ func (uc *ForkChallengeUseCase) Execute(ctx context.Context, input dtos.ForkChal
 		return nil, fmt.Errorf("challenge with id %q does not exist", input.ChallengeID)
 	}
 
-	// [STEP 3] Create challenge entity with user provided values
+	// [STEP 3] Validate challenge to fork is published
+	if challengeToFork.Status != Entities.ChallengeStatusPublished {
+		return nil, fmt.Errorf("challenge with id %q is not published and cannot be forked", input.ChallengeID)
+	}
+
+	// [STEP 4] Create challenge entity with user provided values
 	forkedChallenge, err := services.ForkChallenge(ctx, *challengeToFork, user.ID, uc.challengeRepository, uc.testCaseRepository)
 	if err != nil {
 		return nil, err
@@ -62,7 +67,7 @@ func (uc *ForkChallengeUseCase) Execute(ctx context.Context, input dtos.ForkChal
 		return nil, fmt.Errorf("failed to fork challenge with id %q", input.ChallengeID)
 	}
 
-	// [STEP 4] Create challenge with user provided values
+	// [STEP 5] Create challenge with user provided values
 	createdChallenge, err := uc.challengeRepository.CreateChallenge(ctx, forkedChallenge)
 	if err != nil {
 		return nil, err

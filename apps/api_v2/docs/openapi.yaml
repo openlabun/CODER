@@ -1371,6 +1371,68 @@ paths:
                   id: session-123
                   status: active
                   lastHeartbeat: 2026-03-22T12:00:00Z
+  /submissions/sessions/{id}/block:
+    post:
+      tags:
+        - submissions
+      summary: Block session
+      description: |
+        Bloquea la sesión indicada. Accesible solo para profesores.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/submissions/session/post-block/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/submissions/session/post-block/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Blocked session response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionsGetBySessionIdOutput200"
+              example:
+                  id: session-123
+                  studentID: usr-student-123
+                  examID: exam-123
+                  status: blocked
+                  attempts: 0
+                  timeLeft: 3600
+  /submissions/sessions/{id}/close:
+    post:
+      tags:
+        - submissions
+      summary: Close session
+      description: |
+        Cierra la sesión indicada. Accesible solo para profesores.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/submissions/session/post-close/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/submissions/session/post-close/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Closed session response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionsGetBySessionIdOutput200"
+              example:
+                  id: session-123
+                  studentID: usr-student-123
+                  examID: exam-123
+                  status: completed
+                  attempts: 0
+                  timeLeft: 0
   /leaderboard/challenge/{id}:
     get:
       tags:

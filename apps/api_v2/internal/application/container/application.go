@@ -70,8 +70,10 @@ type SubmissionUseCases struct {
 
 type SessionUseCases struct {
 	CreateSession    *session_usecases.CreateSessionUseCase
-	GetActiveSession       *session_usecases.GetActiveSessionUseCase
+	GetActiveSession *session_usecases.GetActiveSessionUseCase
 	HeartBeatSession *session_usecases.HeartBeatSessionUseCase
+	BlockSession     *session_usecases.BlockSessionUseCase
+	CloseSession     *session_usecases.CloseSessionUseCase
 }
 
 type ExamUseCases struct {
@@ -80,7 +82,7 @@ type ExamUseCases struct {
 	DeleteExam       *exam_crud_usecases.DeleteExamUseCase
 	GetExamDetails   *exam_crud_usecases.GetExamDetailsUseCase
 	GetExamsByCourse *exam_crud_usecases.GetExamsByCourseUseCase
-	GetExamItems 	 *exam_crud_usecases.GetExamItemsUseCase
+	GetExamItems     *exam_crud_usecases.GetExamItemsUseCase
 }
 
 type Application struct {
@@ -140,8 +142,10 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 
 	app.SessionModule = SessionUseCases{
 		CreateSession:    session_usecases.NewCreateSessionUseCase(deps.UserRepository, deps.SessionRepository, deps.ExamRepository),
-		GetActiveSession:       session_usecases.NewGetActiveSessionUseCase(deps.SessionRepository, deps.UserRepository),
+		GetActiveSession: session_usecases.NewGetActiveSessionUseCase(deps.SessionRepository, deps.UserRepository),
 		HeartBeatSession: session_usecases.NewHeartBeatSessionUseCase(deps.UserRepository, deps.SessionRepository),
+		BlockSession:     session_usecases.NewBlockSessionUseCase(deps.SessionRepository, deps.UserRepository),
+		CloseSession:     session_usecases.NewCloseSessionUseCase(deps.SessionRepository, deps.UserRepository),
 	}
 
 	app.SubmissionUseCases = SubmissionUseCases{
@@ -175,7 +179,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		DeleteExam:       exam_crud_usecases.NewDeleteExamUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
 		GetExamDetails:   exam_crud_usecases.NewGetExamDetailsUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
 		GetExamsByCourse: exam_crud_usecases.NewGetExamsByCourseUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
-		GetExamItems: 	  exam_crud_usecases.NewGetExamItemsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
+		GetExamItems:     exam_crud_usecases.NewGetExamItemsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
 	}
 
 	return app, nil

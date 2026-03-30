@@ -44,7 +44,7 @@ func TestExamCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected update status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 	updated := httputils.DecodeMap(t, body, "update exam")
-	if httputils.MapString(t, updated, "Title", "update exam") != updatedTitle {
+	if httputils.MapString(t, updated, "title", "update exam") != updatedTitle {
 		t.Fatalf("expected updated title=%q, got body=%s", updatedTitle, string(body))
 	}
 	t.Logf("[OK] Examen 1 actualizado. title=%q", updatedTitle)
@@ -58,10 +58,10 @@ func TestExamCRUDHTTP(t *testing.T) {
 		t.Fatalf("expected get-by-id status=%d, got=%d body=%s", http.StatusOK, status, string(body))
 	}
 	reloaded := httputils.DecodeMap(t, body, "get exam by id")
-	if httputils.MapString(t, reloaded, "ID", "get exam by id") != examID1 {
+	if httputils.MapString(t, reloaded, "id", "get exam by id") != examID1 {
 		t.Fatalf("expected exam id=%s, got body=%s", examID1, string(body))
 	}
-	if httputils.MapString(t, reloaded, "Title", "get exam by id") != updatedTitle {
+	if httputils.MapString(t, reloaded, "title", "get exam by id") != updatedTitle {
 		t.Fatalf("expected title=%q, got body=%s", updatedTitle, string(body))
 	}
 	t.Log("[OK] Detalle de examen 1 validado")

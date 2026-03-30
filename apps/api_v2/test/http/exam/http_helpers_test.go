@@ -41,7 +41,7 @@ func createCourseHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.Use
 	}
 
 	created := httputils.DecodeMap(t, body, "create course")
-	return httputils.MapString(t, created, "ID", "create course")
+	return httputils.MapString(t, created, "id", "create course")
 }
 
 func createExamHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.UserAccess, courseID, title string) string {
@@ -73,7 +73,7 @@ func createExamHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.UserA
 	}
 
 	created := httputils.DecodeMap(t, body, "create exam")
-	return httputils.MapString(t, created, "ID", "create exam")
+	return httputils.MapString(t, created, "id", "create exam")
 }
 
 func createChallengeHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.UserAccess, title string) string {
@@ -155,5 +155,5 @@ func createTestCaseHTTP(t *testing.T, app *fiber.App, teacherAccess *user_dtos.U
 	}
 
 	created := httputils.DecodeMap(t, body, "create test-case")
-	return httputils.MapString(t, created, "ID", "create test-case")
+	return httputils.MapString(t, created, "id", "create test-case")
 }

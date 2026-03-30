@@ -119,6 +119,58 @@ func (r *ChallengeRepository) GetChallengeByID(ctx context.Context, challengeID 
 	return r.recordToHydratedChallenge(ctx, record)
 }
 
+func (r *ChallengeRepository) GetChallenges(ctx context.Context, status, tag, difficulty *string) ([]*Entities.Challenge, error) {
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
+
+	filters := map[string]string{}
+	if status != nil {
+		if s := strings.TrimSpace(*status); s != "" {
+			filters["Status"] = s
+		}
+	}
+	if tag != nil {
+		if t := strings.TrimSpace(*tag); t != "" {
+			filters["Tags"] = t
+		}
+	}
+	if difficulty != nil {
+		if d := strings.TrimSpace(*difficulty); d != "" {
+			filters["Difficulty"] = d
+		}
+	}
+
+	var res map[string]any
+	var err error
+	if len(filters) == 0 {
+		res, err = r.adapter.Read(challengeTableName, nil)
+	} else {
+		res, err = r.adapter.Read(challengeTableName, filters)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	records := extractRecords(res)
+	if len(records) == 0 {
+		return []*Entities.Challenge{}, nil
+	}
+
+	challenges := make([]*Entities.Challenge, 0, len(records))
+	for _, record := range records {
+		challenge, mapErr := r.recordToHydratedChallenge(ctx, record)
+		if mapErr != nil {
+			return nil, mapErr
+		}
+		if challenge != nil {
+			challenges = append(challenges, challenge)
+		}
+	}
+
+	return challenges, nil
+}
+
 func (r *ChallengeRepository) GetChallengesByUserID(ctx context.Context, userID string, examID *string) ([]*Entities.Challenge, error) {
 	normalizedUserID := strings.TrimSpace(userID)
 

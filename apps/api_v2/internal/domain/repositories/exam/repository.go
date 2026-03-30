@@ -12,6 +12,7 @@ type ExamRepository interface {
 	DeleteExam(ctx context.Context, examID string) error
 
 	GetExamByID(ctx context.Context, examID string) (*Entities.Exam, error)
+	GetPublicExams(ctx context.Context, visibility string) ([]*Entities.Exam, error)
 	GetExamsByCourseID(ctx context.Context, courseID string) ([]*Entities.Exam, error)
 	GetExamsByTeacherID(ctx context.Context, teacherID string) ([]*Entities.Exam, error)
 }
@@ -21,6 +22,7 @@ type ChallengeRepository interface {
 	UpdateChallenge(ctx context.Context, challenge *Entities.Challenge) (*Entities.Challenge, error)
 	DeleteChallenge(ctx context.Context, challengeID string) error
 
+	GetChallenges(ctx context.Context, status, tag, difficulty *string) ([]*Entities.Challenge, error)
 	GetChallengeByID(ctx context.Context, challengeID string) (*Entities.Challenge, error)
 	GetChallengesByExamID(ctx context.Context, examID string) ([]*Entities.Challenge, error)
 	GetChallengesByUserID(ctx context.Context, userID string, examID *string) ([]*Entities.Challenge, error)
@@ -32,9 +34,10 @@ type ChallengeRepository interface {
 type ExamItemRepository interface {
 	CreateExamItem(ctx context.Context, examItem *Entities.ExamItem) (*Entities.ExamItem, error)
 	UpdateExamItem(ctx context.Context, examItem *Entities.ExamItem) (*Entities.ExamItem, error)
+	DeleteExamItem(ctx context.Context, examItemID string) error
+
 	GetExamItemByID(ctx context.Context, examItemID string) (*Entities.ExamItem, error)
 	GetExamItem (ctx context.Context, examID *string, challengeID *string) ([]*Entities.ExamItem, error)
-	DeleteExamItem(ctx context.Context, examItemID string) error
 }
 
 type TestCaseRepository interface {

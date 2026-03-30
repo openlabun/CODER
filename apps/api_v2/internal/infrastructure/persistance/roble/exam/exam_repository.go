@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	examTableName       = "Exam"
+	examTableName = "Exam"
 )
 
 type ExamRepository struct {
@@ -102,6 +102,47 @@ func (r *ExamRepository) GetExamByID(ctx context.Context, examID string) (*Entit
 	}
 
 	return recordToExam(record)
+}
+
+func (r *ExamRepository) GetPublicExams(ctx context.Context, visibility string) ([]*Entities.Exam, error) {
+	normalized := strings.TrimSpace(visibility)
+	if normalized == "" {
+		return nil, fmt.Errorf("visibility is required")
+	}
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
+
+	res, err := r.adapter.Read(examTableName, map[string]string{"Visibility": normalized})
+	if err != nil {
+		return nil, err
+	}
+
+	records := extractRecords(res)
+	if len(records) == 0 {
+		return []*Entities.Exam{}, nil
+	}
+
+	// TODO: Replace with null comparison in DB query
+	public_records := make([]map[string]any, 0, len(records))
+	for _, record := range records {
+		if record["CourseID"] != nil {
+			public_records = append(public_records, record)
+		}
+	}
+
+	exams := make([]*Entities.Exam, 0, len(public_records))
+	for _, record := range public_records {
+		exam, mapErr := recordToExam(record)
+		if mapErr != nil {
+			return nil, mapErr
+		}
+		if exam != nil {
+			exams = append(exams, exam)
+		}
+	}
+
+	return exams, nil
 }
 
 func (r *ExamRepository) GetExamsByCourseID(ctx context.Context, courseID string) ([]*Entities.Exam, error) {

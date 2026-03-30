@@ -44,6 +44,8 @@ import (
 	sub_patch_update_result "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/patch-update-result"
 	sub_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create"
 	sub_get_active_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/get-active-session"
+	sub_post_block "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-block"
+	sub_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-close"
 	sub_post_heartbeat "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-heartbeat"
 	sub_post_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-session"
 	tc_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/delete-by-id"
@@ -192,6 +194,8 @@ func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Applicati
 	sessions.Post("/", sub_post_session.Handler(appContainer))
 	sessions.Get("/active", sub_get_active_session.Handler(appContainer))
 	sessions.Post("/:id/heartbeat", sub_post_heartbeat.Handler(appContainer))
+	sessions.Post("/:id/block", sub_post_block.Handler(appContainer))
+	sessions.Post("/:id/close", sub_post_close.Handler(appContainer))
 }
 
 func registerLeaderboardRoutes(app *fiber.App) {

@@ -3,8 +3,8 @@ package container
 import (
 	"fmt"
 
-	submussion_ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/submission"
 	ai_ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/generative-ai"
+	submussion_ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/submission"
 	ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 	course_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	exam_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
@@ -22,13 +22,13 @@ type ApplicationDependencies struct {
 	PasswordHasher  ports.PasswordHasherPort
 
 	PublisherPort submussion_ports.SubmissionPublisherPort
-	AIAdapter   ai_ports.AIPort
+	AIAdapter     ai_ports.AIPort
 
 	UserRepository             user_repositories.UserRepository
 	CourseRepository           course_repositories.CourseRepository
 	ExamRepository             exam_repositories.ExamRepository
 	ChallengeRepository        exam_repositories.ChallengeRepository
-	ExamItemRepository 	   	exam_repositories.ExamItemRepository
+	ExamItemRepository         exam_repositories.ExamItemRepository
 	TestCaseRepository         exam_repositories.TestCaseRepository
 	SubmissionRepository       submission_repositories.SubmissionRepository
 	SessionRepository          submission_repositories.SessionRepository
@@ -60,6 +60,7 @@ func NewApplicationDependencies(
 		TokenService:               tokenService,
 		PasswordHasher:             passwordHasher,
 		PublisherPort:              publisherPort,
+		AIAdapter:                  aiAdapter,
 		UserRepository:             userRepo,
 		CourseRepository:           courseRepo,
 		ExamRepository:             examRepo,
@@ -127,6 +128,10 @@ func (deps ApplicationDependencies) CheckDependencies() error {
 
 	if deps.SubmissionResultRepository == nil {
 		return fmt.Errorf("SubmissionResultRepository dependency is not provided")
+	}
+
+	if deps.AIAdapter == nil {
+		return fmt.Errorf("AIAdapter dependency is not provided")
 	}
 
 	if deps.PublisherPort == nil {

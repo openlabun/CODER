@@ -9,6 +9,8 @@ import (
 
 	exam_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam"
 
+	ai_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/ai"
+
 	challenge_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/challenge_crud"
 	exam_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/exam_crud"
 	exam_item_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/exam_item_crud"
@@ -47,7 +49,7 @@ type ChallengeUseCases struct {
 	GetChallengeDetails *challenge_crud_usecases.GetChallengeDetailsUseCase
 	GetChallengesByUser *challenge_crud_usecases.GetChallengesByUserUseCase
 	GetPublicChallenges *exam_usecases.GetPublicChallengesUseCase
-	ForkChallenge      *exam_usecases.ForkChallengeUseCase
+	ForkChallenge       *exam_usecases.ForkChallengeUseCase
 }
 
 type TestCaseUseCases struct {
@@ -90,6 +92,11 @@ type ExamUseCases struct {
 	GetPublicExams   *exam_usecases.GetPublicExamsUseCase
 }
 
+type AIUseCases struct {
+	GenerateFullChallenge *ai_usecases.GenerateFullChallengeUseCase
+	GenerateExam          *ai_usecases.GenerateExamUseCase
+}
+
 type Application struct {
 	Dependencies       ApplicationDependencies
 	UserModule         UserUseCases
@@ -100,6 +107,7 @@ type Application struct {
 	ExamItemModule     ExamItemUseCases
 	SessionModule      SessionUseCases
 	SubmissionUseCases SubmissionUseCases
+	AIModule           AIUseCases
 }
 
 func NewApplication(deps ApplicationDependencies) (*Application, error) {
@@ -131,7 +139,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		GetChallengeDetails: challenge_crud_usecases.NewGetChallengeDetailsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 		GetChallengesByUser: challenge_crud_usecases.NewGetChallengesByUserUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 		GetPublicChallenges: exam_usecases.NewGetPublicChallengesUseCase(deps.ChallengeRepository, deps.UserRepository),
-		ForkChallenge:      exam_usecases.NewForkChallengeUseCase(deps.ChallengeRepository, deps.UserRepository, deps.TestCaseRepository),
+		ForkChallenge:       exam_usecases.NewForkChallengeUseCase(deps.ChallengeRepository, deps.UserRepository, deps.TestCaseRepository),
 	}
 
 	app.TestCaseModule = TestCaseUseCases{
@@ -188,6 +196,11 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 		GetExamsByCourse: exam_crud_usecases.NewGetExamsByCourseUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
 		GetExamItems:     exam_crud_usecases.NewGetExamItemsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
 		GetPublicExams:   exam_usecases.NewGetPublicExamsUseCase(deps.UserRepository, deps.ExamRepository),
+	}
+
+	app.AIModule = AIUseCases{
+		GenerateFullChallenge: ai_usecases.NewGenerateFullChallengeUseCase(deps.AIAdapter),
+		GenerateExam:          ai_usecases.NewGenerateExamUseCase(deps.AIAdapter),
 	}
 
 	return app, nil

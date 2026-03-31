@@ -500,6 +500,66 @@ paths:
               example: &a17
                   id: challenge-123
                   status: archived
+
+  /challenges/public:
+    get:
+      tags:
+        - challenges
+      summary: List public challenges
+      description: |
+        Devuelve los challenges publicados disponibles en la galería pública. Permite filtrar por `tag` y `difficulty`.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/challenges/get-public/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/challenges/get-public/mockup/output.json
+      parameters:
+        - in: query
+          name: tag
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: difficulty
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Public challenges list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengesGetListOutput200"
+              example: *a12
+
+  /challenges/{id}/fork:
+    post:
+      tags:
+        - challenges
+      summary: Fork challenge
+      description: |
+        Crea una copia (fork) de un challenge publicado en el repositorio del usuario que realiza la petición. Requiere permisos de profesor.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/challenges/post-fork/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/challenges/post-fork/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Fork created (new challenge)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengesPostCreateOutput201"
+              example: *a11
+
+
+
   /test-cases:
     post:
       tags:
@@ -1034,6 +1094,25 @@ paths:
           description: Examen no encontrado
         "403":
           description: Permisos insuficientes
+  /exams/public:
+    get:
+      tags:
+        - exams
+      summary: List public exams
+      description: |
+        Devuelve los exámenes públicos. Si el usuario que hace la petición es profesor, el backend puede incluir exámenes con visibilidad `teachers`.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exams/get-public/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exams/get-public/mockup/output.json
+      responses:
+        "200":
+          description: Public exams list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamsGetByCourseIdOutput200"
+              example: *a40
   /exams/{id}:
     get:
       tags:

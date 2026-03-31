@@ -270,6 +270,89 @@ paths:
                 $ref: "#/components/schemas/AiPostGenerateTestCasesOutput200"
               example: &a9
                   message: AI test case generation not implemented in application usecases
+
+  /ai/generate-full-challenge:
+    post:
+      tags:
+        - ai
+      summary: Generate a full challenge (description + test cases)
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/ai/post-generate-full-challenge/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/ai/post-generate-full-challenge/mockup/output.json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiPostGenerateFullChallengeInput"
+            example: &a35
+              topic: sorting
+              difficulty: medium
+      responses:
+        "200":
+          description: AI generated full challenge (challenge object with test cases)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiPostGenerateFullChallengeOutput200"
+              example: &a36
+                statusCode: 200
+                body:
+                  challenge:
+                    title: Sort It
+                    description: Sort an array of integers ascending
+                    difficulty: medium
+                    tags:
+                      - arrays
+                      - sorting
+                    input_format: "n\\narr"
+                    output_format: "sorted_arr"
+                    constraints: "n <= 100000"
+                    public_test_cases:
+                      - input: "3\\n1 2 3"
+                        output: "1 2 3"
+                        name: sample1
+                        visible: true
+                    hidden_test_cases:
+                      - input: "5\\n5 4 3 2 1"
+                        output: "1 2 3 4 5"
+                        name: hidden1
+                        visible: false
+
+  /ai/generate-exam:
+    post:
+      tags:
+        - ai
+      summary: Generate an exam (metadata only)
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/ai/post-generate-exam/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/ai/post-generate-exam/mockup/output.json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiPostGenerateExamInput"
+            example: &a37
+              topic: data structures
+              difficulty: easy
+      responses:
+        "200":
+          description: AI generated exam
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiPostGenerateExamOutput200"
+              example: &a38
+                statusCode: 200
+                body:
+                  exam:
+                    title: Intro to Data Structures Exam
+                    description: Short exam covering arrays and linked lists
+                    time_limit: 60
+                    try_limit: 1
   /challenges:
     post:
       tags:
@@ -2176,6 +2259,146 @@ components:
         - statusCode
         - body
       example: *a9
+    AiPostGenerateFullChallengeInput:
+      type: object
+      properties:
+        method:
+          type: string
+        path:
+          type: string
+        pathParams:
+          type: object
+          properties: {}
+        query:
+          type: object
+          properties: {}
+        body:
+          type: object
+          properties:
+            topic:
+              type: string
+            difficulty:
+              type: string
+          required:
+            - topic
+            - difficulty
+      required:
+        - method
+        - path
+        - pathParams
+        - query
+        - body
+      example: *a35
+    AiPostGenerateFullChallengeOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+          properties:
+            challenge:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                difficulty:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                input_format:
+                  type: string
+                output_format:
+                  type: string
+                constraints:
+                  type: string
+                public_test_cases:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      input:
+                        type: string
+                      output:
+                        type: string
+                      name:
+                        type: string
+                      visible:
+                        type: boolean
+                hidden_test_cases:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      input:
+                        type: string
+                      output:
+                        type: string
+                      name:
+                        type: string
+                      visible:
+                        type: boolean
+      required:
+        - statusCode
+        - body
+      example: *a36
+    AiPostGenerateExamInput:
+      type: object
+      properties:
+        method:
+          type: string
+        path:
+          type: string
+        pathParams:
+          type: object
+          properties: {}
+        query:
+          type: object
+          properties: {}
+        body:
+          type: object
+          properties:
+            topic:
+              type: string
+            difficulty:
+              type: string
+          required:
+            - topic
+            - difficulty
+      required:
+        - method
+        - path
+        - pathParams
+        - query
+        - body
+      example: *a37
+    AiPostGenerateExamOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+          properties:
+            exam:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                time_limit:
+                  type: integer
+                try_limit:
+                  type: integer
+      required:
+        - statusCode
+        - body
+      example: *a38
     ChallengesPostCreateInput:
       type: object
       properties:

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+
+	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/ai"
 )
 
 type GeminiAdapter struct {
@@ -79,5 +81,21 @@ func (s *GeminiAdapter) GenerateContent(ctx context.Context, prompt string) (str
 	}
 
 	return result.Candidates[0].Content.Parts[0].Text, nil
+}
+
+func (s *GeminiAdapter) GenerateExamIdea(ctx context.Context, prompt string) (*dtos.AIExamIdea, error) {
+	response, err := s.GenerateContent(ctx, prompt)
+	if err != nil {
+		return nil, err
+	}
+	return MapResponseToExamIdeaDTO(response)
+}
+
+func (s *GeminiAdapter) GenerateChallengeIdea(ctx context.Context, prompt string) (*dtos.AIChallengeIdea, error) {
+	response, err := s.GenerateContent(ctx, prompt)
+	if err != nil {
+		return nil, err
+	}
+	return MapResponseToChallengeIdeaDTO(response)
 }
 

@@ -7,6 +7,8 @@ import (
 	"github.com/MarceloPetrucio/go-scalar-api-reference"
 	"github.com/gofiber/fiber/v2"
 	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
+	post_generate_exam "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-exam"
+	post_generate_full_challenge "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-full-challenge"
 	auth_get_me "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/get-me"
 	auth_post_login "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-login"
 	auth_post_refresh_token "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-refresh-token"
@@ -60,7 +62,7 @@ import (
 func RegisterRoutes(app *fiber.App, appContainer *container.Application) {
 	registerDocsRoutes(app)
 	registerAuthRoutes(app, appContainer)
-	registerAIRoutes(app)
+	registerAIRoutes(app, appContainer)
 	registerChallengesRoutes(app, appContainer)
 	registerTestCasesRoutes(app, appContainer)
 	registerCoursesRoutes(app, appContainer)
@@ -129,10 +131,12 @@ func registerAuthRoutes(app *fiber.App, appContainer *container.Application) {
 	auth.Get("/me", auth_get_me.Handler(appContainer))
 }
 
-func registerAIRoutes(app *fiber.App) {
+func registerAIRoutes(app *fiber.App, appContainer *container.Application) {
 	ai := app.Group("/ai")
 	ai.Post("/generate-challenge-ideas", mockHandler("ai/post-generate-challenge-ideas/mockup/output.json", fiber.StatusOK))
 	ai.Post("/generate-test-cases", mockHandler("ai/post-generate-test-cases/mockup/output.json", fiber.StatusOK))
+	ai.Post("/generate-full-challenge", post_generate_full_challenge.Handler(appContainer))
+	ai.Post("/generate-exam", post_generate_exam.Handler(appContainer))
 }
 
 func registerChallengesRoutes(app *fiber.App, appContainer *container.Application) {

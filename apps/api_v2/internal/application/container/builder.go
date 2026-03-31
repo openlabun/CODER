@@ -9,6 +9,7 @@ import (
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
 	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitMQ"
 	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
+	gemini_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/generative-ai/cloud/gemini"
 	
 	course_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
 	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
@@ -43,6 +44,7 @@ func BuildDependencies() (*ApplicationDependencies, error) {
 	userRepository := roble_user_infrastructure.NewUserRepository(robleAdapter)
 	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
 	passwordHasher := security_infrastructure.NewSecurityAdapter()
+	ai_adapter := gemini_infrastructure.NewGeminiAdapter()
 
 	courseRepository := course_repository.NewCourseRepository(robleAdapter)
 	examRepository := exam_repository.NewExamRepository(robleAdapter)
@@ -79,6 +81,7 @@ func BuildDependencies() (*ApplicationDependencies, error) {
 		sessionRepository,
 		submissionResRepository,
 		publisherAdapter,
+		ai_adapter,
 	)
 
 	return &dependencies, nil

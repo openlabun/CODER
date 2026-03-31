@@ -8,7 +8,6 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	userRepositoty "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 )
@@ -34,8 +33,8 @@ func (uc *GetCourseDetailsUseCase) Execute(ctx context.Context, input dtos.GetCo
 		return nil, err
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create a course")
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
 	}
 
 	// [STEP 2] Get course details with user provided values
@@ -45,6 +44,11 @@ func (uc *GetCourseDetailsUseCase) Execute(ctx context.Context, input dtos.GetCo
 	}
 
 	if course == nil {
+		return nil, fmt.Errorf("course not found")
+	}
+
+	// [STEP 3] If user is not owner and course is blocked, return error
+	if course.Visibility == Entities.CourseVisibilityBlocked && course.ProfessorID != user.ID {
 		return nil, fmt.Errorf("course not found")
 	}
 

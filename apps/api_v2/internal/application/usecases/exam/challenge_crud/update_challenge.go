@@ -41,7 +41,7 @@ func (uc *UpdateChallengeUseCase) Execute(ctx context.Context, input dtos.Update
 	}
 
 	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to update an exam")
+		return nil, fmt.Errorf("user does not have permissions to update a challenge")
 	}
 
 	// [STEP 2] Verify challenge exists
@@ -54,13 +54,18 @@ func (uc *UpdateChallengeUseCase) Execute(ctx context.Context, input dtos.Update
 		return nil, fmt.Errorf("challenge with id %q does not exist", input.ChallengeID)
 	}
 
-	// [STEP 3] Create challenge update entity with user provided values
+	// [STEP 3] Verify that challenge belongs to teacher
+	if existingChallenge.UserID != user.ID {
+		return nil, fmt.Errorf("user does not have permissions to update this challenge")
+	}
+
+	// [STEP 4] Create challenge update entity with user provided values
 	challenge, err := mapper.MapUpdateChallengeInputToChallengeEntity(existingChallenge, input)
 	if err != nil {
 		return nil, err
 	}
 
-	// [STEP 4] Save challenge with user provided values
+	// [STEP 5] Save challenge with user provided values
 	updatedChallenge, err := uc.challengeRepository.UpdateChallenge(ctx, challenge)
 	if err != nil {
 		return nil, err

@@ -29,7 +29,7 @@ func NewGetExamsByCourseUseCase(userRepository userRepository.UserRepository, ex
 }
 
 func (uc *GetExamsByCourseUseCase) Execute(ctx context.Context, input dtos.GetExamsByCourseInput) ([]*Entities.Exam, error) {
-	// [STEP 1] Verify user is teacher
+	// [STEP 1] Verify user
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -44,11 +44,7 @@ func (uc *GetExamsByCourseUseCase) Execute(ctx context.Context, input dtos.GetEx
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
-	}
-
-	// [STEP 2] Verify course exists and user is owner
+	// [STEP 2] Verify course exists
 	course, err := uc.courseRepository.GetCourseByID(ctx, input.CourseID)
 	if err != nil {
 		return nil, err
@@ -58,14 +54,22 @@ func (uc *GetExamsByCourseUseCase) Execute(ctx context.Context, input dtos.GetEx
 		return nil, fmt.Errorf("course with id %q does not exist", input.CourseID)
 	}
 
-	if course.ProfessorID != user.ID {
-		return nil, fmt.Errorf("user is not the owner of the course")
-	}
-
 	// [STEP 3] Get exams for course
 	exams, err := uc.examRepository.GetExamsByCourseID(ctx, input.CourseID)
 	if err != nil {
 		return nil, err
+	}
+
+	// [STEP 4] If user is student, filter exams by visibility
+	if user.Role == user_entities.UserRoleStudent {
+		filteredExams := []*Entities.Exam{}
+		for _, exam := range exams {
+			if exam.Visibility == Entities.VisibilityCourse {
+				filteredExams = append(filteredExams, exam)
+			}
+		}
+		
+		exams = filteredExams
 	}
 
 	return exams, nil

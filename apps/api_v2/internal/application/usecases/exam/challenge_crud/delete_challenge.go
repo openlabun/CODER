@@ -42,7 +42,7 @@ func (uc *DeleteChallengeUseCase) Execute(ctx context.Context, input dtos.Delete
 	}
 
 	if user.Role != user_entities.UserRoleProfessor {
-		return fmt.Errorf("user does not have permissions to create an exam")
+		return fmt.Errorf("user does not have permissions to delete an exam")
 	}
 
 	// [STEP 2] Validate that the challenge exists

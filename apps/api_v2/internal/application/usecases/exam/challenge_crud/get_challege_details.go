@@ -38,7 +38,7 @@ func (uc *GetChallengeDetailsUseCase) Execute(ctx context.Context, input dtos.Ge
 	}
 
 	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
+		return nil, fmt.Errorf("user does not have permissions to get an exam")
 	}
 
 	// [STEP 2] Verify challenge exists

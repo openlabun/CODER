@@ -69,6 +69,10 @@ func (uc *GetExamDetailsUseCase) Execute(ctx context.Context, input dtos.GetExam
 
 	// [STEP 5] If user is student, get its courses and verify that at least one of them is the course of the exam
 	if role == user_entities.UserRoleStudent {
+		if exam.Visibility != Entities.VisibilityCourse {
+			return nil, fmt.Errorf("user does not have permissions to view exam details")
+		}
+		
 		courses, err := uc.courseRepository.GetCoursesByStudentID(ctx, user.ID)
 		if err != nil {
 			return nil, err
@@ -79,7 +83,6 @@ func (uc *GetExamDetailsUseCase) Execute(ctx context.Context, input dtos.GetExam
 		}
 	}
 
-	// [STEP 6] If user passes all filters, return exam details
 	return exam, nil
 }
 

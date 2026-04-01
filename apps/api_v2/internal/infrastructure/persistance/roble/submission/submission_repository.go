@@ -175,33 +175,3 @@ func (r *SubmissionRepository) getSubmissionsByFields(fields map[string]string) 
 
 	return submissions, nil
 }
-
-func (r *SubmissionRepository) getSubmissionsByField(field, value string) ([]*Entities.Submission, error) {
-	normalizedValue := strings.TrimSpace(value)
-	if normalizedValue == "" {
-		return nil, fmt.Errorf("%s is required", field)
-	}
-
-	res, err := r.adapter.Read(submissionTableName, map[string]string{field: normalizedValue})
-	if err != nil {
-		return nil, err
-	}
-
-	records := extractRecords(res)
-	if len(records) == 0 {
-		return []*Entities.Submission{}, nil
-	}
-
-	submissions := make([]*Entities.Submission, 0, len(records))
-	for _, record := range records {
-		submission, mapErr := recordToSubmission(record)
-		if mapErr != nil {
-			return nil, mapErr
-		}
-		if submission != nil {
-			submissions = append(submissions, submission)
-		}
-	}
-
-	return submissions, nil
-}

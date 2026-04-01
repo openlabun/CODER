@@ -131,26 +131,26 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	}
 
 	app.ChallengeModule = ChallengeUseCases{
-		CreateChallenge:     challenge_crud_usecases.NewCreateChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
-		UpdateChallenge:     challenge_crud_usecases.NewUpdateChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
+		CreateChallenge:     challenge_crud_usecases.NewCreateChallengeUseCase(deps.ChallengeRepository, deps.IOVariableRepository, deps.UserRepository),
+		UpdateChallenge:     challenge_crud_usecases.NewUpdateChallengeUseCase(deps.ChallengeRepository, deps.IOVariableRepository, deps.UserRepository),
 		PublishChallenge:    challenge_crud_usecases.NewPublishChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
 		ArchiveChallenge:    challenge_crud_usecases.NewArchiveChallengeUseCase(deps.ChallengeRepository, deps.UserRepository),
-		DeleteChallenge:     challenge_crud_usecases.NewDeleteChallengeUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository, deps.TestCaseRepository, deps.ExamItemRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
+		DeleteChallenge:     challenge_crud_usecases.NewDeleteChallengeUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository, deps.TestCaseRepository, deps.IOVariableRepository, deps.ExamItemRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
 		GetChallengeDetails: challenge_crud_usecases.NewGetChallengeDetailsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 		GetChallengesByUser: challenge_crud_usecases.NewGetChallengesByUserUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository),
 		GetPublicChallenges: exam_usecases.NewGetPublicChallengesUseCase(deps.ChallengeRepository, deps.UserRepository),
-		ForkChallenge:       exam_usecases.NewForkChallengeUseCase(deps.ChallengeRepository, deps.UserRepository, deps.TestCaseRepository),
+		ForkChallenge:       exam_usecases.NewForkChallengeUseCase(deps.ChallengeRepository, deps.IOVariableRepository, deps.UserRepository, deps.TestCaseRepository),
 	}
 
 	app.TestCaseModule = TestCaseUseCases{
-		CreateTestCase:          test_case_crud_usecases.NewCreateTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
-		UpdateTestCase:          test_case_crud_usecases.NewUpdateTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
-		DeleteTestCase:          test_case_crud_usecases.NewDeleteTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository),
+		CreateTestCase:          test_case_crud_usecases.NewCreateTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.IOVariableRepository),
+		UpdateTestCase:          test_case_crud_usecases.NewUpdateTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.IOVariableRepository),
+		DeleteTestCase:          test_case_crud_usecases.NewDeleteTestCaseUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.IOVariableRepository),
 		GetTestCasesByChallenge: test_case_crud_usecases.NewGetTestCasesByChallengeUseCase(deps.UserRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.CourseRepository, deps.ExamItemRepository),
 	}
 
 	app.ExamItemModule = ExamItemUseCases{
-		CreateExamItem: exam_item_crud_usecases.NewCreateExamItemUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository, deps.ChallengeRepository, deps.TestCaseRepository),
+		CreateExamItem: exam_item_crud_usecases.NewCreateExamItemUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.IOVariableRepository),
 		UpdateExamItem: exam_item_crud_usecases.NewUpdateExamItemUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository, deps.ChallengeRepository),
 		DeleteExamItem: exam_item_crud_usecases.NewDeleteExamItemUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository, deps.ChallengeRepository),
 	}
@@ -164,12 +164,12 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	}
 
 	app.SubmissionUseCases = SubmissionUseCases{
-		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.PublisherPort),
+		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
 		GetSubmissionStatus:     submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
 		GetChallengeSubmissions: submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
 		GetSessionSubmissions:   submission_usecases.NewGetSessionSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository, deps.SessionRepository),
 		GetUserSubmissions:      submission_usecases.NewGetUserSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository),
-		UpdateResult:            submission_usecases.NewUpdateResultUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.LoginService, deps.PasswordHasher),
+		UpdateResult:            submission_usecases.NewUpdateResultUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.IOVariableRepository, deps.SubmissionResultRepository, deps.LoginService, deps.PasswordHasher),
 	}
 
 	app.UserModule = UserUseCases{

@@ -55,6 +55,7 @@ func BuildDependencies() (*ApplicationDependencies, error) {
 	submissionRepository := submission_repository.NewSubmissionRepository(robleAdapter)
 	sessionRepository := submission_repository.NewSessionRepository(robleAdapter)
 	submissionResRepository := submission_repository.NewSubmissionResultRepository(robleAdapter)
+	ioVariableRepository := exam_repository.NewIOVariableRepository(robleAdapter)
 
 	publisherAdapter, err := rabbitmq_infrastructure.NewRabbitMQAdapter()
 	if err != nil {
@@ -75,6 +76,7 @@ func BuildDependencies() (*ApplicationDependencies, error) {
 		examRepository,
 		challengeRepository,
 		testCaseRepository,
+		ioVariableRepository,
 		examItemRepository,
 
 		submissionRepository,

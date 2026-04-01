@@ -11,7 +11,6 @@ import (
 
 const (
 	testCaseTableName   = "TestCase"
-	ioVariableTableName = "IOVariable"
 )
 
 type TestCaseRepository struct {

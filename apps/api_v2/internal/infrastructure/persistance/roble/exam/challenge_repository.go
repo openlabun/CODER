@@ -7,6 +7,7 @@ import (
 	"time"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 )
 
@@ -15,11 +16,15 @@ const (
 )
 
 type ChallengeRepository struct {
-	adapter *infrastructure.RobleDatabaseAdapter
+	adapter              *infrastructure.RobleDatabaseAdapter
+	ioVariableRepository repositories.IOVariableRepository
 }
 
-func NewChallengeRepository(adapter *infrastructure.RobleDatabaseAdapter) *ChallengeRepository {
-	return &ChallengeRepository{adapter: adapter}
+func NewChallengeRepository(
+	adapter *infrastructure.RobleDatabaseAdapter,
+	ioVariableRepository repositories.IOVariableRepository,
+) *ChallengeRepository {
+	return &ChallengeRepository{adapter: adapter, ioVariableRepository: ioVariableRepository}
 }
 
 func (r *ChallengeRepository) CreateChallenge(ctx context.Context, challenge *Entities.Challenge) (*Entities.Challenge, error) {
@@ -331,20 +336,6 @@ func (r *ChallengeRepository) recordToHydratedChallenge(ctx context.Context, rec
 	return recordToChallenge(record, inputVariables, outputVariable)
 }
 
-func (r *ChallengeRepository) upsertChallengeIOVariables(ctx context.Context, challenge *Entities.Challenge) error {
-	for _, input := range challenge.InputVariables {
-		if err := r.upsertIOVariable(ctx, input); err != nil {
-			return err
-		}
-	}
-
-	if err := r.upsertIOVariable(ctx, challenge.OutputVariable); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (r *ChallengeRepository) getIOVariablesByIDs(ctx context.Context, ids []string) ([]Entities.IOVariable, error) {
 	if len(ids) == 0 {
 		return []Entities.IOVariable{}, nil
@@ -369,42 +360,11 @@ func (r *ChallengeRepository) getIOVariableByID(ctx context.Context, variableID 
 	if normalizedID == "" {
 		return nil, nil
 	}
-	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
-		return nil, err
-	}
 
-	res, err := r.adapter.Read(ioVariableTableName, map[string]string{"ID": normalizedID})
+	ioVariable, err := r.ioVariableRepository.GetIOVariableByID(ctx, normalizedID)
 	if err != nil {
 		return nil, err
 	}
 
-	record, err := firstRecord(res)
-	if err != nil {
-		return nil, nil
-	}
-
-	return recordToIOVariable(record)
-}
-
-func (r *ChallengeRepository) upsertIOVariable(ctx context.Context, variable Entities.IOVariable) error {
-	variableID := strings.TrimSpace(variable.ID)
-	if variableID == "" {
-		return fmt.Errorf("io variable id is required")
-	}
-	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
-		return err
-	}
-
-	res, err := r.adapter.Read(ioVariableTableName, map[string]string{"ID": variableID})
-	if err != nil {
-		return err
-	}
-
-	if _, findErr := firstRecord(res); findErr != nil {
-		_, insertErr := r.adapter.Insert(ioVariableTableName, []map[string]any{ioVariableToRecord(variable)})
-		return insertErr
-	}
-
-	_, updateErr := r.adapter.Update(ioVariableTableName, "ID", variableID, ioVariableToUpdates(variable))
-	return updateErr
+	return ioVariable, nil
 }

@@ -34,8 +34,9 @@ func TestExamCRUD(t *testing.T) {
 	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
 	courseRepository := roble_course_infrastructure.NewCourseRepository(robleAdapter)
 	examRepository := roble_exam_infrastructure.NewExamRepository(robleAdapter)
-	challengeRepository := roble_exam_infrastructure.NewChallengeRepository(robleAdapter)
-	testCaseRepository := roble_exam_infrastructure.NewTestCaseRepository(robleAdapter)
+	ioVariableRepository := roble_exam_infrastructure.NewIOVariableRepository(robleAdapter)
+	challengeRepository := roble_exam_infrastructure.NewChallengeRepository(robleAdapter, ioVariableRepository)
+	testCaseRepository := roble_exam_infrastructure.NewTestCaseRepository(robleAdapter, ioVariableRepository)
 	t.Log("[OK] Adapter y repositories inicializados")
 
 	t.Log("[STEP 2] Login con usuario docente de pruebas")

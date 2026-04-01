@@ -6,15 +6,20 @@ import (
 	"strings"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 )
 
 type SubmissionResultRepository struct {
-	adapter *infrastructure.RobleDatabaseAdapter
+	adapter              *infrastructure.RobleDatabaseAdapter
+	ioVariableRepository examRepository.IOVariableRepository
 }
 
-func NewSubmissionResultRepository(adapter *infrastructure.RobleDatabaseAdapter) *SubmissionResultRepository {
-	return &SubmissionResultRepository{adapter: adapter}
+func NewSubmissionResultRepository(
+	adapter *infrastructure.RobleDatabaseAdapter,
+	ioVariableRepository examRepository.IOVariableRepository,
+) *SubmissionResultRepository {
+	return &SubmissionResultRepository{adapter: adapter, ioVariableRepository: ioVariableRepository}
 }
 
 func (r *SubmissionResultRepository) CreateResult(ctx context.Context, result *Entities.SubmissionResult) (*Entities.SubmissionResult, error) {
@@ -86,7 +91,7 @@ func (r *SubmissionResultRepository) GetResultByID(ctx context.Context, resultID
 		return nil, nil
 	}
 
-	actualOutput, err := getIOVariableByID(ctx, r.adapter, asString(record["ActualOutput"]))
+	actualOutput, err := r.ioVariableRepository.GetIOVariableByID(ctx, asString(record["ActualOutput"]))
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +128,7 @@ func (r *SubmissionResultRepository) getResultsByField(ctx context.Context, fiel
 
 	results := make([]*Entities.SubmissionResult, 0, len(records))
 	for _, record := range records {
-		actualOutput, fetchErr := getIOVariableByID(ctx, r.adapter, asString(record["ActualOutput"]))
+		actualOutput, fetchErr := r.ioVariableRepository.GetIOVariableByID(ctx, asString(record["ActualOutput"]))
 		if fetchErr != nil {
 			return nil, fetchErr
 		}

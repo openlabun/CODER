@@ -1,9 +1,0 @@
-{
-  "method": "POST",
-  "path": "/submissions/sessions/{id}/close",
-  "pathParams": {
-    "id": "session-123"
-  },
-  "query": {},
-  "body": null
-}

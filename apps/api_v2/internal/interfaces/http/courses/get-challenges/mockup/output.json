@@ -1,7 +1,6 @@
 {
-  "statusCode": 200,
+  "statusCode": 501,
   "body": {
-    "challenges": [],
-    "message": "Listado de retos (vacío por defecto)"
+    "message": "Get course challenges use case is not implemented"
   }
 }

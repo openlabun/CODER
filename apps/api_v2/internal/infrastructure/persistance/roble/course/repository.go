@@ -160,13 +160,7 @@ func (r *CourseRepository) GetCourseByID(ctx context.Context, courseID string) (
 		return nil, nil
 	}
 
-	course, err := recordToCourse(record)
-	if err != nil {
-		return nil, err
-	}
-
-	r.hydrateCourseCounts(ctx, course)
-	return course, nil
+	return recordToCourse(record)
 }
 
 func (r *CourseRepository) GetCourseByEnrollmentCode(ctx context.Context, enrollmentCode string) (*Entities.Course, error) {
@@ -187,13 +181,7 @@ func (r *CourseRepository) GetCourseByEnrollmentCode(ctx context.Context, enroll
 		return nil, nil
 	}
 
-	course, err := recordToCourse(record)
-	if err != nil {
-		return nil, err
-	}
-
-	r.hydrateCourseCounts(ctx, course)
-	return course, nil
+	return recordToCourse(record)
 }
 
 func (r *CourseRepository) GetCoursesByStudentID(ctx context.Context, studentID string) ([]*Entities.Course, error) {
@@ -258,7 +246,6 @@ func (r *CourseRepository) GetCoursesByTeacherID(ctx context.Context, teacherID 
 			return nil, err
 		}
 		if course != nil {
-			r.hydrateCourseCounts(ctx, course)
 			courses = append(courses, course)
 		}
 	}
@@ -315,35 +302,6 @@ func (r *CourseRepository) GetStudentsByCourseID(ctx context.Context, courseID s
 	}
 
 	return students, nil
-}
-
-func (r *CourseRepository) GetAllCourses(ctx context.Context) ([]*Entities.Course, error) {
-	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
-		return nil, err
-	}
-
-	res, err := r.adapter.Read(courseTableName, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	records := extractRecords(res)
-	if len(records) == 0 {
-		return []*Entities.Course{}, nil
-	}
-
-	courses := make([]*Entities.Course, 0, len(records))
-	for _, record := range records {
-		course, err := recordToCourse(record)
-		if err != nil {
-			return nil, err
-		}
-		if course != nil {
-			courses = append(courses, course)
-		}
-	}
-
-	return courses, nil
 }
 
 
@@ -467,17 +425,4 @@ func asTime(v any) (time.Time, bool) {
 	}
 
 	return time.Time{}, false
-}
-func (r *CourseRepository) hydrateCourseCounts(ctx context.Context, course *Entities.Course) {
-	if course == nil {
-		return
-	}
-
-	// We ignore error here to not break the whole request if count fails
-	res, err := r.adapter.Read(courseStudentTableName, map[string]string{"CourseID": course.ID})
-	if err == nil {
-		records := extractRecords(res)
-		course.StudentCount = len(records)
-		course.EnrolledCount = len(records)
-	}
 }

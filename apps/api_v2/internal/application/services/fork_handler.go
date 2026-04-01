@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 
 	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
@@ -17,6 +18,7 @@ func ForkChallenge (ctx context.Context,
 	userID string, 
 	challengeRepository examRepository.ChallengeRepository,
 	testCaseRepository examRepository.TestCaseRepository,
+	ioVariableRepository examRepository.IOVariableRepository,
 	) (*Entities.Challenge, error) {
 
 		// [STEP 1] Get Challenge TestCases
@@ -55,14 +57,14 @@ func ForkChallenge (ctx context.Context,
 		}
 
 		// [STEP 5] Save forked Challenge and TestCases in repository
-		new_challenge, err := challengeRepository.CreateChallenge(ctx, forkedChallenge)
+		new_challenge, err := domain_services.CreateChallenge(ctx, forkedChallenge, challengeRepository, ioVariableRepository)
 		if err != nil {
 			return nil, fmt.Errorf("failed to save forked challenge: %w", err)
 		}
 
 		// [STEP 6] Save forked TestCases in repository
 		for _, tc := range forkedTestCases {
-			_, err = testCaseRepository.CreateTestCase(ctx, &tc)
+			_, err = domain_services.CreateTestCase(ctx, &tc, testCaseRepository, ioVariableRepository)
 			if err != nil {
 				return nil, fmt.Errorf("failed to save forked test case: %w", err)
 			}

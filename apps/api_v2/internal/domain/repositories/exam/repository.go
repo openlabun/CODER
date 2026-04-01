@@ -50,3 +50,10 @@ type TestCaseRepository interface {
 	GetInputVariablesByTestCaseID(ctx context.Context, testCaseID string) ([]*Entities.IOVariable, error)
 	GetOutputVariablesByTestCaseID(ctx context.Context, testCaseID string) ([]*Entities.IOVariable, error)
 }
+
+type IOVariableRepository interface {
+	CreateIOVariable(ctx context.Context, ioVariable *Entities.IOVariable) (*Entities.IOVariable, error)
+	UpdateIOVariable(ctx context.Context, ioVariable *Entities.IOVariable) (*Entities.IOVariable, error)
+	GetIOVariableByID(ctx context.Context, ioVariableID string) (*Entities.IOVariable, error)
+	DeleteIOVariable(ctx context.Context, ioVariableID string) error
+}

@@ -1,178 +1,62 @@
 # PRODUCTION ENVIRONMENT
-# Use: docker-compose -f docker-compose.prod.yml up -d
+# Use: docker compose -f docker-compose.yml up -d --build
 version: "3.9"
 
 services:
-    api:
+    apiv2:
         build:
-            context: ./apps/api
+            context: ./apps/api_v2
             dockerfile: Dockerfile.prod
-        command: node dist/main.js
-        restart: always
-        expose:
-            - "${API_PORT:-3000}"
-        depends_on:
-            - postgres
-            - redis
-        environment:
-            - NODE_ENV=${NODE_ENV}
-            - PORT=${PORT}
-            - CORS_ORIGIN=${CORS_ORIGIN}
-            - POSTGRES_HOST=${POSTGRES_HOST}
-            - POSTGRES_PORT=${POSTGRES_PORT}
-            - POSTGRES_USER=${POSTGRES_USER}
-            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-            - POSTGRES_DB=${POSTGRES_DB}
-            - REDIS_HOST=${REDIS_HOST}
-            - REDIS_PORT=${REDIS_PORT}
-            - REDIS_PASSWORD=${REDIS_PASSWORD}
-            - GEMINI_API_KEY=${GEMINI_API_KEY}
-        networks:
-            - judge_net
-        healthcheck:
-            test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) process.exit(1)})\""]
-            interval: 30s
-            timeout: 10s
-            retries: 3
-            start_period: 40s
-        deploy:
-            resources:
-                limits:
-                    cpus: '1'
-                    memory: 1G
-    
-    web:
-        build:
-            context: ./apps/web
-            dockerfile: Dockerfile.prod
-            args:
-                - VITE_API_URL=${VITE_API_URL}
         restart: always
         ports:
-            - "${WEB_PORT:-5173}:5173"
-        networks:
-            - judge_net
-        healthcheck:
-            test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:5173/health"]
-            interval: 30s
-            timeout: 10s
-            retries: 5
-            start_period: 20s
-        deploy:
-            resources:
-                limits:
-                    cpus: '0.5'
-                    memory: 512M
-
-    postgres:
-        image: postgres:16-alpine
-        restart: always
+            - "${APIV2_PORT:-4000}:${APIV2_PORT:-4000}"
+        env_file:
+            - .env.dev
         environment:
-            POSTGRES_USER: ${POSTGRES_USER}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-            POSTGRES_DB: ${POSTGRES_DB}
-        volumes:
-            - pgdata_prod:/var/lib/postgresql/data
-            - ./apps/api/migrations:/docker-entrypoint-initdb.d:ro
-        networks:
-            - judge_net
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
-            interval: 10s
-            timeout: 5s
-            retries: 15
-            start_period: 40s
-        deploy:
-            resources:
-                limits:
-                    cpus: '1'
-                    memory: 1G
-
-    redis:
-        image: redis:7-alpine
-        container_name: juez_redis_prod
-        restart: always
-        volumes:
-            - redis_data:/data
-        networks:
-            - judge_net
-        healthcheck:
-            test: ["CMD", "redis-cli", "ping"]
-            interval: 10s
-            timeout: 5s
-            retries: 15
-            start_period: 30s
-    
-    runner-python:
-        profiles: ["judge"]
-        build:
-            context: ./apps/api/src/runners/python
-        image: juez_runner_python:prod
-        restart: "no"
-
-    runner-node:
-        profiles: ["judge"]
-        build:
-            context: ./apps/api/src/runners/node
-        image: juez_runner_node:prod
-        restart: "no"
-
-    runner-cpp:
-        profiles: ["judge"]
-        build:
-            context: ./apps/api/src/runners/cpp
-        image: juez_runner_cpp:prod
-        restart: "no"
-
-    runner-java:
-        profiles: ["judge"]
-        build:
-            context: ./apps/api/src/runners/java
-        image: juez_runner_java:prod
-        restart: "no"
-    
-    worker:
-        profiles: ["judge"]
-        build:
-            context: ./apps/api
-            dockerfile: Dockerfile.worker
-            args:
-                - NODE_ENV=production
-        command: npm run worker
-        restart: always
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock:ro
-            - submissions_data:/usr/src/app/data
+            - APIV2_PORT=${APIV2_PORT:-4000}
+            - RABBITMQ_URL=${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}
         depends_on:
-            - runner-python
-            - runner-node
-            - runner-cpp
-            - runner-java
-            - postgres
-            - redis
-        environment:
-            - NODE_ENV=${NODE_ENV}
-            - POSTGRES_HOST=${POSTGRES_HOST}
-            - POSTGRES_PORT=${POSTGRES_PORT}
-            - POSTGRES_USER=${POSTGRES_USER}
-            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-            - POSTGRES_DB=${POSTGRES_DB}
-            - REDIS_HOST=${REDIS_HOST}
-            - REDIS_PORT=${REDIS_PORT}
-            - REDIS_PASSWORD=${REDIS_PASSWORD}
-            - HOST_SUBMISSIONS_DIR=${HOST_SUBMISSIONS_DIR}
+            rabbitmq:
+                condition: service_healthy
         networks:
             - judge_net
-        deploy:
-            resources:
-                limits:
-                    cpus: '2'
-                    memory: 2G
 
-volumes:
-    pgdata_prod:
-    redis_data:
-    submissions_data:
+    rabbitmq:
+        image: rabbitmq:3.13-management
+        restart: always
+        expose:
+            - "5672:5672"
+            - "15672:15672"
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+        networks:
+            - judge_net
+
+    worker-python:
+        build:
+            context: ./apps/workers/python
+            dockerfile: Dockerfile
+        working_dir: /app
+        command: python main.py
+        restart: always
+        env_file:
+            - .env.dev
+        environment:
+            - API_BASE_URL=http://apiv2:${APIV2_PORT:-4000}
+            - RABBITMQ_URL=${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}
+            - QUEUE_NAME=${PYTHON_QUEUE:-python.queue}
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        depends_on:
+            apiv2:
+                condition: service_started
+            rabbitmq:
+                condition: service_healthy
+        networks:
+            - judge_net
 
 networks:
     judge_net:

@@ -41,7 +41,7 @@ func TestExamCRUD(t *testing.T) {
 
 	t.Log("[STEP 2] Login con usuario docente de pruebas")
 	email := "test@test.com"
-	password := "Testing123!"
+	password := "Password123!"
 
 	access, err := authAdapter.LoginUser(email, password)
 	if err != nil {

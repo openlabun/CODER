@@ -1,8 +1,8 @@
 package roble_auth_test
 
 import (
-	"testing"
 	"net/http"
+	"testing"
 	"time"
 
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
@@ -19,7 +19,7 @@ func TestUserDirectRegistration(t *testing.T) {
 
 func TestRobleRegistrationInfrastructure(t *testing.T) {
 	email := "test@test.com"
-	password := "Testing123!"
+	password := "Password123!"
 	name := "Test User"
 
 	httpClient := &http.Client{Timeout: 15 * time.Second}

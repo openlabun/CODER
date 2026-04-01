@@ -1,0 +1,18 @@
+[
+  {
+    "submission": {
+      "id": "sub-1",
+      "userID": "usr-1",
+      "challengeID": "chal-1",
+      "sessionID": "sess-1",
+      "code": "print(1)",
+      "language": "python"
+    },
+    "results": [
+      {
+        "id": "res-1",
+        "status": "passed"
+      }
+    ]
+  }
+]

@@ -34,21 +34,3 @@ type UpdateCourseInput struct {
 type GetCourseDetailsInput struct {
 	CourseID string `json:"course_id"`
 }
-
-type GetEnrolledCoursesInput struct {
-	StudentID string `json:"student_id"`
-}
-
-type GetOwnedCoursesInput struct {
-	TeacherID string `query:"teacherId"`
-}
-
-type CourseBrowseItem struct {
-	ID             string `json:"id"`
-	Name           string `json:"name"`
-	Code           string `json:"code"`
-	Period         string `json:"period"`
-	ProfessorID    string `json:"professor_id"`
-	ProfessorName  string `json:"professor_name"`
-	CreatedAt      string `json:"created_at"`
-}

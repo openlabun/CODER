@@ -34,7 +34,7 @@
 
 #### Exámenes (`Exam`)
 
-- Un examen (`Exam`) contiene varios retos (`Challenge`)
+- Un examen (`Exam`) contiene varios retos (`Challenge`) a través de un `ExamItem`. Entre los exámenes y los retos se manejará una relación muchos a muchos.
 
 - Un examen (`Exam`) puede estar o no vinculado a un curso (`Course`), si no está vinculado, podrá ser visto por todos los usuarios estudiantes (según configuración de visibilidad).
 
@@ -50,19 +50,27 @@
 
 - El examen podrá configurarse con una fecha de inicio (atributo `StartTime`) y con una fecha de cierre (atributo `EndTime`). Después de la fecha de cierre el examen no recibirá revisiones (`Submission`), a menos que se encuentre activada la configuración para aceptar respuestas tardías (`AllowLateSubmissions == True`).
 
-- El examen podrá tener un tiempo límite (atributo `TimeLimit`) y un límite de intentos (atributo `TryLimit`). Si alguna revisión (`Submission`) se carga después del tiempo límite no será recibida, y si se excede el límite de intentos tampoco. Si el valor de estos atributos es -1 entonces se tomará como tiempo o intentos ilimitados.
+- El examen podrá tener un tiempo límite (atributo `TimeLimit`) y un límite de intentos (atributo `TryLimit`). Si alguna revisión (`Submission`) se carga después del tiempo límite **no será recibida**, y si se excede el límite de intentos tampoco. Si el valor de estos atributos es `-1` entonces se tomará como **tiempo o intentos ilimitados**.
+
+- Solo los exámenes (`Exam`) pueden resolverse. Los retos (`Challenge`) deben estar asociados a uno para poder resolverse.
 
 #### Retos (`Challenge`)
 
+- Son enunciados de retos de programación, los usuarios profesores pueden crearlos y alojarlos en su repositorio, estos podrán ser compartidos o editados según su configuración de guardado.
+
 - Los retos (`Challenge`) pueden guardarse como:
   
-  - `draft`: permiten modificación, estarán en el examen pero no serán visibles
+  - `draft`: permiten modificación, no pueden ser vinculados a un examen.
   
-  - `published`: no permiten modificación, estarán visibles en el examen y permitirán ejecuciones.
+  - `published`: no permiten modificación, pueden ser vinculados a un examen, y cualquier otro usuario profesor lo puede buscar y hacer copia (*fork*).
+  
+  - `private`: no permiten modificación, solo serán visibles en el repositorio para su dueño pero pueden ser vinculados a un examen.
   
   - `archived`: no permiten modificación, tampoco estarán visibles en el examen.
 
-- Una vez publicado un reto no podrá modificarse, solo podrá archivarse. Y una vez archivado, puede volver a publicarse.
+- Una vez publicado un reto **no podrá modificarse**, solo podrá archivarse. Y una vez archivado, puede volver a publicarse.
+
+- Se puede hacer copia (*fork*) a un reto existente de otro usuario (si está disponible para su vista) o de uno del que el usuario es dueño.
 
 - Cada reto deberá contar con un time límite de ejecución y una memoria límite para el worker. **(No podrá exceder determinados valores fijados en las variables en producción)**.
 
@@ -73,6 +81,20 @@
   - Tipo (`Type`: `string`, `int`, `float`)
   
   - Valor esperado/ejemplo (`Value`)
+
+#### Punto de Examen (`ExamItem`)
+
+- Son asociaciones de muchos a muchos entre exámenes (`Exam`) y retos (`Challenge`)
+
+- Solo se pueden crear a partir de retos (`Challenge`) que se encuentren en tu repositorio (visibilidad `private`) o que otros usuarios hayan publicado (visibilidad `published`).
+
+- En caso de usar un reto de otro usuario se realizará *fork* automáticamente hacia tu propio repositorio.
+
+- Por cada punto de examen (`ExamItem`) se deberá incluir valores para el orden del punto en el examen (atributo `Order`) y el valor del punto (atributo `Points`). El orden se calcula automáticamente cuando se crea el `ExamItem`.
+
+- Solo el dueño de un examen (`Exam`) puede crear puntos (`ExamItem`), modificarlos o borrarlos en él.
+
+- Al crear un nuevo punto (`ExamItem`) validará si ese reto (`Challenge`) no se encontraba ya en el examen (`Exam`). Si lo estaba arrojará error.
 
 #### Casos de Prueba (`TestCase`)
 

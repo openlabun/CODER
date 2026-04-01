@@ -20,6 +20,86 @@ tags:
   - name: metrics
   - name: health
 paths:
+  /submissions/challenge/{challengeId}:
+      get:
+        tags:
+          - submissions
+        summary: List submissions by challenge
+        description: |
+          Devuelve todas las submissions asociadas a un challenge. Permite filtrar por status y testId.
+          Requiere autenticación y permisos adecuados (ver lógica de roles en backend).
+        x-implementation: usecase
+        x-mockup:
+          input: apps/api_v2/internal/interfaces/http/submissions/get-by-challenge-id/mockup/input.json
+          output: apps/api_v2/internal/interfaces/http/submissions/get-by-challenge-id/mockup/output.json
+        parameters:
+          - in: path
+            name: challengeId
+            required: true
+            schema:
+              type: string
+          - in: query
+            name: status
+            required: false
+            schema:
+              type: string
+          - in: query
+            name: testId
+            required: false
+            schema:
+              type: string
+        responses:
+          "200":
+            description: Lista de submissions para el challenge.
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/SubmissionOutputDTO"
+                example:
+                  - submission:
+                      id: sub-1
+                      userID: usr-1
+                      challengeID: chal-1
+                      sessionID: sess-1
+                      code: print(1)
+                      language: python
+                    results:
+                      - id: res-1
+                        status: passed
+
+  /submissions/sessions/active:
+    get:
+      tags:
+        - submissions
+      summary: Get active session
+      description: |
+        Devuelve la sesión activa del usuario actual. Si el llamador es profesor, puede pasar `user_id` en query para obtener la sesión activa de un estudiante.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/output.json
+      parameters:
+        - in: query
+          name: user_id
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Active session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionsGetBySessionIdOutput200"
+              example:
+                  id: session-123
+                  studentID: usr-student-123
+                  examID: exam-123
+                  status: active
+                  attempts: 0
+                  timeLeft: 3600
   /auth/register:
     post:
       tags:
@@ -36,14 +116,9 @@ paths:
             schema:
               $ref: "#/components/schemas/AuthPostRegisterInput"
             example: &a1
-              method: POST
-              path: /auth/register
-              pathParams: {}
-              query: {}
-              body:
-                email: student@example.com
-                name: Student Test
-                password: Testing123!
+              email: student@example.com
+              name: Student Test
+              password: Testing123!
       responses:
         "201":
           description: Register response
@@ -52,8 +127,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthPostRegisterOutput201"
               example: &a2
-                statusCode: 201
-                body:
                   token:
                     access_token: jwt-access-token
                     refresh_token: jwt-refresh-token
@@ -78,13 +151,8 @@ paths:
             schema:
               $ref: "#/components/schemas/AuthPostLoginInput"
             example: &a3
-              method: POST
-              path: /auth/login
-              pathParams: {}
-              query: {}
-              body:
-                email: student@example.com
-                password: Testing123!
+              email: student@example.com
+              password: Testing123!
       responses:
         "200":
           description: Login response
@@ -93,8 +161,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthPostLoginOutput200"
               example: &a4
-                statusCode: 200
-                body:
                   token:
                     access_token: jwt-access-token
                     refresh_token: jwt-refresh-token
@@ -120,8 +186,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthGetMeOutput200"
               example: &a5
-                statusCode: 200
-                body:
                   id: usr-123
                   username: Student Test
                   email: student@example.com
@@ -164,14 +228,9 @@ paths:
             schema:
               $ref: "#/components/schemas/AiPostGenerateChallengeIdeasInput"
             example: &a6
-              method: POST
-              path: /ai/generate-challenge-ideas
-              pathParams: {}
-              query: {}
-              body:
-                topic: sorting
-                difficulty: easy
-                count: 3
+              topic: sorting
+              difficulty: easy
+              count: 3
       responses:
         "200":
           description: Mock AI challenge ideas
@@ -180,8 +239,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiPostGenerateChallengeIdeasOutput200"
               example: &a7
-                statusCode: 501
-                body:
                   message: AI challenge idea generation not implemented in application usecases
   /ai/generate-test-cases:
     post:
@@ -199,16 +256,11 @@ paths:
             schema:
               $ref: "#/components/schemas/AiPostGenerateTestCasesInput"
             example: &a8
-              method: POST
-              path: /ai/generate-test-cases
-              pathParams: {}
-              query: {}
-              body:
-                challengeDescription: Sum two integers
-                inputFormat: a b
-                outputFormat: a+b
-                publicCount: 2
-                hiddenCount: 3
+              challengeDescription: Sum two integers
+              inputFormat: a b
+              outputFormat: a+b
+              publicCount: 2
+              hiddenCount: 3
       responses:
         "200":
           description: Mock AI test cases
@@ -217,9 +269,90 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiPostGenerateTestCasesOutput200"
               example: &a9
-                statusCode: 501
-                body:
                   message: AI test case generation not implemented in application usecases
+
+  /ai/generate-full-challenge:
+    post:
+      tags:
+        - ai
+      summary: Generate a full challenge (description + test cases)
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/ai/post-generate-full-challenge/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/ai/post-generate-full-challenge/mockup/output.json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiPostGenerateFullChallengeInput"
+            example: &a35
+              topic: sorting
+              difficulty: medium
+      responses:
+        "200":
+          description: AI generated full challenge (challenge object with test cases)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiPostGenerateFullChallengeOutput200"
+              example: &a36
+                statusCode: 200
+                body:
+                  challenge:
+                    title: Sort It
+                    description: Sort an array of integers ascending
+                    difficulty: medium
+                    tags:
+                      - arrays
+                      - sorting
+                    input_format: "n\\narr"
+                    output_format: "sorted_arr"
+                    constraints: "n <= 100000"
+                    public_test_cases:
+                      - input: "3\\n1 2 3"
+                        output: "1 2 3"
+                        name: sample1
+                        visible: true
+                    hidden_test_cases:
+                      - input: "5\\n5 4 3 2 1"
+                        output: "1 2 3 4 5"
+                        name: hidden1
+                        visible: false
+
+  /ai/generate-exam:
+    post:
+      tags:
+        - ai
+      summary: Generate an exam (metadata only)
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/ai/post-generate-exam/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/ai/post-generate-exam/mockup/output.json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiPostGenerateExamInput"
+            example: &a37
+              topic: data structures
+              difficulty: easy
+      responses:
+        "200":
+          description: AI generated exam
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiPostGenerateExamOutput200"
+              example: &a38
+                statusCode: 200
+                body:
+                  exam:
+                    title: Intro to Data Structures Exam
+                    description: Short exam covering arrays and linked lists
+                    time_limit: 60
+                    try_limit: 1
   /challenges:
     post:
       tags:
@@ -236,11 +369,6 @@ paths:
             schema:
               $ref: "#/components/schemas/ChallengesPostCreateInput"
             example: &a10
-              method: POST
-              path: /challenges
-              pathParams: {}
-              query: {}
-              body:
                 title: Two Sum
                 description: Return indexes of two numbers that add up to target
                 tags:
@@ -262,7 +390,7 @@ paths:
                   type: string
                   value: 0,1
                 constraints: 2 <= n <= 10000
-                examID: exam-123
+                userID: exam-123
       responses:
         "201":
           description: Challenge created
@@ -271,13 +399,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesPostCreateOutput201"
               example: &a11
-                statusCode: 201
-                body:
                   id: challenge-123
                   title: Two Sum
                   status: draft
                   difficulty: easy
-                  examID: exam-123
+                  userID: exam-123
     get:
       tags:
         - challenges
@@ -300,8 +426,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesGetListOutput200"
               example: &a12
-                statusCode: 200
-                body:
                   - id: challenge-123
                     title: Two Sum
                     status: published
@@ -330,14 +454,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesGetByIdOutput200"
               example: &a13
-                statusCode: 200
-                body:
                   id: challenge-123
                   title: Two Sum
                   description: Return indexes of two numbers that add up to target
                   status: published
                   difficulty: easy
-                  examID: exam-123
+                  userID: exam-123
+                  challenge: 
+                    id: challenge-123
+                    title: Two Sum
+                    description: Return indexes of two numbers that add up to target
+                    status: published
+                    difficulty: easy
+                    inputVariables:
+                      - name: nums
+                        type: string
+                        value: 2,7,11,15
+                      - name: target
+                        type: int
+                        value: "9"
+                    outputVariable:
+                      name: indexes
+                      type: string
+                      value: 0,1
+                    constraints: 2 <= n <= 10000
     patch:
       tags:
         - challenges
@@ -359,12 +499,6 @@ paths:
             schema:
               $ref: "#/components/schemas/ChallengesPatchUpdateInput"
             example: &a14
-              method: PATCH
-              path: /challenges/{id}
-              pathParams:
-                id: challenge-123
-              query: {}
-              body:
                 title: Two Sum Updated
                 difficulty: medium
                 workerTimeLimit: 2000
@@ -376,8 +510,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesPatchUpdateOutput200"
               example: &a15
-                statusCode: 200
-                body:
                   id: challenge-123
                   title: Two Sum Updated
     delete:
@@ -424,8 +556,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesPostPublishOutput200"
               example: &a16
-                statusCode: 200
-                body:
                   id: challenge-123
                   status: published
   /challenges/{id}/archive:
@@ -451,10 +581,68 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChallengesPostArchiveOutput200"
               example: &a17
-                statusCode: 200
-                body:
                   id: challenge-123
                   status: archived
+
+  /challenges/public:
+    get:
+      tags:
+        - challenges
+      summary: List public challenges
+      description: |
+        Devuelve los challenges publicados disponibles en la galería pública. Permite filtrar por `tag` y `difficulty`.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/challenges/get-public/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/challenges/get-public/mockup/output.json
+      parameters:
+        - in: query
+          name: tag
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: difficulty
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Public challenges list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengesGetListOutput200"
+              example: *a12
+
+  /challenges/{id}/fork:
+    post:
+      tags:
+        - challenges
+      summary: Fork challenge
+      description: |
+        Crea una copia (fork) de un challenge publicado en el repositorio del usuario que realiza la petición. Requiere permisos de profesor.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/challenges/post-fork/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/challenges/post-fork/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Fork created (new challenge)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengesPostCreateOutput201"
+              example: *a11
+
+
+
   /test-cases:
     post:
       tags:
@@ -471,11 +659,6 @@ paths:
             schema:
               $ref: "#/components/schemas/TestCasesPostCreateInput"
             example: &a18
-              method: POST
-              path: /test-cases
-              pathParams: {}
-              query: {}
-              body:
                 name: tc_add_1
                 input:
                   - name: a
@@ -499,8 +682,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/TestCasesPostCreateOutput201"
               example: &a19
-                statusCode: 201
-                body:
                   id: test-case-123
                   challengeID: challenge-123
                   isSample: true
@@ -510,6 +691,9 @@ paths:
       tags:
         - test-cases
       summary: List test cases by challenge
+      description: |
+        Devuelve los test cases asociados a un challenge. Si el usuario es estudiante, exam_id es obligatorio y filtra los test cases públicos del challenge para ese examen.
+        Si exam_id no se envía, se asume acceso de profesor o admin.
       x-implementation: usecase
       x-mockup:
         input: apps/api_v2/internal/interfaces/http/test-cases/get-by-challenge-id/mockup/input.json
@@ -521,10 +705,11 @@ paths:
           schema:
             type: string
         - in: query
-          name: samplesOnly
+          name: exam_id
           required: false
           schema:
-            type: boolean
+            type: string
+          description: ID del examen (obligatorio para estudiantes, opcional para profesores)
       responses:
         "200":
           description: Test cases list
@@ -533,8 +718,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/TestCasesGetByChallengeIdOutput200"
               example: &a20
-                statusCode: 200
-                body:
                   - id: test-case-123
                     name: tc_add_1
                     isSample: true
@@ -590,8 +773,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/TestCasesDeleteByIdOutput200"
               example: &a21
-                statusCode: 200
-                body:
                   deleted: true
                   testCaseID: test-case-123
   /courses/enroll:
@@ -610,13 +791,9 @@ paths:
             schema:
               $ref: "#/components/schemas/CoursesPostEnrollInput"
             example: &a22
-              method: POST
-              path: /courses/enroll
-              pathParams: {}
-              query: {}
-              body:
                 courseID: course-123
                 studentID: usr-student-123
+                studentEmail: usr-student@test.com
       responses:
         "200":
           description: Enrollment response
@@ -625,11 +802,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesPostEnrollOutput200"
               example: &a23
-                statusCode: 200
-                body:
-                  enrolled: true
-                  courseID: course-123
-                  studentID: usr-student-123
+                enrolled: true
+                courseID: course-123
+                studentID: usr-student-123
   /courses:
     post:
       tags:
@@ -646,11 +821,6 @@ paths:
             schema:
               $ref: "#/components/schemas/CoursesPostCreateInput"
             example: &a24
-              method: POST
-              path: /courses
-              pathParams: {}
-              query: {}
-              body:
                 name: Algorithms 1
                 description: Intro to algorithms
                 visibility: public
@@ -669,8 +839,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesPostCreateOutput201"
               example: &a25
-                statusCode: 201
-                body:
                   id: course-123
                   name: Algorithms 1
                   code: ALG-101
@@ -678,7 +846,14 @@ paths:
     get:
       tags:
         - courses
-      summary: List courses
+      summary: List courses (owned, enrolled, or public)
+      description: |
+        Devuelve la lista de cursos según el alcance solicitado:
+        - `scope=owned`: cursos donde el usuario autenticado es profesor.
+        - `scope=enrolled`: cursos donde el usuario autenticado es estudiante.
+        - (sin scope o scope distinto): lista vacía o no implementado (futuro: cursos públicos).
+        
+        Requiere autenticación. El usuario debe tener el rol adecuado para cada scope.
       x-implementation: usecase
       x-mockup:
         input: apps/api_v2/internal/interfaces/http/courses/get-list/mockup/input.json
@@ -689,49 +864,40 @@ paths:
           required: false
           schema:
             type: string
+          description: |
+            Alcance de la consulta. Valores soportados: `owned`, `enrolled`.
         - in: query
           name: studentId
           required: false
           schema:
             type: string
+          description: (Reservado para uso futuro)
         - in: query
           name: teacherId
           required: false
           schema:
             type: string
+          description: (Reservado para uso futuro)
       responses:
         "200":
-          description: Courses list
+          description: Lista de cursos según el scope solicitado.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CoursesGetListOutput200"
-              example: &a26
-                statusCode: 200
-                body:
+              example:
                   - id: course-123
                     name: Algorithms 1
                     visibility: public
-  /courses/browse:
-    get:
-      tags:
-        - courses
-      summary: Browse courses
-      x-implementation: mock
-      x-mockup:
-        input: apps/api_v2/internal/interfaces/http/courses/get-browse/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/courses/get-browse/mockup/output.json
-      responses:
-        "200":
-          description: Browse response
+        "501":
+          description: No implementado para el scope solicitado (por ejemplo, cursos públicos).
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CoursesGetBrowseOutput200"
-              example: &a27
-                statusCode: 501
-                body:
-                  message: Browse courses endpoint does not have a dedicated use case yet
+                type: array
+                items:
+                  type: string
+              example: []
   /courses/{id}:
     get:
       tags:
@@ -755,8 +921,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesGetByIdOutput200"
               example: &a28
-                statusCode: 200
-                body:
                   id: course-123
                   name: Algorithms 1
                   description: Intro to algorithms
@@ -782,12 +946,6 @@ paths:
             schema:
               $ref: "#/components/schemas/CoursesPostUpdateInput"
             example: &a29
-              method: POST
-              path: /courses/{id}
-              pathParams:
-                id: course-123
-              query: {}
-              body:
                 name: Algorithms 1 - Updated
                 description: Updated description
       responses:
@@ -798,8 +956,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesPostUpdateOutput200"
               example: &a30
-                statusCode: 200
-                body:
                   id: course-123
                   name: Algorithms 1 - Updated
     delete:
@@ -824,8 +980,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesDeleteCourseOutput200"
               example: &a30_delete
-                statusCode: 200
-                body:
                   removed: true
   /courses/{id}/students:
     post:
@@ -849,13 +1003,7 @@ paths:
             schema:
               $ref: "#/components/schemas/CoursesPostAddStudentInput"
             example: &a31
-              method: POST
-              path: /courses/{id}/students
-              pathParams:
-                id: course-123
-              query: {}
-              body:
-                studentID: usr-student-123
+              studentID: usr-student-123
       responses:
         "200":
           description: Add student response
@@ -864,8 +1012,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesPostAddStudentOutput200"
               example: &a32
-                statusCode: 200
-                body:
                   enrolled: true
                   courseID: course-123
                   studentID: usr-student-123
@@ -891,8 +1037,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesGetStudentsOutput200"
               example: &a33
-                statusCode: 200
-                body:
                   - id: usr-student-123
                     username: Student Test
                     email: student@example.com
@@ -925,76 +1069,10 @@ paths:
               schema:
                 $ref: "#/components/schemas/CoursesDeleteStudentOutput200"
               example: &a34
-                statusCode: 200
-                body:
+ 
                   removed: true
                   courseID: course-123
                   studentID: usr-student-123
-  /courses/{id}/challenges:
-    post:
-      tags:
-        - courses
-      summary: Assign challenge to course
-      x-implementation: mock
-      x-mockup:
-        input: apps/api_v2/internal/interfaces/http/courses/post-assign-challenge/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/courses/post-assign-challenge/mockup/output.json
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CoursesPostAssignChallengeInput"
-            example: &a35
-              method: POST
-              path: /courses/{id}/challenges
-              pathParams:
-                id: course-123
-              query: {}
-              body:
-                challengeID: challenge-123
-      responses:
-        "200":
-          description: Assign challenge response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CoursesPostAssignChallengeOutput200"
-              example: &a36
-                statusCode: 501
-                body:
-                  message: Assign challenge to course use case is not implemented
-    get:
-      tags:
-        - courses
-      summary: List course challenges
-      x-implementation: mock
-      x-mockup:
-        input: apps/api_v2/internal/interfaces/http/courses/get-challenges/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/courses/get-challenges/mockup/output.json
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Course challenges list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CoursesGetChallengesOutput200"
-              example: &a37
-                statusCode: 501
-                body:
-                  message: Get course challenges use case is not implemented
   /exams:
     post:
       tags:
@@ -1011,11 +1089,6 @@ paths:
             schema:
               $ref: "#/components/schemas/ExamsPostCreateInput"
             example: &a38
-              method: POST
-              path: /exams
-              pathParams: {}
-              query: {}
-              body:
                 course_id: course-123
                 title: Midterm 1
                 description: Midterm exam
@@ -1034,8 +1107,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsPostCreateOutput201"
               example: &a39
-                statusCode: 201
-                body:
+
                   id: exam-123
                   title: Midterm 1
                   course_id: course-123
@@ -1063,11 +1135,67 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsGetByCourseIdOutput200"
               example: &a40
-                statusCode: 200
-                body:
+ 
                   - id: exam-123
                     title: Midterm 1
                     course_id: course-123
+  /exams/{examId}/items:
+    get:
+      tags:
+        - exams
+      summary: Obtener items de un examen
+      description: |
+        Devuelve los items (preguntas/desafíos) asociados a un examen específico. Requiere autenticación y permisos adecuados (profesor o visibilidad pública/teachers).
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exams/get-exam-items/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exams/get-exam-items/mockup/output.json
+      parameters:
+        - name: examId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del examen
+      responses:
+        "200":
+          description: Lista de items del examen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExamItemDTO'
+              example:
+                  - id: item-123
+                    exam_id: exam-123
+                    points: 100
+                    order: 1
+                    challenge: *a13
+
+        "404":
+          description: Examen no encontrado
+        "403":
+          description: Permisos insuficientes
+  /exams/public:
+    get:
+      tags:
+        - exams
+      summary: List public exams
+      description: |
+        Devuelve los exámenes públicos. Si el usuario que hace la petición es profesor, el backend puede incluir exámenes con visibilidad `teachers`.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exams/get-public/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exams/get-public/mockup/output.json
+      responses:
+        "200":
+          description: Public exams list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamsGetByCourseIdOutput200"
+              example: *a40
   /exams/{id}:
     get:
       tags:
@@ -1091,8 +1219,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsGetByIdOutput200"
               example: &a41
-                statusCode: 200
-                body:
+ 
                   id: exam-123
                   title: Midterm 1
                   description: Midterm exam
@@ -1119,12 +1246,6 @@ paths:
             schema:
               $ref: "#/components/schemas/ExamsPatchUpdateInput"
             example: &a42
-              method: PATCH
-              path: /exams/{id}
-              pathParams:
-                id: exam-123
-              query: {}
-              body:
                 title: Midterm 1 Updated
                 description: Updated description
                 try_limit: 3
@@ -1136,8 +1257,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsPatchUpdateOutput200"
               example: &a43
-                statusCode: 200
-                body:
                   id: exam-123
                   title: Midterm 1 Updated
                   try_limit: 3
@@ -1184,12 +1303,6 @@ paths:
             schema:
               $ref: "#/components/schemas/ExamsPostChangeVisibilityInput"
             example: &a44
-              method: POST
-              path: /exams/{id}/visibility
-              pathParams:
-                id: exam-123
-              query: {}
-              body:
                 visibility: private
       responses:
         "200":
@@ -1199,8 +1312,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsPostChangeVisibilityOutput200"
               example: &a45
-                statusCode: 200
-                body:
                   id: exam-123
                   visibility: private
   /exams/{id}/close:
@@ -1226,8 +1337,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExamsPostCloseOutput200"
               example: &a46
-                statusCode: 200
-                body:
+ 
                   id: exam-123
                   status: closed
   /submissions:
@@ -1246,11 +1356,6 @@ paths:
             schema:
               $ref: "#/components/schemas/SubmissionsPostCreateInput"
             example: &a47
-              method: POST
-              path: /submissions
-              pathParams: {}
-              query: {}
-              body:
                 code: "def solve(a,b): return a+b"
                 language: python
                 challengeID: challenge-123
@@ -1263,54 +1368,10 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubmissionsPostCreateOutput201"
               example: &a48
-                statusCode: 201
-                body:
                   id: submission-123
                   challengeID: challenge-123
                   sessionID: session-123
                   status: queued
-    get:
-      tags:
-        - submissions
-      summary: List submissions
-      x-implementation: usecase
-      x-mockup:
-        input: apps/api_v2/internal/interfaces/http/submissions/get-list/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/submissions/get-list/mockup/output.json
-      parameters:
-        - in: query
-          name: challengeId
-          required: false
-          schema:
-            type: string
-        - in: query
-          name: status
-          required: false
-          schema:
-            type: string
-        - in: query
-          name: testId
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Submissions list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SubmissionsGetListOutput200"
-              example: &a49
-                statusCode: 200
-                body:
-                  - submission:
-                      id: submission-123
-                      challengeID: challenge-123
-                      sessionID: session-123
-                      userID: usr-student-123
-                    results:
-                      - id: result-1
-                        status: queued
   /submissions/{id}:
     get:
       tags:
@@ -1334,8 +1395,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubmissionsGetByIdOutput200"
               example: &a50
-                statusCode: 200
-                body:
+ 
                   submission:
                     id: submission-123
                     challengeID: challenge-123
@@ -1432,11 +1492,6 @@ paths:
             schema:
               $ref: "#/components/schemas/SubmissionsPostSessionInput"
             example: &a51
-              method: POST
-              path: /submissions/sessions
-              pathParams: {}
-              query: {}
-              body:
                 userID: usr-student-123
                 examID: exam-123
       responses:
@@ -1447,43 +1502,10 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubmissionsPostSessionOutput201"
               example: &a52
-                statusCode: 201
-                body:
                   id: session-123
                   studentID: usr-student-123
                   examID: exam-123
                   status: active
-  /submissions/sessions/{id}:
-    get:
-      tags:
-        - submissions
-      summary: Get session by ID
-      x-implementation: usecase
-      x-mockup:
-        input: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/submissions/get-by-session-id/mockup/output.json
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Session details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SubmissionsGetBySessionIdOutput200"
-              example: &a53
-                statusCode: 200
-                body:
-                  id: session-123
-                  studentID: usr-student-123
-                  examID: exam-123
-                  status: active
-                  attempts: 0
-                  timeLeft: 3600
   /submissions/sessions/{id}/heartbeat:
     post:
       tags:
@@ -1507,20 +1529,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/SubmissionsPostHeartbeatOutput200"
               example: &a54
-                statusCode: 200
-                body:
+ 
                   id: session-123
                   status: active
                   lastHeartbeat: 2026-03-22T12:00:00Z
-  /submissions/sessions/{id}/close:
+  /submissions/sessions/{id}/block:
     post:
       tags:
         - submissions
-      summary: Close session
+      summary: Block session
+      description: |
+        Bloquea la sesión indicada. Accesible solo para profesores.
       x-implementation: usecase
       x-mockup:
-        input: apps/api_v2/internal/interfaces/http/submissions/post-close-session/mockup/input.json
-        output: apps/api_v2/internal/interfaces/http/submissions/post-close-session/mockup/output.json
+        input: apps/api_v2/internal/interfaces/http/submissions/session/post-block/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/submissions/session/post-block/mockup/output.json
       parameters:
         - in: path
           name: id
@@ -1529,18 +1552,49 @@ paths:
             type: string
       responses:
         "200":
-          description: Close session response
+          description: Blocked session response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SubmissionsPostCloseSessionOutput200"
-              example: &a54b
-                statusCode: 200
-                body:
+                $ref: "#/components/schemas/SubmissionsGetBySessionIdOutput200"
+              example:
+                  id: session-123
+                  studentID: usr-student-123
+                  examID: exam-123
+                  status: blocked
+                  attempts: 0
+                  timeLeft: 3600
+  /submissions/sessions/{id}/close:
+    post:
+      tags:
+        - submissions
+      summary: Close session
+      description: |
+        Cierra la sesión indicada. Accesible solo para profesores.
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/submissions/session/post-close/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/submissions/session/post-close/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Closed session response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionsGetBySessionIdOutput200"
+              example:
                   id: session-123
                   studentID: usr-student-123
                   examID: exam-123
                   status: completed
+                  attempts: 0
+                  timeLeft: 0
   /leaderboard/challenge/{id}:
     get:
       tags:
@@ -1564,8 +1618,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/LeaderboardGetChallengeIdOutput200"
               example: &a55
-                statusCode: 501
-                body:
+
                   message: Challenge leaderboard use case is not implemented
   /leaderboard/course/{id}:
     get:
@@ -1590,8 +1643,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/LeaderboardGetCourseIdOutput200"
               example: &a56
-                statusCode: 501
-                body:
+
                   message: Course leaderboard use case is not implemented
   /metrics:
     get:
@@ -1610,8 +1662,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/MetricsGetOutput200"
               example: &a57
-                statusCode: 200
-                body:
                   uptime_seconds: 12345
                   requests_total: 987
                   errors_total: 3
@@ -1632,8 +1682,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthGetOutput200"
               example: &a58
-                statusCode: 200
-                body:
                   status: ok
                   service: api_v2
                   timestamp: 2026-03-22T12:00:00Z
@@ -1654,8 +1702,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/CacheGetHealthOutput200"
               example: &a59
-                statusCode: 200
-                body:
                   status: ok
                   component: cache
                   timestamp: 2026-03-22T12:00:00Z
@@ -1676,13 +1722,215 @@ paths:
               schema:
                 $ref: "#/components/schemas/DbGetHealthOutput200"
               example: &a60
-                statusCode: 200
-                body:
                   status: ok
                   component: database
                   timestamp: 2026-03-22T12:00:00Z
+
+  # --- NUEVOS ENDPOINTS EXAM-ITEMS ---
+  /exam-items:
+    post:
+      tags:
+        - exam-items
+      summary: Crear ExamItem
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exam-items/post-create/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exam-items/post-create/mockup/output.json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExamItemsPostCreateInput"
+            example:
+              order: 1
+              points: 10
+              exam_id: "exam-123"
+              challenge_id: "challenge-123"
+      responses:
+        "201":
+          description: ExamItem creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamItemsPostCreateOutput201"
+              example:
+                id: "examitem-123"
+                order: 1
+                points: 10
+                exam_id: "exam-123"
+                challenge_id: "challenge-123"
+
+  /exam-items/{id}:
+    patch:
+      tags:
+        - exam-items
+      summary: Actualizar ExamItem
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exam-items/patch-update/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exam-items/patch-update/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExamItemsPatchUpdateInput"
+            example:
+              order: 2
+              points: 15
+      responses:
+        "200":
+          description: ExamItem actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamItemsPatchUpdateOutput200"
+              example:
+                id: "examitem-123"
+                order: 2
+                points: 15
+    delete:
+      tags:
+        - exam-items
+      summary: Eliminar ExamItem
+      x-implementation: usecase
+      x-mockup:
+        input: apps/api_v2/internal/interfaces/http/exam-items/delete-by-id/mockup/input.json
+        output: apps/api_v2/internal/interfaces/http/exam-items/delete-by-id/mockup/output.json
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ExamItem eliminado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExamItemsDeleteByIdOutput200"
+              example:
+                deleted: true
+                id: "examitem-123"
 components:
   schemas:
+    # --- SCHEMAS PARA EXAM-ITEMS ---
+    ExamItemsPostCreateInput:
+      type: object
+      properties:
+        order:
+          type: integer
+        points:
+          type: integer
+        exam_id:
+          type: string
+        challenge_id:
+          type: string
+      required:
+        - order
+        - points
+        - exam_id
+        - challenge_id
+    ExamItemsPostCreateOutput201:
+      type: object
+      properties:
+        id:
+          type: string
+        order:
+          type: integer
+        points:
+          type: integer
+        exam_id:
+          type: string
+        challenge_id:
+          type: string
+      required:
+        - id
+        - order
+        - points
+        - exam_id
+        - challenge_id
+    ExamItemsPatchUpdateInput:
+      type: object
+      properties:
+        order:
+          type: integer
+        points:
+          type: integer
+      required:
+        - order
+        - points
+    ExamItemsPatchUpdateOutput200:
+      type: object
+      properties:
+        id:
+          type: string
+        order:
+          type: integer
+        points:
+          type: integer
+      required:
+        - id
+        - order
+        - points
+    ExamItemsDeleteByIdOutput200:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+        id:
+          type: string
+      required:
+        - deleted
+        - id
+    SubmissionOutputDTO:
+      type: object
+      properties:
+        submission:
+          type: object
+          properties:
+            id:
+              type: string
+            userID:
+              type: string
+            challengeID:
+              type: string
+            sessionID:
+              type: string
+            code:
+              type: string
+            language:
+              type: string
+          required:
+            - id
+            - userID
+            - challengeID
+            - sessionID
+            - code
+            - language
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              status:
+                type: string
+            required:
+              - id
+              - status
+      required:
+        - submission
+        - results
     AuthPostRegisterInput:
       type: object
       properties:
@@ -1905,8 +2153,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           access_token: jwt-access-token-new
           refresh_token: jwt-refresh-token-new
     AiPostGenerateChallengeIdeasInput:
@@ -2013,7 +2259,7 @@ components:
         - statusCode
         - body
       example: *a9
-    ChallengesPostCreateInput:
+    AiPostGenerateFullChallengeInput:
       type: object
       properties:
         method:
@@ -2029,73 +2275,200 @@ components:
         body:
           type: object
           properties:
-            title:
-              type: string
-            description:
-              type: string
-            tags:
-              type: array
-              items:
-                type: string
-            status:
+            topic:
               type: string
             difficulty:
               type: string
-            workerTimeLimit:
-              type: integer
-            workerMemoryLimit:
-              type: integer
-            inputVariables:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  type:
-                    type: string
-                  value:
-                    type: string
-                required:
-                  - name
-                  - type
-                  - value
-            outputVariable:
-              type: object
-              properties:
-                name:
-                  type: string
-                type:
-                  type: string
-                value:
-                  type: string
-              required:
-                - name
-                - type
-                - value
-            constraints:
-              type: string
-            examID:
-              type: string
           required:
-            - title
-            - description
-            - tags
-            - status
+            - topic
             - difficulty
-            - workerTimeLimit
-            - workerMemoryLimit
-            - inputVariables
-            - outputVariable
-            - constraints
-            - examID
       required:
         - method
         - path
         - pathParams
         - query
         - body
-      example: *a10
+      example: *a35
+    AiPostGenerateFullChallengeOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+          properties:
+            challenge:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                difficulty:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                input_format:
+                  type: string
+                output_format:
+                  type: string
+                constraints:
+                  type: string
+                public_test_cases:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      input:
+                        type: string
+                      output:
+                        type: string
+                      name:
+                        type: string
+                      visible:
+                        type: boolean
+                hidden_test_cases:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      input:
+                        type: string
+                      output:
+                        type: string
+                      name:
+                        type: string
+                      visible:
+                        type: boolean
+      required:
+        - statusCode
+        - body
+      example: *a36
+    AiPostGenerateExamInput:
+      type: object
+      properties:
+        method:
+          type: string
+        path:
+          type: string
+        pathParams:
+          type: object
+          properties: {}
+        query:
+          type: object
+          properties: {}
+        body:
+          type: object
+          properties:
+            topic:
+              type: string
+            difficulty:
+              type: string
+          required:
+            - topic
+            - difficulty
+      required:
+        - method
+        - path
+        - pathParams
+        - query
+        - body
+      example: *a37
+    AiPostGenerateExamOutput200:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+          properties:
+            exam:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                time_limit:
+                  type: integer
+                try_limit:
+                  type: integer
+      required:
+        - statusCode
+        - body
+      example: *a38
+    ChallengesPostCreateInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        difficulty:
+          type: string
+        workerTimeLimit:
+          type: integer
+        workerMemoryLimit:
+          type: integer
+        inputVariables:
+          type: array
+          items:
+            $ref: "#/components/schemas/IOVariableDTO"
+        outputVariable:
+          $ref: "#/components/schemas/IOVariableDTO"
+        constraints:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        userId:
+          type: string
+      required:
+        - title
+        - description
+        - tags
+        - status
+        - difficulty
+        - workerTimeLimit
+        - workerMemoryLimit
+        - inputVariables
+        - outputVariable
+        - constraints
+        - createdAt
+        - updatedAt
+        - userId
+      example:
+        title: Two Sum
+        description: Return indexes of two numbers that add up to target
+        tags: [arrays, hashmap]
+        status: draft
+        difficulty: easy
+        workerTimeLimit: 1500
+        workerMemoryLimit: 256
+        inputVariables:
+          - name: nums
+            type: string
+            value: 2,7,11,15
+          - name: target
+            type: int
+            value: "9"
+        outputVariable:
+          name: indexes
+          type: string
+          value: 0,1
+        constraints: 2 <= n <= 10000
+        createdAt: "2026-03-25T10:00:00Z"
+        updatedAt: "2026-03-25T10:00:00Z"
+        userId: usr-123
     ChallengesPostCreateOutput201:
       type: object
       properties:
@@ -2263,8 +2636,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           removed: true
     ChallengesPostPublishOutput200:
       type: object
@@ -2307,69 +2678,43 @@ components:
     TestCasesPostCreateInput:
       type: object
       properties:
-        method:
+        name:
           type: string
-        path:
+        input:
+          type: array
+          items:
+            $ref: "#/components/schemas/IOVariableDTO"
+        expectedOutput:
+          $ref: "#/components/schemas/IOVariableDTO"
+        isSample:
+          type: boolean
+        points:
+          type: integer
+        challengeID:
           type: string
-        pathParams:
-          type: object
-          properties: {}
-        query:
-          type: object
-          properties: {}
-        body:
-          type: object
-          properties:
-            name:
-              type: string
-            input:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  type:
-                    type: string
-                  value:
-                    type: string
-                required:
-                  - name
-                  - type
-                  - value
-            expectedOutput:
-              type: object
-              properties:
-                name:
-                  type: string
-                type:
-                  type: string
-                value:
-                  type: string
-              required:
-                - name
-                - type
-                - value
-            isSample:
-              type: boolean
-            points:
-              type: integer
-            challengeID:
-              type: string
-          required:
-            - name
-            - input
-            - expectedOutput
-            - isSample
-            - points
-            - challengeID
       required:
-        - method
-        - path
-        - pathParams
-        - query
-        - body
-      example: *a18
+        - name
+        - input
+        - expectedOutput
+        - isSample
+        - points
+        - challengeID
+      example:
+        name: tc_add_1
+        input:
+          - name: a
+            type: int
+            value: "2"
+          - name: b
+            type: int
+            value: "3"
+        expectedOutput:
+          name: sum
+          type: int
+          value: "5"
+        isSample: true
+        points: 10
+        challengeID: challenge-123
     TestCasesPostCreateOutput201:
       type: object
       properties:
@@ -2525,8 +2870,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           id: test-case-123
           name: tc_add_1_updated
           points: 15
@@ -2660,7 +3003,16 @@ components:
       required:
         - statusCode
         - body
-      example: *a25
+      responses:
+        "200":
+          description: Browse response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesGetBrowseOutput200"
+              example: &a27
+
+                  message: Browse courses endpoint does not have a dedicated use case yet
     CoursesGetListOutput200:
       type: object
       properties:
@@ -2684,7 +3036,10 @@ components:
       required:
         - statusCode
         - body
-      example: *a26
+      example:
+          - id: course-123
+            name: Algorithms 1
+            visibility: public
     CoursesGetBrowseOutput200:
       type: object
       properties:
@@ -2817,8 +3172,9 @@ components:
           properties:
             studentID:
               type: string
-          required:
-            - studentID
+            studentEmail:
+              type: string
+          # No required fields, both are optional
       required:
         - method
         - path
@@ -2927,7 +3283,14 @@ components:
         - pathParams
         - query
         - body
-      example: *a35
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoursesPostAssignChallengeInput"
+            example: &a35
+                challengeID: challenge-123
     CoursesPostAssignChallengeOutput200:
       type: object
       properties:
@@ -2943,7 +3306,15 @@ components:
       required:
         - statusCode
         - body
-      example: *a36
+      responses:
+        "200":
+          description: Assign challenge response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesPostAssignChallengeOutput200"
+              example: &a36
+                  message: Assign challenge to course use case is not implemented
     CoursesGetChallengesOutput200:
       type: object
       properties:
@@ -2959,61 +3330,96 @@ components:
       required:
         - statusCode
         - body
-      example: *a37
+      responses:
+        "200":
+          description: Course challenges list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesGetChallengesOutput200"
+              example:
+                  message: Get course challenges use case is not implemented
     ExamsPostCreateInput:
       type: object
       properties:
-        method:
+        course_id:
           type: string
-        path:
+        title:
           type: string
-        pathParams:
-          type: object
-          properties: {}
-        query:
-          type: object
-          properties: {}
-        body:
+        description:
+          type: string
+        visibility:
+          type: string
+        start_time:
+          type: string
+        end_time:
+          type: string
+        allow_late_submissions:
+          type: boolean
+        time_limit:
+          type: integer
+        try_limit:
+          type: integer
+        professor_id:
+          type: string
+      required:
+        - course_id
+        - title
+        - description
+        - visibility
+        - start_time
+        - allow_late_submissions
+        - time_limit
+        - try_limit
+        - professor_id
+      example:
+        course_id: course-123
+        title: Midterm 1
+        description: Midterm exam
+        visibility: course
+        start_time: 2026-04-01T10:00:00Z
+        end_time: 2026-04-01T12:00:00Z
+        allow_late_submissions: false
+        time_limit: 7200
+        try_limit: 2
+        professor_id: usr-teacher-123
+        IOVariableDTO:
           type: object
           properties:
-            course_id:
+            name:
               type: string
-            title:
+            type:
               type: string
-            description:
-              type: string
-            visibility:
-              type: string
-            start_time:
-              type: string
-            end_time:
-              type: string
-            allow_late_submissions:
-              type: boolean
-            time_limit:
-              type: integer
-            try_limit:
-              type: integer
-            professor_id:
+            value:
               type: string
           required:
-            - course_id
-            - title
-            - description
-            - visibility
-            - start_time
-            - end_time
-            - allow_late_submissions
-            - time_limit
-            - try_limit
-            - professor_id
+            - name
+            - type
+            - value
+    ExamItemDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID del item del examen
+        order:
+          type: integer
+          description: Orden del item en el examen
+        points:
+          type: integer
+          description: Puntos asignados al item
+        exam_id:
+          type: string
+          description: ID del examen al que pertenece
+        challenge:
+          type: object
+          $ref: '#/components/schemas/ChallengesGetByIdOutput200'
+          description: Información del desafío asociado
       required:
-        - method
-        - path
-        - pathParams
-        - query
-        - body
-      example: *a38
+        - id
+        - order
+        - points
+        - exam_id
     ExamsPostCreateOutput201:
       type: object
       properties:
@@ -3235,8 +3641,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           removed: true
     SubmissionsPostCreateInput:
       type: object
@@ -3353,7 +3757,15 @@ components:
       required:
         - statusCode
         - body
-      example: *a49
+      example:
+          - submission:
+              id: submission-123
+              challengeID: challenge-123
+              sessionID: session-123
+              userID: usr-student-123
+            results:
+              - id: result-1
+                status: queued
     SubmissionsGetByIdOutput200:
       type: object
       properties:
@@ -3435,8 +3847,6 @@ components:
         - statusCode
         - body
       example:
-        statusCode: 200
-        body:
           - id: submission-123
             userID: usr-student-123
             challengeID: challenge-123
@@ -3571,7 +3981,13 @@ components:
       required:
         - statusCode
         - body
-      example: *a53
+      example:
+          id: session-123
+          studentID: usr-student-123
+          examID: exam-123
+          status: active
+          attempts: 0
+          timeLeft: 3600
     SubmissionsPostHeartbeatOutput200:
       type: object
       properties:
@@ -3594,31 +4010,6 @@ components:
         - statusCode
         - body
       example: *a54
-    SubmissionsPostCloseSessionOutput200:
-      type: object
-      properties:
-        statusCode:
-          type: integer
-        body:
-          type: object
-          properties:
-            id:
-              type: string
-            studentID:
-              type: string
-            examID:
-              type: string
-            status:
-              type: string
-          required:
-            - id
-            - studentID
-            - examID
-            - status
-      required:
-        - statusCode
-        - body
-      example: *a54b
     LeaderboardGetChallengeIdOutput200:
       type: object
       properties:

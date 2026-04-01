@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"bytes"
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,20 +13,17 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp"
 
 	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	course_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
-	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
-	submission_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
-	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
-	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitMQ"
-	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	http_interfaces "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http"
+
+	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 )
 
 type requestMock struct {
@@ -42,24 +39,6 @@ type responseMock struct {
 	Body       any `json:"body"`
 }
 
-func ReadFileContent(path string) (string, error) {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	return string(content), nil
-}
-
-func ReadInputFileContent(module, endpoint string) (string, error) {
-	path := filepath.Join(apiV2RootDir(), "internal", "interfaces", "http", module, endpoint, "mockup", "input.json")
-	return ReadFileContent(path)
-}
-
-func ReadOutputFileContent(module, endpoint string) (string, error) {
-	path := filepath.Join(apiV2RootDir(), "internal", "interfaces", "http", module, endpoint, "mockup", "output.json")
-	return ReadFileContent(path)
-}
-
 func InitApp() (*fiber.App, error) {
 	moduleRoot := apiV2RootDir()
 	_ = loadEnvFile(filepath.Join(moduleRoot, ".env.dev"))
@@ -72,47 +51,7 @@ func InitApp() (*fiber.App, error) {
 		_ = os.Setenv("ROBLE_BASE_URL", "https://roble.invalid")
 	}
 
-	httpClient := &http.Client{Timeout: 15 * time.Second}
-	robleClient, err := roble_infrastructure.NewRobleClient(httpClient)
-	if err != nil {
-		return nil, fmt.Errorf("initialize roble client: %w", err)
-	}
-
-	robleAdapter := roble_infrastructure.NewRobleDatabaseAdapter(robleClient)
-	userRepository := roble_user_infrastructure.NewUserRepository(robleAdapter)
-	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
-	passwordHasher := security_infrastructure.NewSecurityAdapter()
-
-	courseRepository := course_repository.NewCourseRepository(robleAdapter)
-	examRepository := exam_repository.NewExamRepository(robleAdapter)
-	challengeRepository := exam_repository.NewChallengeRepository(robleAdapter)
-	testCaseRepository := exam_repository.NewTestCaseRepository(robleAdapter)
-	submissionRepository := submission_repository.NewSubmissionRepository(robleAdapter)
-	sessionRepository := submission_repository.NewSessionRepository(robleAdapter)
-	submissionResRepository := submission_repository.NewSubmissionResultRepository(robleAdapter)
-	publisherPort, err := rabbitmq_infrastructure.NewRabbitMQAdapter()
-	if err != nil {
-		return nil, fmt.Errorf("initialize publisher adapter: %w", err)
-	}
-
-	deps := container.NewApplicationDependencies(
-		authAdapter,
-		authAdapter,
-		userRepository,
-		authAdapter,
-		passwordHasher,
-		userRepository,
-		courseRepository,
-		examRepository,
-		challengeRepository,
-		testCaseRepository,
-		submissionRepository,
-		sessionRepository,
-		submissionResRepository,
-		publisherPort,
-	)
-
-	appContainer, err := container.NewApplication(deps)
+	appContainer, err := container.BuildApplicationContainer()
 	if err != nil {
 		return nil, fmt.Errorf("initialize application container: %w", err)
 	}
@@ -164,112 +103,6 @@ func loadEnvFile(path string) error {
 	}
 
 	return scanner.Err()
-}
-
-func getRequest(method, url string, headers map[string]string, params []byte) (*fiber.Ctx, error) {
-	return runRequest(method, url, headers, params)
-}
-
-func postRequest(url string, headers map[string]string, body []byte) (*fiber.Ctx, error) {
-	return runRequest(http.MethodPost, url, headers, body)
-}
-
-func putRequest(url string, headers map[string]string, body []byte) (*fiber.Ctx, error) {
-	return runRequest(http.MethodPut, url, headers, body)
-}
-
-func deleteRequest(url string, headers map[string]string, params []byte) (*fiber.Ctx, error) {
-	return runRequest(http.MethodDelete, url, headers, params)
-}
-
-func CompareResponse(expected, actual string) bool {
-	var expectedJSON any
-	if err := json.Unmarshal([]byte(expected), &expectedJSON); err != nil {
-		return strings.TrimSpace(expected) == strings.TrimSpace(actual)
-	}
-
-	var actualJSON any
-	if err := json.Unmarshal([]byte(actual), &actualJSON); err != nil {
-		return false
-	}
-
-	left, err := json.Marshal(expectedJSON)
-	if err != nil {
-		return false
-	}
-	right, err := json.Marshal(actualJSON)
-	if err != nil {
-		return false
-	}
-
-	return bytes.Equal(left, right)
-}
-
-func RunEndpointMockupTest(t interface {
-	Helper()
-	Logf(format string, args ...any)
-	Fatalf(format string, args ...any)
-	Cleanup(func())
-}, module, endpoint string) {
-	t.Helper()
-
-	inputContent, err := ReadInputFileContent(module, endpoint)
-	if err != nil {
-		t.Fatalf("read input.json failed for %s/%s: %v", module, endpoint, err)
-	}
-
-	outputContent, err := ReadOutputFileContent(module, endpoint)
-	if err != nil {
-		t.Fatalf("read output.json failed for %s/%s: %v", module, endpoint, err)
-	}
-
-	var input requestMock
-	if err := json.Unmarshal([]byte(inputContent), &input); err != nil {
-		t.Fatalf("decode input.json failed for %s/%s: %v", module, endpoint, err)
-	}
-
-	var expected responseMock
-	if err := json.Unmarshal([]byte(outputContent), &expected); err != nil {
-		t.Fatalf("decode output.json failed for %s/%s: %v", module, endpoint, err)
-	}
-
-	requestPath := buildRequestPath(input.Path, input.PathParams, input.Query)
-	bodyBytes := []byte(nil)
-	if input.Body != nil {
-		bodyBytes, err = json.Marshal(input.Body)
-		if err != nil {
-			t.Fatalf("encode request body failed for %s/%s: %v", module, endpoint, err)
-		}
-	}
-
-	t.Logf("CHECK REQUEST module=%s endpoint=%s method=%s path=%s body=%s", module, endpoint, strings.ToUpper(input.Method), requestPath, string(bodyBytes))
-	t.Logf("CHECK EXPECTED module=%s endpoint=%s status=%d response=%s", module, endpoint, expected.StatusCode, outputContent)
-
-	ctx, err := getRequest(strings.ToUpper(input.Method), requestPath, map[string]string{"Content-Type": "application/json"}, bodyBytes)
-	if err != nil {
-		t.Fatalf("http request failed for %s/%s: %v", module, endpoint, err)
-	}
-	t.Cleanup(func() {
-		ctx.App().ReleaseCtx(ctx)
-	})
-
-	actualStatus := ctx.Response().StatusCode()
-	actualBody := string(ctx.Response().Body())
-
-	t.Logf("CHECK ACTUAL module=%s endpoint=%s status=%d response=%s", module, endpoint, actualStatus, actualBody)
-
-	if actualStatus != expected.StatusCode {
-		t.Fatalf("unexpected status for %s/%s: got=%d expected=%d", module, endpoint, actualStatus, expected.StatusCode)
-	}
-
-	expectedBodyBytes, err := json.Marshal(expected.Body)
-	if err != nil {
-		t.Fatalf("encode expected body failed for %s/%s: %v", module, endpoint, err)
-	}
-
-	if !CompareResponse(string(expectedBodyBytes), actualBody) {
-		t.Fatalf("unexpected response body for %s/%s: got=%s expected=%s", module, endpoint, actualBody, string(expectedBodyBytes))
-	}
 }
 
 func runRequest(method, requestURL string, headers map[string]string, body []byte) (*fiber.Ctx, error) {
@@ -380,4 +213,169 @@ func DoJSONRequest(app *fiber.App, method, path string, body any, headers map[st
 	}
 
 	return resp.StatusCode, respBody, nil
+}
+
+func EnsureHTTPAuthUserAccess(t *testing.T, app *fiber.App, email, password, name string) *dtos.UserAccess {
+	t.Helper()
+
+	t.Logf("[STEP] Attempt HTTP login for %s", email)
+	loginBody := map[string]string{
+		"email":    email,
+		"password": password,
+	}
+
+	status, body, err := PostAuthLogin(nil, loginBody)
+	if err != nil {
+		t.Fatalf("login request failed for %s: %v", email, err)
+	}
+
+	if status == http.StatusOK {
+		access := decodeUserAccess(t, body, "login")
+		validateUserAccess(t, access, email)
+		return access
+	}
+
+	t.Logf("login failed for %s with status=%d, trying register", email, status)
+	registerBody := map[string]string{
+		"email":    email,
+		"name":     name,
+		"password": password,
+	}
+
+	status, body, err = PostAuthRegister(nil, registerBody)
+	if err != nil {
+		t.Fatalf("register request failed for %s: %v", email, err)
+	}
+	if status != http.StatusCreated {
+		t.Fatalf("expected register status=%d for %s, got=%d body=%s", http.StatusCreated, email, status, string(body))
+	}
+
+	access := decodeUserAccess(t, body, "register")
+	validateUserAccess(t, access, email)
+	return access
+}
+
+func GetUserDataHTTP(t *testing.T, app *fiber.App, access *dtos.UserAccess) *Entities.User {
+	t.Helper()
+
+	headers := map[string]string{
+		"Authorization": "Bearer " + access.Token.AccessToken,
+		"X-User-Email":  access.UserData.Email,
+	}
+
+	status, body, err := GetAuthMe(headers)
+	if err != nil {
+		t.Fatalf("/auth/me request failed: %v", err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected /auth/me status=%d, got=%d body=%s", http.StatusOK, status, string(body))
+	}
+
+	var user Entities.User
+	if err := json.Unmarshal(body, &user); err != nil {
+		t.Fatalf("decode /auth/me response failed: %v body=%s", err, string(body))
+	}
+
+	if user.ID == "" {
+		t.Fatal("expected /auth/me response with user ID")
+	}
+
+	return &user
+}
+
+func decodeUserAccess(t *testing.T, raw []byte, source string) *dtos.UserAccess {
+	t.Helper()
+
+	var access dtos.UserAccess
+	if err := json.Unmarshal(raw, &access); err != nil {
+		t.Fatalf("decode %s response failed: %v body=%s", source, err, string(raw))
+	}
+
+	return &access
+}
+
+func validateUserAccess(t *testing.T, access *dtos.UserAccess, expectedEmail string) {
+	t.Helper()
+
+	if access == nil || access.UserData == nil || access.Token == nil {
+		t.Fatalf("expected valid access payload for %s", expectedEmail)
+	}
+	if access.UserData.ID == "" {
+		t.Fatalf("expected user ID in access payload for %s", expectedEmail)
+	}
+	if access.Token.AccessToken == "" {
+		t.Fatalf("expected access token in payload for %s", expectedEmail)
+	}
+	if access.UserData.Email != expectedEmail {
+		t.Fatalf("expected email=%s in payload, got=%s", expectedEmail, access.UserData.Email)
+	}
+}
+
+func AuthHeaders(access *dtos.UserAccess) map[string]string {
+	return map[string]string{
+		"Authorization": "Bearer " + access.Token.AccessToken,
+		"X-User-Email":  access.UserData.Email,
+	}
+}
+
+func DecodeMap(t *testing.T, raw []byte, source string) map[string]any {
+	t.Helper()
+
+	var out map[string]any
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatalf("decode %s map response failed: %v body=%s", source, err, string(raw))
+	}
+
+	return out
+}
+
+func MapString(t *testing.T, m map[string]any, key, source string) string {
+	t.Helper()
+
+	v, ok := m[key]
+	if !ok {
+		t.Fatalf("missing key=%s in %s response", key, source)
+	}
+	s, ok := v.(string)
+	if !ok {
+		t.Fatalf("key=%s in %s response is not string (type=%T)", key, source, v)
+	}
+	return s
+}
+
+
+func MapBool(t *testing.T, m map[string]any, key, source string) bool {
+	t.Helper()
+
+	v, ok := m[key]
+	if !ok {
+		t.Fatalf("missing key=%s in %s response", key, source)
+	}
+	b, ok := v.(bool)
+	if !ok {
+		t.Fatalf("key=%s in %s response is not bool (type=%T)", key, source, v)
+	}
+	return b
+}
+
+func DecodeSliceMap(t *testing.T, raw []byte, source string) []map[string]any {
+	t.Helper()
+
+	var out []map[string]any
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatalf("decode %s list response failed: %v body=%s", source, err, string(raw))
+	}
+	return out
+}
+
+func ContainsID(list []map[string]any, id string) bool {
+	for _, item := range list {
+		if v, ok := item["ID"].(string); ok && v == id {
+			return true
+		}
+		if v, ok := item["id"].(string); ok && v == id {
+			return true
+		}
+	}
+	return false
 }

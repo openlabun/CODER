@@ -43,7 +43,7 @@ func (uc *CloseExamUseCase) Execute(ctx context.Context, input dtos.CloseExamInp
 	}
 
 	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
+		return nil, fmt.Errorf("user does not have permissions to close an exam")
 	}
 
 	// [STEP 2] Get exam entity to be closed
@@ -56,16 +56,21 @@ func (uc *CloseExamUseCase) Execute(ctx context.Context, input dtos.CloseExamInp
 		return nil, fmt.Errorf("exam with id %q does not exist", input.ExamID)
 	}
 
-	// [STEP 3] Read actual time (now)
+	// [STEP 3] Verify that exam belongs to teacher
+	if exam.ProfessorID != user.ID {
+		return nil, fmt.Errorf("user does not have permissions to close this exam")
+	}
+
+	// [STEP 4] Read actual time (now)
 	now := services.Now()
 
-	// [STEP 4] Update exam entity with closing time
+	// [STEP 5] Update exam entity with closing time
 	exam, err = mapper.MapExamEndTimeInputToExamEntity(exam, now)
 	if err != nil {
 		return nil, err
 	}
 
-	// [STEP 5] Save updated exam entity
+	// [STEP 6] Save updated exam entity
 	exam, err = uc.examRepository.UpdateExam(ctx, exam)
 	if err != nil {
 		return nil, err

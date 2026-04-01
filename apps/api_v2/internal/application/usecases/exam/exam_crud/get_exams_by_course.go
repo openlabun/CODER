@@ -36,8 +36,12 @@ func (uc *GetExamsByCourseUseCase) Execute(ctx context.Context, input dtos.GetEx
 	}
 
 	user, err := uc.userRepository.GetUserByEmail(ctx, userEmail)
-	if err != nil || user == nil {
-		return nil, fmt.Errorf("user not found")
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
 	// [STEP 2] Verify course exists
@@ -45,25 +49,27 @@ func (uc *GetExamsByCourseUseCase) Execute(ctx context.Context, input dtos.GetEx
 	if err != nil {
 		return nil, err
 	}
+
 	if course == nil {
 		return nil, fmt.Errorf("course with id %q does not exist", input.CourseID)
-	}
-
-	// [STEP 3] Role-based access control
-	if user.Role == user_entities.UserRoleProfessor {
-		// Professors can only see exams of courses they own
-		if course.ProfessorID != user.ID {
-			return nil, fmt.Errorf("user is not the owner of the course")
-		}
-	} else if user.Role == user_entities.UserRoleStudent {
-		// Students should be enrolled (for now we assume if they can see the course they are enrolled or it's public)
-		// Better: we will filter visibility later or here
 	}
 
 	// [STEP 3] Get exams for course
 	exams, err := uc.examRepository.GetExamsByCourseID(ctx, input.CourseID)
 	if err != nil {
 		return nil, err
+	}
+
+	// [STEP 4] If user is student, filter exams by visibility
+	if user.Role == user_entities.UserRoleStudent {
+		filteredExams := []*Entities.Exam{}
+		for _, exam := range exams {
+			if exam.Visibility == Entities.VisibilityCourse {
+				filteredExams = append(filteredExams, exam)
+			}
+		}
+		
+		exams = filteredExams
 	}
 
 	return exams, nil

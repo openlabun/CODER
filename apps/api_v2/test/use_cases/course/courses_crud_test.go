@@ -1,34 +1,23 @@
 package usecases_test
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
 	course_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
-	user_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
-	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
-	user_repo "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
 
 	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
-	rabbitmq_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/publisher/rabbitmq"
-	security_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
-
-	course_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
-	exam_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
-	submission_repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
-
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
+
+	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
+
 
 func TestCoursesCRUD(t *testing.T) {
 	t.Log("[STEP 1] Inicializando application container")
 	// Initialize application
-	h, err := buildApplication()
+	h, err := container.BuildApplicationContainer()
 	if err != nil {
 		t.Fatalf("failed to build application: %v", err)
 	}
@@ -36,8 +25,8 @@ func TestCoursesCRUD(t *testing.T) {
 
 	t.Log("[STEP 2] Login de profesor")
 	// Login Teacher user
-	teacherAccess := mustLoginTeacher(t, h)
-	ctx := teacherCourseCtx(teacherAccess)
+	teacherAccess := utils.EnsureTeacherAccess(t, h)
+	ctx := utils.TeacherCourseCtx(teacherAccess)
 	t.Logf("[OK] Login profesor exitoso. teacherID=%s", teacherAccess.UserData.ID)
 
 	now := time.Now().UTC()
@@ -110,115 +99,4 @@ func TestCoursesCRUD(t *testing.T) {
 	}
 	courseID = ""
 	t.Log("[OK] Curso eliminado")
-}
-
-func buildApplication() (*container.Application, error) {
-	// verbose logs are intentionally omitted here to keep the helper reusable in tests.
-	// Start clients
-	httpClient := &http.Client{Timeout: 15 * time.Second}
-	robleClient, err := roble_infrastructure.NewRobleClient(httpClient)
-	if err != nil {
-		return nil, fmt.Errorf("initialize roble client: %w", err)
-	}
-
-	// Start adapters and repositories
-	robleAdapter := roble_infrastructure.NewRobleDatabaseAdapter(robleClient)
-	userRepository := roble_user_infrastructure.NewUserRepository(robleAdapter)
-	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
-	passwordHasher := security_infrastructure.NewSecurityAdapter()
-
-	courseRepository := course_repository.NewCourseRepository(robleAdapter)
-	examRepository := exam_repository.NewExamRepository(robleAdapter)
-	challengeRepository := exam_repository.NewChallengeRepository(robleAdapter)
-	testCaseRepository := exam_repository.NewTestCaseRepository(robleAdapter)
-
-	submissionRepository := submission_repository.NewSubmissionRepository(robleAdapter)
-	sessionRepository := submission_repository.NewSessionRepository(robleAdapter)
-	submissionResRepository := submission_repository.NewSubmissionResultRepository(robleAdapter)
-	publisherPort, err := rabbitmq_infrastructure.NewRabbitMQAdapter()
-	if err != nil {
-		return nil, fmt.Errorf("initialize publisher adapter: %w", err)
-	}
-
-	deps := container.NewApplicationDependencies(
-		authAdapter,
-		authAdapter,
-		userRepository,
-		authAdapter,
-
-		passwordHasher,
-
-		userRepository,
-		courseRepository,
-
-		examRepository,
-		challengeRepository,
-		testCaseRepository,
-
-		submissionRepository,
-		sessionRepository,
-		submissionResRepository,
-		publisherPort,
-	)
-
-	appContainer, err := container.NewApplication(deps)
-	if err != nil {
-		return nil, fmt.Errorf("initialize application container: %w", err)
-	}
-
-	return appContainer, nil
-}
-
-func mustLoginTeacher(t *testing.T, app *container.Application) *user_dtos.UserAccess {
-	t.Helper()
-	t.Log("[AUTH] Intentando login de profesor")
-
-	email := "test@test.com"
-	password := "Password123!"
-
-	access, err := app.Dependencies.LoginService.LoginUser(email, password)
-	if err != nil {
-		t.Fatalf("teacher login failed: %v", err)
-	}
-	if access == nil || access.UserData == nil || access.UserData.ID == "" {
-		t.Fatal("expected teacher user data with ID")
-	}
-	if access.Token == nil || access.Token.AccessToken == "" {
-		t.Fatal("expected teacher access token")
-	}
-	t.Logf("[AUTH][OK] Login profesor completado. teacherID=%s", access.UserData.ID)
-
-	return access
-}
-
-func ensureStudentAccess(t *testing.T, auth *user_repo.RobleAuthAdapter) *user_dtos.UserAccess {
-	t.Helper()
-	t.Log("[AUTH] Intentando login de estudiante")
-
-	email := "stud@test.com"
-	password := "Password123!"
-
-	access, err := auth.LoginUser(email, password)
-	if err == nil && access != nil && access.UserData != nil && access.UserData.ID != "" && access.Token != nil && access.Token.AccessToken != "" {
-		t.Logf("[AUTH][OK] Login estudiante exitoso. studentID=%s", access.UserData.ID)
-		return access
-	}
-	t.Log("[AUTH] Estudiante no existe o login fallo, registrando usuario")
-
-	registered, registerErr := auth.RegisterUserDirect(email, password, "Student Test")
-	if registerErr != nil {
-		t.Fatalf("register student failed: %v", registerErr)
-	}
-	if registered == nil || registered.UserData == nil || registered.UserData.ID == "" || registered.Token == nil || registered.Token.AccessToken == "" {
-		t.Fatal("expected registered student with ID and access token")
-	}
-	t.Logf("[AUTH][OK] Registro de estudiante exitoso. studentID=%s", registered.UserData.ID)
-
-	return registered
-}
-
-func teacherCourseCtx(teacherAccess *user_dtos.UserAccess) context.Context {
-	ctx := services.WithAccessToken(context.Background(), teacherAccess.Token.AccessToken)
-	ctx = services.WithUserEmail(ctx, teacherAccess.UserData.Email)
-	return ctx
 }

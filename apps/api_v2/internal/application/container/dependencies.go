@@ -3,6 +3,7 @@ package container
 import (
 	"fmt"
 
+	ai_ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/generative-ai"
 	submussion_ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/submission"
 	ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 	course_repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
@@ -21,11 +22,14 @@ type ApplicationDependencies struct {
 	PasswordHasher  ports.PasswordHasherPort
 
 	PublisherPort submussion_ports.SubmissionPublisherPort
+	AIAdapter     ai_ports.AIPort
 
 	UserRepository             user_repositories.UserRepository
 	CourseRepository           course_repositories.CourseRepository
 	ExamRepository             exam_repositories.ExamRepository
 	ChallengeRepository        exam_repositories.ChallengeRepository
+	IOVariableRepository 	   exam_repositories.IOVariableRepository
+	ExamItemRepository         exam_repositories.ExamItemRepository
 	TestCaseRepository         exam_repositories.TestCaseRepository
 	SubmissionRepository       submission_repositories.SubmissionRepository
 	SessionRepository          submission_repositories.SessionRepository
@@ -43,10 +47,13 @@ func NewApplicationDependencies(
 	examRepo exam_repositories.ExamRepository,
 	challengeRepo exam_repositories.ChallengeRepository,
 	testCaseRepo exam_repositories.TestCaseRepository,
+	ioVariableRepo exam_repositories.IOVariableRepository,
+	examItemRepo exam_repositories.ExamItemRepository,
 	submissionRepo submission_repositories.SubmissionRepository,
 	sessionRepo submission_repositories.SessionRepository,
 	submissionResultRepo submission_repositories.SubmissionResultRepository,
 	publisherPort submussion_ports.SubmissionPublisherPort,
+	aiAdapter ai_ports.AIPort,
 ) ApplicationDependencies {
 	return ApplicationDependencies{
 		RegisterService:            registerService,
@@ -55,11 +62,14 @@ func NewApplicationDependencies(
 		TokenService:               tokenService,
 		PasswordHasher:             passwordHasher,
 		PublisherPort:              publisherPort,
+		AIAdapter:                  aiAdapter,
 		UserRepository:             userRepo,
 		CourseRepository:           courseRepo,
 		ExamRepository:             examRepo,
 		ChallengeRepository:        challengeRepo,
+		IOVariableRepository: 		ioVariableRepo,
 		TestCaseRepository:         testCaseRepo,
+		ExamItemRepository:         examItemRepo,
 		SubmissionRepository:       submissionRepo,
 		SessionRepository:          sessionRepo,
 		SubmissionResultRepository: submissionResultRepo,
@@ -111,12 +121,24 @@ func (deps ApplicationDependencies) CheckDependencies() error {
 		return fmt.Errorf("TestCaseRepository dependency is not provided")
 	}
 
+	if deps.IOVariableRepository == nil {
+		return fmt.Errorf("IOVariableRepository dependency is not provided")
+	}
+
+	if deps.ExamItemRepository == nil {
+		return fmt.Errorf("ExamItemRepository dependency is not provided")
+	}
+
 	if deps.SessionRepository == nil {
 		return fmt.Errorf("SessionRepository dependency is not provided")
 	}
 
 	if deps.SubmissionResultRepository == nil {
 		return fmt.Errorf("SubmissionResultRepository dependency is not provided")
+	}
+
+	if deps.AIAdapter == nil {
+		return fmt.Errorf("AIAdapter dependency is not provided")
 	}
 
 	if deps.PublisherPort == nil {

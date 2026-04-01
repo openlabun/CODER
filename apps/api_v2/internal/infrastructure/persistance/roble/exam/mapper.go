@@ -10,6 +10,36 @@ import (
 	exam_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
 )
 
+// ExamItem mappers
+func examItemToRecord(item *Entities.ExamItem) map[string]any {
+	return map[string]any{
+		"ID":          strings.TrimSpace(item.ID),
+		"ChallengeID": strings.TrimSpace(item.ChallengeID),
+		"ExamID":      strings.TrimSpace(item.ExamID),
+		"Order":       item.Order,
+		"Points":      item.Points,
+	}
+}
+
+func examItemToUpdates(item *Entities.ExamItem) map[string]any {
+	return map[string]any{
+		"ChallengeID": strings.TrimSpace(item.ChallengeID),
+		"ExamID":      strings.TrimSpace(item.ExamID),
+		"Order":       item.Order,
+		"Points":      item.Points,
+	}
+}
+
+func recordToExamItem(record map[string]any) (*Entities.ExamItem, error) {
+	return exam_factory.ExistingExamItem(
+		asString(record["ID"]),
+		asString(record["ChallengeID"]),
+		asString(record["ExamID"]),
+		asInt(record["Order"]),
+		asInt(record["Points"]),
+	)
+}
+
 func examToRecord(exam *Entities.Exam) map[string]any {
 	record := map[string]any{
 		"ID":                   strings.TrimSpace(exam.ID),
@@ -93,56 +123,38 @@ func recordToExam(record map[string]any) (*Entities.Exam, error) {
 }
 
 func challengeToRecord(challenge *Entities.Challenge) map[string]any {
-	record := map[string]any{
+	return map[string]any{
 		"ID":                strings.TrimSpace(challenge.ID),
 		"Title":             strings.TrimSpace(challenge.Title),
 		"Description":       strings.TrimSpace(challenge.Description),
+		"Tags":              listFieldValue(challenge.Tags),
 		"Status":            string(challenge.Status),
 		"Difficulty":        string(challenge.Difficulty),
 		"WorkerTimeLimit":   challenge.WorkerTimeLimit,
 		"WorkerMemoryLimit": challenge.WorkerMemoryLimit,
-		"InputVariables":    listFieldValue(ioVariableIDs(challenge.InputVariables)),
-		"OutputVariable":    strings.TrimSpace(challenge.OutputVariable.ID),
+		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
+		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
 		"CreatedAt":         challenge.CreatedAt.UTC().Format(time.RFC3339),
 		"UpdatedAt":         challenge.UpdatedAt.UTC().Format(time.RFC3339),
+		"UserID":            strings.TrimSpace(challenge.UserID),
 	}
-
-	if challenge.CourseID != "" {
-		challenge.Tags = append(challenge.Tags, "course_id:"+challenge.CourseID)
-	}
-	record["Tags"] = listFieldValue(challenge.Tags)
-
-	if examID := strings.TrimSpace(challenge.ExamID); examID != "" {
-		record["ExamID"] = examID
-	}
-
-	return record
 }
 
 func challengeToUpdates(challenge *Entities.Challenge) map[string]any {
-	updates := map[string]any{
+	return map[string]any{
 		"Title":             strings.TrimSpace(challenge.Title),
 		"Description":       strings.TrimSpace(challenge.Description),
+		"Tags":              listFieldValue(challenge.Tags),
 		"Status":            string(challenge.Status),
 		"Difficulty":        string(challenge.Difficulty),
 		"WorkerTimeLimit":   challenge.WorkerTimeLimit,
 		"WorkerMemoryLimit": challenge.WorkerMemoryLimit,
-		"InputVariables":    listFieldValue(ioVariableIDs(challenge.InputVariables)),
-		"OutputVariable":    strings.TrimSpace(challenge.OutputVariable.ID),
+		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
+		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
+		"UserID":            strings.TrimSpace(challenge.UserID),
 	}
-
-	if challenge.CourseID != "" {
-		challenge.Tags = append(challenge.Tags, "course_id:"+challenge.CourseID)
-	}
-	updates["Tags"] = listFieldValue(challenge.Tags)
-
-	if examID := strings.TrimSpace(challenge.ExamID); examID != "" {
-		updates["ExamID"] = examID
-	}
-
-	return updates
 }
 
 func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariable, outputVariable *Entities.IOVariable) (*Entities.Challenge, error) {
@@ -150,14 +162,6 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 	updatedAt, _ := asTime(record["UpdatedAt"])
 
 	tags := asStringList(record["Tags"])
-	var courseID string
-	for _, tag := range tags {
-		if strings.HasPrefix(tag, "course_id:") {
-			courseID = tag[10:]
-			break
-		}
-	}
-
 	status := Entities.ChallengeStatus(asString(record["Status"]))
 	if status == "" {
 		status = Entities.ChallengeStatusDraft
@@ -185,8 +189,7 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 		inputVariables,
 		output,
 		asString(record["Constraints"]),
-		asString(record["ExamID"]),
-		courseID,
+		asString(record["UserID"]),
 		createdAt,
 		updatedAt,
 	)

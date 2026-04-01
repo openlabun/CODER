@@ -26,38 +26,34 @@ func NewGetChallengeDetailsUseCase(challengeRepository repositories.ChallengeRep
 }
 
 func (uc *GetChallengeDetailsUseCase) Execute(ctx context.Context, input dtos.GetChallengeDetailsInput) (*Entities.Challenge, error) {
-	// [STEP 1] Verify user
+	// [STEP 1] Verify user is teacher
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	user, err := uc.userRepository.GetUserByEmail(ctx, userEmail)
-	if err != nil || user == nil {
-		return nil, fmt.Errorf("user not found")
+	if err != nil {
+		return nil, err
+	}
+
+	if user.Role != user_entities.UserRoleProfessor {
+		return nil, fmt.Errorf("user does not have permissions to get an exam")
 	}
 
 	// [STEP 2] Verify challenge exists
 	challenge, err := uc.challengeRepository.GetChallengeByID(ctx, input.ChallengeID)
-	if err != nil || challenge == nil {
-		return nil, fmt.Errorf("challenge not found")
+	if err != nil {
+		return nil, err
 	}
 
-	// [STEP 3] Access Control
-	if user.Role == user_entities.UserRoleStudent {
-		// Students can only see published challenges or those in an active exam
-		if challenge.Status != Entities.ChallengeStatusPublished && challenge.ExamID == "" {
-			return nil, fmt.Errorf("challenge is not accessible")
-		}
-	} else if user.Role == user_entities.UserRoleProfessor {
-		// Professors should be able to see their own challenges
-		// If it belongs to an exam, check exam ownership
-		if challenge.ExamID != "" {
-			exam, err := uc.examRepository.GetExamByID(ctx, challenge.ExamID)
-			if err == nil && exam != nil && exam.ProfessorID != user.ID {
-				return nil, fmt.Errorf("you do not have permission to view this exam's challenge")
-			}
-		}
+	if challenge == nil {
+		return nil, fmt.Errorf("challenge with id %s does not exist", input.ChallengeID)
+	}
+
+	// [STEP 3] Verify that challenge belongs to teacher
+	if challenge.UserID != user.ID {
+		return nil, fmt.Errorf("user does not have permissions to access this challenge")
 	}
 
 	return challenge, nil

@@ -10,6 +10,7 @@ import (
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
@@ -45,15 +46,15 @@ func (uc *GetUserSubmissionsUseCase) Execute(ctx context.Context, input dtos.Get
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
-	// [STEP 2] Check permissions (Temporarily relaxed for debugging)
-	/*
-	if input.UserID != user.ID && user.Role != user_entities.UserRoleAdmin && user.Role != user_entities.UserRoleProfessor {
+	role := user.Role
+
+	// [STEP 2] Verify if user is a student, only query for his own submissions | Teachers and Admins are allowed
+	if role == user_entities.UserRoleStudent || user.ID != input.UserID {
 		return nil, fmt.Errorf("user does not have permissions to view submissions for this user")
 	}
-	*/
 
-	// [STEP 3] Get all submissions for the user
-	submissions, err := uc.submissionRepository.GetSubmissionsByUserID(ctx, input.UserID)
+	// [STEP 3] Get all submissions for the user  
+	submissions, err := uc.submissionRepository.GetSubmissionsByUserID(ctx, user.ID, input.Status, input.TestID, input.ChallengeID)
 	if err != nil {
 		return nil, err
 	}

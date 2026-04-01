@@ -6,15 +6,20 @@ import (
 	"strings"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 )
 
 type SubmissionResultRepository struct {
-	adapter *infrastructure.RobleDatabaseAdapter
+	adapter              *infrastructure.RobleDatabaseAdapter
+	ioVariableRepository examRepository.IOVariableRepository
 }
 
-func NewSubmissionResultRepository(adapter *infrastructure.RobleDatabaseAdapter) *SubmissionResultRepository {
-	return &SubmissionResultRepository{adapter: adapter}
+func NewSubmissionResultRepository(
+	adapter *infrastructure.RobleDatabaseAdapter,
+	ioVariableRepository examRepository.IOVariableRepository,
+) *SubmissionResultRepository {
+	return &SubmissionResultRepository{adapter: adapter, ioVariableRepository: ioVariableRepository}
 }
 
 func (r *SubmissionResultRepository) CreateResult(ctx context.Context, result *Entities.SubmissionResult) (*Entities.SubmissionResult, error) {
@@ -23,12 +28,6 @@ func (r *SubmissionResultRepository) CreateResult(ctx context.Context, result *E
 	}
 	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
 		return nil, err
-	}
-
-	if result.ActualOutput != nil {
-		if err := upsertIOVariable(ctx, r.adapter, *result.ActualOutput); err != nil {
-			return nil, err
-		}
 	}
 
 	_, err := r.adapter.Insert(submissionResultTableName, []map[string]any{resultToRecord(result)})
@@ -52,12 +51,6 @@ func (r *SubmissionResultRepository) UpdateResult(ctx context.Context, result *E
 		return nil, fmt.Errorf("result id is required")
 	}
 
-	if result.ActualOutput != nil {
-		if err := upsertIOVariable(ctx, r.adapter, *result.ActualOutput); err != nil {
-			return nil, err
-		}
-	}
-
 	_, err := r.adapter.Update(submissionResultTableName, "ID", resultID, resultToUpdates(result))
 	if err != nil {
 		return nil, err
@@ -75,22 +68,8 @@ func (r *SubmissionResultRepository) DeleteResult(ctx context.Context, resultID 
 		return err
 	}
 
-	res, err := r.adapter.Read(submissionResultTableName, map[string]string{"ID": normalizedID})
-	if err != nil {
-		return err
-	}
-
-	var ActualOutput string
-	if record, findErr := firstRecord(res); findErr == nil {
-		ActualOutput = strings.TrimSpace(asString(record["ActualOutput"]))
-	}
-
-	_, err = r.adapter.Delete(submissionResultTableName, "ID", normalizedID)
-	if err != nil {
-		return err
-	}
-
-	return deleteIOVariableByID(ctx, r.adapter, ActualOutput)
+	_, err := r.adapter.Delete(submissionResultTableName, "ID", normalizedID)
+	return err
 }
 
 func (r *SubmissionResultRepository) GetResultByID(ctx context.Context, resultID string) (*Entities.SubmissionResult, error) {
@@ -112,7 +91,7 @@ func (r *SubmissionResultRepository) GetResultByID(ctx context.Context, resultID
 		return nil, nil
 	}
 
-	actualOutput, err := getIOVariableByID(ctx, r.adapter, asString(record["ActualOutput"]))
+	actualOutput, err := r.ioVariableRepository.GetIOVariableByID(ctx, asString(record["ActualOutput"]))
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +128,7 @@ func (r *SubmissionResultRepository) getResultsByField(ctx context.Context, fiel
 
 	results := make([]*Entities.SubmissionResult, 0, len(records))
 	for _, record := range records {
-		actualOutput, fetchErr := getIOVariableByID(ctx, r.adapter, asString(record["ActualOutput"]))
+		actualOutput, fetchErr := r.ioVariableRepository.GetIOVariableByID(ctx, asString(record["ActualOutput"]))
 		if fetchErr != nil {
 			return nil, fetchErr
 		}

@@ -30,35 +30,31 @@ const (
 )
 
 type Period struct {
-	Year   int            `json:"year"`
-	Semester AcademicPeriod `json:"semester"`
+	Year   int					`json:"year"`
+	Semester AcademicPeriod		`json:"semester"`
 }
 
 type Course struct {
-	ID             string           `json:"id"`
-	Name           string           `json:"name"`
-	Description    string           `json:"description"` // (Optional)
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Description    string `json:"description"` // (Optional)
 
 	// Access Control
 	Visibility     CourseVisibility `json:"visibility"`
 
 	// Visual Identity
-	VisualIdentity CourseColour     `json:"visual_identity"`
+	VisualIdentity CourseColour `json:"visual_identity"` 
 
 	// Course Institution Data
-	Code           string           `json:"code"`
-	Period         *Period          `json:"period"` // Optional, won't be blocked after the period ends
+	Code           string `json:"code"` 
+	Period         *Period `json:"period"` // Optional, won't be blocked after the period ends
 
 	// Enrollment Details
-	EnrollmentCode string           `json:"enrollment_code"`
-	EnrollmentURL  string           `json:"enrollment_url"`
+	EnrollmentCode string `json:"enrollment_code"`
+	EnrollmentURL  string `json:"enrollment_url"`
 
 	// Metadata
-	CreatedAt      time.Time        `json:"created_at"`
-	UpdatedAt      time.Time        `json:"updated_at"`
-	ProfessorID    string           `json:"professor_id"`
-
-	// Aggregated metadata
-	StudentCount   int              `json:"studentCount"`
-	EnrolledCount  int              `json:"enrolledCount"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	ProfessorID    string	 `json:"professor_id"`
 }

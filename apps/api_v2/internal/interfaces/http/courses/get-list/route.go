@@ -10,17 +10,23 @@ func Handler(appContainer *container.Application) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		query := MapQuery(c.Query("scope"), c.Query("studentId"), c.Query("teacherId"))
 		ctx := shared.BuildRequestContext(c)
-		if query.Scope == "owned" {
-			result, err := appContainer.CourseModule.GetOwnedCourses.Execute(ctx, ToOwnedInput(query))
-			if err != nil { 
-				return shared.HandleError(c, err) 
-			}
-			return c.Status(fiber.StatusOK).JSON(result)
+		switch query.Scope {
+			case "owned":
+				result, err := appContainer.CourseModule.GetOwnedCourses.Execute(ctx)
+				if err != nil { 
+					return shared.HandleError(c, err) 
+				}
+				return c.Status(fiber.StatusOK).JSON(result)
+			case "enrolled":
+				result, err := appContainer.CourseModule.GetEnrolledCourses.Execute(ctx)
+				if err != nil { 
+					return shared.HandleError(c, err) 
+				}
+				return c.Status(fiber.StatusOK).JSON(result)
 		}
-		result, err := appContainer.CourseModule.GetEnrolledCourses.Execute(ctx, ToEnrolledInput(query))
-		if err != nil { 
-			return shared.HandleError(c, err) 
-		}
-		return c.Status(fiber.StatusOK).JSON(result)
+		// TODO: Not implemented get all public courses
+		result := []string{}
+		
+		return c.Status(fiber.StatusNotImplemented).JSON(result)
 	}
 }

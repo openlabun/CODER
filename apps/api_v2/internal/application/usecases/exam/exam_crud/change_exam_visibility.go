@@ -43,7 +43,7 @@ func (uc *ChangeExamVisibilityUseCase) Execute(ctx context.Context, input dtos.C
 	}
 
 	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
+		return nil, fmt.Errorf("user does not have permissions to change exam visibility")
 	}
 
 	// [STEP 2] Get exam entity to be updated
@@ -56,13 +56,18 @@ func (uc *ChangeExamVisibilityUseCase) Execute(ctx context.Context, input dtos.C
 		return nil, fmt.Errorf("exam with id %q does not exist", input.ExamID)
 	}
 
-	// [STEP 3] Update exam entity with new visibility value
+	// [STEP 3] Verify that exam belongs to teacher
+	if exam.ProfessorID != user.ID {
+		return nil, fmt.Errorf("user does not have permissions to change visibility of this exam")
+	}
+
+	// [STEP 4] Update exam entity with new visibility value
 	exam, err = mapper.MapExamVisibilityInputToExamEntity(exam, input)
 	if err != nil {
 		return nil, err
 	}
 
-	// [STEP 4] Save updated exam entity
+	// [STEP 5] Save updated exam entity
 	exam, err = uc.examRepository.UpdateExam(ctx, exam)
 	if err != nil {
 		return nil, err

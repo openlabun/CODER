@@ -35,11 +35,12 @@ func TestSubmissionCRUD(t *testing.T) {
 	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
 	courseRepository := roble_course_infrastructure.NewCourseRepository(robleAdapter)
 	examRepository := roble_exam_infrastructure.NewExamRepository(robleAdapter)
-	challengeRepository := roble_exam_infrastructure.NewChallengeRepository(robleAdapter)
-	testCaseRepository := roble_exam_infrastructure.NewTestCaseRepository(robleAdapter)
+	ioVariableRepository := roble_exam_infrastructure.NewIOVariableRepository(robleAdapter)
+	challengeRepository := roble_exam_infrastructure.NewChallengeRepository(robleAdapter, ioVariableRepository)
+	testCaseRepository := roble_exam_infrastructure.NewTestCaseRepository(robleAdapter, ioVariableRepository)
 	sessionRepository := roble_submission_infrastructure.NewSessionRepository(robleAdapter)
 	submissionRepository := roble_submission_infrastructure.NewSubmissionRepository(robleAdapter)
-	resultRepository := roble_submission_infrastructure.NewSubmissionResultRepository(robleAdapter)
+	resultRepository := roble_submission_infrastructure.NewSubmissionResultRepository(robleAdapter, ioVariableRepository)
 	t.Log("[OK] Repositories inicializados")
 
 	t.Log("[STEP 2] Login docente de pruebas")
@@ -316,15 +317,15 @@ func TestSubmissionCRUD(t *testing.T) {
 	}
 	t.Logf("[OK] Submission actualizada. score=%d timeMsTotal=%d", updatedSubmission.Score, updatedSubmission.TimeMsTotal)
 
-	bySession, err := submissionRepository.GetSubmissionsBySessionID(ctx, sessionID)
+	bySession, err := submissionRepository.GetSubmissionsBySessionID(ctx, sessionID, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("get submissions by session failed: %v", err)
 	}
-	byUser, err := submissionRepository.GetSubmissionsByUserID(ctx, teacherID)
+	byUser, err := submissionRepository.GetSubmissionsByUserID(ctx, teacherID, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("get submissions by user failed: %v", err)
 	}
-	byChallenge, err := submissionRepository.GetSubmissionsByChallengeID(ctx, challengeID)
+	byChallenge, err := submissionRepository.GetSubmissionsByChallengeID(ctx, challengeID, nil, nil)
 	if err != nil {
 		t.Fatalf("get submissions by challenge failed: %v", err)
 	}

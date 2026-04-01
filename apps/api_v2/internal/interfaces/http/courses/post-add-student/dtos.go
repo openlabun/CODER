@@ -7,12 +7,14 @@ type PathDTO struct {
 }
 
 type RequestDTO struct { 
-	StudentID string `json:"studentID"` 
+	StudentID    *string `json:"studentID"` 
+	StudentEmail *string `json:"studentEmail"`
 }
 
 func ToInput(path PathDTO, body RequestDTO) courseDtos.EnrolledInCourseInput {
 	return courseDtos.EnrolledInCourseInput{
 		CourseID: path.CourseID, 
 		StudentID: body.StudentID,
+		StudentEmail: body.StudentEmail,
 	}
 }

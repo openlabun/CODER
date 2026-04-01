@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
@@ -22,7 +21,7 @@ func NewGetEnrolledCoursesUseCase(courseRepository repositories.CourseRepository
 	return &GetEnrolledCoursesUseCase{courseRepository: courseRepository, userRepository: userRepository}
 }
 
-func (uc *GetEnrolledCoursesUseCase) Execute(ctx context.Context, input dtos.GetEnrolledCoursesInput) ([]*Entities.Course, error) {
+func (uc *GetEnrolledCoursesUseCase) Execute(ctx context.Context) ([]*Entities.Course, error) {
 	// Verify user is a student
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
@@ -35,21 +34,15 @@ func (uc *GetEnrolledCoursesUseCase) Execute(ctx context.Context, input dtos.Get
 	}
 
 	if user.Role != user_entities.UserRoleStudent {
-		return nil, fmt.Errorf("user role '%s' does not have permissions to view enrolled courses", user.Role)
+		return nil, fmt.Errorf("user does not have permissions to view enrolled courses")
 	}
 
 	// Get enrolled courses for the student
-	studentID := input.StudentID
-	if studentID == "" {
-		studentID = user.ID
-	}
-
-	courses, err := uc.courseRepository.GetCoursesByStudentID(ctx, studentID)
+	courses, err := uc.courseRepository.GetCoursesByStudentID(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Return empty list instead of nil if no courses found
 	if courses == nil {
 		return []*Entities.Course{}, nil
 	}

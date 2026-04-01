@@ -8,23 +8,21 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
-	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
-	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
-	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	Entity "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 )
 
 type CloseSessionUseCase struct {
-	userRepository userRepository.UserRepository
 	sessionRepository submissionRepository.SessionRepository
-	examRepository examRepository.ExamRepository
+	userRepository userRepository.UserRepository
 }
 
-func NewCloseSessionUseCase(userRepository userRepository.UserRepository, sessionRepository submissionRepository.SessionRepository, examRepository examRepository.ExamRepository) *CloseSessionUseCase {
+func NewCloseSessionUseCase(sessionRepository submissionRepository.SessionRepository, userRepository userRepository.UserRepository) *CloseSessionUseCase {
 	return &CloseSessionUseCase{
-		userRepository: userRepository,
 		sessionRepository: sessionRepository,
-		examRepository: examRepository,
+		userRepository: userRepository,
 	}
 }
 
@@ -44,29 +42,31 @@ func (uc *CloseSessionUseCase) Execute(ctx context.Context, input dtos.CloseSess
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
+	if user.Role != user_entities.UserRoleProfessor {
+		return nil, fmt.Errorf("user does not have permissions to create an exam")
+	}
+	
 	// [STEP 2] Verify existing student session
-	sessions, err := uc.sessionRepository.GetSessionsByStudentID(ctx, user.ID)
+	session, err := uc.sessionRepository.GetSessionByID(ctx, input.SessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	active_sesion := getExistingSession(sessions)
-
-	// [STEP 3] If session is not active, return error
-	if active_sesion == nil {
-		return nil, fmt.Errorf("student does not have an active session")
+	// [STEP 3] Verify if student is owner of the session
+	if user.Role == user_entities.UserRoleStudent && session.StudentID != user.ID {
+		return nil, fmt.Errorf("user is not the owner of the session")
 	}
 
-	// [STEP 4] Close session
-	err = state_machine.ApplyTranstion(active_sesion, Entity.SessionStatusCompleted)
+	// [STEP 4] Close Session
+	err = state_machine.ApplyTranstion(session, Entity.SessionStatusCompleted)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("session is not active and cannot be closed, got error: %w", err)
 	}
 
-	// [STEP 5] Persist session changes
-	session, err := uc.sessionRepository.UpdateSession(ctx, active_sesion)
+	// [STEP 5] Update session in repository
+	session, err = uc.sessionRepository.UpdateSession(ctx, session)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to update session: %w", err)
 	}
 
 	return session, nil

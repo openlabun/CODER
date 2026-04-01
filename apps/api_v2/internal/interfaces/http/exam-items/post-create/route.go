@@ -1,4 +1,4 @@
-package getlist
+package postcreate
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -8,11 +8,16 @@ import (
 
 func Handler(appContainer *container.Application) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		query := MapQuery(c.Query("challengeId"), c.Query("status"), c.Query("testId"))
-		result, err := appContainer.SubmissionUseCases.GetChallengeSubmissions.Execute(shared.BuildRequestContext(c), ToInput(query))
+		var req RequestDTO
+		if err := c.BodyParser(&req); err != nil {
+			return shared.HandleError(c, err)
+		}
+
+		result, err := appContainer.ExamItemModule.CreateExamItem.Execute(shared.BuildRequestContext(c), MapRequestToInput(req))
 		if err != nil {
 			return shared.HandleError(c, err)
 		}
-		return c.Status(fiber.StatusOK).JSON(result)
+
+		return c.Status(fiber.StatusCreated).JSON(result)
 	}
 }

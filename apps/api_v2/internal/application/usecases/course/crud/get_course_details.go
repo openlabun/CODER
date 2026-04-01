@@ -22,14 +22,18 @@ func NewGetCourseDetailsUseCase(courseRepository repositories.CourseRepository, 
 }
 
 func (uc *GetCourseDetailsUseCase) Execute(ctx context.Context, input dtos.GetCourseDetailsInput) (*Entities.Course, error) {
-	// Verify user is teacher and has permissions to create a course
+	// [STEP 1] Verify user is teacher and has permissions to create a course
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	user, err := uc.userRepository.GetUserByEmail(ctx, userEmail)
-	if err != nil || user == nil {
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
 		return nil, fmt.Errorf("user not found")
 	}
 
@@ -40,6 +44,11 @@ func (uc *GetCourseDetailsUseCase) Execute(ctx context.Context, input dtos.GetCo
 	}
 
 	if course == nil {
+		return nil, fmt.Errorf("course not found")
+	}
+
+	// [STEP 3] If user is not owner and course is blocked, return error
+	if course.Visibility == Entities.CourseVisibilityBlocked && course.ProfessorID != user.ID {
 		return nil, fmt.Errorf("course not found")
 	}
 

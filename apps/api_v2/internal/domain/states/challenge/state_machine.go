@@ -7,7 +7,7 @@ import (
 )
 
 // State machine for challenge lifecycle
-// States: draft -> published -> archived
+// States: draft -> published|private -> archived
 //   - Can make direct transition to published
 //   - Can return from archived to published, but not to draft
 
@@ -16,6 +16,11 @@ var challengeAllowedTransitions = map[Entities.ChallengeStatus]map[Entities.Chal
 		Entities.ChallengeStatusPublished: {},
 	},
 	Entities.ChallengeStatusPublished: {
+		Entities.ChallengeStatusArchived: {},
+		Entities.ChallengeStatusPrivate:  {},
+	},
+	Entities.ChallengeStatusPrivate: {
+		Entities.ChallengeStatusPublished: {},
 		Entities.ChallengeStatusArchived: {},
 	},
 	Entities.ChallengeStatusArchived: {
@@ -30,6 +35,8 @@ func IsValidState(state Entities.ChallengeStatus) bool {
 	case Entities.ChallengeStatusPublished:
 		return true
 	case Entities.ChallengeStatusArchived:
+		return true
+	case Entities.ChallengeStatusPrivate:
 		return true
 	default:
 		return false

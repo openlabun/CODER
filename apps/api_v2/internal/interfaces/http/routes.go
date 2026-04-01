@@ -7,8 +7,8 @@ import (
 	"github.com/MarceloPetrucio/go-scalar-api-reference"
 	"github.com/gofiber/fiber/v2"
 	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
-	ai_post_generate_exam "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-exam"
-	ai_post_generate_full_challenge "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-full-challenge"
+	post_generate_exam "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-exam"
+	post_generate_full_challenge "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/ai/post-generate-full-challenge"
 	auth_get_me "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/get-me"
 	auth_post_login "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-login"
 	auth_post_refresh_token "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/auth/post-refresh-token"
@@ -16,40 +16,43 @@ import (
 	challenge_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/delete-by-id"
 	challenge_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-by-id"
 	challenge_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-list"
-	challenge_get_mine "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-mine"
+	challenge_get_public "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/get-public"
 	challenge_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/patch-update"
 	challenge_post_archive "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-archive"
 	challenge_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-create"
+	challenge_post_fork "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-fork"
 	challenge_post_publish "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-publish"
 	course_delete_course "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/delete-course"
 	course_delete_student "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/delete-student"
-	course_get_browse "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-browse"
 	course_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-by-id"
-	course_get_challenges "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-challenges"
 	course_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-list"
 	course_get_students "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/get-students"
 	course_post_add_student "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-add-student"
-	course_post_assign_challenge "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-assign-challenge"
 	course_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-create"
 	course_post_enroll "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-enroll"
 	course_post_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/post-update"
+	exam_item_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exam-items/delete-by-id"
+	exam_item_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exam-items/patch-update"
+	exam_item_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exam-items/post-create"
 	exam_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/delete-by-id"
 	exam_get_by_course_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-course-id"
 	exam_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-by-id"
-	exam_get_owned "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-owned"
+	exam_get_exam_items "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-exam-items"
+	exam_get_public "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/get-public"
 	exam_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/patch-update"
 	exam_post_change_visibility "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-change-visibility"
 	exam_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-close"
 	exam_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-create"
+	sub_get_by_challenge_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-challenge-id"
 	sub_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-id"
-	sub_get_by_session_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-session-id"
 	sub_get_by_user_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-user-id"
-	sub_get_list "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-list"
 	sub_patch_update_result "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/patch-update-result"
-	sub_post_close_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-close-session"
 	sub_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create"
-	sub_post_heartbeat "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-heartbeat"
-	sub_post_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-session"
+	sub_get_active_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/get-active-session"
+	sub_post_block "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-block"
+	sub_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-close"
+	sub_post_heartbeat "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-heartbeat"
+	sub_post_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-session"
 	tc_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/delete-by-id"
 	tc_get_by_challenge_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/get-by-challenge-id"
 	tc_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/patch-update"
@@ -64,6 +67,7 @@ func RegisterRoutes(app *fiber.App, appContainer *container.Application) {
 	registerTestCasesRoutes(app, appContainer)
 	registerCoursesRoutes(app, appContainer)
 	registerExamsRoutes(app, appContainer)
+	registerExamItemsRoutes(app, appContainer)
 	registerSubmissionsRoutes(app, appContainer)
 	registerLeaderboardRoutes(app)
 	registerMetricsRoutes(app)
@@ -131,19 +135,20 @@ func registerAIRoutes(app *fiber.App, appContainer *container.Application) {
 	ai := app.Group("/ai")
 	ai.Post("/generate-challenge-ideas", mockHandler("ai/post-generate-challenge-ideas/mockup/output.json", fiber.StatusOK))
 	ai.Post("/generate-test-cases", mockHandler("ai/post-generate-test-cases/mockup/output.json", fiber.StatusOK))
-	ai.Post("/generate-full-challenge", ai_post_generate_full_challenge.Handler(appContainer))
-	ai.Post("/generate-exam", ai_post_generate_exam.Handler(appContainer))
+	ai.Post("/generate-full-challenge", post_generate_full_challenge.Handler(appContainer))
+	ai.Post("/generate-exam", post_generate_exam.Handler(appContainer))
 }
 
 func registerChallengesRoutes(app *fiber.App, appContainer *container.Application) {
 	challenges := app.Group("/challenges")
 	challenges.Post("/", challenge_post_create.Handler(appContainer))
 	challenges.Get("/", challenge_get_list.Handler(appContainer))
-	challenges.Get("/mine", challenge_get_mine.Handler(appContainer))
 	challenges.Get("/:id", challenge_get_by_id.Handler(appContainer))
 	challenges.Patch("/:id", challenge_patch_update.Handler(appContainer))
 	challenges.Delete("/:id", challenge_delete_by_id.Handler(appContainer))
 	challenges.Post("/:id/publish", challenge_post_publish.Handler(appContainer))
+	challenges.Get("/public", challenge_get_public.Handler(appContainer))
+	challenges.Post("/:id/fork", challenge_post_fork.Handler(appContainer))
 	challenges.Post("/:id/archive", challenge_post_archive.Handler(appContainer))
 }
 
@@ -159,28 +164,33 @@ func registerCoursesRoutes(app *fiber.App, appContainer *container.Application) 
 	courses := app.Group("/courses")
 	courses.Post("/enroll", course_post_enroll.Handler(appContainer))
 	courses.Post("/", course_post_create.Handler(appContainer))
-	courses.Get("/browse", course_get_browse.Handler(appContainer))
 	courses.Get("/", course_get_list.Handler(appContainer))
 	courses.Get("/:id", course_get_by_id.Handler(appContainer))
 	courses.Post("/:id", course_post_update.Handler(appContainer))
 	courses.Delete("/:id", course_delete_course.Handler(appContainer))
 	courses.Post("/:id/students", course_post_add_student.Handler(appContainer))
 	courses.Delete("/:id/students/:studentId", course_delete_student.Handler(appContainer))
-	courses.Post("/:id/challenges", course_post_assign_challenge.Handler(appContainer))
 	courses.Get("/:id/students", course_get_students.Handler(appContainer))
-	courses.Get("/:id/challenges", course_get_challenges.Handler(appContainer))
 }
 
 func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 	exams := app.Group("/exams")
 	exams.Post("/", exam_post_create.Handler(appContainer))
 	exams.Get("/course/:courseId", exam_get_by_course_id.Handler(appContainer))
-	exams.Get("/owned", exam_get_owned.Handler(appContainer))
 	exams.Get("/:id", exam_get_by_id.Handler(appContainer))
 	exams.Patch("/:id", exam_patch_update.Handler(appContainer))
 	exams.Delete("/:id", exam_delete_by_id.Handler(appContainer))
 	exams.Post("/:id/visibility", exam_post_change_visibility.Handler(appContainer))
 	exams.Post("/:id/close", exam_post_close.Handler(appContainer))
+	exams.Get("/public", exam_get_public.Handler(appContainer))
+	exams.Get("/:examId/items", exam_get_exam_items.Handler(appContainer))
+}
+
+func registerExamItemsRoutes(app *fiber.App, appContainer *container.Application) {
+	examItems := app.Group("/exam-items")
+	examItems.Post("/", exam_item_post_create.Handler(appContainer))
+	examItems.Patch("/:id", exam_item_patch_update.Handler(appContainer))
+	examItems.Delete("/:id", exam_item_delete_by_id.Handler(appContainer))
 }
 
 func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Application) {
@@ -188,13 +198,14 @@ func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Applicati
 	submissions.Post("/", sub_post_create.Handler(appContainer))
 	submissions.Patch("/results/:resultId", sub_patch_update_result.Handler(appContainer))
 	submissions.Get("/user/:userId", sub_get_by_user_id.Handler(appContainer))
+	submissions.Get("/challenge/:challengeId", sub_get_by_challenge_id.Handler(appContainer))
 	submissions.Get("/:id", sub_get_by_id.Handler(appContainer))
-	submissions.Get("/", sub_get_list.Handler(appContainer))
 	sessions := submissions.Group("/sessions")
 	sessions.Post("/", sub_post_session.Handler(appContainer))
-	sessions.Get("/:id", sub_get_by_session_id.Handler(appContainer))
+	sessions.Get("/active", sub_get_active_session.Handler(appContainer))
 	sessions.Post("/:id/heartbeat", sub_post_heartbeat.Handler(appContainer))
-	sessions.Post("/:id/close", sub_post_close_session.Handler(appContainer))
+	sessions.Post("/:id/block", sub_post_block.Handler(appContainer))
+	sessions.Post("/:id/close", sub_post_close.Handler(appContainer))
 }
 
 func registerLeaderboardRoutes(app *fiber.App) {

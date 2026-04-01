@@ -12,9 +12,9 @@ type SubmissionRepository interface {
 	DeleteSubmission(ctx context.Context, submissionID string) error
 
 	GetSubmissionByID(ctx context.Context, submissionID string) (*Entities.Submission, error)
-	GetSubmissionsBySessionID(ctx context.Context, sessionID string) ([]*Entities.Submission, error)
-	GetSubmissionsByUserID(ctx context.Context, userID string) ([]*Entities.Submission, error)
-	GetSubmissionsByChallengeID(ctx context.Context, challengeID string) ([]*Entities.Submission, error)
+	GetSubmissionsBySessionID(ctx context.Context, sessionID string, status *string, testID *string, challengeID *string) ([]*Entities.Submission, error)
+	GetSubmissionsByUserID(ctx context.Context, userID string, status *string, testID *string, challengeID *string) ([]*Entities.Submission, error)
+	GetSubmissionsByChallengeID(ctx context.Context, challengeID string, status *string, testID *string) ([]*Entities.Submission, error)
 }
 
 type SessionRepository interface {

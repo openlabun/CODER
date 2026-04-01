@@ -13,19 +13,19 @@ const (
 )
 
 type Submission struct {
-	ID          string `json:"id"`
-	Code        string
-	Function    string
-	Language    ProgrammingLanguage
+	ID          string				`json:"id"`
+	Code        string				`json:"code"`
+	Function    string				`json:"function"`
+	Language    ProgrammingLanguage	`json:"language"`
 
 	// Results
-	Score       int
-	TimeMsTotal int
+	Score       int					`json:"score"`
+	TimeMsTotal int					`json:"time_ms_total"`
 
 	// Metadata
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	ChallengeID string
-	SessionID   string
-	UserID      string
+	CreatedAt   time.Time			`json:"created_at"`
+	UpdatedAt   time.Time			`json:"updated_at"`
+	ChallengeID string				`json:"challenge_id"`
+	SessionID   string				`json:"session_id"`
+	UserID      string				`json:"user_id"`
 }

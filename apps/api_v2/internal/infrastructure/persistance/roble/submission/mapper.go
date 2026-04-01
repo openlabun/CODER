@@ -1,7 +1,6 @@
 package roble_infrastructure
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -9,14 +8,12 @@ import (
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	submission_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
-	infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 )
 
 const (
 	submissionTableName       = "Submission"
 	sessionTableName          = "Sessions"
 	submissionResultTableName = "SubmissionResult"
-	ioVariableTableName       = "IOVariable"
 )
 
 func submissionToRecord(submission *Entities.Submission) map[string]any {
@@ -187,23 +184,6 @@ func recordToResult(record map[string]any, actualOutput *ExamEntities.IOVariable
 	)
 }
 
-func ioVariableToRecord(variable ExamEntities.IOVariable) map[string]any {
-	return map[string]any{
-		"ID":    strings.TrimSpace(variable.ID),
-		"Name":  strings.TrimSpace(variable.Name),
-		"Type":  string(variable.Type),
-		"Value": strings.TrimSpace(variable.Value),
-	}
-}
-
-func ioVariableToUpdates(variable ExamEntities.IOVariable) map[string]any {
-	return map[string]any{
-		"Name":  strings.TrimSpace(variable.Name),
-		"Type":  string(variable.Type),
-		"Value": strings.TrimSpace(variable.Value),
-	}
-}
-
 func recordToIOVariable(record map[string]any) (*ExamEntities.IOVariable, error) {
 	return &ExamEntities.IOVariable{
 		ID:    asString(record["ID"]),
@@ -211,64 +191,6 @@ func recordToIOVariable(record map[string]any) (*ExamEntities.IOVariable, error)
 		Type:  ExamEntities.VariableFormat(asString(record["Type"])),
 		Value: asString(record["Value"]),
 	}, nil
-}
-
-func getIOVariableByID(ctx context.Context, adapter *infrastructure.RobleDatabaseAdapter, variableID string) (*ExamEntities.IOVariable, error) {
-	normalizedID := strings.TrimSpace(variableID)
-	if normalizedID == "" {
-		return nil, nil
-	}
-	if err := infrastructure.SetAdapterTokenFromContext(ctx, adapter); err != nil {
-		return nil, err
-	}
-
-	res, err := adapter.Read(ioVariableTableName, map[string]string{"ID": normalizedID})
-	if err != nil {
-		return nil, err
-	}
-
-	record, err := firstRecord(res)
-	if err != nil {
-		return nil, nil
-	}
-
-	return recordToIOVariable(record)
-}
-
-func upsertIOVariable(ctx context.Context, adapter *infrastructure.RobleDatabaseAdapter, variable ExamEntities.IOVariable) error {
-	variableID := strings.TrimSpace(variable.ID)
-	if variableID == "" {
-		return fmt.Errorf("io variable id is required")
-	}
-	if err := infrastructure.SetAdapterTokenFromContext(ctx, adapter); err != nil {
-		return err
-	}
-
-	res, err := adapter.Read(ioVariableTableName, map[string]string{"ID": variableID})
-	if err != nil {
-		return err
-	}
-
-	if _, findErr := firstRecord(res); findErr != nil {
-		_, insertErr := adapter.Insert(ioVariableTableName, []map[string]any{ioVariableToRecord(variable)})
-		return insertErr
-	}
-
-	_, updateErr := adapter.Update(ioVariableTableName, "ID", variableID, ioVariableToUpdates(variable))
-	return updateErr
-}
-
-func deleteIOVariableByID(ctx context.Context, adapter *infrastructure.RobleDatabaseAdapter, variableID string) error {
-	normalizedID := strings.TrimSpace(variableID)
-	if normalizedID == "" {
-		return nil
-	}
-	if err := infrastructure.SetAdapterTokenFromContext(ctx, adapter); err != nil {
-		return err
-	}
-
-	_, err := adapter.Delete(ioVariableTableName, "ID", normalizedID)
-	return err
 }
 
 func firstRecord(res map[string]any) (map[string]any, error) {

@@ -5,42 +5,49 @@ import (
 )
 
 type CreateSubmissionInput struct {
-	Code        string
-	Function    string
-	Language    string
-	Score       int
-	ChallengeID string
-	SessionID   string
+	Code        string		`json:"code"`
+	Function    string		`json:"function"`
+	Language    string		`json:"language"`
+	Score       int			`json:"score"`
+	ChallengeID string		`json:"challenge_id"`
+	SessionID   string		`json:"session_id"`
 }
 
 type UpdateResultInput struct {
-	ResultID	string
-	Status		string
-	TimeExecution	int
-	Output		*string
-	Error		*string
+	ResultID	string		`json:"result_id"`
+	Status		string		`json:"status"`
+	TimeExecution	int		`json:"time_execution"`
+	Output		*string		`json:"output"`
+	Error		*string		`json:"error"`
 }
 
 type GetSubmissionStatusInput struct {
-	SubmissionID string
+	SubmissionID string		`json:"submission_id"`
 }
 
 type GetUserSubmissionsInput struct {
-	UserID      string
-	Status      *string
-	TestID      *string
-	ChallengeID *string
+	UserID      string		`json:"user_id"`
+	Status      *string		`json:"status"`			// Optional
+	TestID      *string		`json:"test_id"`		// Optional
+	ChallengeID *string 	`json:"challenge_id"`	// Optional
 }
 
 type GetChallengeSubmissionsInput struct {
-	ChallengeID string
-	Status      *string
-	TestID      *string
+	ChallengeID string		`json:"challenge_id"`
+	Status      *string		`json:"status"`			// Optional
+	TestID      *string		`json:"test_id"`		// Optional
+}
+
+type GetSessionSubmissionsInput struct {
+	SessionID   string		`json:"session_id"`
+	Status      *string		`json:"status"`			// Optional
+	TestID      *string		`json:"test_id"`		// Optional
+	ChallengeID *string		`json:"challenge_id"`	// Optional
 }
 
 type SubmissionOutputDTO struct {
-	Submission Entities.Submission
-	Results    []Entities.SubmissionResult
+	Submission Entities.Submission			`json:"submission"`
+	Results    []Entities.SubmissionResult	`json:"results"`
 }
 
 type SubmissionResultPublishedDTO struct {

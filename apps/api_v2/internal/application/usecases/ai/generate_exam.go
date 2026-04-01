@@ -2,57 +2,49 @@ package ai_usecases
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/ai"
-	"github.com/openlabun/CODER/apps/api_v2/internal/application/services"
-	"strings"
+	ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/generative-ai"
 )
 
 type GenerateExamUseCase struct {
-	geminiService *services.GeminiService
+	AI ports.AIPort
 }
 
-func NewGenerateExamUseCase(geminiService *services.GeminiService) *GenerateExamUseCase {
-	return &GenerateExamUseCase{geminiService: geminiService}
+func NewGenerateExamUseCase(AI ports.AIPort) *GenerateExamUseCase {
+	return &GenerateExamUseCase{AI: AI}
 }
 
 func (uc *GenerateExamUseCase) Execute(ctx context.Context, input dtos.GenerateExamInput) (*dtos.GenerateExamOutput, error) {
+	// [STEP 1] Build prompt for LLM
 	prompt := fmt.Sprintf(`
-Actúa como un profesor universitario experto diseñando exámenes de programación.
-Crea un examen completo basado en el tema: "%s" con dificultad general: "%s".
+		Actúa como un profesor universitario experto diseñando exámenes de programación.
+		Crea un examen completo basado en el tema: "%s" con dificultad general: "%s".
 
-Tu respuesta DEBE ser ÚNICAMENTE un objeto JSON válido con la siguiente estructura:
-{
-  "title": "Un título profesional para el examen",
-  "description": "Una descripción clara que incluya instrucciones y reglas generales en español",
-  "time_limit": 90,
-  "try_limit": 2
-}
+		Tu respuesta DEBE ser ÚNICAMENTE un objeto JSON válido con la siguiente estructura:
+		{
+		"title": "Un título profesional para el examen",
+		"description": "Una descripción clara que incluya instrucciones y reglas generales en español",
+		"time_limit": 90,
+		"try_limit": 2
+		}
 
-REGLAS CRÍTICAS:
-1. El contenido debe estar en ESPAÑOL.
-2. time_limit debe ser un entero representando minutos (entre 30 y 180).
-3. try_limit debe ser un entero pequeño (entre 1 y 5).
-4. El JSON debe ser perfectamente válido. No incluyas explicaciones fuera del JSON.
-`, input.Topic, input.Difficulty)
+		REGLAS CRÍTICAS:
+		1. El contenido debe estar en ESPAÑOL.
+		2. time_limit debe ser un entero representando minutos (entre 30 y 180).
+		3. try_limit debe ser un entero pequeño (entre 1 y 5).
+		4. El JSON debe ser perfectamente válido. No incluyas explicaciones fuera del JSON.
+	`, input.Topic, input.Difficulty)
 
-	response, err := uc.geminiService.GenerateContent(ctx, prompt)
+	// [STEP 2] Call LLM to generate exam
+	exam, err := uc.AI.GenerateExamIdea(ctx, prompt)
 	if err != nil {
-		return nil, fmt.Errorf("error llamando a Gemini: %w", err)
+		return nil, fmt.Errorf("Error calling AI: %w", err)
+	}
+	if exam == nil {
+		return nil, fmt.Errorf("AI returned nil response")
 	}
 
-	start := strings.Index(response, "{")
-	end := strings.LastIndex(response, "}")
-	if start == -1 || end == -1 || end < start {
-		return nil, fmt.Errorf("la IA devolvió un formato inválido. Intenta de nuevo")
-	}
-	cleanJSON := response[start : end+1]
-
-	var exam dtos.AIExamIdea
-	if err := json.Unmarshal([]byte(cleanJSON), &exam); err != nil {
-		return nil, fmt.Errorf("error al parsear JSON del examen")
-	}
-
-	return &dtos.GenerateExamOutput{Exam: exam}, nil
+	return &dtos.GenerateExamOutput{Exam: *exam}, nil
 }

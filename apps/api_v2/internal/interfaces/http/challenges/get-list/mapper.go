@@ -1,7 +1,11 @@
 package getlist
 
-func MapQuery(examID string) QueryDTO { 
+func MapQuery(examID string) QueryDTO {
+	var ptr *string
+	if examID != "" {
+		ptr = &examID
+	}
 	return QueryDTO{
-		ExamID: examID,
-	} 
+		ExamID: ptr,
+	}
 }

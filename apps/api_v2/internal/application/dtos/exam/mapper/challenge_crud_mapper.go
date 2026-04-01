@@ -63,8 +63,7 @@ func MapCreateChallengeInputToChallengeEntity(input dtos.CreateChallengeInput) (
 	 	inputVariables,
 		*outputVariable,
 		input.Constraints,
-		input.ExamID,
-		input.CourseID,
+		input.UserID,
 	)
 	if err != nil {
 		return nil, err
@@ -124,14 +123,6 @@ func MapUpdateChallengeInputToChallengeEntity(existingChallenge *Entities.Challe
 
 	if input.Constraints != nil {
 		existingChallenge.Constraints = *input.Constraints
-	}
-
-	if input.ExamID != nil {
-		existingChallenge.ExamID = *input.ExamID
-	}
-
-	if input.CourseID != nil {
-		existingChallenge.CourseID = *input.CourseID
 	}
 
 	return existingChallenge, nil

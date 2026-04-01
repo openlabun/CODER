@@ -1,7 +1,6 @@
 package usecases_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -12,21 +11,21 @@ import (
 	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
 	course_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	user_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
-	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
+
+	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
 
 func TestChallengeCRUD(t *testing.T) {
 	t.Log("[STEP 1] Inicializando application container con dependencias")
-	app, err := buildExamApplication()
+	app, err := container.BuildApplicationContainer()
 	if err != nil {
 		t.Fatalf("failed to build application: %v", err)
 	}
 	t.Log("[OK] Application container inicializado")
 
 	t.Log("[STEP 2] Login de profesor y construccion de contexto autenticado")
-	teacherAccess := mustLoginExamTeacher(t, app)
-	teacherCtx := teacherExamCtx(teacherAccess)
+	teacherAccess := utils.EnsureTeacherAccess(t, app)
+	teacherCtx := utils.TeacherCourseCtx(teacherAccess)
 	teacherID := teacherAccess.UserData.ID
 	t.Logf("[OK] Login profesor exitoso. teacherID=%s", teacherID)
 
@@ -114,7 +113,6 @@ func TestChallengeCRUD(t *testing.T) {
 		},
 		OutputVariable: exam_dtos.IOVariableDTO{Name: "sum", Type: "int", Value: "5"},
 		Constraints:    "1 <= a,b <= 1000",
-		ExamID:         examID,
 	})
 	if err != nil {
 		t.Fatalf("create challenge failed: %v", err)
@@ -159,8 +157,22 @@ func TestChallengeCRUD(t *testing.T) {
 	}
 	t.Logf("[OK] Challenge publicado. status=%s", publishedChallenge.Status)
 
+	t.Log("[STEP 7.1] Creando ExamItem a partir del Challenge")
+	createdExamItem, err := app.ExamItemModule.CreateExamItem.Execute(teacherCtx, exam_dtos.CreateExamItemInput{
+		ExamID:      examID,
+		ChallengeID: challengeID,
+		Order: 1,
+		Points: 1,
+	})
+	if err != nil {
+		t.Fatalf("create exam item failed: %v", err)
+	}
+	if createdExamItem == nil || createdExamItem.ID == "" {
+		t.Fatal("expected created exam item with ID")
+	}
+
 	t.Logf("[STEP 8] Listando challenges del examen examID=%s", examID)
-	challengesByExam, err := app.ChallengeModule.GetChallengesByExam.Execute(teacherCtx, exam_dtos.GetChallengesByExamInput{ExamID: examID})
+	challengesByExam, err := app.ChallengeModule.GetChallengesByUser.Execute(teacherCtx, exam_dtos.GetChallengesByUserInput{ExamID: &examID})
 	if err != nil {
 		t.Fatalf("get challenges by exam failed: %v", err)
 	}
@@ -192,7 +204,7 @@ func TestChallengeCRUD(t *testing.T) {
 	}
 	challengeID = ""
 
-	challengesAfterDelete, err := app.ChallengeModule.GetChallengesByExam.Execute(teacherCtx, exam_dtos.GetChallengesByExamInput{ExamID: examID})
+	challengesAfterDelete, err := app.ChallengeModule.GetChallengesByUser.Execute(teacherCtx, exam_dtos.GetChallengesByUserInput{ExamID: &examID})
 	if err != nil {
 		t.Fatalf("get challenges after delete failed: %v", err)
 	}
@@ -209,15 +221,15 @@ func TestChallengeCRUD(t *testing.T) {
 
 func TestChallengeFromStudentView(t *testing.T) {
 	t.Log("[STEP 1] Inicializando application container con dependencias")
-	app, err := buildExamApplication()
+	app, err := container.BuildApplicationContainer()
 	if err != nil {
 		t.Fatalf("failed to build application: %v", err)
 	}
 	t.Log("[OK] Application container inicializado")
 
 	t.Log("[STEP 2] Login de profesor y contexto autenticado")
-	teacherAccess := mustLoginExamTeacher(t, app)
-	teacherCtx := teacherExamCtx(teacherAccess)
+	teacherAccess := utils.EnsureTeacherAccess(t, app)
+	teacherCtx := utils.TeacherCourseCtx(teacherAccess)
 	teacherID := teacherAccess.UserData.ID
 	t.Logf("[OK] Login profesor exitoso. teacherID=%s", teacherID)
 
@@ -315,7 +327,6 @@ func TestChallengeFromStudentView(t *testing.T) {
 			},
 			OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: "int", Value: "1"},
 			Constraints:    "1 <= a <= 10",
-			ExamID:         examID,
 		})
 		if createErr != nil {
 			t.Fatalf("create challenge %s failed: %v", title, createErr)
@@ -357,15 +368,47 @@ func TestChallengeFromStudentView(t *testing.T) {
 	}
 	t.Logf("[OK] Estados finales: published=%s archived=%s draft=%s", publishedChallenge.Status, archivedChallenge.Status, exam_entities.ChallengeStatusDraft)
 
+	t.Logf("[STEP 6.1] Agregando challenge publicado al examen")
+	createExamItem := func(challengeID string) error {
+		_, createErr := app.ExamItemModule.CreateExamItem.Execute(teacherCtx, exam_dtos.CreateExamItemInput{
+			ExamID:      examID,
+			ChallengeID: challengeID,
+			Order: 1,
+			Points: 1,
+		})
+		if createErr != nil {
+			return fmt.Errorf("create exam item for challenge %s failed: %v", challengeID, createErr)
+		}
+		return nil
+	}
+	
+	err = createExamItem(publishedChallengeID)
+	if err != nil {
+		t.Fatalf("failed to create exam item for published challenge: %v", err)
+	}
+	t.Log("[OK] ExamItems creados para el challenge publicado")
+
+	t.Logf("[STEP 6.2] Agregando challenge archivado y en borrador al examen")
+	err = createExamItem(archivedChallengeID)
+	if err == nil {
+		t.Fatalf("expected to get error creating exam item for archived challenge: %v", err)
+	}
+	err = createExamItem(draftChallengeID)
+	if err == nil {
+		t.Fatalf("expected to get error creating exam item for draft challenge: %v", err)
+	}
+	t.Log("[OK] ExamItems arrojaron error para challenges no publicados, como se esperaba")
+
 	t.Log("[STEP 7] Login/registro de estudiante y construccion de contexto autenticado")
-	studentAccess := ensureExamStudentAccess(t, app)
-	studentCtx := studentExamCtx(studentAccess)
+	studentAccess := utils.EnsureStudentAccess(t, app)
+	studentCtx := utils.StudentCtx(studentAccess)
 	t.Logf("[OK] Estudiante listo. studentID=%s", studentAccess.UserData.ID)
 
 	t.Log("[STEP 8] Matriculando estudiante en el curso")
 	_, err = app.CourseModule.EnrollInCourse.Execute(studentCtx, course_dtos.EnrolledInCourseInput{
 		CourseID:  courseID,
-		StudentID: studentAccess.UserData.ID,
+		StudentID: &studentAccess.UserData.ID,
+		StudentEmail: nil,
 	})
 	if err != nil {
 		t.Fatalf("enroll student failed: %v", err)
@@ -373,7 +416,7 @@ func TestChallengeFromStudentView(t *testing.T) {
 	t.Log("[OK] Estudiante matriculado")
 
 	t.Log("[STEP 9] Obteniendo challenges desde vista de estudiante y validando restricciones")
-	studentChallenges, err := app.ChallengeModule.GetChallengesByExam.Execute(studentCtx, exam_dtos.GetChallengesByExamInput{ExamID: examID})
+	studentChallenges, err := app.ExamModule.GetExamItems.Execute(studentCtx, exam_dtos.GetExamItemsInput{ExamID: examID})
 	if err != nil {
 		t.Fatalf("get challenges by exam as student failed: %v", err)
 	}
@@ -381,10 +424,9 @@ func TestChallengeFromStudentView(t *testing.T) {
 	foundPublished := false
 	foundArchived := false
 	foundDraft := false
-	for _, ch := range studentChallenges {
-		if ch == nil {
-			continue
-		}
+	for _, item := range studentChallenges {
+		ch := item.Challenge
+
 		if ch.ID == publishedChallengeID {
 			foundPublished = true
 		}
@@ -411,36 +453,4 @@ func TestChallengeFromStudentView(t *testing.T) {
 	t.Logf("[OK] Restricciones de vista estudiante validadas. visibleChallenges=%d", len(studentChallenges))
 
 	t.Log("[STEP 10] Teardown automatico preparado (challenges + exam + course)")
-}
-
-func ensureExamStudentAccess(t *testing.T, app *container.Application) *user_dtos.UserAccess {
-	t.Helper()
-	t.Log("[AUTH] Intentando login de estudiante")
-
-	email := "stud@test.com"
-	password := "Password123!"
-
-	access, err := app.Dependencies.LoginService.LoginUser(email, password)
-	if err == nil && access != nil && access.UserData != nil && access.UserData.ID != "" && access.Token != nil && access.Token.AccessToken != "" {
-		t.Logf("[AUTH][OK] Login estudiante exitoso. studentID=%s", access.UserData.ID)
-		return access
-	}
-
-	t.Log("[AUTH] Estudiante no existe o login fallo, registrando usuario")
-	registered, registerErr := app.Dependencies.RegisterService.RegisterUserDirect(email, password, "Student Test")
-	if registerErr != nil {
-		t.Fatalf("register student failed: %v", registerErr)
-	}
-	if registered == nil || registered.UserData == nil || registered.UserData.ID == "" || registered.Token == nil || registered.Token.AccessToken == "" {
-		t.Fatal("expected registered student with ID and access token")
-	}
-	t.Logf("[AUTH][OK] Registro de estudiante exitoso. studentID=%s", registered.UserData.ID)
-
-	return registered
-}
-
-func studentExamCtx(studentAccess *user_dtos.UserAccess) context.Context {
-	ctx := services.WithAccessToken(context.Background(), studentAccess.Token.AccessToken)
-	ctx = services.WithUserEmail(ctx, studentAccess.UserData.Email)
-	return ctx
 }

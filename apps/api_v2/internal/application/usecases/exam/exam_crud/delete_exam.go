@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	
+	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
@@ -16,12 +17,15 @@ import (
 type DeleteExamUseCase struct {
 	userRepository userRepository.UserRepository
 	examRepository examRepository.ExamRepository
+	examItemRepository examRepository.ExamItemRepository
 }
 
-func NewDeleteExamUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository) *DeleteExamUseCase {
+func NewDeleteExamUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, examItemRepository examRepository.ExamItemRepository) *DeleteExamUseCase {
 	return &DeleteExamUseCase{
 		userRepository: userRepository,
 		examRepository: examRepository,
+		examItemRepository: examItemRepository,
+
 	}
 }
 
@@ -61,7 +65,7 @@ func (uc *DeleteExamUseCase) Execute(ctx context.Context, input dtos.DeleteExamI
 	}
 
 	// [STEP 4] Delete exam entity
-	err = uc.examRepository.DeleteExam(ctx, input.ExamID)
+	err = domain_services.RemoveExam(ctx, exam.ID, uc.examRepository, uc.examItemRepository)
 	if err != nil {
 		return nil, err
 	}

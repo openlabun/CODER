@@ -3,30 +3,33 @@ package exam_usecases
 import (
 	"context"
 	"fmt"
-	
+
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam/mapper"
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 )
 
 type CreateTestCaseUseCase struct {
-	userRepository userRepository.UserRepository
-	examRepository examRepository.ExamRepository
-	challengeRepository examRepository.ChallengeRepository
-	testCaseRepository examRepository.TestCaseRepository
+	userRepository       userRepository.UserRepository
+	examRepository       examRepository.ExamRepository
+	challengeRepository  examRepository.ChallengeRepository
+	testCaseRepository   examRepository.TestCaseRepository
+	ioVariableRepository examRepository.IOVariableRepository
 }
 
-func NewCreateTestCaseUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository) *CreateTestCaseUseCase {
+func NewCreateTestCaseUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, ioVariableRepository examRepository.IOVariableRepository) *CreateTestCaseUseCase {
 	return &CreateTestCaseUseCase{
-		userRepository: userRepository,
-		examRepository: examRepository,
-		challengeRepository: challengeRepository,
-		testCaseRepository: testCaseRepository,
+		userRepository:       userRepository,
+		examRepository:       examRepository,
+		challengeRepository:  challengeRepository,
+		testCaseRepository:   testCaseRepository,
+		ioVariableRepository: ioVariableRepository,
 	}
 }
 
@@ -49,7 +52,7 @@ func (uc *CreateTestCaseUseCase) Execute(ctx context.Context, input dtos.CreateT
 	if user.Role != user_entities.UserRoleProfessor {
 		return nil, fmt.Errorf("user does not have permissions to create an exam")
 	}
-	
+
 	// [STEP 2] Validate that challenge exists
 	challenge, err := uc.challengeRepository.GetChallengeByID(ctx, input.ChallengeID)
 	if err != nil {
@@ -72,7 +75,7 @@ func (uc *CreateTestCaseUseCase) Execute(ctx context.Context, input dtos.CreateT
 	}
 
 	// [STEP 5] Store test case in database
-	testCase, err = uc.testCaseRepository.CreateTestCase(ctx, testCase)
+	testCase, err = domain_services.CreateTestCase(ctx, testCase, uc.testCaseRepository, uc.ioVariableRepository)
 	if err != nil {
 		return nil, err
 	}

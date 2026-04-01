@@ -20,15 +20,17 @@ type CreateExamItemUseCase struct {
 	testCaseRepository examRepository.TestCaseRepository
 	examItemRepository examRepository.ExamItemRepository
 	challengeRepository examRepository.ChallengeRepository
+	ioVariableRepository examRepository.IOVariableRepository
 }
 
-func NewCreateExamItemUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, examItemRepository examRepository.ExamItemRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository) *CreateExamItemUseCase {
+func NewCreateExamItemUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, examItemRepository examRepository.ExamItemRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, ioVariableRepository examRepository.IOVariableRepository) *CreateExamItemUseCase {
 	return &CreateExamItemUseCase{
 		userRepository: userRepository,
 		examRepository: examRepository,
 		testCaseRepository: testCaseRepository,
 		examItemRepository: examItemRepository,
 		challengeRepository: challengeRepository,
+		ioVariableRepository: ioVariableRepository,
 	}
 }
 
@@ -99,7 +101,7 @@ func (uc *CreateExamItemUseCase) Execute(ctx context.Context, input dtos.CreateE
 
 	// [STEP 8] If challenge is not owned by the teacher, fork it and use the forked challenge in the exam item
 	if challenge.UserID != user.ID {
-		challenge, err = services.ForkChallenge(ctx, *challenge, user.ID, uc.challengeRepository, uc.testCaseRepository)
+		challenge, err = services.ForkChallenge(ctx, *challenge, user.ID, uc.challengeRepository, uc.testCaseRepository, uc.ioVariableRepository)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fork challenge: %v", err)
 		}

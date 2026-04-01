@@ -7,38 +7,41 @@ import (
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 
+	passwordHasher "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 	userPort "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	passwordHasher "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
+	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
 
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission/mapper"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 )
 
 type UpdateResultUseCase struct {
-	userService    userPort.LoginPort
-	userRepository userRepository.UserRepository
+	userService          userPort.LoginPort
+	userRepository       userRepository.UserRepository
 	submissionRepository submissionRepository.SubmissionRepository
-	sessionRepository submissionRepository.SessionRepository
-	challengeRepository examRepository.ChallengeRepository
-	testCaseRepository examRepository.TestCaseRepository
-	resultRepository submissionRepository.SubmissionResultRepository
-	passwordHasher passwordHasher.PasswordHasherPort
+	sessionRepository    submissionRepository.SessionRepository
+	challengeRepository  examRepository.ChallengeRepository
+	testCaseRepository   examRepository.TestCaseRepository
+	ioVariableRepository examRepository.IOVariableRepository
+	resultRepository     submissionRepository.SubmissionResultRepository
+	passwordHasher       passwordHasher.PasswordHasherPort
 }
 
-func NewUpdateResultUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository, userService userPort.LoginPort, passwordHasher passwordHasher.PasswordHasherPort) *UpdateResultUseCase {
+func NewUpdateResultUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, ioVariableRepository examRepository.IOVariableRepository, resultRepository submissionRepository.SubmissionResultRepository, userService userPort.LoginPort, passwordHasher passwordHasher.PasswordHasherPort) *UpdateResultUseCase {
 	return &UpdateResultUseCase{
-		userRepository: userRepository,
+		userRepository:       userRepository,
 		submissionRepository: submissionRepository,
-		sessionRepository: sessionRepository,
-		challengeRepository: challengeRepository,
-		testCaseRepository: testCaseRepository,
-		resultRepository: resultRepository,
-		userService: userService,
-		passwordHasher: passwordHasher,
+		sessionRepository:    sessionRepository,
+		challengeRepository:  challengeRepository,
+		testCaseRepository:   testCaseRepository,
+		ioVariableRepository: ioVariableRepository,
+		resultRepository:     resultRepository,
+		userService:          userService,
+		passwordHasher:       passwordHasher,
 	}
 }
 
@@ -103,11 +106,10 @@ func (uc *UpdateResultUseCase) Execute(ctx context.Context, input dtos.UpdateRes
 	}
 
 	// [STEP 6] Save the updated submission result back to the repository
-	result, err := uc.resultRepository.UpdateResult(ctx, updatedResult)
+	result, err := domain_services.UpdateSubmissionResult(ctx, updatedResult, uc.resultRepository, uc.ioVariableRepository)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update submission result: %w", err)
 	}
 
 	return result, nil
 }
-

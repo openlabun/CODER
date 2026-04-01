@@ -5,10 +5,11 @@ import (
 	"fmt"
 
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
+	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam/mapper"
@@ -16,12 +17,13 @@ import (
 )
 
 type CreateChallengeUseCase struct {
-	challengeRepository repositories.ChallengeRepository
-	userRepository      userRepository.UserRepository
+	challengeRepository  repositories.ChallengeRepository
+	ioVariableRepository repositories.IOVariableRepository
+	userRepository       userRepository.UserRepository
 }
 
-func NewCreateChallengeUseCase(challengeRepository repositories.ChallengeRepository, userRepository userRepository.UserRepository) *CreateChallengeUseCase {
-	return &CreateChallengeUseCase{challengeRepository: challengeRepository, userRepository: userRepository}
+func NewCreateChallengeUseCase(challengeRepository repositories.ChallengeRepository, ioVariableRepository repositories.IOVariableRepository, userRepository userRepository.UserRepository) *CreateChallengeUseCase {
+	return &CreateChallengeUseCase{challengeRepository: challengeRepository, ioVariableRepository: ioVariableRepository, userRepository: userRepository}
 }
 
 func (uc *CreateChallengeUseCase) Execute(ctx context.Context, input dtos.CreateChallengeInput) (*Entities.Challenge, error) {
@@ -54,10 +56,10 @@ func (uc *CreateChallengeUseCase) Execute(ctx context.Context, input dtos.Create
 	}
 
 	// [STEP 4] Create challenge with user provided values
-	createdChallenge, err := uc.challengeRepository.CreateChallenge(ctx, challenge)
+	createdChallenge, err := domain_services.CreateChallenge(ctx, challenge, uc.challengeRepository, uc.ioVariableRepository)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return createdChallenge, nil
 }

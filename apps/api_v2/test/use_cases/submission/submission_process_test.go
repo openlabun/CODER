@@ -398,6 +398,7 @@ func TestSubmissions(t *testing.T) {
 		app.Dependencies.ChallengeRepository,
 		app.Dependencies.TestCaseRepository,
 		app.Dependencies.SubmissionResultRepository,
+		app.Dependencies.IOVariableRepository,
 		app.Dependencies.PublisherPort,
 	)
 

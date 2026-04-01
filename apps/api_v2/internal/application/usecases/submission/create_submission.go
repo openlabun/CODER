@@ -7,36 +7,39 @@ import (
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 
 	submissionPorts "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/submission"
-	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
-	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
-	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
-	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
+	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
+	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
 
-	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission/mapper"
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 )
 
 type CreateSubmissionUseCase struct {
-	userRepository userRepository.UserRepository
+	userRepository       userRepository.UserRepository
 	submissionRepository submissionRepository.SubmissionRepository
-	sessionRepository submissionRepository.SessionRepository
-	challengeRepository examRepository.ChallengeRepository
-	testCaseRepository examRepository.TestCaseRepository
-	resultRepository submissionRepository.SubmissionResultRepository
-	publisherPort submissionPorts.SubmissionPublisherPort
+	sessionRepository    submissionRepository.SessionRepository
+	challengeRepository  examRepository.ChallengeRepository
+	testCaseRepository   examRepository.TestCaseRepository
+	resultRepository     submissionRepository.SubmissionResultRepository
+	ioVariableRepository examRepository.IOVariableRepository
+	publisherPort        submissionPorts.SubmissionPublisherPort
 }
 
-func NewCreateSubmissionUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository, publisherPort submissionPorts.SubmissionPublisherPort) *CreateSubmissionUseCase {
+func NewCreateSubmissionUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository, ioVariableRepository examRepository.IOVariableRepository, publisherPort submissionPorts.SubmissionPublisherPort) *CreateSubmissionUseCase {
 	return &CreateSubmissionUseCase{
-		userRepository: userRepository,
+		userRepository:       userRepository,
 		submissionRepository: submissionRepository,
-		sessionRepository: sessionRepository,
-		challengeRepository: challengeRepository,
-		testCaseRepository: testCaseRepository,
-		resultRepository: resultRepository,
-		publisherPort: publisherPort,
+		sessionRepository:    sessionRepository,
+		challengeRepository:  challengeRepository,
+		testCaseRepository:   testCaseRepository,
+		resultRepository:     resultRepository,
+		ioVariableRepository: ioVariableRepository,
+		publisherPort:        publisherPort,
 	}
 }
 
@@ -120,7 +123,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 			}
 		}
 	}
-	
+
 	// [STEP 8] Publish submission created event to message broker for asynchronous processing of submission results
 	for _, publishedResult := range publishedResults {
 		err = uc.publisherPort.PublishSubmission(publishedResult)
@@ -141,10 +144,10 @@ func (uc *CreateSubmissionUseCase) createSubmissionResultsForTestCases(ctx conte
 	}
 
 	// [STEP 7.2] Save submission result in database
-	result, err := uc.resultRepository.CreateResult(ctx, submissionResult)
+	result, err := domain_services.CreateSubmissionResult(ctx, submissionResult, uc.resultRepository, uc.ioVariableRepository)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return result, nil
 }

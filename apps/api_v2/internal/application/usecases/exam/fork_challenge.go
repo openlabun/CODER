@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
@@ -15,13 +15,14 @@ import (
 )
 
 type ForkChallengeUseCase struct {
-	challengeRepository repositories.ChallengeRepository
-	userRepository      userRepository.UserRepository
-	testCaseRepository repositories.TestCaseRepository
+	challengeRepository  repositories.ChallengeRepository
+	ioVariableRepository repositories.IOVariableRepository
+	userRepository       userRepository.UserRepository
+	testCaseRepository   repositories.TestCaseRepository
 }
 
-func NewForkChallengeUseCase(challengeRepository repositories.ChallengeRepository, userRepository userRepository.UserRepository, testCaseRepository repositories.TestCaseRepository) *ForkChallengeUseCase {
-	return &ForkChallengeUseCase{challengeRepository: challengeRepository, userRepository: userRepository, testCaseRepository: testCaseRepository}
+func NewForkChallengeUseCase(challengeRepository repositories.ChallengeRepository, ioVariableRepository repositories.IOVariableRepository, userRepository userRepository.UserRepository, testCaseRepository repositories.TestCaseRepository) *ForkChallengeUseCase {
+	return &ForkChallengeUseCase{challengeRepository: challengeRepository, ioVariableRepository: ioVariableRepository, userRepository: userRepository, testCaseRepository: testCaseRepository}
 }
 
 func (uc *ForkChallengeUseCase) Execute(ctx context.Context, input dtos.ForkChallengeInput) (*Entities.Challenge, error) {
@@ -59,7 +60,7 @@ func (uc *ForkChallengeUseCase) Execute(ctx context.Context, input dtos.ForkChal
 	}
 
 	// [STEP 4] Create challenge entity with user provided values
-	forkedChallenge, err := services.ForkChallenge(ctx, *challengeToFork, user.ID, uc.challengeRepository, uc.testCaseRepository)
+	forkedChallenge, err := services.ForkChallenge(ctx, *challengeToFork, user.ID, uc.challengeRepository, uc.testCaseRepository, uc.ioVariableRepository)
 	if err != nil {
 		return nil, err
 	}
@@ -67,11 +68,5 @@ func (uc *ForkChallengeUseCase) Execute(ctx context.Context, input dtos.ForkChal
 		return nil, fmt.Errorf("failed to fork challenge with id %q", input.ChallengeID)
 	}
 
-	// [STEP 5] Create challenge with user provided values
-	createdChallenge, err := uc.challengeRepository.CreateChallenge(ctx, forkedChallenge)
-	if err != nil {
-		return nil, err
-	}
-	
-	return createdChallenge, nil
+	return forkedChallenge, nil
 }

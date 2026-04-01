@@ -3,28 +3,31 @@ package exam_usecases
 import (
 	"context"
 	"fmt"
-	
+
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 )
 
 type DeleteTestCaseUseCase struct {
-	userRepository userRepository.UserRepository
-	examRepository examRepository.ExamRepository
-	challengeRepository examRepository.ChallengeRepository
-	testCaseRepository examRepository.TestCaseRepository
+	userRepository       userRepository.UserRepository
+	examRepository       examRepository.ExamRepository
+	challengeRepository  examRepository.ChallengeRepository
+	testCaseRepository   examRepository.TestCaseRepository
+	ioVariableRepository examRepository.IOVariableRepository
 }
 
-func NewDeleteTestCaseUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository) *DeleteTestCaseUseCase {
+func NewDeleteTestCaseUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, ioVariableRepository examRepository.IOVariableRepository) *DeleteTestCaseUseCase {
 	return &DeleteTestCaseUseCase{
-		userRepository: userRepository,
-		examRepository: examRepository,
-		challengeRepository: challengeRepository,
-		testCaseRepository: testCaseRepository,
+		userRepository:       userRepository,
+		examRepository:       examRepository,
+		challengeRepository:  challengeRepository,
+		testCaseRepository:   testCaseRepository,
+		ioVariableRepository: ioVariableRepository,
 	}
 }
 
@@ -47,7 +50,7 @@ func (uc *DeleteTestCaseUseCase) Execute(ctx context.Context, input dtos.DeleteT
 	if user.Role != user_entities.UserRoleProfessor {
 		return fmt.Errorf("user does not have permissions to create an exam")
 	}
-	
+
 	// [STEP 2] Validate that test case exists
 	test_case, err := uc.testCaseRepository.GetTestCaseByID(ctx, input.TestCaseID)
 	if err != nil {
@@ -73,7 +76,7 @@ func (uc *DeleteTestCaseUseCase) Execute(ctx context.Context, input dtos.DeleteT
 	}
 
 	// [STEP 4] Delete test case entity
-	if err := uc.testCaseRepository.DeleteTestCase(ctx, input.TestCaseID); err != nil {
+	if err := domain_services.RemoveTestCase(ctx, input.TestCaseID, uc.testCaseRepository, uc.ioVariableRepository); err != nil {
 		return fmt.Errorf("failed to delete test case with id %q: %v", input.TestCaseID, err)
 	}
 

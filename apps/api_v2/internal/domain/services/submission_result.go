@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	submissionEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
-	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
+	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 )
 
 func CreateSubmissionResult(

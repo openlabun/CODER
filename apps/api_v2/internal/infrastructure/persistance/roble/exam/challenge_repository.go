@@ -30,10 +30,6 @@ func (r *ChallengeRepository) CreateChallenge(ctx context.Context, challenge *En
 		return nil, err
 	}
 
-	if err := r.upsertChallengeIOVariables(ctx, challenge); err != nil {
-		return nil, err
-	}
-
 	_, err := r.adapter.Insert(challengeTableName, []map[string]any{challengeToRecord(challenge)})
 	if err != nil {
 		return nil, err
@@ -53,10 +49,6 @@ func (r *ChallengeRepository) UpdateChallenge(ctx context.Context, challenge *En
 	challengeID := strings.TrimSpace(challenge.ID)
 	if challengeID == "" {
 		return nil, fmt.Errorf("challenge id is required")
-	}
-
-	if err := r.upsertChallengeIOVariables(ctx, challenge); err != nil {
-		return nil, err
 	}
 
 	updates := challengeToUpdates(challenge)
@@ -79,22 +71,8 @@ func (r *ChallengeRepository) DeleteChallenge(ctx context.Context, challengeID s
 		return err
 	}
 
-	res, err := r.adapter.Read(challengeTableName, map[string]string{"ID": normalizedID})
-	if err != nil {
-		return err
-	}
-
-	var ioVariableIDs []string
-	if record, findErr := firstRecord(res); findErr == nil {
-		ioVariableIDs = relatedIOVariableIDs(record)
-	}
-
-	_, err = r.adapter.Delete(challengeTableName, "ID", normalizedID)
-	if err != nil {
-		return err
-	}
-
-	return deleteIOVariablesByIDs(ctx, r.adapter, ioVariableIDs)
+	_, err := r.adapter.Delete(challengeTableName, "ID", normalizedID)
+	return err
 }
 
 func (r *ChallengeRepository) GetChallengeByID(ctx context.Context, challengeID string) (*Entities.Challenge, error) {

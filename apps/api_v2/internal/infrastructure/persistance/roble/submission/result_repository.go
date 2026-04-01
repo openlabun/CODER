@@ -25,12 +25,6 @@ func (r *SubmissionResultRepository) CreateResult(ctx context.Context, result *E
 		return nil, err
 	}
 
-	if result.ActualOutput != nil {
-		if err := upsertIOVariable(ctx, r.adapter, *result.ActualOutput); err != nil {
-			return nil, err
-		}
-	}
-
 	_, err := r.adapter.Insert(submissionResultTableName, []map[string]any{resultToRecord(result)})
 	if err != nil {
 		return nil, err
@@ -52,12 +46,6 @@ func (r *SubmissionResultRepository) UpdateResult(ctx context.Context, result *E
 		return nil, fmt.Errorf("result id is required")
 	}
 
-	if result.ActualOutput != nil {
-		if err := upsertIOVariable(ctx, r.adapter, *result.ActualOutput); err != nil {
-			return nil, err
-		}
-	}
-
 	_, err := r.adapter.Update(submissionResultTableName, "ID", resultID, resultToUpdates(result))
 	if err != nil {
 		return nil, err
@@ -75,22 +63,8 @@ func (r *SubmissionResultRepository) DeleteResult(ctx context.Context, resultID 
 		return err
 	}
 
-	res, err := r.adapter.Read(submissionResultTableName, map[string]string{"ID": normalizedID})
-	if err != nil {
-		return err
-	}
-
-	var ActualOutput string
-	if record, findErr := firstRecord(res); findErr == nil {
-		ActualOutput = strings.TrimSpace(asString(record["ActualOutput"]))
-	}
-
-	_, err = r.adapter.Delete(submissionResultTableName, "ID", normalizedID)
-	if err != nil {
-		return err
-	}
-
-	return deleteIOVariableByID(ctx, r.adapter, ActualOutput)
+	_, err := r.adapter.Delete(submissionResultTableName, "ID", normalizedID)
+	return err
 }
 
 func (r *SubmissionResultRepository) GetResultByID(ctx context.Context, resultID string) (*Entities.SubmissionResult, error) {

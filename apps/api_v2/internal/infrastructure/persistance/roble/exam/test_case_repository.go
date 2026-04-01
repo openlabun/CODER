@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	testCaseTableName   = "TestCase"
+	testCaseTableName = "TestCase"
 )
 
 type TestCaseRepository struct {
@@ -26,10 +26,6 @@ func (r *TestCaseRepository) CreateTestCase(ctx context.Context, testCase *Entit
 		return nil, fmt.Errorf("testCase is nil")
 	}
 	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
-		return nil, err
-	}
-
-	if err := r.upsertTestCaseIOVariables(ctx, testCase); err != nil {
 		return nil, err
 	}
 
@@ -54,10 +50,6 @@ func (r *TestCaseRepository) UpdateTestCase(ctx context.Context, testCase *Entit
 		return nil, fmt.Errorf("testCase id is required")
 	}
 
-	if err := r.upsertTestCaseIOVariables(ctx, testCase); err != nil {
-		return nil, err
-	}
-
 	_, err := r.adapter.Update(testCaseTableName, "ID", testCaseID, testCaseToUpdates(testCase))
 	if err != nil {
 		return nil, err
@@ -75,22 +67,8 @@ func (r *TestCaseRepository) DeleteTestCase(ctx context.Context, testCaseID stri
 		return err
 	}
 
-	res, err := r.adapter.Read(testCaseTableName, map[string]string{"ID": normalizedID})
-	if err != nil {
-		return err
-	}
-
-	var ioVariableIDs []string
-	if record, findErr := firstRecord(res); findErr == nil {
-		ioVariableIDs = relatedIOVariableIDs(record)
-	}
-
-	_, err = r.adapter.Delete(testCaseTableName, "ID", normalizedID)
-	if err != nil {
-		return err
-	}
-
-	return deleteIOVariablesByIDs(ctx, r.adapter, ioVariableIDs)
+	_, err := r.adapter.Delete(testCaseTableName, "ID", normalizedID)
+	return err
 }
 
 func (r *TestCaseRepository) GetTestCaseByID(ctx context.Context, testCaseID string) (*Entities.TestCase, error) {

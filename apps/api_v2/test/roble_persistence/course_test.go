@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	test "github.com/openlabun/CODER/apps/api_v2/test"
+
+	hasher "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/course"
@@ -15,46 +18,60 @@ import (
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
 )
 
-func TestCourseCreation(t *testing.T) {
-	t.Log("[STEP 1] Inicializando cliente Roble y repositorios")
+func TestCourseCRUD (t *testing.T) {
+	process := test.StartTest(t, "Course Creation and Persistence")
+	email := "test@test.com"
+	password := "Password123!"
 
+	// [STEP 1] Initialize Roble client and repositories
+	process.StartStep("Inicializando cliente Roble y repositorios")
 	// Initialize Roble client and repositories
 	httpClient := &http.Client{Timeout: 15 * time.Second}
 	robleClient, err := roble_infrastructure.NewRobleClient(httpClient)
 	if err != nil {
-		t.Fatalf("initialize roble client: %v", err)
+		process.Fail("initialize roble client", err)
 	}
-	t.Log("[OK] Cliente Roble inicializado")
+	process.Log("Cliente Roble inicializado")
 
 	robleAdapter := roble_infrastructure.NewRobleDatabaseAdapter(robleClient)
 	userRepository := roble_user_infrastructure.NewUserRepository(robleAdapter)
 	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
 	courseRepository := roble_course_infrastructure.NewCourseRepository(robleAdapter)
-	t.Log("[OK] Adapter y repositories inicializados")
+	process.Log("Adapter y repositories inicializados")
+	process.EndStep()
 
-	// Login Teacher user
-	email := "test@test.com"
-	password := "Password123!"
-	t.Logf("[STEP 2] Login docente con email=%s", email)
-
-	access, err := authAdapter.LoginUser(email, password)
+	// [STEP 2] Initialize hasher and hash password
+	process.StartStep("Inicializar hasher y hashear password")
+	adapter := hasher.NewSecurityAdapter()
+	hashedPassword, err := adapter.Hash(password)
 	if err != nil {
-		t.Fatalf("teacher login failed: %v", err)
+		process.Fail("hash password", err)
+	}
+	process.EndStep()
+
+	// [STEP 3] Login Teacher user
+	process.StartStep("Login docente")
+	access, err := authAdapter.LoginUser(email, hashedPassword)
+	if err != nil {
+		process.Fail("login user", err)
 	}
 	if access == nil || access.UserData == nil || access.UserData.ID == "" {
-		t.Fatal("expected logged user data with valid ID")
+		process.Fail("login user", fmt.Errorf("expected logged user data with valid ID"))
 	}
 	if access.Token == nil || access.Token.AccessToken == "" {
-		t.Fatal("expected access token in login response")
+		process.Fail("login user", fmt.Errorf("expected access token in login response"))
 	}
 	ctx := services.WithAccessToken(context.Background(), access.Token.AccessToken)
-	t.Logf("[OK] Login exitoso. teacherID=%s", access.UserData.ID)
+	process.Log(fmt.Sprintf("teacherID=%s", access.UserData.ID))
+	process.EndStep()
 
-	// Create a new course
+	// [STEP 4] Create a new course
 	teacherID := access.UserData.ID
 	now := time.Now().UTC()
 	enrollmentCode := fmt.Sprintf("ENR-%d", now.UnixNano())
-	t.Logf("[STEP 3] Creando curso con factory enrollmentCode=%s", enrollmentCode)
+
+	process.StartStep("Creando curso con factory")
+	process.Log(fmt.Sprintf("enrollmentCode=%s", enrollmentCode))
 
 	course, err := factory.NewCourse(
 		"Integration Course",
@@ -81,21 +98,23 @@ func TestCourseCreation(t *testing.T) {
 	if createdCourse == nil || createdCourse.ID == "" {
 		t.Fatal("expected created course with ID")
 	}
+
 	courseID := createdCourse.ID
-	t.Logf("[OK] Curso creado. createdCourseID=%s", createdCourse.ID)
+	process.Log(fmt.Sprintf("createdCourseID=%s", createdCourse.ID))
+	process.EndStep()
 
 	defer func() {
 		t.Logf("[CLEANUP] Eliminando curso temporal %s", courseID)
 		_ = courseRepository.DeleteCourse(ctx, courseID)
 	}()
 
-	// Get all courses for the teacher and verify the new course is present
-	t.Logf("[STEP 4] Listando cursos del docente teacherID=%s", teacherID)
+	// [STEP 5] Get all courses for the teacher and verify the new course is present
+	process.StartStep("Listando cursos del docente")
 	teacherCourses, err := courseRepository.GetCoursesByTeacherID(ctx, teacherID)
 	if err != nil {
-		t.Fatalf("get courses by teacher failed: %v", err)
+		process.Fail("courses list", err)
 	}
-	t.Logf("[OK] Se recuperaron %d cursos del docente", len(teacherCourses))
+	process.Log(fmt.Sprintf("Se recuperaron %d cursos del docente", len(teacherCourses)))
 
 	found := false
 	for _, c := range teacherCourses {
@@ -105,50 +124,56 @@ func TestCourseCreation(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Fatalf("expected created course %s in teacher course list", courseID)
+		process.Fail("courses list", fmt.Errorf("expected created course %s in teacher course list", courseID))
 	}
-	t.Logf("[OK] Validacion lista docente: curso %s encontrado", courseID)
+	process.Log(fmt.Sprintf("Validacion lista docente: curso %s encontrado", courseID))
+	process.EndStep()
 
-	// Update course details and verify the changes
-	t.Log("[STEP 5] Actualizando nombre y descripcion del curso")
+	// [STEP 6] Update course details and verify the changes
+	process.StartStep("Actualizando nombre y descripcion del curso")
 	createdCourse.Name = "Integration Course Updated"
 	createdCourse.Description = "Updated by integration test"
 	updatedCourse, err := courseRepository.UpdateCourse(ctx, createdCourse)
 	if err != nil {
-		t.Fatalf("update course failed: %v", err)
+		process.Fail("update course", err)
 	}
 	if updatedCourse == nil || updatedCourse.Name != "Integration Course Updated" {
-		t.Fatal("expected updated course name")
+		process.Fail("update course", fmt.Errorf("expected updated course name"))
 	}
-	t.Logf("[OK] Update aplicado. Nuevo nombre=%q", updatedCourse.Name)
+	process.Log(fmt.Sprintf("Update aplicado: Nuevo nombre=%q", updatedCourse.Name))
+	process.EndStep()
 
-	t.Logf("[STEP 6] Recargando curso por ID=%s para validar persistencia", courseID)
+	// [STEP 7] Get course by ID and verify details
+	process.StartStep("Recargando curso por ID")
 	reloadedCourse, err := courseRepository.GetCourseByID(ctx, courseID)
 	if err != nil {
-		t.Fatalf("get course by id failed: %v", err)
+		process.Fail("get course by id", err)
 	}
 	if reloadedCourse == nil {
-		t.Fatal("expected reloaded course")
+		process.Fail("get course by id", fmt.Errorf("expected reloaded course"))
 	}
 	if reloadedCourse.Name != "Integration Course Updated" {
-		t.Fatalf("expected persisted updated name, got %q", reloadedCourse.Name)
+		process.Fail("get course by id", fmt.Errorf("expected persisted updated name, got %q", reloadedCourse.Name))
 	}
-	t.Logf("[OK] Persistencia validada. Nombre recargado=%q", reloadedCourse.Name)
+	process.Log(fmt.Sprintf("Persistencia validada: Nombre recargado=%q", reloadedCourse.Name))
 
-	// Delete course
-	t.Logf("[STEP 7] Eliminando curso ID=%s", courseID)
+	// [STEP 8] Delete course
+	process.StartStep("Eliminando curso")
 	if err := courseRepository.DeleteCourse(ctx, courseID); err != nil {
-		t.Fatalf("delete course failed: %v", err)
+		process.Fail("delete course", err)
 	}
-	t.Log("[OK] Curso eliminado")
+	process.EndStep()
 
-	t.Logf("[STEP 8] Verificando que el curso %s ya no existe", courseID)
+	// [STEP 9] Verify course deletion
+	process.StartStep("Verificando que el curso ya no existe")
 	deletedCourse, err := courseRepository.GetCourseByID(ctx, courseID)
 	if err != nil {
-		t.Fatalf("get course after delete failed: %v", err)
+		process.Fail("get course after delete", err)
 	}
 	if deletedCourse != nil {
-		t.Fatalf("expected course %s to be deleted", courseID)
+		process.Fail("get course after delete", fmt.Errorf("expected course %s to be deleted", courseID))
 	}
-	t.Log("[OK] Validacion final: curso eliminado correctamente")
+	process.EndStep()
+
+	process.End()
 }

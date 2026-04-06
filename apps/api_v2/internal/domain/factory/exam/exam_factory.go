@@ -48,6 +48,10 @@ func NewExam(
 		CourseID:             courseID,
 	}
 
+	if err := Validations.ValidateExamEndTime(exam, now); err != nil {
+		return nil, err
+	}
+
 	if err := Validations.ValidateExam(exam); err != nil {
 		return nil, err
 	}

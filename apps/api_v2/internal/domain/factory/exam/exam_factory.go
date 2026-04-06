@@ -17,7 +17,8 @@ func NewExam(
 	endTime *time.Time,
 	allowLateSubmissions bool,
 	timeLimit, tryLimit int,
-	professorID, courseID string,
+	professorID string,
+	courseID *string,
 ) (*Entities.Exam, error) {
 	now := time.Now()
 	if visibility == "" {
@@ -25,6 +26,10 @@ func NewExam(
 	}
 	if startTime.IsZero() {
 		startTime = now
+	}
+	if courseID != nil && strings.TrimSpace(*courseID) != "" {
+		trimmedCourseID := strings.TrimSpace(*courseID)
+		courseID = &trimmedCourseID
 	}
 
 	exam := &Entities.Exam{
@@ -40,7 +45,7 @@ func NewExam(
 		CreatedAt:            now,
 		UpdatedAt:            now,
 		ProfessorID:          strings.TrimSpace(professorID),
-		CourseID:             strings.TrimSpace(courseID),
+		CourseID:             courseID,
 	}
 
 	if err := Validations.ValidateExam(exam); err != nil {
@@ -57,7 +62,8 @@ func ExistingExam(
 	endTime *time.Time,
 	allowLateSubmissions bool,
 	timeLimit, tryLimit int,
-	professorID, courseID string,
+	professorID string,
+	courseID *string,
 	createdAt, updatedAt time.Time,
 ) (*Entities.Exam, error) {
 	exam := &Entities.Exam{
@@ -73,7 +79,7 @@ func ExistingExam(
 		CreatedAt:            createdAt,
 		UpdatedAt:            updatedAt,
 		ProfessorID:          strings.TrimSpace(professorID),
-		CourseID:             strings.TrimSpace(courseID),
+		CourseID:             courseID,
 	}
 
 	if err := Validations.ValidateExam(exam); err != nil {

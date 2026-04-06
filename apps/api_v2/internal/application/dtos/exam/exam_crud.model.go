@@ -5,7 +5,7 @@ import (
 )
 
 type CreateExamInput struct {
-	CourseID    		string 	`json:"course_id"`
+	CourseID    		*string `json:"course_id"`
 	Title           	string 	`json:"title"`
 	Description     	string 	`json:"description"`
 	Visibility      	string 	`json:"visibility"`

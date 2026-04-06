@@ -3,6 +3,8 @@ package test_utils
 import (
 	"time"
 	"testing"
+
+	container "github.com/openlabun/CODER/apps/api_v2/internal/application/container"
 )
 
 type HTTPTestResult struct {
@@ -16,6 +18,7 @@ type TestProcess struct {
 	name  string
 	t	   *testing.T
 	steps []*TestStepResult
+	Application *container.Application
 }
 
 type TestStepResult struct {
@@ -34,6 +37,22 @@ func StartTest (t *testing.T, name string) TestProcess {
 		name: name,
 		t: t,
 		steps: []*TestStepResult{},
+	}
+}
+
+func StartTestWithApp (t *testing.T, name string) TestProcess {
+	appContainer, err := container.BuildApplicationContainer()
+	if err != nil {
+		t.Fatalf("initialize application container: %s", err)
+	}
+
+	t.Log(name)
+	return TestProcess{
+		count: 0,
+		name: name,
+		t: t,
+		steps: []*TestStepResult{},
+		Application: appContainer,
 	}
 }
 

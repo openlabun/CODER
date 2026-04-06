@@ -189,7 +189,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	}
 
 	app.ExamModule = ExamUseCases{
-		CreateExam:       exam_crud_usecases.NewCreateExamUseCase(deps.UserRepository, deps.ExamRepository),
+		CreateExam:       exam_crud_usecases.NewCreateExamUseCase(deps.UserRepository, deps.CourseRepository, deps.ExamRepository),
 		UpdateExam:       exam_crud_usecases.NewUpdateExamUseCase(deps.UserRepository, deps.ExamRepository),
 		DeleteExam:       exam_crud_usecases.NewDeleteExamUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
 		GetExamDetails:   exam_crud_usecases.NewGetExamDetailsUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),

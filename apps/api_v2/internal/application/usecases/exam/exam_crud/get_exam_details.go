@@ -58,8 +58,10 @@ func (uc *GetExamDetailsUseCase) Execute(ctx context.Context, input dtos.GetExam
 	}
 
 	// [STEP 3] If user is teacher and is not the owner or exam visibility is not "public" or "teachers"
-	if role == user_entities.UserRoleProfessor && exam.ProfessorID != user.ID && exam.Visibility != Entities.VisibilityPublic && exam.Visibility != Entities.VisibilityTeachers {
-		return nil, fmt.Errorf("user does not have permissions to view exam details")
+	if role == user_entities.UserRoleProfessor && exam.ProfessorID != user.ID {
+		if exam.Visibility != Entities.VisibilityPublic && exam.Visibility != Entities.VisibilityTeachers {
+			return nil, fmt.Errorf("user does not have permissions to view exam details")
+		}
 	}
 
 	// [STEP 4] If user is student and exam visibility is not "public" nor "course"

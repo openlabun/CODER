@@ -158,13 +158,13 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	app.SessionModule = SessionUseCases{
 		CreateSession:    session_usecases.NewCreateSessionUseCase(deps.UserRepository, deps.SessionRepository, deps.ExamRepository),
 		GetActiveSession: session_usecases.NewGetActiveSessionUseCase(deps.SessionRepository, deps.UserRepository),
-		HeartBeatSession: session_usecases.NewHeartBeatSessionUseCase(deps.UserRepository, deps.SessionRepository),
+		HeartBeatSession: session_usecases.NewHeartBeatSessionUseCase(deps.UserRepository, deps.ExamRepository, deps.SessionRepository),
 		BlockSession:     session_usecases.NewBlockSessionUseCase(deps.SessionRepository, deps.UserRepository),
 		CloseSession:     session_usecases.NewCloseSessionUseCase(deps.SessionRepository, deps.UserRepository),
 	}
 
 	app.SubmissionUseCases = SubmissionUseCases{
-		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
+		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
 		GetSubmissionStatus:     submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
 		GetChallengeSubmissions: submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
 		GetSessionSubmissions:   submission_usecases.NewGetSessionSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository, deps.SessionRepository),

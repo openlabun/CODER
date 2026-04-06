@@ -105,6 +105,8 @@ func (uc *CreateExamItemUseCase) Execute(ctx context.Context, input dtos.CreateE
 		if err != nil {
 			return nil, fmt.Errorf("failed to fork challenge: %v", err)
 		}
+		
+		input.ChallengeID = challenge.ID
 	}
 
 	// [STEP 9] Create ExamItem

@@ -128,7 +128,7 @@ func TestExamCRUD(t *testing.T) {
 		5400,
 		2,
 		teacherID,
-		courseID,
+		&courseID,
 	)
 	if err != nil {
 		process.Fail("build exam with factory", err)

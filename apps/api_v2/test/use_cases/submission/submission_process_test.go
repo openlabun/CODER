@@ -88,7 +88,7 @@ func TestCreateSession(t *testing.T) {
 	endTimeStr := endTime.Format(time.RFC3339)
 
 	createdExam, err := app.ExamModule.CreateExam.Execute(teacherCtx, exam_dtos.CreateExamInput{
-		CourseID:             courseID,
+		CourseID:             &courseID,
 		Title:                "UC Submission Session Exam",
 		Description:          "Exam for session use case test",
 		Visibility:           string(exam_entities.VisibilityCourse),
@@ -282,7 +282,7 @@ func TestSubmissions(t *testing.T) {
 	endTimeStr := endTime.Format(time.RFC3339)
 
 	createdExam, err := app.ExamModule.CreateExam.Execute(teacherCtx, exam_dtos.CreateExamInput{
-		CourseID:             courseID,
+		CourseID:             &courseID,
 		Title:                "UC Submission Exam",
 		Description:          "Exam for submission use case test",
 		Visibility:           string(exam_entities.VisibilityCourse),

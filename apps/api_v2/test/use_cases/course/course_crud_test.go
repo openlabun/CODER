@@ -35,7 +35,7 @@ func TestCourseCRUD(t *testing.T) {
 	// [STEP 1] Login Teacher user
 	process.StartStep("Inicio de sesión con usuario docente")
 	teacherAccess := utils.EnsureAuthUserAccess(t, process.Application, email, password, "Teacher Test")
-	teacherCtx = utils.TeacherCourseCtx(teacherAccess)
+	teacherCtx = utils.BuildUserCtx(teacherAccess)
 	teacherID = teacherAccess.UserData.ID
 	process.Log(fmt.Sprintf("teacherID=%s", teacherID))
 

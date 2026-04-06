@@ -38,8 +38,8 @@ func TestCourseEnrollment(t *testing.T) {
 	process.StartStep("Inicio de sesión con usuario docente")
 	teacherAccess := utils.EnsureAuthUserAccess(t, process.Application, email, password, "Teacher Test")
 	studentAccess := utils.EnsureAuthUserAccess(t, process.Application, studentEmail, password, "Student Test")
-	teacherCtx = utils.TeacherCourseCtx(teacherAccess)
-	studentCtx = utils.StudentCtx(studentAccess)
+	teacherCtx = utils.BuildUserCtx(teacherAccess)
+	studentCtx = utils.BuildUserCtx(studentAccess)
 	teacherID = teacherAccess.UserData.ID
 	studentID = studentAccess.UserData.ID
 	process.Log(fmt.Sprintf("teacherID=%s studentID=%s", teacherID, studentID))

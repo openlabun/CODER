@@ -37,7 +37,7 @@ func TestCourseFromStudentView(t *testing.T) {
 	// [STEP 1] Login Teacher user
 	process.StartStep("Inicio de sesión con usuario docente")
 	teacherAccess := utils.EnsureAuthUserAccess(t, process.Application, teacher_email, password, "Teacher Test")
-	teacherCtx = utils.TeacherCourseCtx(teacherAccess)
+	teacherCtx = utils.BuildUserCtx(teacherAccess)
 	teacherID = teacherAccess.UserData.ID
 	process.Log(fmt.Sprintf("teacherID=%s", teacherID))
 
@@ -73,7 +73,7 @@ func TestCourseFromStudentView(t *testing.T) {
 	// [STEP 3] Login Student user
 	process.StartStep("Inicio de sesión con usuario estudiante")
 	studentAccess := utils.EnsureAuthUserAccess(t, process.Application, student_email, password, "Student Test")
-	studentCtx = utils.StudentCtx(studentAccess)
+	studentCtx = utils.BuildUserCtx(studentAccess)
 	studentID = studentAccess.UserData.ID
 	process.Log(fmt.Sprintf("studentID=%s", studentID))
 

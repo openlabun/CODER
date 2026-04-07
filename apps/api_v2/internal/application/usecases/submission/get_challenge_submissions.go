@@ -55,7 +55,7 @@ func (uc *GetChallengeSubmissionsUseCase) Execute(ctx context.Context, input dto
 	// [STEP 2] Verify that challenge exists
 	challenge, err := uc.challengeRepository.GetChallengeByID(ctx, input.ChallengeID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get challenge from repository: %w", err)
 	}
 
 	if challenge == nil {
@@ -74,7 +74,7 @@ func (uc *GetChallengeSubmissionsUseCase) Execute(ctx context.Context, input dto
 	if role == user_entities.UserRoleStudent {
 		submissions, err = uc.submissionRepository.GetSubmissionsByUserID(ctx, user.ID, input.Status, input.TestID, &input.ChallengeID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("get submissions by user: %w", err)
 		}
 
 		return uc.createSubmissionsOutputDTO(ctx, submissions)
@@ -91,7 +91,7 @@ func (uc *GetChallengeSubmissionsUseCase) Execute(ctx context.Context, input dto
 	submissions, err = uc.submissionRepository.GetSubmissionsByChallengeID(ctx, input.ChallengeID, input.Status, input.TestID)
 		
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get submissions by challenge: %w", err)
 	}
 
 	return uc.createSubmissionsOutputDTO(ctx, submissions)
@@ -111,7 +111,7 @@ func (uc *GetChallengeSubmissionsUseCase) filterUserSubmissions (userID string, 
 func (uc *GetChallengeSubmissionsUseCase) getSubmissionResults (ctx context.Context, submission *Entities.Submission) ([]Entities.SubmissionResult, error) {
 	results, err := uc.resultsRepository.GetResultsBySubmissionID(ctx, submission.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get by id: %w", err)
 	}
 
 	derefResults := make([]Entities.SubmissionResult, len(results))
@@ -119,7 +119,7 @@ func (uc *GetChallengeSubmissionsUseCase) getSubmissionResults (ctx context.Cont
 		derefResults[i] = *result
 	}
 
-	return derefResults, err
+	return derefResults, nil
 }
 
 func (uc *GetChallengeSubmissionsUseCase) createSubmissionsOutputDTO (ctx context.Context, submission []*Entities.Submission) ([]*dtos.SubmissionOutputDTO, error) {
@@ -127,7 +127,7 @@ func (uc *GetChallengeSubmissionsUseCase) createSubmissionsOutputDTO (ctx contex
 	for _, submission := range submission {
 		results, err := uc.getSubmissionResults(ctx, submission)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("get submission results: %w", err)
 		}
 
 		dto := mapper.MapSubmissionOutputDTO(submission, results)

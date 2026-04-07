@@ -132,9 +132,12 @@ func (r *SubmissionResultRepository) getResultsByField(ctx context.Context, fiel
 
 	results := make([]*Entities.SubmissionResult, 0, len(records))
 	for _, record := range records {
-		actualOutput, fetchErr := r.ioVariableRepository.GetIOVariableByID(ctx, asString(record["ActualOutput"]))
-		if fetchErr != nil {
-			return nil, fetchErr
+		var actualOutput *examEntities.IOVariable
+		if outputID := strings.TrimSpace(asString(record["ActualOutput"])); outputID != "" {
+			actualOutput, err = r.ioVariableRepository.GetIOVariableByID(ctx, outputID)
+			if err != nil {
+				return nil, fmt.Errorf("get IO variable by ID: %w", err)
+			}
 		}
 
 		result, mapErr := recordToResult(record, actualOutput)

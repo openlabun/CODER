@@ -23,18 +23,18 @@ const Sidebar = () => {
     const isActive = (path) => location.pathname === path;
 
     const navItems = user?.role === 'student' ? [
-        { path: '/dashboard', label: 'PANEL PRINCIPAL', icon: <LayoutDashboard size={20} /> },
-        { path: '/challenges', label: 'Retos', icon: <Trophy size={20} /> },
-        { path: '/courses', label: 'Mis Cursos', icon: <BookOpen size={20} /> },
-        { path: '/submissions', label: 'Envíos', icon: <FileText size={20} /> },
-        { path: '/leaderboard', label: 'Clasificación', icon: <BarChart3 size={20} /> },
+        { path: '/dashboard', label: 'PANEL PRINCIPAL', icon: <LayoutDashboard size={20} />, id: 'tour-nav-dashboard' },
+        { path: '/challenges', label: 'Retos', icon: <Trophy size={20} />, id: 'tour-nav-challenges' },
+        { path: '/courses', label: 'Mis Cursos', icon: <BookOpen size={20} />, id: 'tour-nav-courses' },
+        { path: '/submissions', label: 'Envíos', icon: <FileText size={20} />, id: 'tour-nav-submissions' },
+        { path: '/leaderboard', label: 'Clasificación', icon: <BarChart3 size={20} />, id: 'tour-nav-leaderboard' },
     ] : [
-        { path: '/dashboard', label: 'PANEL PRINCIPAL', icon: <LayoutDashboard size={20} /> },
-        { path: '/challenges', label: 'Retos', icon: <Trophy size={20} /> },
-        { path: '/challenges/create', label: 'Crear Reto', icon: <PlusCircle size={20} /> },
-        { path: '/courses', label: 'Cursos', icon: <BookOpen size={20} /> },
-        { path: '/submissions', label: 'Envíos', icon: <FileText size={20} /> },
-        { path: '/leaderboard', label: 'Clasificación', icon: <BarChart3 size={20} /> },
+        { path: '/dashboard', label: 'PANEL PRINCIPAL', icon: <LayoutDashboard size={20} />, id: 'tour-nav-dashboard' },
+        { path: '/challenges', label: 'Retos', icon: <Trophy size={20} />, id: 'tour-nav-challenges' },
+        { path: '/challenges/create', label: 'Crear Reto', icon: <PlusCircle size={20} />, id: 'tour-nav-challenges-create' },
+        { path: '/courses', label: 'Cursos', icon: <BookOpen size={20} />, id: 'tour-nav-courses' },
+        { path: '/submissions', label: 'Envíos', icon: <FileText size={20} />, id: 'tour-nav-submissions' },
+        { path: '/leaderboard', label: 'Clasificación', icon: <BarChart3 size={20} />, id: 'tour-nav-leaderboard' },
     ];
 
     return (
@@ -55,6 +55,7 @@ const Sidebar = () => {
                                 <Link 
                                     to={item.path} 
                                     className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
+                                    id={item.id}
                                 >
                                     <span className="nav-icon">{item.icon}</span>
                                     <span className="nav-label">{item.label}</span>
@@ -100,6 +101,14 @@ const Sidebar = () => {
                         </div>
                     </div>
                 </div>
+                <button onClick={() => {
+                    import('../tours/tourConfig').then(({ startTour }) => {
+                        startTour(user?.role);
+                    });
+                }} className="logout-button" style={{marginBottom: '10px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', opacity: 0.8}}>
+                    <BookOpen size={18} />
+                    <span>Hacer Tour</span>
+                </button>
                 <button onClick={logout} className="logout-button">
                     <LogOut size={18} />
                     <span>Cerrar Sesión</span>

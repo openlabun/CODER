@@ -105,7 +105,29 @@ func (uc *UpdateResultUseCase) Execute(ctx context.Context, input dtos.UpdateRes
 		}
 	}
 
-	// [STEP 6] Save the updated submission result back to the repository
+	// [STEP 6] Validate if submission result is accepted, if it is, update submission score
+	if updatedResult.Status == Entities.SubmissionStatusAccepted {
+		// [STEP 6.1] Retrieve the submission
+		submission, err := uc.submissionRepository.GetSubmissionByID(ctx, submissionResult.SubmissionID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve submission for result update: %w", err)
+		}
+
+		// [STEP 6.2] Retrieve the test case to get the points
+		testCase, err := uc.testCaseRepository.GetTestCaseByID(ctx, submissionResult.TestCaseID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve test case for result update: %w", err)
+		}
+
+		// [STEP 6.3] Update the submission score
+		submission.Score = submission.Score + testCase.Points
+		_, err = uc.submissionRepository.UpdateSubmission(ctx, submission)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update submission score: %w", err)
+		}
+	}
+
+	// [STEP 7] Save the updated submission result back to the repository
 	result, err := domain_services.UpdateSubmissionResult(ctx, updatedResult, uc.resultRepository, uc.ioVariableRepository)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update submission result: %w", err)

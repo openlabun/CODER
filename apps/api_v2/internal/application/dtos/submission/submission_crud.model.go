@@ -52,6 +52,7 @@ type SubmissionOutputDTO struct {
 type SubmissionResultPublishedDTO struct {
 	SubmissionID string `json:"submission_id"`
 	Code 	  	 string `json:"code"`
+	Input 		 string `json:"input"`
 	ResultID	 string `json:"result_id"`
 	TimeLimitMs  int    `json:"time_limit_ms"`
 	MemoryLimitMb int    `json:"memory_limit_mb"`

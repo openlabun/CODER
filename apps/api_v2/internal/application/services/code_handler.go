@@ -88,3 +88,15 @@ func AppendFunctionCall(code string, function string, language submissionEntitie
 
 	return code, nil
 }
+
+func ExtractInputFromTestCase(test_case entities.TestCase) string {
+	var inputs string
+	for _, input := range test_case.Input {
+		if inputs == "" {
+			inputs = input.Value
+		} else {
+			inputs += "\n" + input.Value
+		}
+	}
+	return inputs
+}

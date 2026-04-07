@@ -141,7 +141,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 	for _, testCase := range testCases {
 		result, err := uc.createSubmissionResultsForTestCases(ctx, createdSubmission.ID, *testCase)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not create submission results for test cases: %w", err)
 		}
 
 		if result != nil {
@@ -168,13 +168,13 @@ func (uc *CreateSubmissionUseCase) createSubmissionResultsForTestCases(ctx conte
 	// [STEP 11.1] Create submission result entity with user provided values
 	submissionResult, err := mapper.MapSubmissionResultEntity(submissionID, testCase.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to map submission result entity: %w", err)
 	}
 
 	// [STEP 11.2] Save submission result in database
 	result, err := domain_services.CreateSubmissionResult(ctx, submissionResult, uc.resultRepository, uc.ioVariableRepository)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create submission result: %w", err)
 	}
 
 	return result, nil

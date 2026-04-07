@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
@@ -16,7 +15,6 @@ import (
 func MapCreateSubmissionInputToSubmissionEntity(userID string, input dtos.CreateSubmissionInput) (*Entities.Submission, error) {
 	submission, err := factory.NewSubmission(
 		input.Code,
-		input.Function,
 		Entities.ProgrammingLanguage(input.Language),
 		input.ChallengeID,
 		input.SessionID,
@@ -90,16 +88,9 @@ func MapSubmissionResultToPublishedDTO(
 	test_case examEntities.TestCase, 
 	challenge examEntities.Challenge,
 ) *dtos.SubmissionResultPublishedDTO {
-
-	code, err := services.AppendFunctionCall(submission.Code,submission.Function, submission.Language, test_case.Input)
-	if err != nil {
-		return nil
-	}
-
-
 	return &dtos.SubmissionResultPublishedDTO{
 		SubmissionID: submission.ID,
-		Code: code,
+		Code: submission.Code,
 		ResultID: result.ID,
 		TimeLimitMs: challenge.WorkerTimeLimit,
 		MemoryLimitMb: challenge.WorkerMemoryLimit,

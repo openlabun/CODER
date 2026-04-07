@@ -331,7 +331,6 @@ func TestSubmissionCRUD(t *testing.T) {
 	process.StartStep("Crear Submission")
 	submission, err := submission_factory.NewSubmission(
 		"print(1+2)",
-		"print(1+2)",
 		submission_entities.LanguagePython,
 		challengeID,
 		sessionID,

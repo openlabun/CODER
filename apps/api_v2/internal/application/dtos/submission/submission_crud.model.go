@@ -6,7 +6,6 @@ import (
 
 type CreateSubmissionInput struct {
 	Code        string		`json:"code"`
-	Function    string		`json:"function"`
 	Language    string		`json:"language"`
 	Score       int			`json:"score"`
 	ChallengeID string		`json:"challenge_id"`

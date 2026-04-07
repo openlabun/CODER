@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
 )
@@ -91,7 +92,10 @@ func (r *SubmissionResultRepository) GetResultByID(ctx context.Context, resultID
 		return nil, nil
 	}
 
-	actualOutput, err := r.ioVariableRepository.GetIOVariableByID(ctx, asString(record["ActualOutput"]))
+	var actualOutput *examEntities.IOVariable
+	if outputID := strings.TrimSpace(asString(record["ActualOutput"])); outputID != "" {
+		actualOutput, err = r.ioVariableRepository.GetIOVariableByID(ctx, outputID)
+	}
 	if err != nil {
 		return nil, err
 	}

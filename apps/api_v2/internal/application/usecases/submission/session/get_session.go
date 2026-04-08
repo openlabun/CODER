@@ -94,8 +94,10 @@ func (uc *GetActiveSessionUseCase) Execute(ctx context.Context, input dtos.GetAc
 	// [STEP 5] Get active session (updated)
 	var active_session *Entity.Session
 	
-	if session != nil && session.Status == Entity.SessionStatusActive {
-		active_session = session
+	if session != nil {
+		if session.Status == Entity.SessionStatusActive || session.Status == Entity.SessionStatusFrozen {
+			active_session = session
+		}
 	}
 
 	// [STEP 6] If there is an active session, return it. Else, throw error

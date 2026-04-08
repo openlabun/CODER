@@ -42,24 +42,3 @@ func BuildUserCtx(access *user_dtos.UserAccess) context.Context {
 	return buildContext(access.Token.AccessToken, access.UserData.Email)
 }
 
-func EnsureTeacherAccess(t *testing.T, app *container.Application) *user_dtos.UserAccess {
-	t.Helper()
-	t.Log("[AUTH] Intentando login de profesor")
-
-	email := "test@test.com"
-	password := "Password123!"
-
-	return EnsureAuthUserAccess(t, app, email, password, "Teacher Test")
-}
-
-
-func EnsureStudentAccess(t *testing.T, app *container.Application) *user_dtos.UserAccess {
-	t.Helper()
-	t.Log("[AUTH] Intentando login de estudiante")
-
-	email := "stud@test.com"
-	password := "Password123!"
-
-	return EnsureAuthUserAccess(t, app, email, password, "Student Test")
-}
-

@@ -202,6 +202,12 @@ func UpdateSessionStatus(
 
 	if heartbeat {
 		session.LastHeartbeat = now
+
+		if session.Status == SessionEntities.SessionStatusFrozen {
+			if err := ApplyTranstion(session, SessionEntities.SessionStatusActive); err != nil {
+				return fmt.Errorf("failed to reactivate session on heartbeat: %w", err)
+			}
+		}
 	}
 
 	return nil

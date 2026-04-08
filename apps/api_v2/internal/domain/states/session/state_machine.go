@@ -105,7 +105,7 @@ func validateSessionExamBinding(session *SessionEntities.Session, exam *ExamEnti
 
 func shouldExpireSession(session *SessionEntities.Session, exam *ExamEntities.Exam, now time.Time) bool {
 	if validateStateTransition(session, SessionEntities.SessionStatusExpired) != nil {
-		return true
+		return false
 	}
 
 	// If exam has unlimited time, it cannot expire
@@ -126,6 +126,9 @@ func shouldExpireSession(session *SessionEntities.Session, exam *ExamEntities.Ex
 			return true
 		}
 	}
+
+	// Update timeLeft
+	session.TimeLeft = int(session.StartedAt.Add(time.Duration(exam.TimeLimit) * time.Second).Sub(now).Seconds())
 
 	// Check if session has no time left
 	if session.TimeLeft <= 0 {

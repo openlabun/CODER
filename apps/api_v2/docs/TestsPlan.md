@@ -446,4 +446,202 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
 
 ##### Módulo de Revisiones
 
+- **CRUD de Sesiones (`Session`):**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (visibilidad `public` y sin curso)
+  
+  - Paso 3: Crear otro examen público
+  
+  - Paso 4: Iniciar sesión con usuario de estudiante
+  
+  - Paso 5: Crear sesión con examen
+  
+  - Paso 6: Crear sesión con el otro examen (espera `error`)
+  
+  - Paso 7: Obtener la sesión
+  
+  - Paso 8: Cerrar la sesión
+  
+  - Paso 9: Obtener la sesión y confirmar cierre
+  
+  ```
+  go test -v ./test/use_cases/submission -run TestSessionCRUD
+  ```
+
+- **Heartbeat de Sesiones:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (visibilidad `public` y sin curso)
+  
+  - Paso 3: Iniciar sesión con usuario de estudiante
+  
+  - Paso 4: Crear sesión con examen
+  
+  - Paso 5: Obtener la sesión
+  
+  - Paso 6: Hacer heartbeat a la sesión
+  
+  - Paso 7: Obtener la sesión
+  
+  ```
+  go test -v ./test/use_cases/submission -run 
+  ```
+
+- **Congelamiento y Bloqueo de Sesiones:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (visibilidad `public` y sin curso)
+  
+  - Paso 3: Iniciar sesión con usuario de estudiante
+  
+  - Paso 4: Crear sesión con examen
+  
+  - Paso 5: Bloquear sesión desde cuenta de docente
+  
+  - Paso 6: Obtener la sesión
+  
+  - Paso 7: Crear sesión con examen
+  
+  - Paso 8: Esperar tiempo para congelamiento de examen
+  
+  - Paso 9: Obtener la sesión y comprobar que está congelada
+  
+  - Paso 10: Hacer heartbeat
+  
+  - Paso 11: Comprobar que se volvió a activar
+  
+  - Paso 12: Bloquear sesión desde vista de docente
+  
+  - Paso 13: Obtener la sesión y comprobar que está bloqueada
+  
+  ```
+  go test -v ./test/use_cases/submission -run
+  ```
+
+- **Creación y obtención de Revisiones (`Submission`):**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (visibilidad `public` y sin curso)
+  
+  - Paso 3: Crear un reto
+  
+  - Paso 4: Crear casos de prueba
+  
+  - Paso 5: Crear un punto de examen
+  
+  - Paso 6: Iniciar sesión con usuario de estudiante
+  
+  - Paso 7: Crear una sesión en el examen
+  
+  - Paso 8: Crear una revisión
+  
+  - Paso 9: Obtener revisiones a partir del ID del reto
+  
+  - Paso 10: Obtener revisiones a partir del ID de la sesión
+  
+  - Paso 11: Obtener revisiones a partir del ID del usuario
+  
+  - Paso 12: Obtener el `status` de la revisión
+  
+  ```
+  go test -v ./test/use_cases/submission -run
+  ```
+
+- **Revisiones Inválidas:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (visibilidad `public`, sin curso y 60 segundos de tiempo para resolver)
+  
+  - Paso 3: Crear un reto
+  
+  - Paso 4: Crear casos de prueba
+  
+  - Paso 5: Crear un punto de examen
+  
+  - Paso 6: Iniciar sesión con usuario de estudiante
+  
+  - Paso 7: Crear una revisión sin sesión (espera `error`)
+  
+  - Paso 8: Crear una sesión en el examen
+  
+  - Paso 9: Cerrar el examen desde la vista de docente
+  
+  - Paso 10: Crear una revisión (espera `error`)
+  
+  - Paso 11: Esperar 61 segundos y crear un revisión (espera `error`)
+  
+  - Paso 12: Obtener datos de sesión
+  
+  - Paso 13: Confirmar que la sesión tiene estado `expired`
+  
+  - Paso 14: Crear una sesión en el examen
+  
+  - Paso 15: Bloquear la sesión desde la vista de docente
+  
+  - Paso 16: Crear una revisión (espera `error`)
+  
+  - Paso 17: Crear una sesión en el examen
+  
+  - Paso 18: Cerrar el examen
+  
+  - Paso 19: Crear una revisión (espera `error`)
+  
+  ```
+  
+  ```
+
+- **Ejecución de Revisiones:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (visibilidad `public` y sin curso)
+  
+  - Paso 3: Crear un reto
+  
+  - Paso 4: Crear casos de prueba
+  
+  - Paso 5: Crear un punto de examen
+  
+  - Paso 6: Iniciar sesión con usuario de estudiante
+  
+  - Paso 7: Crear una revisión
+  
+  - Paso 8: Obtener el `status` de la revisión hasta que su estado sea `accepted`
+  
+  ```
+  
+  ```
+
+- **Puntaje de Revisiones:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (visibilidad `public` y sin curso)
+  
+  - Paso 3: Crear un reto
+  
+  - Paso 4: Crear 2 casos de prueba con valor de 3 puntos
+  
+  - Paso 5: Crear un caso de prueba con valor de 6 puntos (debe ser imposible de cumplir)
+  
+  - Paso 5: Crear un punto de examen
+  
+  - Paso 6: Iniciar sesión con usuario de estudiante
+  
+  - Paso 7: Crear una revisión
+  
+  - Paso 8: Obtener el `status` de la revisión hasta que su estado sea `accepted` o `wrong_answer`
+  
+  - Paso 9: Confirmar valor del atributo `Score` de la revisión corresponde a 6
+  
+  ```
+  
+  ```
+
 ### Pruebas de Rendimiento

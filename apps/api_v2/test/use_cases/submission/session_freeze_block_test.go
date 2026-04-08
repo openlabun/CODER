@@ -136,9 +136,9 @@ func TestSessionFreezeAndBlock(t *testing.T) {
 
 	// [STEP 9] Get the session and verify it's frozen
 	process.StartStep("Obtener la sesión y comprobar que está congelada")
-	frozenSession, err := process.Application.SessionModule.HeartBeatSession.Execute(studentCtx, submission_dtos.HeartbeatSessionInput{SessionID: secondSessionID})
+	frozenSession, err := process.Application.SessionModule.GetActiveSession.Execute(studentCtx, submission_dtos.GetActiveSessionInput{UserID: &studentAccess.UserData.ID})
 	if err != nil {
-		process.Fail("heartbeat to freeze session", err)
+		process.Fail("get active session", err)
 	}
 	if frozenSession == nil || frozenSession.Status != submission_entities.SessionStatusFrozen {
 		process.Fail("verify frozen session", fmt.Errorf("expected frozen session status"))

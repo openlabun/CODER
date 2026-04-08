@@ -23,7 +23,7 @@ const EditCourse = () => {
                 setFormData({
                     name: data.name,
                     code: data.code,
-                    period: data.period,
+                    period: data.period ? `${data.period.year}-${data.period.semester}` : `${new Date().getFullYear()}-1`,
                     groupNumber: data.groupNumber,
                 });
             } catch (err) {
@@ -41,8 +41,11 @@ const EditCourse = () => {
         setError('');
 
         try {
+            const [year, semester] = formData.period.split('-');
             await client.post(`/courses/${id}`, {
                 ...formData,
+                year: parseInt(year),
+                semester: semester,
                 groupNumber: parseInt(formData.groupNumber),
             });
             navigate('/courses');

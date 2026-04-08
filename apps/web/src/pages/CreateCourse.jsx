@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
+import Swal from 'sweetalert2';
 import './CreateCourse.css';
 
 const CreateCourse = () => {
@@ -49,7 +50,7 @@ const CreateCourse = () => {
 
         // Course code validation (letters + numbers only)
         if (!/^[A-Za-z0-9]+$/.test(formData.code)) {
-            errors.code = 'Course code must contain only letters and numbers';
+            errors.code = 'El código del curso debe contener solo letras y números';
         }
 
         // Period validation (YYYY-X format)
@@ -59,13 +60,13 @@ const CreateCourse = () => {
 
         // Group number validation
         if (formData.groupNumber < 1) {
-            errors.groupNumber = 'Group number must be a positive integer';
+            errors.groupNumber = 'El número de grupo debe ser un entero positivo';
         }
 
         // Date validation
         if (formData.startDate && formData.endDate) {
             if (new Date(formData.startDate) >= new Date(formData.endDate)) {
-                errors.endDate = 'End date must be after start date';
+                errors.endDate = 'La fecha de finalización debe ser posterior a la fecha de inicio';
             }
         }
 
@@ -77,7 +78,7 @@ const CreateCourse = () => {
         setError('');
 
         if (!validateForm()) {
-            setError('Please fix the validation errors before submitting');
+            setError('Por favor corrige los errores de validación antes de enviar');
             return;
         }
 
@@ -88,15 +89,49 @@ const CreateCourse = () => {
 
         setLoading(true);
         try {
+            const [year, semesterCode] = formData.period.split('-');
+            
+            // Map semesters to backend constants (01: first, 02: intersemestral/summer, 03: second)
+            // 1 -> 01, 2 -> 03, 3 -> 02
+            const semesterMap = { '1': '01', '2': '03', '3': '02' };
+            const semester = semesterMap[semesterCode] || '01';
+
+            // Map frontend fields to backend DTO
             const payload = {
-                ...formData,
-                status
+                name: formData.name,
+                description: formData.description,
+                visibility: formData.visibility === 'active' ? 'public' : 'private',
+                visual_identity: formData.color,
+                code: formData.code,
+                year: parseInt(year),
+                semester: semester,
+                enrollment_code: formData.enrollmentCode
             };
+
             await client.post('/courses', payload);
-            navigate('/courses');
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Curso Creado!',
+                text: 'El curso se ha registrado exitosamente',
+                timer: 1000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                position: 'top-end',
+                toast: true
+            });
+
+            setTimeout(() => navigate('/courses'), 1000);
         } catch (err) {
-            setError('Failed to create course. Please try again.');
-            console.error(err);
+            console.error('Error creating course:', err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Creación',
+                text: 'No se pudo crear el curso. Revisa el código y periodo.',
+                timer: 1500,
+                showConfirmButton: false,
+                position: 'center'
+            });
         } finally {
             setLoading(false);
         }
@@ -105,46 +140,46 @@ const CreateCourse = () => {
     return (
         <div className="create-course-page">
             <div className="page-header">
-                <h1>Create New Course</h1>
-                <p className="subtitle">Set up a comprehensive course for your students</p>
+                <h1>Crear Nuevo Curso</h1>
+                <p className="subtitle">Configura un curso completo para tus estudiantes</p>
             </div>
 
             {error && <div className="error-message">{error}</div>}
 
             <form className="course-form">
                 <div className="form-section">
-                    <h2>Basic Information</h2>
+                    <h2>Información Básica</h2>
 
                     <div className="form-group">
-                        <label htmlFor="name">Course Name *</label>
+                        <label htmlFor="name">Nombre del Curso *</label>
                         <input
                             type="text"
                             id="name"
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
-                            placeholder="e.g., Algorithms and Data Structures"
+                            placeholder="ej. Algoritmos y Estructuras de Datos"
                             required
                         />
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label htmlFor="code">Course Code *</label>
+                            <label htmlFor="code">Código del Curso *</label>
                             <input
                                 type="text"
                                 id="code"
                                 name="code"
                                 value={formData.code}
                                 onChange={handleChange}
-                                placeholder="e.g., CS101"
+                                placeholder="ej. CS101"
                                 required
                                 className={validationErrors.code ? 'error' : ''}
                             />
                             {validationErrors.code ? (
                                 <small className="error-text">{validationErrors.code}</small>
                             ) : (
-                                <small>Format: CS101, MAT202, INF251</small>
+                                <small>Formato: CS101, MAT202, INF251</small>
                             )}
                         </div>
 
@@ -185,7 +220,7 @@ const CreateCourse = () => {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="groupNumber">Group Number *</label>
+                            <label htmlFor="groupNumber">Número de Grupo *</label>
                             <input
                                 type="number"
                                 id="groupNumber"
@@ -199,30 +234,30 @@ const CreateCourse = () => {
                             {validationErrors.groupNumber ? (
                                 <small className="error-text">{validationErrors.groupNumber}</small>
                             ) : (
-                                <small>Must be a positive integer</small>
+                                <small>Debe ser un número entero positivo</small>
                             )}
                         </div>
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="description">Course Description (Optional)</label>
+                        <label htmlFor="description">Descripción del Curso (Opcional)</label>
                         <textarea
                             id="description"
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
-                            placeholder="Provide a short overview of the course topics and learning goals..."
+                            placeholder="Proporciona una breve descripción de los temas del curso y los objetivos de aprendizaje..."
                             rows="5"
                         />
-                        <small>Describe objectives, main topics, and academic purpose</small>
+                        <small>Describe objetivos, temas principales y propósito académico</small>
                     </div>
                 </div>
 
                 <div className="form-section">
-                    <h2>Visual Identity</h2>
+                    <h2>Identidad Visual</h2>
 
                     <div className="form-group">
-                        <label>Course Color (Optional)</label>
+                        <label>Color del Curso (Opcional)</label>
                         <div className="color-picker">
                             {courseColors.map(color => (
                                 <button
@@ -235,15 +270,15 @@ const CreateCourse = () => {
                                 />
                             ))}
                         </div>
-                        <small>Choose a color to visually identify this course</small>
+                        <small>Elige un color para identificar visualmente este curso</small>
                     </div>
                 </div>
 
                 <div className="form-section">
-                    <h2>Enrollment Settings</h2>
+                    <h2>Configuración de Inscripción</h2>
 
                     <div className="form-group">
-                        <label>Enrollment Method *</label>
+                        <label>Método de Inscripción *</label>
                         <div className="radio-group">
                             <label className="radio-option">
                                 <input
@@ -254,8 +289,8 @@ const CreateCourse = () => {
                                     onChange={handleChange}
                                 />
                                 <div>
-                                    <span>🔑 Enrollment Code</span>
-                                    <small>Students join using a unique code</small>
+                                    <span>🔑 Código de Inscripción</span>
+                                    <small>Los estudiantes se unen usando un código único</small>
                                 </div>
                             </label>
                             <label className="radio-option">
@@ -267,8 +302,8 @@ const CreateCourse = () => {
                                     onChange={handleChange}
                                 />
                                 <div>
-                                    <span>🔗 Private Link</span>
-                                    <small>Students join via invitation link</small>
+                                    <span>🔗 Enlace Privado</span>
+                                    <small>Los estudiantes se unen a través de un enlace de invitación</small>
                                 </div>
                             </label>
                             <label className="radio-option">
@@ -280,8 +315,8 @@ const CreateCourse = () => {
                                     onChange={handleChange}
                                 />
                                 <div>
-                                    <span>⚙️ Automatic</span>
-                                    <small>Institution-managed enrollment</small>
+                                    <span>⚙️ Automático</span>
+                                    <small>Inscripción gestionada por la institución</small>
                                 </div>
                             </label>
                         </div>
@@ -289,7 +324,7 @@ const CreateCourse = () => {
 
                     {formData.enrollmentMethod === 'code' && (
                         <div className="form-group">
-                            <label htmlFor="enrollmentCode">Enrollment Code</label>
+                            <label htmlFor="enrollmentCode">Código de Inscripción</label>
                             <div className="code-input-group">
                                 <input
                                     type="text"
@@ -297,24 +332,24 @@ const CreateCourse = () => {
                                     name="enrollmentCode"
                                     value={formData.enrollmentCode}
                                     onChange={handleChange}
-                                    placeholder="Will be auto-generated"
+                                    placeholder="Se generará automáticamente"
                                     readOnly
                                 />
                                 <button type="button" onClick={generateEnrollmentCode} className="btn-generate">
-                                    Generate Code
+                                    Generar Código
                                 </button>
                             </div>
-                            <small>Students will use this code to join the course</small>
+                            <small>Los estudiantes usarán este código para unirse al curso</small>
                         </div>
                     )}
                 </div>
 
                 <div className="form-section">
-                    <h2>Schedule</h2>
+                    <h2>Calendario</h2>
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label htmlFor="startDate">Start Date</label>
+                            <label htmlFor="startDate">Fecha de Inicio</label>
                             <input
                                 type="date"
                                 id="startDate"
@@ -322,11 +357,11 @@ const CreateCourse = () => {
                                 value={formData.startDate}
                                 onChange={handleChange}
                             />
-                            <small>When the course becomes active</small>
+                            <small>Cuándo se activa el curso</small>
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="endDate">End Date</label>
+                            <label htmlFor="endDate">Fecha de Finalización</label>
                             <input
                                 type="date"
                                 id="endDate"
@@ -338,17 +373,17 @@ const CreateCourse = () => {
                             {validationErrors.endDate ? (
                                 <small className="error-text">{validationErrors.endDate}</small>
                             ) : (
-                                <small>When the course ends</small>
+                                <small>Cuándo termina el curso</small>
                             )}
                         </div>
                     </div>
                 </div>
 
                 <div className="form-section">
-                    <h2>Visibility</h2>
+                    <h2>Visibilidad</h2>
 
                     <div className="form-group">
-                        <label>Course Visibility *</label>
+                        <label>Visibilidad del Curso *</label>
                         <div className="radio-group">
                             <label className="radio-option">
                                 <input
@@ -359,8 +394,8 @@ const CreateCourse = () => {
                                     onChange={handleChange}
                                 />
                                 <div>
-                                    <span>✅ Active</span>
-                                    <small>Visible to enrolled students</small>
+                                    <span>✅ Activo</span>
+                                    <small>Visible para los estudiantes inscritos</small>
                                 </div>
                             </label>
                             <label className="radio-option">
@@ -372,8 +407,8 @@ const CreateCourse = () => {
                                     onChange={handleChange}
                                 />
                                 <div>
-                                    <span>👁️ Hidden / Draft</span>
-                                    <small>Not visible to students yet</small>
+                                    <span>👁️ Oculto / Borrador</span>
+                                    <small>Aún no es visible para los estudiantes</small>
                                 </div>
                             </label>
                         </div>
@@ -382,7 +417,7 @@ const CreateCourse = () => {
 
                 <div className="form-actions">
                     <button type="button" onClick={() => navigate('/courses')} className="btn-secondary">
-                        Cancel
+                        Cancelar
                     </button>
                     <button
                         type="button"
@@ -390,7 +425,7 @@ const CreateCourse = () => {
                         disabled={loading}
                         className="btn-draft"
                     >
-                        {loading ? 'Saving...' : '💾 Save as Draft'}
+                        {loading ? 'Guardando...' : '💾 Guardar como Borrador'}
                     </button>
                     <button
                         type="button"
@@ -398,19 +433,19 @@ const CreateCourse = () => {
                         disabled={loading}
                         className="btn-primary"
                     >
-                        {loading ? 'Creating...' : '🚀 Create Course'}
+                        {loading ? 'Creando...' : '🚀 Crear Curso'}
                     </button>
                 </div>
             </form>
 
             <div className="info-box">
-                <h3>📚 Next Steps</h3>
-                <p>After creating the course, you'll be able to:</p>
+                <h3>📚 Próximos Pasos</h3>
+                <p>Después de crear el curso, podrás:</p>
                 <ul>
-                    <li>Enroll students manually or share the enrollment code</li>
-                    <li>Assign challenges to the course</li>
-                    <li>Create exams and assessments</li>
-                    <li>View course leaderboards and analytics</li>
+                    <li>Inscribir estudiantes manualmente o compartir el código de inscripción</li>
+                    <li>Asignar retos al curso</li>
+                    <li>Crear exámenes y evaluaciones</li>
+                    <li>Ver tablas de clasificación y analíticas del curso</li>
                 </ul>
             </div>
         </div>

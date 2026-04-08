@@ -2,6 +2,21 @@ import { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import client from '../api/client';
+import Swal from 'sweetalert2';
+import { 
+    BookOpen, 
+    Plus, 
+    Compass, 
+    Hash, 
+    Calendar, 
+    Settings, 
+    ChevronRight,
+    Users,
+    Key,
+    AlertCircle,
+    RotateCcw,
+    Trash2
+} from 'lucide-react';
 import './Courses.css';
 
 const Courses = () => {
@@ -11,77 +26,185 @@ const Courses = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchCourses = async () => {
-            try {
-                const { data } = await client.get('/courses');
-                setCourses(data);
-            } catch (err) {
-                setError('Failed to load courses');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCourses();
-    }, []);
+    const fetchCourses = async () => {
+        try {
+            const scope = (user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin') ? '?scope=owned' : '';
+            const { data } = await client.get(`/courses${scope}`);
+            setCourses(Array.isArray(data) ? data : (data?.items || []));
+        } catch (err) {
+            console.error('Error loading courses:', err);
+            setError('No se pudieron cargar los cursos. Por favor, intenta de nuevo.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    if (loading) return <div className="loading">Loading courses...</div>;
-    if (error) return <div className="error">{error}</div>;
+    useEffect(() => {
+        if (user) fetchCourses();
+    }, [user]);
+
+    const handleDeleteCourse = async (e, id) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Eliminar curso?',
+            text: 'Esta acción borrará todos los datos asociados. Es irreversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminar curso',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!isConfirmed) return;
+        
+        try {
+            await client.delete(`/courses/${id}`);
+            Swal.fire({
+                icon: 'success',
+                title: 'Curso Eliminado',
+                timer: 1000,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false
+            });
+            await fetchCourses();
+        } catch (err) {
+            console.error('Error deleting course:', err);
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Error', 
+                text: 'No se pudo eliminar el curso. Verifica si tiene estudiantes inscritos.' 
+            });
+        }
+    };
+
+    if (loading) return (
+        <div className="courses-page-new">
+            <header className="courses-header-new">
+                <div className="skeleton title-skeleton"></div>
+            </header>
+            <div className="courses-grid-new">
+                {[...Array(3)].map((_, i) => (
+                    <div key={i} className="course-card-new skeleton-card">
+                        <div className="skeleton card-content-skeleton"></div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    if (error) return (
+        <div className="courses-page-new">
+            <div className="error-container">
+                <AlertCircle size={48} />
+                <h3>Error en la carga</h3>
+                <p>{error}</p>
+                <button onClick={() => window.location.reload()} className="btn-retry">
+                    <RotateCcw size={16} /> Reintentar carga
+                </button>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="courses-page">
-            <div className="page-header">
-                <h1>My Courses</h1>
-                <div className="header-actions">
-                    {user?.role === 'student' && (
+        <div className="courses-page-new">
+            <header className="courses-header-new">
+                <div className="header-info-new">
+                    <h1>Mis Cursos</h1>
+                    <p>Gestiona tus asignaturas y accede a los retos programados</p>
+                </div>
+                
+                <div className="header-actions-new">
+                    {(user?.role === 'student') && (
                         <>
-                            <button onClick={() => navigate('/courses/browse')} className="btn-secondary" style={{ marginRight: '1rem' }}>
-                                🔍 Browse Courses
+                            <button onClick={() => navigate('/courses/browse')} className="btn-action-outline">
+                                <Compass size={18} /> Explorar Cursos
                             </button>
-                            <button onClick={() => navigate('/courses/join')} className="btn-primary">
-                                🔑 Join Course
+                            <button onClick={() => navigate('/courses/join')} className="btn-action-filled">
+                                <Key size={18} /> Unirse con Código
                             </button>
                         </>
                     )}
-                    {user?.role === 'professor' && (
-                        <button onClick={() => navigate('/courses/create')} className="btn-primary">
-                            ➕ Create Course
+                    {(user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin') && (
+                        <button onClick={() => navigate('/courses/create')} className="btn-action-filled">
+                            <Plus size={18} /> Crear Nuevo Curso
                         </button>
                     )}
                 </div>
-            </div>
+            </header>
+
             {courses.length === 0 ? (
-                <div className="empty-state">
-                    <h3>📚 No Courses Available</h3>
-                    {user?.role === 'student' ? (
-                        <p>You haven't joined any courses yet. Click "Browse Courses" to find open courses or "Join Course" to enroll with a code.</p>
-                    ) : (
-                        <p>You haven't created any courses yet. Click "Create Course" to get started.</p>
+                <div className="empty-state-new">
+                    <div className="icon-circle">
+                        <BookOpen size={40} />
+                    </div>
+                    <h3>Aún no tienes cursos</h3>
+                    <p>
+                        {user?.role === 'student' 
+                            ? 'No te has unido a ningún curso. Revisa la sección de explorar o solicita un código a tu docente.' 
+                            : 'No tienes cursos asignados todavía. Contacta al administrador para que te asigne uno.'}
+                    </p>
+                    {user?.role === 'student' && (
+                        <button onClick={() => navigate('/courses/browse')} className="btn-cta-link">
+                            Empezar ahora <ChevronRight size={16} />
+                        </button>
                     )}
                 </div>
             ) : (
-                <div className="courses-grid">
+                <div className="courses-grid-new">
                     {courses.map((course) => (
-                        <Link key={course.id} to={`/courses/${course.id}`} className="course-card">
-                            <h3>{course.name}</h3>
-                            <p>Code: {course.code}</p>
-                            <p>Period: {course.period}</p>
-                            {user?.role === 'professor' && course.enrollmentCode && (
-                                <p className="enrollment-code">🔑 {course.enrollmentCode}</p>
+                        <div key={course.id} className="course-card-new">
+                            <Link to={`/courses/${course.id}`} className="card-clickable-area">
+                                <div className="card-icon-area">
+                                    <BookOpen className="course-icon" />
+                                </div>
+                                <div className="card-info-area">
+                                    <h3>{course.name || 'Sin nombre'}</h3>
+                                    <div className="course-metadata-new">
+                                        <div className="meta-item-new">
+                                            <Hash size={14} />
+                                            <span>{course.code || 'S/N'}</span>
+                                        </div>
+                                        <div className="meta-item-new">
+                                            <Calendar size={14} />
+                                            <span>{course.period ? `${course.period.year}-${course.period.semester}` : 'S/P'}</span>
+                                        </div>
+                                        <div className="meta-item-new">
+                                            <Users size={14} />
+                                            <span>{course.studentCount || 0} inscritos</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                            
+                            {(user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin') && (
+                                <div className="card-admin-actions">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            navigate(`/courses/edit/${course.id}`);
+                                        }}
+                                        className="btn-settings"
+                                        title="Configurar curso"
+                                    >
+                                        <Settings size={18} />
+                                    </button>
+                                    <button 
+                                        onClick={(e) => handleDeleteCourse(e, course.id)}
+                                        className="btn-delete-course"
+                                        title="Eliminar curso"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             )}
-                            {user?.role === 'professor' && (
-                                <button
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        navigate(`/courses/edit/${course.id}`);
-                                    }}
-                                    className="btn-edit"
-                                    style={{ marginTop: '1rem', width: '100%', padding: '0.5rem', background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}
-                                >
-                                    ✏️ Edit Course
-                                </button>
-                            )}
-                        </Link>
+                            <Link to={`/courses/${course.id}`} className="card-arrow-link">
+                                <ChevronRight size={20} />
+                            </Link>
+                        </div>
                     ))}
                 </div>
             )}

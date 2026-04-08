@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
-import './Courses.css';
+import { 
+    Search, 
+    User, 
+    Calendar, 
+    Hash, 
+    ArrowRight, 
+    X, 
+    Lock,
+    AlertCircle,
+    Loader2,
+    Sparkles
+} from 'lucide-react';
+import './BrowseCourses.css';
 
 const BrowseCourses = () => {
     const navigate = useNavigate();
@@ -26,7 +38,7 @@ const BrowseCourses = () => {
                 setFilteredCourses(data);
             } catch (err) {
                 console.error(err);
-                setError('Failed to load courses');
+                setError('No pudimos cargar los cursos disponibles. Por favor, intenta más tarde.');
             } finally {
                 setLoading(false);
             }
@@ -50,11 +62,11 @@ const BrowseCourses = () => {
     };
 
     const handleJoinCourse = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setEnrollError('');
 
         if (!enrollmentCode.trim()) {
-            setEnrollError('Please enter an enrollment code');
+            setEnrollError('El código de inscripción es obligatorio');
             return;
         }
 
@@ -62,91 +74,176 @@ const BrowseCourses = () => {
         try {
             await client.post('/courses/enroll', { enrollmentCode });
             setShowModal(false);
-            alert(`Successfully enrolled in ${selectedCourse.name}!`);
             navigate('/courses');
         } catch (err) {
-            setEnrollError(err.response?.data?.message || 'Invalid enrollment code');
+            setEnrollError(err.response?.data?.message || 'Código de inscripción inválido');
         } finally {
             setEnrolling(false);
         }
     };
 
-    if (loading) return <div className="loading">Loading courses...</div>;
-    if (error) return <div className="error">{error}</div>;
+    if (loading) return (
+        <div className="browse-courses-page">
+            <header className="browse-hero-banner">
+                <div className="hero-content-inner">
+                    <div style={{width: '200px', height: '40px', background: '#334155', borderRadius: '100px', margin: '0 auto 20px'}}></div>
+                    <div style={{width: '100%', height: '80px', background: '#334155', borderRadius: '20px', margin: '0 auto'}}></div>
+                </div>
+            </header>
+            <div className="browse-content-area">
+                <div className="browse-grid-premium">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="skeleton-rc-card">
+                            <div className="sk-line" style={{width: '60px', height: '24px'}}></div>
+                            <div className="sk-line" style={{width: '100%', height: '32px'}}></div>
+                            <div className="sk-line" style={{width: '80%', height: '20px'}}></div>
+                            <div className="sk-line" style={{width: '100%', height: '48px', marginTop: 'auto'}}></div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    if (error) return (
+        <div className="browse-courses-page flex-center-view">
+            <div className="rc-modal-container">
+                <AlertCircle size={64} color="#f87171" strokeWidth={1.5} />
+                <h2>Oops, algo salió mal</h2>
+                <p>{error}</p>
+                <button onClick={() => window.location.reload()} className="btn-rc-submit" style={{width: '100%'}}>
+                    Reintentar Carga
+                </button>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="courses-page">
-            <div className="page-header">
-                <h1>Browse Courses</h1>
-                <input
-                    type="text"
-                    placeholder="Search courses..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="search-input"
-                />
-            </div>
-
-            <div className="courses-grid">
-                {filteredCourses.map((course) => (
-                    <div key={course.id} className="course-card">
-                        <h3>{course.name}</h3>
-                        <p>Code: {course.code}</p>
-                        <p>Period: {course.period}</p>
-                        <p>Professor: {course.professorName || 'Unknown'}</p>
-                        <button
-                            onClick={() => handleJoinClick(course)}
-                            className="btn-primary"
-                            style={{ marginTop: '10px', width: '100%' }}
-                        >
-                            Join Course
-                        </button>
+        <div className="browse-courses-page">
+            <header className="browse-hero-banner">
+                <div className="hero-content-inner">
+                    <h1>Descubre tu camino</h1>
+                    <p>Encuentra tus asignaturas y únete a la comunidad académica</p>
+                    
+                    <div className="search-wrapper-floating">
+                        <Search className="search-icon-float" size={24} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre, código o docente..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="search-field"
+                        />
                     </div>
-                ))}
+                </div>
+            </header>
+
+            <div className="browse-content-area">
+                <div className="browse-grid-premium">
+                    {filteredCourses.length > 0 ? (
+                        filteredCourses.map((course) => (
+                            <div key={course.id} className="glass-course-card">
+                                <div className="card-top-inner">
+                                    <div className="card-label-row">
+                                        <div className="tag-premium">
+                                            Asignatura
+                                        </div>
+                                        <div className="course-dot-accent"></div>
+                                    </div>
+                                    <h3>{course.name}</h3>
+                                    
+                                    <div className="meta-grid-compact">
+                                        <div className="meta-row-premium">
+                                            <Hash size={18} />
+                                            <span>{course.code}</span>
+                                        </div>
+                                        <div className="meta-row-premium">
+                                            <Calendar size={18} />
+                                            <span>Periodo {course.period ? `${course.period.year}-${course.period.semester}` : 'S/P'}</span>
+                                        </div>
+                                        <div className="meta-row-premium" style={{borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '1rem', marginTop: '0.5rem'}}>
+                                            <User size={18} />
+                                            <span>{course.professor_name || 'Docente asignado'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="card-actions-area">
+                                    <button
+                                        onClick={() => handleJoinClick(course)}
+                                        className="btn-premium-join"
+                                    >
+                                        Unirse ahora <ArrowRight size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{gridColumn: '1/-1', textAlign: 'center', padding: '6rem 2rem'}}>
+                            <div style={{background: 'white', display: 'inline-flex', padding: '2rem', borderRadius: '40px', marginBottom: '2rem'}}>
+                                <Search size={48} color="#94a3b8" />
+                            </div>
+                            <h3>No se encontraron resultados</h3>
+                            <p>Intenta con otros términos de búsqueda para encontrar tu curso.</p>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Enrollment Modal */}
+            {/* Modal Ultra Premium */}
             {showModal && (
-                <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>🔑 Enrollment Code</h2>
-                            <button onClick={() => setShowModal(false)} className="close-btn">×</button>
+                <div className="rc-modal-overlay" onClick={() => setShowModal(false)}>
+                    <div className="rc-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => setShowModal(false)} className="rc-close-btn">
+                            <X size={20} />
+                        </button>
+                        
+                        <div className="rc-modal-icon">
+                            <Lock size={36} strokeWidth={1.5} />
                         </div>
-                        <p>Enter the unique code shared by your professor to join the course</p>
+                        
+                        <h2>Inscripción</h2>
+                        <p>
+                            Introduce el código único de <strong>{selectedCourse?.name || 'este curso'}</strong> para completar tu inscripción.
+                        </p>
 
-                        {enrollError && <div className="error-message">{enrollError}</div>}
+                        {enrollError && (
+                            <div className="rc-error-msg">
+                                <AlertCircle size={18} />
+                                {enrollError}
+                            </div>
+                        )}
 
                         <form onSubmit={handleJoinCourse}>
-                            <div className="form-group">
-                                <label htmlFor="enrollmentCode">Enrollment Code</label>
-                                <input
-                                    type="text"
-                                    id="enrollmentCode"
-                                    value={enrollmentCode}
-                                    onChange={(e) => setEnrollmentCode(e.target.value.toUpperCase())}
-                                    placeholder="e.g., CS101-20251G1"
-                                    disabled={enrolling}
-                                    autoFocus
-                                />
-                                <small>Format: COURSE-PERIODG# (e.g., CS101-20251G1)</small>
-                            </div>
+                            <input
+                                type="text"
+                                value={enrollmentCode}
+                                onChange={(e) => setEnrollmentCode(e.target.value.toUpperCase())}
+                                placeholder="CÓDIGO-01"
+                                disabled={enrolling}
+                                className="rc-input-code"
+                                autoFocus
+                            />
 
-                            <div className="form-actions">
+                            <div className="rc-modal-footer">
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="btn-secondary"
+                                    className="btn-rc-cancel"
                                     disabled={enrolling}
                                 >
-                                    Cancel
+                                    Cerrar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn-primary"
-                                    disabled={enrolling}
+                                    className="btn-rc-submit"
+                                    disabled={enrolling || !enrollmentCode.trim()}
                                 >
-                                    {enrolling ? 'Joining...' : 'Join Course'}
+                                    {enrolling ? (
+                                        <><Loader2 size={18} className="animate-spin" /> Uniendo...</>
+                                    ) : (
+                                        <>Confirmar <ArrowRight size={18} /></>
+                                    )}
                                 </button>
                             </div>
                         </form>

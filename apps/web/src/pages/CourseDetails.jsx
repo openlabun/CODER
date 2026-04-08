@@ -1,10 +1,19 @@
 import { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import client from '../api/client';
-import { getCourseExams } from '../api/exams';
+import { 
+    getCourseExams, 
+    toggleExamVisibility, 
+    closeExam, 
+    deleteExam,
+    createExamSession
+} from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
+import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, Target, ChevronRight, Code, Edit } from 'lucide-react';
+import Swal from 'sweetalert2';
 import './Courses.css';
 import './CourseActions.css';
+import './Challenges.css';
 
 const CourseDetails = () => {
     const { id } = useParams();
@@ -14,30 +23,139 @@ const CourseDetails = () => {
     const [exams, setExams] = useState([]);
     const [challenges, setChallenges] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [processingId, setProcessingId] = useState(null);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            // Fetch non-blocking results separately to avoid one failing the others
+            const results = await Promise.allSettled([
+                client.get(`/courses/${id}`),
+                getCourseExams(id),
+                client.get(`/courses/${id}/challenges`)
+            ]);
+
+            // [0] Course Details
+            if (results[0].status === 'fulfilled') {
+                setCourse(results[0].value.data);
+            } else {
+                console.error("Course error:", results[0].reason);
+                Swal.fire({ icon: 'error', title: 'Error cargando curso', text: results[0].reason.response?.data?.error || 'No se pudo obtener la información del curso.' });
+            }
+
+            // [1] Exams
+            if (results[1].status === 'fulfilled') {
+                setExams(results[1].value);
+            } else {
+                console.error("Exams error:", results[1].reason);
+                setExams([]);
+            }
+
+            // [2] Challenges
+            if (results[2].status === 'fulfilled') {
+                setChallenges(results[2].value.data.challenges || []);
+            } else {
+                console.error("Challenges error:", results[2].reason);
+                setChallenges([]);
+            }
+
+        } catch (err) {
+            console.error("Fetch data error:", err);
+            Swal.fire({ icon: 'error', title: 'Error de conexión', text: 'No se pudo comunicar con el servidor.' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [courseRes, examsData, challengesRes] = await Promise.all([
-                    client.get(`/courses/${id}`),
-                    getCourseExams(id),
-                    client.get(`/courses/${id}/challenges`)
-                ]);
-                setCourse(courseRes.data);
-                setExams(examsData);
-                setChallenges(challengesRes.data.challenges || []);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchData();
     }, [id]);
 
-    if (loading) return <div className="loading">Loading...</div>;
+    const handleToggleVisibility = async (examId) => {
+        setProcessingId(examId);
+        try {
+            await toggleExamVisibility(examId);
+            Swal.fire({ icon: 'success', title: 'Visibilidad Actualizada', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
+            await fetchData();
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar la visibilidad.' });
+        } finally {
+            setProcessingId(null);
+        }
+    };
 
-    const isProfessor = user?.role === 'professor' || user?.role === 'admin';
+    const handleCloseExam = async (examId) => {
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Cerrar Examen?',
+            text: 'Los estudiantes ya no podrán realizar más envíos.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cerrar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!isConfirmed) return;
+
+        setProcessingId(examId);
+        try {
+            await closeExam(examId);
+            Swal.fire({ icon: 'success', title: 'Examen Cerrado', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
+            await fetchData();
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cerrar el examen.' });
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleDeleteExam = async (examId) => {
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Eliminar Examen?',
+            text: 'Toda la información del examen se perderá. Esta acción es irreversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!isConfirmed) return;
+
+        setProcessingId(examId);
+        try {
+            await deleteExam(examId);
+            Swal.fire({ icon: 'success', title: 'Examen Eliminado', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
+            await fetchData();
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el examen.' });
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleStartExam = async (examId) => {
+        try {
+            const session = await createExamSession(examId);
+            const sessionId = session?.id || session?.ID;
+            if (sessionId) {
+                localStorage.setItem('session_id', sessionId);
+            }
+            navigate(`/exam/${examId}`);
+        } catch (err) {
+            const apiMessage = err?.response?.data?.error || err?.message || 'No se pudo iniciar el examen';
+            if (String(apiMessage).toLowerCase().includes('active session')) {
+                navigate(`/exam/${examId}`);
+                return;
+            }
+            Swal.fire({ icon: 'error', title: 'Error', text: apiMessage });
+        }
+    };
+
+    if (loading) return <div className="loading">Cargando curso...</div>;
+    const isProfessor = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
 
     return (
         <div className="course-details-page">
@@ -45,7 +163,7 @@ const CourseDetails = () => {
                 <div>
                     <h1>{course?.name}</h1>
                     <p className="course-meta">
-                        {course?.code} - {course?.period} - Group {course?.groupNumber}
+                        {course?.code} - {course?.period ? `${course.period.year}-${course.period.semester}` : 'S/P'} - Grupo {course?.groupNumber}
                     </p>
                 </div>
 
@@ -55,82 +173,187 @@ const CourseDetails = () => {
                             onClick={() => navigate(`/courses/${id}/students`)}
                             className="btn-action btn-students"
                         >
-                            <span>👥</span> View Students
+                            <span>👥</span> Ver Estudiantes
                         </button>
                         <button
                             onClick={() => navigate(`/challenges/create?courseId=${id}`)}
                             className="btn-action btn-create-challenge"
                         >
-                            <span>➕</span> Create Challenge
+                            <span>➕</span> Crear Reto
                         </button>
                     </div>
                 )}
             </div>
 
-            <section className="challenges-section">
-                <h2>Challenges</h2>
+            <section className="challenges-section-new">
+                <div className="section-header">
+                    <h2>🎯 Retos del Curso</h2>
+                    {isProfessor && (
+                        <button className="btn-add-mini" onClick={() => navigate(`/challenges/create?courseId=${id}`)}>
+                            Nuevo Reto
+                        </button>
+                    )}
+                </div>
                 {challenges.length === 0 ? (
-                    <div className="empty-state">
+                    <div className="empty-state-mini-alt">
                         <div className="empty-state-icon">🎯</div>
-                        <h3 className="empty-state-title">No Challenges Yet</h3>
-                        <p className="empty-state-description">
-                            No challenges have been assigned to this course yet.
-                        </p>
+                        <h3>No hay retos todavía</h3>
+                        <p>Aún no se han asignado retos a este curso.</p>
                         {isProfessor && (
-                            <p className="empty-state-hint">
-                                Click "Create Challenge" above to add a challenge to this course.
+                            <p className="empty-state-hint" style={{marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.7}}>
+                                Haz clic en "Nuevo Reto" para añadir desafíos.
                             </p>
                         )}
                     </div>
                 ) : (
-                    <div className="challenges-grid">
+                    <div className="challenges-grid-compact">
                         {challenges.map(challenge => (
-                            <Link key={challenge.id} to={`/challenges/${challenge.id}`} className="challenge-card">
-                                <div className="challenge-header">
-                                    <h3>{challenge.title}</h3>
-                                    <span className={`difficulty-badge ${challenge.difficulty}`}>
-                                        {challenge.difficulty}
-                                    </span>
+                            <div key={challenge.id} className="challenge-card-mini">
+                                <div className={`card-accent ${challenge.difficulty}`}></div>
+                                <div className="card-main">
+                                    <div className="card-top">
+                                        <div className="title-area">
+                                            <Code size={16} className="title-icon" />
+                                            <h3>{challenge.title}</h3>
+                                        </div>
+                                        <span className={`diff-pill ${challenge.difficulty}`}>
+                                            {challenge.difficulty === 'easy' ? 'Fácil' : challenge.difficulty === 'hard' ? 'Difícil' : 'Medio'}
+                                        </span>
+                                    </div>
+                                    <p className="description-text">
+                                        {challenge.description || 'Sin descripción disponible.'}
+                                    </p>
+                                    <div className="card-footer-mini">
+                                        <div className="stats-mini">
+                                            <div className="stat">
+                                                <Clock size={12} />
+                                                <span>{challenge.workerTimeLimit || 1000}ms</span>
+                                            </div>
+                                            <div className="stat">
+                                                <Target size={12} />
+                                                <span>{challenge.workerMemoryLimit || 256}MB</span>
+                                            </div>
+                                        </div>
+                                        <div className="actions-wrapper">
+                                            {isProfessor && (
+                                                <div className="teacher-actions">
+                                                    <button 
+                                                        className="action-btn edit" 
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            navigate(`/challenges/edit/${challenge.id}`);
+                                                        }}
+                                                        title="Editar"
+                                                    >
+                                                        <Edit size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <Link to={`/challenge/${challenge.id}`} className="btn-action-mini">
+                                                Resolver <ChevronRight size={14} />
+                                            </Link>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="challenge-description">
-                                    {challenge.description?.substring(0, 100)}...
-                                </p>
-                                <div className="challenge-meta">
-                                    <span>⏱️ {challenge.timeLimit}ms</span>
-                                    <span>💾 {challenge.memoryLimit}MB</span>
-                                </div>
-                            </Link>
+                            </div>
                         ))}
                     </div>
                 )}
             </section>
 
-            <section className="exams-section">
-                <h2>Exams</h2>
+            <section className="exams-section-new">
+                <div className="section-header">
+                    <h2>📚 Exámenes</h2>
+                    {isProfessor && (
+                        <button className="btn-add-mini" onClick={() => navigate(`/exams/create?courseId=${id}`)}>
+                            Nuevo Examen
+                        </button>
+                    )}
+                </div>
                 {exams.length === 0 ? (
-                    <div className="empty-state">
+                    <div className="empty-state-mini-alt">
                         <div className="empty-state-icon">📝</div>
-                        <h3 className="empty-state-title">No Exams Yet</h3>
-                        <p className="empty-state-description">
-                            There are no exams scheduled for this course at the moment.
-                        </p>
-                        <p className="empty-state-hint">
-                            Your professor will create exams here when they're ready.
-                        </p>
+                        <h3>No hay exámenes programados</h3>
+                        <p>Los exámenes aparecerán aquí cuando sean creados.</p>
                     </div>
                 ) : (
-                    <ul className="exams-list">
-                        {exams.map(exam => (
-                            <li key={exam.id} className="exam-item">
-                                <h3>{exam.title}</h3>
-                                <p>Duration: {exam.durationMinutes} mins</p>
-                                <p>Start: {new Date(exam.startTime).toLocaleString()}</p>
-                                <Link to={`/exam/${exam.id}`} className="btn-start-exam">
-                                    Start Exam
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
+                    <div className="exams-grid-new">
+                                {exams.map(exam => {
+                                    const examId = exam.id || exam.ID;
+                                    const visibility = String(exam.visibility || exam.Visibility || 'private').toLowerCase();
+                                    const endTime = exam.endTime || exam.EndTime;
+                                    const isClosed = Boolean(endTime && new Date(endTime) <= new Date());
+                                    const isVisible = visibility !== 'private';
+                                    const isStudentVisible = visibility === 'public' || visibility === 'course';
+                           
+                           return (
+                            <div key={examId} className={`exam-card-new ${isClosed ? 'closed' : ''}`}>
+                                <div className="exam-card-info">
+                                    <div className="exam-card-top">
+                                        <h3>{exam.title || exam.Title}</h3>
+                                        <div className="exam-status-badges">
+                                            {isClosed && <span className="status-badge closed">Cerrado</span>}
+                                            {!isVisible && <span className="status-badge private">Privado</span>}
+                                        </div>
+                                    </div>
+                                    <div className="exam-meta-grid">
+                                         <div className="exam-meta-item">
+                                             <Clock size={14} />
+                                             <span>{Math.floor((exam.timeLimit || exam.TimeLimit) / 60)} min</span>
+                                         </div>
+                                         <div className="exam-meta-item">
+                                             <Calendar size={14} />
+                                             <span>{new Date(exam.startTime || exam.StartTime).toLocaleDateString()}</span>
+                                         </div>
+                                     </div>
+                                </div>
+
+                                <div className="exam-card-actions">
+                                    {isProfessor ? (
+                                        <div className="exam-admin-group">
+                                            <button 
+                                                className={`exam-action-btn ${isVisible ? 'visible' : 'hidden'}`}
+                                                onClick={() => handleToggleVisibility(examId)}
+                                                disabled={processingId === examId}
+                                                title={isVisible ? "Ocultar Examen" : "Hacer Visible"}
+                                            >
+                                                {isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
+                                            </button>
+                                            {!isClosed && (
+                                                <button 
+                                                    className="exam-action-btn close"
+                                                    onClick={() => handleCloseExam(examId)}
+                                                    disabled={processingId === examId}
+                                                    title="Cerrar Examen"
+                                                >
+                                                    <Lock size={16} />
+                                                </button>
+                                            )}
+                                            <button 
+                                                className="exam-action-btn delete"
+                                                onClick={() => handleDeleteExam(examId)}
+                                                disabled={processingId === examId}
+                                                title="Eliminar Examen"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        !isClosed && isStudentVisible && (
+                                            <button
+                                                type="button"
+                                                className="btn-enter-exam"
+                                                onClick={() => handleStartExam(examId)}
+                                            >
+                                                Iniciar <ChevronRight size={14} />
+                                            </button>
+                                        )
+                                    )}
+                                </div>
+                            </div>
+                           );
+                        })}
+                    </div>
                 )}
             </section>
         </div>

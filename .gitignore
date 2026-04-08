@@ -145,3 +145,5 @@ vite.config.ts.timestamp-*
 # Python cache files
 __pycache__/
 *.pyc
+
+package-lock.json

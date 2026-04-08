@@ -46,6 +46,10 @@ func ValidateExamEndTime (exam *Entities.Exam, now time.Time) error {
 		return fmt.Errorf("exam can't end in the past")
 	}
 
+	if exam.EndTime != nil && exam.StartTime.After(*exam.EndTime) {
+		return fmt.Errorf("exam can't end before it starts")
+	}
+
 	return nil
 }
 

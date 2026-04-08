@@ -3,6 +3,8 @@ package session_states
 import (
 	"fmt"
 	"time"
+	"os"
+	"strconv"
 
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	SessionEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
@@ -139,12 +141,18 @@ func shouldExpireSession(session *SessionEntities.Session, exam *ExamEntities.Ex
 }
 
 func shouldFreezeSession(session *SessionEntities.Session, now time.Time) bool {
+	freeze_time, err := strconv.Atoi(os.Getenv("SESSION_FREEZE_TIME"))
+	if err != nil {
+		freeze_time = 60 // default freeze time in seconds
+	}
+	freeze_time_duration := time.Duration(freeze_time) * time.Second
+	
 	if validateStateTransition(session, SessionEntities.SessionStatusFrozen) != nil {
 		return false
 	}
 
 	// If user has been inactive for more than 60 seconds, freeze the session
-	if now.Sub(session.LastHeartbeat) > 60*time.Second { //TODO: make this configurable from env
+	if now.Sub(session.LastHeartbeat) > freeze_time_duration {
 		return true
 	}
 

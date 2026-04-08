@@ -23,6 +23,7 @@ func TestCourseFromStudentViewHTTP(t *testing.T) {
 
 	defer func() {
 		if courseID != "" && teacherAccess != nil {
+			t.Logf("[CLEANUP] Eliminando curso %s", courseID)
 			_ = httputils.DeleteCourseByID(t, app, teacherAccess, courseID)
 		}
 	}()

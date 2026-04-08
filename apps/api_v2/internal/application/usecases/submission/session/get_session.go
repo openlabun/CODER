@@ -62,13 +62,17 @@ func (uc *GetActiveSessionUseCase) Execute(ctx context.Context, input dtos.GetAc
 		}
 	}
 
-	// [STEP 3] Verify existing student session
+	// [STEP 3] Verify existing student active session
 	sessions, err := uc.sessionRepository.GetSessionsByStudentID(ctx, studentID)
 	if err != nil {
 		return nil, err
 	}
 
-	active_session := getExistingSession(sessions)
+	var active_session *Entity.Session
+	session := getExistingSession(sessions)
+	if session != nil && session.Status == Entity.SessionStatusActive {
+		active_session = session
+	}
 
 	// [STEP 4] If there is an active session, return it. Else, throw error
 	if active_session == nil {

@@ -8,6 +8,7 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission/mapper"
 
+	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
@@ -50,14 +51,29 @@ func (uc *CreateSessionUseCase) Execute(ctx context.Context, input dtos.CreateSe
 		return nil, err
 	}
 
-	active_sesion := getExistingSession(sessions)
+	session := getExistingSession(sessions)
 
-	// [STEP 3] If there is an active session, throw error
+	// [STEP 3] If session is frozen, close it, if its active keep it 
+	var active_sesion *Entity.Session
+	if session != nil && session.Status == Entity.SessionStatusFrozen {
+		if err := state_machine.ApplyTranstion(session, Entity.SessionStatusExpired); err != nil {
+			return nil, fmt.Errorf("failed to expire frozen session: %w", err)
+		}
+		
+		_, err = uc.sessionRepository.UpdateSession(ctx, session)
+		if err != nil {
+			return nil, err
+		}
+	} else if session != nil && session.Status == Entity.SessionStatusActive {
+		active_sesion = session
+	}
+
+	// [STEP 4] If there is an active session, throw error
 	if active_sesion != nil {
 		return nil, fmt.Errorf("student already has an active session")
 	}
 
-	// [STEP 4] Retrieve exam
+	// [STEP 5] Retrieve exam
 	exam, err := uc.examRepository.GetExamByID(ctx, input.ExamID)
 	if err != nil {
 		return nil, err
@@ -67,14 +83,14 @@ func (uc *CreateSessionUseCase) Execute(ctx context.Context, input dtos.CreateSe
 		return nil, fmt.Errorf("exam with id %q does not exist", input.ExamID)
 	}
 
-	// [STEP 3] If no existing session, create new session for the student and return it
+	// [STEP 6] If no existing session, create new session for the student and return it
 	sessionEntity, err := mapper.MapCreateSessionInputToSessionRecord(input, exam)
 	if err != nil {
 		return nil, err
 	}
 
-	// [STEP 4] Save in database and return session entity
-	session, err := uc.sessionRepository.CreateSession(ctx, sessionEntity)
+	// [STEP 7] Save in database and return session entity
+	session, err = uc.sessionRepository.CreateSession(ctx, sessionEntity)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +104,7 @@ func getExistingSession (sessions []*Entity.Session) (*Entity.Session) {
 			continue
 		}
 
-		if session.Status == Entity.SessionStatusActive {
+		if session.Status == Entity.SessionStatusActive || session.Status == Entity.SessionStatusFrozen {
 			return session
 		}
 	}

@@ -1,199 +1,234 @@
-package utils
+package http_tests
 
 import (
 	"fmt"
+	"testing"
+
+	"github.com/gofiber/fiber/v2"
 )
 
-// --- AUTH ---
-func PostAuthRegister(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/auth/register", nil, nil, headers, body)
-}
-func PostAuthLogin(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/auth/login", nil, nil, headers, body)
-}
-func PostAuthRefreshToken(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/auth/refresh-token", nil, nil, headers, body)
-}
-func GetAuthMe(headers map[string]string) (int, []byte, error) {
-	return callEndpoint("GET", "/auth/me", nil, nil, headers, nil)
+func PostAuthRegister(t *testing.T, app *fiber.App, email, name, password string) *HTTPResponse {
+	body := map[string]any{"email": email, "name": name, "password": password}
+	return doJSONRequest(t, app, "POST", "/auth/register", body, nil)
 }
 
-// --- AI ---
-func PostAiGenerateChallengeIdeas(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/ai/generate-challenge-ideas", nil, nil, headers, body)
-}
-func PostAiGenerateTestCases(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/ai/generate-test-cases", nil, nil, headers, body)
+func PostAuthLogin(t *testing.T, app *fiber.App, email, password string) *HTTPResponse {
+	body := map[string]any{"email": email, "password": password}
+	return doJSONRequest(t, app, "POST", "/auth/login", body, nil)
 }
 
-// --- CHALLENGES ---
-func PostChallenges(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/challenges/", nil, nil, headers, body)
-}
-func GetChallenges(headers map[string]string, query map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/challenges/", nil, query, headers, nil)
-}
-func GetChallengesById(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/challenges/{id}", path, nil, headers, nil)
-}
-func PatchChallengesById(headers map[string]string, path map[string]any, body any) (int, []byte, error) {
-	return callEndpoint("PATCH", "/challenges/{id}", path, nil, headers, body)
-}
-func DeleteChallengesById(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("DELETE", "/challenges/{id}", path, nil, headers, nil)
-}
-func PostChallengesPublish(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("POST", "/challenges/{id}/publish", path, nil, headers, nil)
-}
-func PostChallengesArchive(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("POST", "/challenges/{id}/archive", path, nil, headers, nil)
-}
-
-// --- TEST CASES ---
-func PostTestCases(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/test-cases/", nil, nil, headers, body)
-}
-func GetTestCasesByChallenge(headers map[string]string, path map[string]any, query map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/test-cases/challenge/{id}", path, query, headers, nil)
-}
-func PatchTestCasesById(headers map[string]string, path map[string]any, body any) (int, []byte, error) {
-	return callEndpoint("PATCH", "/test-cases/{id}", path, nil, headers, body)
-}
-func DeleteTestCasesById(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("DELETE", "/test-cases/{id}", path, nil, headers, nil)
-}
-
-// --- COURSES ---
-func PostCoursesEnroll(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/courses/enroll", nil, nil, headers, body)
-}
-func PostCourses(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/courses/", nil, nil, headers, body)
-}
-func GetCourses(headers map[string]string, query map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/courses/", nil, query, headers, nil)
-}
-func GetCoursesById(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/courses/{id}", path, nil, headers, nil)
-}
-func PostCoursesById(headers map[string]string, path map[string]any, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/courses/{id}", path, nil, headers, body)
-}
-func DeleteCoursesById(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("DELETE", "/courses/{id}", path, nil, headers, nil)
-}
-func PostCoursesAddStudent(headers map[string]string, path map[string]any, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/courses/{id}/students", path, nil, headers, body)
-}
-func DeleteCoursesStudent(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("DELETE", "/courses/{id}/students/{student_id}", path, nil, headers, nil)
-}
-func GetCoursesStudents(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/courses/{id}/students", path, nil, headers, nil)
-}
-
-// --- EXAMS ---
-func PostExams(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/exams/", nil, nil, headers, body)
-}
-func GetExamsByCourse(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/exams/course/{course_id}", path, nil, headers, nil)
-}
-func GetExamsById(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/exams/{id}", path, nil, headers, nil)
-}
-func PatchExamsById(headers map[string]string, path map[string]any, body any) (int, []byte, error) {
-	return callEndpoint("PATCH", "/exams/{id}", path, nil, headers, body)
-}
-func DeleteExamsById(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("DELETE", "/exams/{id}", path, nil, headers, nil)
-}
-func PostExamsVisibility(headers map[string]string, path map[string]any, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/exams/{id}/visibility", path, nil, headers, body)
-}
-func PostExamsClose(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("POST", "/exams/{id}/close", path, nil, headers, nil)
-}
-func GetExamItems(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/exams/{exam_id}/items", path, nil, headers, nil)
-}
-
-// --- EXAM ITEMS ---
-func PostExamItems(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/exam-items/", nil, nil, headers, body)
-}
-func PatchExamItemsById(headers map[string]string, path map[string]any, body any) (int, []byte, error) {
-	return callEndpoint("PATCH", "/exam-items/{id}", path, nil, headers, body)
-}
-func DeleteExamItemsById(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("DELETE", "/exam-items/{id}", path, nil, headers, nil)
-}
-
-// --- SUBMISSIONS ---
-func PostSubmissions(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/submissions/", nil, nil, headers, body)
-}
-func PatchSubmissionsResult(headers map[string]string, path map[string]any, body any) (int, []byte, error) {
-	return callEndpoint("PATCH", "/submissions/results/{result_id}", path, nil, headers, body)
-}
-func GetSubmissionsUser(headers map[string]string, path map[string]any, query map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/submissions/user/{user_id}", path, query, headers, nil)
-}
-func GetSubmissionsSession(headers map[string]string, path map[string]any, query map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/submissions/session/{session_id}", path, query, headers, nil)
-}
-func GetSubmissionsChallenge(headers map[string]string, path map[string]any, query map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/submissions/challenge/{challenge_id}", path, query, headers, nil)
-}
-func GetSubmissionsById(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/submissions/{id}", path, nil, headers, nil)
-}
-func PostSubmissionsSessions(headers map[string]string, body any) (int, []byte, error) {
-	return callEndpoint("POST", "/submissions/sessions/", nil, nil, headers, body)
-}
-func GetSubmissionsSessionsById(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/submissions/sessions/{id}", path, nil, headers, nil)
-}
-func PostSubmissionsSessionsHeartbeat(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("POST", "/submissions/sessions/{id}/heartbeat", path, nil, headers, nil)
-}
-
-func PostSubmissionsSessionsBlock(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("POST", "/submissions/sessions/{id}/block", path, nil, headers, nil)
-}
-
-func PostSubmissionsSessionsClose(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("POST", "/submissions/sessions/{id}/close", path, nil, headers, nil)
-}
-
-// --- LEADERBOARD ---
-func GetLeaderboardChallenge(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/leaderboard/challenge/{id}", path, nil, headers, nil)
-}
-func GetLeaderboardCourse(headers map[string]string, path map[string]any) (int, []byte, error) {
-	return callEndpoint("GET", "/leaderboard/course/{id}", path, nil, headers, nil)
-}
-
-// --- METRICS, HEALTH, CACHE, DB ---
-func GetMetrics(headers map[string]string) (int, []byte, error) {
-	return callEndpoint("GET", "/metrics", nil, nil, headers, nil)
-}
-func GetHealth(headers map[string]string) (int, []byte, error) {
-	return callEndpoint("GET", "/health", nil, nil, headers, nil)
-}
-func GetCacheHealth(headers map[string]string) (int, []byte, error) {
-	return callEndpoint("GET", "/cache/health", nil, nil, headers, nil)
-}
-func GetDbHealth(headers map[string]string) (int, []byte, error) {
-	return callEndpoint("GET", "/db/health", nil, nil, headers, nil)
-}
-
-// --- CORE REQUEST FUNCTION ---
-func callEndpoint(method, path string, pathParams, queryParams map[string]any, headers map[string]string, body any) (int, []byte, error) {
-	app, err := InitApp()
-	if err != nil {
-		return -1, nil, fmt.Errorf("init app: %w", err)
+func GetAuthMe(t *testing.T, app *fiber.App, access *HTTPAccess, userID string) *HTTPResponse {
+	path := "/auth/me"
+	if userID != "" {
+		path = fmt.Sprintf("/auth/me?userId=%s", userID)
 	}
-	fullPath := buildRequestPath(path, pathParams, queryParams)
-	return DoJSONRequest(app, method, fullPath, body, headers)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func PostCourseCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/courses/", body, authHeaders(access))
+}
+
+func PostCourseUpdate(t *testing.T, app *fiber.App, access *HTTPAccess, courseID string, body map[string]any) *HTTPResponse {
+	path := fmt.Sprintf("/courses/%s", courseID)
+	return doJSONRequest(t, app, "POST", path, body, authHeaders(access))
+}
+
+func GetCourseByID(t *testing.T, app *fiber.App, access *HTTPAccess, courseID string) *HTTPResponse {
+	path := fmt.Sprintf("/courses/%s", courseID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func DeleteCourseByID(t *testing.T, app *fiber.App, access *HTTPAccess, courseID string) *HTTPResponse {
+	path := fmt.Sprintf("/courses/%s", courseID)
+	return doJSONRequest(t, app, "DELETE", path, nil, authHeaders(access))
+}
+
+func PostCourseEnroll(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/courses/enroll", body, authHeaders(access))
+}
+
+func GetCourses(t *testing.T, app *fiber.App, access *HTTPAccess, scope, studentID, teacherID string) *HTTPResponse {
+	path := fmt.Sprintf("/courses/?scope=%s", scope)
+	if studentID != "" {
+		path = fmt.Sprintf("%s&studentId=%s", path, studentID)
+	}
+	if teacherID != "" {
+		path = fmt.Sprintf("%s&teacherId=%s", path, teacherID)
+	}
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func GetCourseStudents(t *testing.T, app *fiber.App, access *HTTPAccess, courseID string) *HTTPResponse {
+	path := fmt.Sprintf("/courses/%s/students", courseID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func DeleteCourseStudent(t *testing.T, app *fiber.App, access *HTTPAccess, courseID, studentID string) *HTTPResponse {
+	path := fmt.Sprintf("/courses/%s/students/%s", courseID, studentID)
+	return doJSONRequest(t, app, "DELETE", path, nil, authHeaders(access))
+}
+
+func PostExamCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/exams/", body, authHeaders(access))
+}
+
+func PatchExamUpdate(t *testing.T, app *fiber.App, access *HTTPAccess, examID string, body map[string]any) *HTTPResponse {
+	path := fmt.Sprintf("/exams/%s", examID)
+	return doJSONRequest(t, app, "PATCH", path, body, authHeaders(access))
+}
+
+func GetExamByID(t *testing.T, app *fiber.App, access *HTTPAccess, examID string) *HTTPResponse {
+	path := fmt.Sprintf("/exams/%s", examID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func DeleteExamByID(t *testing.T, app *fiber.App, access *HTTPAccess, examID string) *HTTPResponse {
+	path := fmt.Sprintf("/exams/%s", examID)
+	return doJSONRequest(t, app, "DELETE", path, nil, authHeaders(access))
+}
+
+func PostExamClose(t *testing.T, app *fiber.App, access *HTTPAccess, examID string) *HTTPResponse {
+	path := fmt.Sprintf("/exams/%s/close", examID)
+	return doJSONRequest(t, app, "POST", path, nil, authHeaders(access))
+}
+
+func GetExamsByCourseID(t *testing.T, app *fiber.App, access *HTTPAccess, courseID string) *HTTPResponse {
+	path := fmt.Sprintf("/exams/course/%s", courseID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func GetPublicExams(t *testing.T, app *fiber.App, access *HTTPAccess) *HTTPResponse {
+	return doJSONRequest(t, app, "GET", "/exams/public", nil, authHeaders(access))
+}
+
+func GetExamItems(t *testing.T, app *fiber.App, access *HTTPAccess, examID string) *HTTPResponse {
+	path := fmt.Sprintf("/exams/%s/items", examID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func PostChallengeCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/challenges/", body, authHeaders(access))
+}
+
+func GetChallengeByID(t *testing.T, app *fiber.App, access *HTTPAccess, challengeID string) *HTTPResponse {
+	path := fmt.Sprintf("/challenges/%s", challengeID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func PatchChallengeUpdate(t *testing.T, app *fiber.App, access *HTTPAccess, challengeID string, body map[string]any) *HTTPResponse {
+	path := fmt.Sprintf("/challenges/%s", challengeID)
+	return doJSONRequest(t, app, "PATCH", path, body, authHeaders(access))
+}
+
+func PostChallengePublish(t *testing.T, app *fiber.App, access *HTTPAccess, challengeID string) *HTTPResponse {
+	path := fmt.Sprintf("/challenges/%s/publish", challengeID)
+	return doJSONRequest(t, app, "POST", path, nil, authHeaders(access))
+}
+
+func PostChallengeArchive(t *testing.T, app *fiber.App, access *HTTPAccess, challengeID string) *HTTPResponse {
+	path := fmt.Sprintf("/challenges/%s/archive", challengeID)
+	return doJSONRequest(t, app, "POST", path, nil, authHeaders(access))
+}
+
+func PostChallengeFork(t *testing.T, app *fiber.App, access *HTTPAccess, challengeID string) *HTTPResponse {
+	path := fmt.Sprintf("/challenges/%s/fork", challengeID)
+	return doJSONRequest(t, app, "POST", path, nil, authHeaders(access))
+}
+
+func GetPublicChallenges(t *testing.T, app *fiber.App, access *HTTPAccess) *HTTPResponse {
+	return doJSONRequest(t, app, "GET", "/challenges/public", nil, authHeaders(access))
+}
+
+func DeleteChallengeByID(t *testing.T, app *fiber.App, access *HTTPAccess, challengeID string) *HTTPResponse {
+	path := fmt.Sprintf("/challenges/%s", challengeID)
+	return doJSONRequest(t, app, "DELETE", path, nil, authHeaders(access))
+}
+
+func PostTestCaseCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/test-cases/", body, authHeaders(access))
+}
+
+func PatchTestCaseUpdate(t *testing.T, app *fiber.App, access *HTTPAccess, testCaseID string, body map[string]any) *HTTPResponse {
+	path := fmt.Sprintf("/test-cases/%s", testCaseID)
+	return doJSONRequest(t, app, "PATCH", path, body, authHeaders(access))
+}
+
+func GetTestCasesByChallenge(t *testing.T, app *fiber.App, access *HTTPAccess, challengeID, examID string) *HTTPResponse {
+	path := fmt.Sprintf("/test-cases/challenge/%s", challengeID)
+	if examID != "" {
+		path = fmt.Sprintf("%s?exam_id=%s", path, examID)
+	}
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func DeleteTestCaseByID(t *testing.T, app *fiber.App, access *HTTPAccess, testCaseID string) *HTTPResponse {
+	path := fmt.Sprintf("/test-cases/%s", testCaseID)
+	return doJSONRequest(t, app, "DELETE", path, nil, authHeaders(access))
+}
+
+func PostExamItemCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/exam-items/", body, authHeaders(access))
+}
+
+func PatchExamItemUpdate(t *testing.T, app *fiber.App, access *HTTPAccess, examItemID string, body map[string]any) *HTTPResponse {
+	path := fmt.Sprintf("/exam-items/%s", examItemID)
+	return doJSONRequest(t, app, "PATCH", path, body, authHeaders(access))
+}
+
+func DeleteExamItemByID(t *testing.T, app *fiber.App, access *HTTPAccess, examItemID string) *HTTPResponse {
+	path := fmt.Sprintf("/exam-items/%s", examItemID)
+	return doJSONRequest(t, app, "DELETE", path, nil, authHeaders(access))
+}
+
+func PostSessionCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/submissions/sessions/", body, authHeaders(access))
+}
+
+func PostSessionHeartbeat(t *testing.T, app *fiber.App, access *HTTPAccess, sessionID string) *HTTPResponse {
+	path := fmt.Sprintf("/submissions/sessions/%s/heartbeat", sessionID)
+	return doJSONRequest(t, app, "POST", path, nil, authHeaders(access))
+}
+
+func PostSessionBlock(t *testing.T, app *fiber.App, access *HTTPAccess, sessionID string) *HTTPResponse {
+	path := fmt.Sprintf("/submissions/sessions/%s/block", sessionID)
+	return doJSONRequest(t, app, "POST", path, nil, authHeaders(access))
+}
+
+func PostSessionClose(t *testing.T, app *fiber.App, access *HTTPAccess, sessionID string) *HTTPResponse {
+	path := fmt.Sprintf("/submissions/sessions/%s/close", sessionID)
+	return doJSONRequest(t, app, "POST", path, nil, authHeaders(access))
+}
+
+func GetActiveSession(t *testing.T, app *fiber.App, access *HTTPAccess, userID string) *HTTPResponse {
+	path := "/submissions/sessions/active"
+	if userID != "" {
+		path = fmt.Sprintf("/submissions/sessions/active?user_id=%s", userID)
+	}
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func PostSubmissionCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/submissions/", body, authHeaders(access))
+}
+
+func GetSubmissionByID(t *testing.T, app *fiber.App, access *HTTPAccess, submissionID string) *HTTPResponse {
+	path := fmt.Sprintf("/submissions/%s", submissionID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func GetSubmissionsByChallenge(t *testing.T, app *fiber.App, access *HTTPAccess, challengeID string) *HTTPResponse {
+	path := fmt.Sprintf("/submissions/challenge/%s", challengeID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func GetSubmissionsByUser(t *testing.T, app *fiber.App, access *HTTPAccess, userID string) *HTTPResponse {
+	path := fmt.Sprintf("/submissions/user/%s", userID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func PatchSubmissionResult(t *testing.T, app *fiber.App, workerKey, resultID string, body map[string]any) *HTTPResponse {
+	headers := map[string]string{"WorkerKey": workerKey}
+	path := fmt.Sprintf("/submissions/results/%s", resultID)
+	return doJSONRequest(t, app, "PATCH", path, body, headers)
 }

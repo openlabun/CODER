@@ -28,8 +28,8 @@ const CreateChallenge = () => {
         timeLimit: 1000,
         memoryLimit: 256,
         tags: [],
-        inputFormat: '',
-        outputFormat: '',
+        inputVariables: [{ name: 'stdin', type: 'string' }],
+        outputVariable: { name: 'stdout', type: 'string' },
         constraints: '',
         status: 'draft',
         courseId: courseIdFromUrl || null,
@@ -58,8 +58,8 @@ const CreateChallenge = () => {
                     timeLimit: challenge.timeLimit || challenge.WorkerTimeLimit || 1000,
                     memoryLimit: challenge.memoryLimit || challenge.WorkerMemoryLimit || 256,
                     tags: challenge.tags || challenge.Tags || [],
-                    inputFormat: challenge.inputFormat || challenge.InputFormat || '',
-                    outputFormat: challenge.outputFormat || challenge.OutputFormat || '',
+                    inputVariables: challenge.inputVariables || challenge.InputVariables || [{ name: 'stdin', type: 'string' }],
+                    outputVariable: challenge.outputVariable || challenge.OutputVariable || { name: 'stdout', type: 'string' },
                     constraints: challenge.constraints || challenge.Constraints || '',
                     status: challenge.status || challenge.Status || 'draft',
                     courseId: challenge.courseId || challenge.CourseID || null,
@@ -68,10 +68,24 @@ const CreateChallenge = () => {
 
                 try {
                     const { data: testCases } = await client.get(`/test-cases/challenge/${id}`);
-                    const cases = Array.isArray(testCases) ? testCases : (testCases.items || []);
+                    const mappedCases = testCases.map(tc => {
+                        const inputs = tc.input || tc.Input || [];
+                        const inputValues = {};
+                        inputs.forEach(i => inputValues[i.name] = i.value);
+                        
+                        const expectedOut = tc.expectedOutput || tc.ExpectedOutput || {};
+                        const outputValue = expectedOut.value || expectedOut.Value || '';
+                        
+                        return {
+                            ...tc,
+                            inputValues,
+                            outputValue,
+                            type: (tc.type || tc.Type || (tc.is_sample || tc.isSample ? 'public' : 'hidden'))
+                        };
+                    });
 
-                    setPublicTestCases(cases.filter(tc => tc.type === 'public' || tc.Type === 'public' || tc.is_public || tc.isPublic));
-                    setHiddenTestCases(cases.filter(tc => tc.type !== 'public' && tc.Type !== 'public' && !tc.is_public && !tc.isPublic));
+                    setPublicTestCases(mappedCases.filter(tc => tc.type === 'public' || tc.is_sample || tc.isSample));
+                    setHiddenTestCases(mappedCases.filter(tc => tc.type !== 'public' && !tc.is_sample && !tc.isSample));
                 } catch (tcErr) {
                     console.warn('Test cases fetch failed:', tcErr);
                 }
@@ -132,11 +146,11 @@ const CreateChallenge = () => {
     };
 
     const addPublicTestCase = () => {
-        setPublicTestCases([...publicTestCases, { input: '', output: '', name: `Example ${publicTestCases.length + 1}`, type: 'public' }]);
+        setPublicTestCases([...publicTestCases, { inputValues: {}, outputValue: '', name: `Example ${publicTestCases.length + 1}`, type: 'public' }]);
     };
 
     const addHiddenTestCase = () => {
-        setHiddenTestCases([...hiddenTestCases, { input: '', output: '', name: `Hidden ${hiddenTestCases.length + 1}`, type: 'hidden' }]);
+        setHiddenTestCases([...hiddenTestCases, { inputValues: {}, outputValue: '', name: `Hidden ${hiddenTestCases.length + 1}`, type: 'hidden' }]);
     };
 
     const updateTestCase = (index, field, value, isPublic) => {
@@ -145,10 +159,37 @@ const CreateChallenge = () => {
         isPublic ? setPublicTestCases(cases) : setHiddenTestCases(cases);
     };
 
+    const handleInputVarChange = (index, field, value) => {
+        const vars = [...formData.inputVariables];
+        vars[index][field] = value;
+        setFormData(prev => ({ ...prev, inputVariables: vars }));
+    };
+
+    const handleOutputVarChange = (field, value) => {
+        setFormData(prev => ({ ...prev, outputVariable: { ...prev.outputVariable, [field]: value } }));
+    };
+
+    const updateTestCaseInput = (index, varName, field, value, isPublic) => {
+        const cases = isPublic ? [...publicTestCases] : [...hiddenTestCases];
+        if (!cases[index].inputValues) cases[index].inputValues = {};
+        
+        const currentVal = cases[index].inputValues[varName] || {};
+        cases[index].inputValues[varName] = { ...currentVal, name: varName, [field]: value };
+        
+        isPublic ? setPublicTestCases(cases) : setHiddenTestCases(cases);
+    };
+
     const removeTestCase = (index, isPublic) => {
         const cases = isPublic ? [...publicTestCases] : [...hiddenTestCases];
         cases.splice(index, 1);
         isPublic ? setPublicTestCases(cases) : setHiddenTestCases(cases);
+    };
+
+    const addInputVar = () => setFormData(prev => ({ ...prev, inputVariables: [...prev.inputVariables, { name: '', type: 'string' }] }));
+    const removeInputVar = (index) => {
+        const vars = [...formData.inputVariables];
+        vars.splice(index, 1);
+        setFormData(prev => ({ ...prev, inputVariables: vars }));
     };
 
     const addTag = (tag) => {
@@ -171,10 +212,22 @@ const CreateChallenge = () => {
             Swal.fire({ icon: 'warning', title: 'Faltan casos ocultos', text: 'Se requieren al menos 3 casos ocultos.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
             return false;
         }
+        if (!formData.outputVariable.name?.trim()) {
+            Swal.fire({ icon: 'warning', title: 'Variable de salida', text: 'La variable de salida debe tener un nombre.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
+            return false;
+        }
+
+        for (let iv of formData.inputVariables) {
+            if (!iv.name?.trim()) {
+                Swal.fire({ icon: 'warning', title: 'Variables de entrada', text: 'Todas las variables de entrada deben tener un nombre.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
+                return false;
+            }
+        }
+
         const allCases = [...publicTestCases, ...hiddenTestCases];
         for (let tc of allCases) {
-            if (!tc.input.trim() || !tc.output.trim()) {
-                Swal.fire({ icon: 'warning', title: 'Casos incompletos', text: 'Todos los casos deben tener entrada y salida.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
+            if (!tc.outputValue?.toString().trim()) {
+                Swal.fire({ icon: 'warning', title: 'Casos incompletos', text: 'Todos los casos deben tener una salida esperada.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
                 return false;
             }
         }
@@ -182,27 +235,35 @@ const CreateChallenge = () => {
     };
 
     const handleSubmit = async (status) => {
-        if (status === 'published' && !validateForm()) return;
+        if (!validateForm()) return;
 
         setLoading(true);
         try {
             const payload = {
-                title: formData.title,
-                description: formData.description,
+                title: formData.title.trim(),
+                description: formData.description.trim(),
                 difficulty: formData.difficulty,
-                workerTimeLimit: parseInt(formData.timeLimit),
-                workerMemoryLimit: parseInt(formData.memoryLimit),
+                worker_time_limit: parseInt(formData.timeLimit),
+                worker_memory_limit: parseInt(formData.memoryLimit),
                 tags: formData.tags,
-                inputVariables: [{ name: 'stdin', type: 'string', value: '' }],
-                outputVariable: { name: 'stdout', type: 'string', value: '' },
+                input_variables: formData.inputVariables.map(v => ({ 
+                    name: v.name.trim(), 
+                    type: v.type || 'string', 
+                    value: '' 
+                })),
+                output_variable: { 
+                    name: formData.outputVariable.name.trim(), 
+                    type: formData.outputVariable.type || 'string', 
+                    value: '' 
+                },
                 constraints: formData.constraints,
                 status: status || formData.status,
-                courseId: formData.courseId,
-                examId: formData.examId || null
+                user_id: user?.id || user?.ID || ''
             };
 
             let response;
             if (isEditing) {
+                payload.challenge_id = id;
                 response = await client.patch(`/challenges/${id}`, payload);
             } else {
                 response = await client.post('/challenges', payload);
@@ -217,16 +278,29 @@ const CreateChallenge = () => {
                     ...hiddenTestCases.map(tc => ({ ...tc, isSample: false, points: 10 }))
                 ];
 
-                const tcRequests = allCasesToSave.map(tc => 
-                    client.post('/test-cases', {
-                        name: tc.name,
-                        input: [{ name: "stdin", type: "string", value: tc.input }],
-                        expectedOutput: { name: "stdout", type: "string", value: tc.output },
-                        isSample: tc.isSample,
-                        points: tc.points,
-                        challengeId: challengeId
-                    })
-                );
+                const tcRequests = allCasesToSave.map(tc => {
+                    const inputsDto = formData.inputVariables.map(v => {
+                        const tcVal = tc.inputValues?.[v.name] || {};
+                        return {
+                            name: v.name.trim(),
+                            type: tcVal.type || v.type || 'string',
+                            value: tcVal.value?.toString() || ''
+                        };
+                    });
+                    
+                    return client.post('/test-cases', {
+                        name: tc.name || `Case ${allCasesToSave.indexOf(tc) + 1}`,
+                        input: inputsDto,
+                        expected_output: { 
+                            name: formData.outputVariable.name.trim(), 
+                            type: formData.outputVariable.type || 'string', 
+                            value: tc.outputValue?.toString() || ''
+                        },
+                        is_sample: tc.isSample || false,
+                        points: tc.points || 0,
+                        challenge_id: challengeId
+                    });
+                });
 
                 await Promise.all(tcRequests);
             }
@@ -279,13 +353,33 @@ const CreateChallenge = () => {
             description: idea.description,
             difficulty: diff,
             tags: idea.tags || [],
-            inputFormat: idea.inputFormat || '',
-            outputFormat: idea.outputFormat || '',
+            inputVariables: idea.inputVariables || idea.input_variables || [{ name: 'stdin', type: 'string' }],
+            outputVariable: idea.outputVariable || idea.output_variable || { name: 'stdout', type: 'string' },
+            timeLimit: idea.workerTimeLimit || idea.worker_time_limit || 1000,
+            memoryLimit: idea.workerMemoryLimit || idea.worker_memory_limit || 256,
             constraints: idea.constraints || '',
             status: 'draft'
         }));
-        if (idea.publicTestCases) setPublicTestCases(idea.publicTestCases);
-        if (idea.hiddenTestCases) setHiddenTestCases(idea.hiddenTestCases);
+        if (idea.publicTestCases || idea.public_test_cases) {
+            const arr = idea.publicTestCases || idea.public_test_cases;
+            setPublicTestCases(arr.map(tc => {
+                const ivs = {};
+                (tc.input || []).forEach(i => {
+                    ivs[i.name] = { name: i.name, type: i.type, value: i.value };
+                });
+                return { name: tc.name, type: 'public', inputValues: ivs, outputValue: tc.output?.value || '' };
+            }));
+        }
+        if (idea.hiddenTestCases || idea.hidden_test_cases) {
+            const arr = idea.hiddenTestCases || idea.hidden_test_cases;
+            setHiddenTestCases(arr.map(tc => {
+                const ivs = {};
+                (tc.input || []).forEach(i => {
+                    ivs[i.name] = { name: i.name, type: i.type, value: i.value };
+                });
+                return { name: tc.name, type: 'hidden', inputValues: ivs, outputValue: tc.output?.value || '' };
+            }));
+        }
         setActiveTab('basic');
     };
 
@@ -306,8 +400,24 @@ const CreateChallenge = () => {
                     onClose={() => setShowAIModal(false)}
                     onApplyIdea={handleApplyIdea}
                     onApplyTestCases={(cases) => {
-                        if (cases.publicTestCases) setPublicTestCases(cases.publicTestCases);
-                        if (cases.hiddenTestCases) setHiddenTestCases(cases.hiddenTestCases);
+                        if (cases.publicTestCases) {
+                            setPublicTestCases(cases.publicTestCases.map(tc => {
+                                const ivs = {};
+                                (tc.input || []).forEach(i => {
+                                    ivs[i.name] = { name: i.name, type: i.type, value: i.value };
+                                });
+                                return { name: tc.name, type: 'public', inputValues: ivs, outputValue: tc.output?.value || '' };
+                            }));
+                        }
+                        if (cases.hiddenTestCases) {
+                            setHiddenTestCases(cases.hiddenTestCases.map(tc => {
+                                const ivs = {};
+                                (tc.input || []).forEach(i => {
+                                    ivs[i.name] = { name: i.name, type: i.type, value: i.value };
+                                });
+                                return { name: tc.name, type: 'hidden', inputValues: ivs, outputValue: tc.output?.value || '' };
+                            }));
+                        }
                         setFormData(prev => ({ ...prev, status: 'draft' }));
                         setActiveTab('testcases');
                     }}
@@ -347,30 +457,186 @@ const CreateChallenge = () => {
                                         <input type="number" name="timeLimit" value={formData.timeLimit} onChange={handleChange} />
                                     </div>
                                 </div>
+
+                                <div className="io-variables-section">
+                                    <div className="section-header-mini">
+                                        <h3>Variables Globales</h3>
+                                        <button className="btn-add-mini" onClick={addInputVar}>+ Variable</button>
+                                    </div>
+                                    <div className="vars-grid">
+                                        {formData.inputVariables.map((iv, idx) => (
+                                            <div key={idx} className="var-item-card">
+                                                <div className="var-main-info">
+                                                    <input type="text" placeholder="Nombre" value={iv.name} onChange={(e) => handleInputVarChange(idx, 'name', e.target.value)} />
+                                                    <select value={iv.type} onChange={(e) => handleInputVarChange(idx, 'type', e.target.value)}>
+                                                        <option value="string">String</option>
+                                                        <option value="int">Integer</option>
+                                                        <option value="float">Float</option>
+                                                        <option value="boolean">Boolean</option>
+                                                        <option value="array">Array</option>
+                                                    </select>
+                                                </div>
+                                                <button className="btn-remove-var" onClick={() => removeInputVar(idx)}>×</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    <h3 style={{ marginTop: '1.5rem', fontSize: '1rem', color: 'var(--text-muted)' }}>Variable de Salida</h3>
+                                    <div className="var-item-card output-var">
+                                        <input type="text" placeholder="Nombre" value={formData.outputVariable.name} onChange={(e) => handleOutputVarChange('name', e.target.value)} />
+                                        <select value={formData.outputVariable.type} onChange={(e) => handleOutputVarChange('type', e.target.value)}>
+                                            <option value="string">String</option>
+                                            <option value="int">Integer</option>
+                                            <option value="float">Float</option>
+                                            <option value="boolean">Boolean</option>
+                                            <option value="array">Array</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                                        <label>Restricciones (Constraints)</label>
+                                        <textarea 
+                                            name="constraints" 
+                                            value={formData.constraints} 
+                                            onChange={handleChange} 
+                                            placeholder="Ej: 1 <= nums.length <= 10^4"
+                                            rows="2"
+                                            style={{ height: 'auto' }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         )}
 
                         {activeTab === 'testcases' && (
-                            <div className="form-section">
-                                <h3>Casos Públicos (Ejemplos)</h3>
-                                {publicTestCases.map((tc, idx) => (
-                                    <div key={idx} className="testcase-item">
-                                        <input value={tc.input} onChange={(e) => updateTestCase(idx, 'input', e.target.value, true)} placeholder="Entrada" />
-                                        <input value={tc.output} onChange={(e) => updateTestCase(idx, 'output', e.target.value, true)} placeholder="Salida" />
-                                        <button onClick={() => removeTestCase(idx, true)}>🗑️</button>
+                            <div className="form-section test-cases-view">
+                                <div className="section-header-row">
+                                    <div className="header-info">
+                                        <h3>Casos Públicos</h3>
+                                        <p>Ejemplos visibles en el enunciado</p>
                                     </div>
-                                ))}
-                                <button onClick={addPublicTestCase} className="btn-add">+ Caso Público</button>
+                                    <button onClick={addPublicTestCase} className="btn-add-rich">+ Caso Ejemplo</button>
+                                </div>
 
-                                <h3 style={{ marginTop: '2rem' }}>Casos Ocultos (Evaluación)</h3>
-                                {hiddenTestCases.map((tc, idx) => (
-                                    <div key={idx} className="testcase-item">
-                                        <input value={tc.input} onChange={(e) => updateTestCase(idx, 'input', e.target.value, false)} placeholder="Entrada" />
-                                        <input value={tc.output} onChange={(e) => updateTestCase(idx, 'output', e.target.value, false)} placeholder="Salida" />
-                                        <button onClick={() => removeTestCase(idx, false)}>🗑️</button>
+                                <div className="tc-cards-grid">
+                                    {publicTestCases.map((tc, idx) => (
+                                        <div key={idx} className="tc-rich-card public">
+                                            <div className="tc-card-header">
+                                                <div className="tc-title">
+                                                    <span className="idx-tag">#{idx + 1}</span>
+                                                    <input 
+                                                        value={tc.name} 
+                                                        onChange={(e) => updateTestCase(idx, 'name', e.target.value, true)} 
+                                                        placeholder="Nombre del caso"
+                                                    />
+                                                </div>
+                                                <button className="btn-icon-trash" onClick={() => removeTestCase(idx, true)}>🗑️</button>
+                                            </div>
+                                            
+                                            <div className="tc-variables-grid">
+                                                {formData.inputVariables.map(iv => {
+                                                    const tcVar = tc.inputValues?.[iv.name] || { type: iv.type, value: '' };
+                                                    return (
+                                                        <div key={iv.name} className="tc-var-row">
+                                                            <div className="var-label">
+                                                                <span className="var-name">{iv.name}</span>
+                                                                <select 
+                                                                    className="var-type-select"
+                                                                    value={tcVar.type || iv.type} 
+                                                                    onChange={(e) => updateTestCaseInput(idx, iv.name, 'type', e.target.value, true)}
+                                                                >
+                                                                    <option value="string">str</option>
+                                                                    <option value="int">int</option>
+                                                                    <option value="array">arr</option>
+                                                                    <option value="boolean">bool</option>
+                                                                </select>
+                                                            </div>
+                                                            <input 
+                                                                value={tcVar.value || ''} 
+                                                                onChange={(e) => updateTestCaseInput(idx, iv.name, 'value', e.target.value, true)} 
+                                                                placeholder={`Valor para ${iv.name}`} 
+                                                            />
+                                                        </div>
+                                                    );
+                                                })}
+                                                <div className="tc-var-row output-var">
+                                                    <div className="var-label">
+                                                        <span className="var-name">Salida ({formData.outputVariable.name})</span>
+                                                    </div>
+                                                    <input 
+                                                        value={tc.outputValue} 
+                                                        onChange={(e) => updateTestCase(idx, 'outputValue', e.target.value, true)} 
+                                                        placeholder="Resultado esperado" 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="section-header-row" style={{ marginTop: '3rem' }}>
+                                    <div className="header-info">
+                                        <h3>Casos Ocultos</h3>
+                                        <p>Se usarán para la calificación final</p>
                                     </div>
-                                ))}
-                                <button onClick={addHiddenTestCase} className="btn-add">+ Caso Oculto</button>
+                                    <button onClick={addHiddenTestCase} className="btn-add-rich yellow">+ Caso Oculto</button>
+                                </div>
+
+                                <div className="tc-cards-grid">
+                                    {hiddenTestCases.map((tc, idx) => (
+                                        <div key={idx} className="tc-rich-card hidden-tc">
+                                            <div className="tc-card-header">
+                                                <div className="tc-title">
+                                                    <span className="idx-tag">#{idx + 1}</span>
+                                                    <input 
+                                                        value={tc.name} 
+                                                        onChange={(e) => updateTestCase(idx, 'name', e.target.value, false)} 
+                                                        placeholder="Nombre del caso"
+                                                    />
+                                                </div>
+                                                <button className="btn-icon-trash" onClick={() => removeTestCase(idx, false)}>🗑️</button>
+                                            </div>
+                                            
+                                            <div className="tc-variables-grid">
+                                                {formData.inputVariables.map(iv => {
+                                                    const tcVar = tc.inputValues?.[iv.name] || { type: iv.type, value: '' };
+                                                    return (
+                                                        <div key={iv.name} className="tc-var-row">
+                                                            <div className="var-label">
+                                                                <span className="var-name">{iv.name}</span>
+                                                                <select 
+                                                                    className="var-type-select"
+                                                                    value={tcVar.type || iv.type} 
+                                                                    onChange={(e) => updateTestCaseInput(idx, iv.name, 'type', e.target.value, false)}
+                                                                >
+                                                                    <option value="string">str</option>
+                                                                    <option value="int">int</option>
+                                                                    <option value="array">arr</option>
+                                                                    <option value="boolean">bool</option>
+                                                                </select>
+                                                            </div>
+                                                            <input 
+                                                                value={tcVar.value || ''} 
+                                                                onChange={(e) => updateTestCaseInput(idx, iv.name, 'value', e.target.value, false)} 
+                                                                placeholder={`Valor para ${iv.name}`} 
+                                                            />
+                                                        </div>
+                                                    );
+                                                })}
+                                                <div className="tc-var-row output-var">
+                                                    <div className="var-label">
+                                                        <span className="var-name">Salida ({formData.outputVariable.name})</span>
+                                                    </div>
+                                                    <input 
+                                                        value={tc.outputValue} 
+                                                        onChange={(e) => updateTestCase(idx, 'outputValue', e.target.value, false)} 
+                                                        placeholder="Resultado esperado" 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
 

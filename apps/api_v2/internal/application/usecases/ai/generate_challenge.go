@@ -22,30 +22,53 @@ func (uc *GenerateFullChallengeUseCase) Execute(ctx context.Context, input dtos.
 		Actúa como un diseñador experto de retos de programación competitiva (como Codeforces o LeetCode).
 		Crea un reto de programación COMPLETO basado en el tema: "%s" con dificultad: "%s".
 
-		Tu respuesta DEBE ser ÚNICAMENTE un objeto JSON válido con la siguiente estructura:
+		Tu respuesta DEBE ser ÚNICAMENTE un objeto JSON válido con la siguiente estructura y formato estricto:
 		{
-		"title": "Un título creativo y descriptivo",
-		"description": "Un enunciado claro y profesional del problema en español",
+		"title": "...",
+		"description": "...",
 		"difficulty": "%s",
-		"tags": ["Tag1", "Tag2"],
-		"inputFormat": "Descripción detallada del formato de entrada",
-		"outputFormat": "Descripción detallada del formato de salida esperado",
-		"constraints": "Restricciones de tiempo y memoria (ej: N < 1000)",
-		"publicTestCases": [
-			{"input": "ejemplo de entrada 1", "output": "salida esperada 1", "name": "Caso Ejemplo 1", "type": "public"}
+		"tags": ["..."],
+		"worker_time_limit": 1500,
+		"worker_memory_limit": 256,
+		"input_variables": [
+			{"name": "nombre_variable", "type": "tipo", "value": ""}
 		],
-		"hiddenTestCases": [
-			{"input": "entrada oculta 1", "output": "salida oculta 1", "name": "Caso Evaluación 1", "type": "hidden"},
-			{"input": "entrada oculta 2", "output": "salida oculta 2", "name": "Caso Evaluación 2", "type": "hidden"},
-			{"input": "entrada oculta 3", "output": "salida oculta 3", "name": "Caso Evaluación 3", "type": "hidden"}
+		"output_variable": {"name": "nombre_resultado", "type": "tipo", "value": ""},
+		"constraints": "...",
+		"public_test_cases": [
+			{
+				"name": "Ejemplo 1",
+				"type": "public",
+				"input": [
+					{"name": "nombre_variable", "type": "tipo", "value": "valor_ejemplo"}
+				],
+				"output": {"name": "nombre_resultado", "type": "tipo", "value": "resultado_ejemplo"}
+			}
+		],
+		"hidden_test_cases": [
+			{
+				"name": "Oculto 1",
+				"type": "hidden",
+				"input": [
+					{"name": "nombre_variable", "type": "tipo", "value": "valor_oculto"}
+				],
+				"output": {"name": "nombre_resultado", "type": "tipo", "value": "resultado_oculto"}
+			}
 		]
 		}
 
-		REGLAS CRÍTICAS:
-		1. El enunciado debe estar en ESPAÑOL.
-		2. Genera EXACTAMENTE 3 casos ocultos de evaluación.
-		3. El JSON debe ser perfectamente válido para ser parseado por un programa. No incluyas explicaciones fuera del JSON.
-		`, input.Topic, input.Difficulty, input.Difficulty)
+		REGLAS CRÍTICAS DE DISEÑO:
+		1. FIDELIDAD AL TEMA: Debes seguir estrictamente el "Tema del Reto" proporcionado. Si el tema es simple (ej: "Suma dos números"), el reto debe ser directo y fiel a esa lógica básica. NO intentes transformar un tema simple en un problema complejo de algoritmos famosos (como Two Sum) usando historias espaciales o fantasiosas innecesarias. Sé literal y profesional.
+		2. DIFICULTAD REALISTA: Respeta el nivel "%s". 
+		   - 'easy': El problema debe ser directo, ideal para principiantes, sin algoritmos complejos.
+		   - 'medium': Requiere lógica moderada, uso de arreglos, estructuras de datos básicas o algoritmos simples.
+		   - 'hard': Requiere algoritmos avanzados, optimización de tiempo/memoria, estructuras de datos complejas o múltiples pasos lógicos.
+		3. LENGUAJE: Todo el enunciado y los nombres de los casos de prueba deben estar en ESPAÑOL.
+		4. VARIABLES DINÁMICAS: Crea variables con nombres que tengan sentido para el problema. El campo 'type' puede ser 'string', 'int', 'float', 'boolean', 'array'. 
+		5. ESTRUCTURA DE TEST CASES: El campo 'input' DEBE coincidir con las variables definidas. El campo 'value' DEBE ser SIEMPRE un string.
+		6. CALIDAD: Genera exactamente 3 hidden_test_cases y 2 public_test_cases con valores de entrada variados y lógicos.
+		7. JSON ESTRICTO: Tu respuesta debe ser un JSON puro, sin explicaciones ni código markdown.
+		`, input.Topic, input.Difficulty, input.Difficulty, input.Difficulty)
 
 	// [STEP 2] Call LLM to generate challenge
 	challenge, err := uc.AI.GenerateChallengeIdea(ctx, prompt)

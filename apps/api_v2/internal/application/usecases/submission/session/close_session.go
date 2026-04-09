@@ -41,10 +41,6 @@ func (uc *CloseSessionUseCase) Execute(ctx context.Context, input dtos.CloseSess
 	if user == nil {
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
-
-	if user.Role != user_entities.UserRoleProfessor {
-		return nil, fmt.Errorf("user does not have permissions to create an exam")
-	}
 	
 	// [STEP 2] Verify existing student session
 	session, err := uc.sessionRepository.GetSessionByID(ctx, input.SessionID)

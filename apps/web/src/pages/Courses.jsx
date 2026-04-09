@@ -28,7 +28,7 @@ const Courses = () => {
 
     const fetchCourses = async () => {
         try {
-            const scope = (user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin') ? '?scope=owned' : '';
+            const scope = (user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin') ? '?scope=owned' : '?scope=enrolled';
             const { data } = await client.get(`/courses${scope}`);
             setCourses(Array.isArray(data) ? data : (data?.items || []));
         } catch (err) {

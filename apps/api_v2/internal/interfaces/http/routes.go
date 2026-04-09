@@ -176,6 +176,7 @@ func registerCoursesRoutes(app *fiber.App, appContainer *container.Application) 
 func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 	exams := app.Group("/exams")
 	exams.Post("/", exam_post_create.Handler(appContainer))
+	exams.Get("/public", exam_get_public.Handler(appContainer))
 	exams.Get("/course/:courseId", exam_get_by_course_id.Handler(appContainer))
 	exams.Get("/public", exam_get_public.Handler(appContainer))
 	exams.Get("/:id", exam_get_by_id.Handler(appContainer))

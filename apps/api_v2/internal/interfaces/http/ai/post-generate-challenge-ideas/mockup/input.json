@@ -1,0 +1,11 @@
+{
+  "method": "POST",
+  "path": "/ai/generate-challenge-ideas",
+  "pathParams": {},
+  "query": {},
+  "body": {
+    "topic": "sorting",
+    "difficulty": "easy",
+    "count": 3
+  }
+}

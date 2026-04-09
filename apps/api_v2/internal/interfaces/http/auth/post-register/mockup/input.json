@@ -1,0 +1,11 @@
+{
+  "method": "POST",
+  "path": "/auth/register",
+  "pathParams": {},
+  "query": {},
+  "body": {
+    "email": "student@example.com",
+    "name": "Student Test",
+    "password": "Testing123!"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "method": "POST",
+  "path": "/test-cases",
+  "pathParams": {},
+  "query": {},
+  "body": {
+    "name": "tc_add_1",
+    "input": [
+      {"name": "a", "type": "int", "value": "2"},
+      {"name": "b", "type": "int", "value": "3"}
+    ],
+    "expectedOutput": {"name": "sum", "type": "int", "value": "5"},
+    "isSample": true,
+    "points": 10,
+    "challengeID": "challenge-123"
+  }
+}

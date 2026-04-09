@@ -1,0 +1,9 @@
+{
+  "method": "POST",
+  "path": "/challenges/{id}/publish",
+  "pathParams": {
+    "id": "challenge-123"
+  },
+  "query": {},
+  "body": null
+}

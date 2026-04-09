@@ -1,0 +1,12 @@
+{
+  "statusCode": 200,
+  "body": [
+    {
+      "id": "test-case-123",
+      "name": "tc_add_1",
+      "isSample": true,
+      "points": 10,
+      "challengeID": "challenge-123"
+    }
+  ]
+}

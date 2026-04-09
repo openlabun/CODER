@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "path": "/auth/me",
+  "pathParams": {},
+  "query": {},
+  "body": null
+}

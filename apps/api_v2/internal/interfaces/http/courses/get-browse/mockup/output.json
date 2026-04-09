@@ -1,0 +1,6 @@
+{
+  "statusCode": 501,
+  "body": {
+    "message": "Browse courses endpoint does not have a dedicated use case yet"
+  }
+}

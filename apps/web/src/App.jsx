@@ -10,13 +10,16 @@ import Courses from './pages/Courses';
 import CourseDetails from './pages/CourseDetails';
 import CourseStudents from './pages/CourseStudents';
 import ExamRunner from './pages/ExamRunner';
+import ExamEditor from './pages/ExamEditor';
 import Dashboard from './pages/Dashboard';
 import CreateChallenge from './pages/CreateChallenge';
+import CreateExam from './pages/CreateExam';
 import CreateCourse from './pages/CreateCourse';
 import EditCourse from './pages/EditCourse';
 import JoinCourse from './pages/JoinCourse';
 import BrowseCourses from './pages/BrowseCourses';
 import Submissions from './pages/Submissions';
+import PublicExams from './pages/PublicExams';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Main App component
@@ -29,18 +32,22 @@ function App() {
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
+          <Route path="public-exams" element={<ProtectedRoute><PublicExams /></ProtectedRoute>} />
           <Route path="challenge/:id" element={<ProtectedRoute><ChallengeSolver /></ProtectedRoute>} />
           <Route path="leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="courses" element={<ProtectedRoute><Courses /></ProtectedRoute>} />
+          <Route path="courses/new" element={<ProtectedRoute><CreateCourse /></ProtectedRoute>} />
           <Route path="courses/join" element={<ProtectedRoute><JoinCourse /></ProtectedRoute>} />
           <Route path="courses/browse" element={<ProtectedRoute><BrowseCourses /></ProtectedRoute>} />
           <Route path="courses/:id" element={<ProtectedRoute><CourseDetails /></ProtectedRoute>} />
           <Route path="courses/:id/students" element={<ProtectedRoute><CourseStudents /></ProtectedRoute>} />
           <Route path="exam/:id" element={<ProtectedRoute><ExamRunner /></ProtectedRoute>} />
+          <Route path="exam/:id/edit" element={<ProtectedRoute><ExamEditor /></ProtectedRoute>} />
           <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="submissions" element={<ProtectedRoute><Submissions /></ProtectedRoute>} />
           <Route path="challenges/create" element={<ProtectedRoute><CreateChallenge /></ProtectedRoute>} />
           <Route path="challenges/edit/:id" element={<ProtectedRoute><CreateChallenge /></ProtectedRoute>} />
+          <Route path="exams/create" element={<ProtectedRoute><CreateExam /></ProtectedRoute>} />
           <Route path="courses/create" element={<ProtectedRoute><CreateCourse /></ProtectedRoute>} />
           <Route path="courses/edit/:id" element={<ProtectedRoute><EditCourse /></ProtectedRoute>} />
         </Route>

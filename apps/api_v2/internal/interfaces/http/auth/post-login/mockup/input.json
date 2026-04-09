@@ -1,0 +1,10 @@
+{
+  "method": "POST",
+  "path": "/auth/login",
+  "pathParams": {},
+  "query": {},
+  "body": {
+    "email": "student@example.com",
+    "password": "Testing123!"
+  }
+}

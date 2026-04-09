@@ -1,0 +1,10 @@
+{
+  "method": "POST",
+  "path": "/submissions/sessions",
+  "pathParams": {},
+  "query": {},
+  "body": {
+    "userID": "usr-student-123",
+    "examID": "exam-123"
+  }
+}

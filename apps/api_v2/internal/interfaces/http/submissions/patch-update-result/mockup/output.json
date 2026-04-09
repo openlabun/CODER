@@ -1,0 +1,14 @@
+{
+  "statusCode": 200,
+  "body": {
+    "id": "result-123",
+    "submissionID": "submission-123",
+    "testCaseID": "tc-123",
+    "status": "accepted",
+    "actualOutput": {
+      "type": "int",
+      "value": "42"
+    },
+    "errorMessage": null
+  }
+}

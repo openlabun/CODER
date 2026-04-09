@@ -3,25 +3,60 @@
 version: "3.9"
 
 services:
-    api:
+    apiv2:
         build:
-            context: ./apps/api
-            dockerfile: Dockerfile.api
-        command: npm run dev
+            context: ./apps/api_v2
+            dockerfile: Dockerfile.dev
+        working_dir: /app
+        command: air -c .air.toml
         ports:
-            - "${API_PORT:-3000}:3000"
+            - "${APIV2_PORT:-4000}:4000"
         volumes:
-            - ./apps/api:/usr/src/app
-            - ./apps/api/data:/usr/src/app/data
-            - /usr/src/app/node_modules
-        depends_on:
-            - postgres
-            - redis
+            - ./apps/api_v2:/app
         env_file:
             - .env.dev
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
         networks:
             - judge_net
-    
+
+    rabbitmq:
+        image: rabbitmq:3.13-management
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+        networks:
+            - judge_net
+
+    worker-python:
+        build:
+            context: ./apps/workers/python
+            dockerfile: Dockerfile
+        working_dir: /app
+        command: python main.py
+        env_file:
+            - .env.dev
+        environment:
+            - API_BASE_URL=http://apiv2:4000
+            - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+            - QUEUE_NAME=python.queue
+        volumes:
+            - ./apps/workers/python:/app
+            - /var/run/docker.sock:/var/run/docker.sock
+        depends_on:
+            apiv2:
+                condition: service_started
+            rabbitmq:
+                condition: service_healthy
+        networks:
+            - judge_net
+
     web:
         build:
             context: ./apps/web
@@ -37,77 +72,7 @@ services:
         networks:
             - judge_net
         depends_on:
-            - api
-    postgres:
-        image: postgres:16-alpine
-        env_file:
-            - .env.dev
-        ports:
-            - "${POSTGRES_PORT:-5432}:5432"
-        volumes:
-            - pgdata:/var/lib/postgresql/data
-            - ./apps/api/migrations:/docker-entrypoint-initdb.d
-        networks:
-            - judge_net
-
-    redis:
-        image: redis:7-alpine
-        container_name: juez_redis_dev
-        restart: unless-stopped
-        ports:
-            - "${REDIS_PORT:-6379}:6379"
-        healthcheck:
-            test: [ "CMD", "redis-cli", "ping" ]
-            interval: 5s
-            timeout: 3s
-            retries: 30
-        networks:
-            - judge_net
-    
-    runner-python:
-        build:
-            context: ./apps/api/src/runners/python
-        image: juez_runner_python:dev
-
-    runner-node:
-        build:
-            context: ./apps/api/src/runners/node
-        image: juez_runner_node:dev
-
-    runner-cpp:
-        build:
-            context: ./apps/api/src/runners/cpp
-        image: juez_runner_cpp:dev
-
-    runner-java:
-        build:
-            context: ./apps/api/src/runners/java
-        image: juez_runner_java:dev
-    
-    worker:
-        build:
-            context: ./apps/api
-            dockerfile: Dockerfile.worker
-        command: npm run worker:dev
-        volumes:
-            - ./apps/api:/usr/src/app
-            - /var/run/docker.sock:/var/run/docker.sock
-            - ./apps/api/data:/usr/src/app/data
-            - /usr/src/app/node_modules
-        depends_on:
-            - postgres
-            - redis
-            - runner-python
-            - runner-node
-            - runner-cpp
-            - runner-java
-        env_file:
-            - .env.dev
-        environment:
-            - HOST_SUBMISSIONS_DIR=${PWD}/apps/api/data/submissions
-        networks:
-            - judge_net
-
+            - apiv2
 volumes:
     pgdata:
 

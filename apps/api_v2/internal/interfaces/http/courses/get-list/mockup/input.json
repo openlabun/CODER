@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/courses",
+  "pathParams": {},
+  "query": {
+    "scope": "enrolled"
+  },
+  "body": null
+}

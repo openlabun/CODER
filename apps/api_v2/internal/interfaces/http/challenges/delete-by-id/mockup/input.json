@@ -1,0 +1,9 @@
+{
+  "method": "DELETE",
+  "path": "/challenges/{id}",
+  "pathParams": {
+    "id": "challenge-123"
+  },
+  "query": {},
+  "body": null
+}

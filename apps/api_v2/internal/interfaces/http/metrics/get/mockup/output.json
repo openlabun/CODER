@@ -1,0 +1,8 @@
+{
+  "statusCode": 200,
+  "body": {
+    "uptime_seconds": 12345,
+    "requests_total": 987,
+    "errors_total": 3
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "method": "POST",
+  "path": "/courses/{id}/students",
+  "pathParams": {
+    "id": "course-123"
+  },
+  "query": {},
+  "body": {
+    "studentID": "usr-student-123"
+  }
+}

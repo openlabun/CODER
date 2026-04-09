@@ -1,0 +1,6 @@
+{
+  "statusCode": 501,
+  "body": {
+    "message": "Assign challenge to course use case is not implemented"
+  }
+}

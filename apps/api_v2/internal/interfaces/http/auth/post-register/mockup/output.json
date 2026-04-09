@@ -1,0 +1,15 @@
+{
+  "statusCode": 201,
+  "body": {
+    "token": {
+      "access_token": "jwt-access-token",
+      "refresh_token": "jwt-refresh-token"
+    },
+    "user_data": {
+      "id": "usr-123",
+      "username": "Student Test",
+      "email": "student@example.com",
+      "role": "student"
+    }
+  }
+}

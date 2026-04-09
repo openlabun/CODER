@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "path": "/cache/health",
+  "pathParams": {},
+  "query": {},
+  "body": null
+}

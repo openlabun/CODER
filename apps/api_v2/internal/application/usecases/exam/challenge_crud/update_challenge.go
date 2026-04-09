@@ -1,0 +1,77 @@
+package exam_usecases
+
+import (
+	"context"
+	"fmt"
+
+	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
+	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
+
+	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
+	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam/mapper"
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
+)
+
+type UpdateChallengeUseCase struct {
+	challengeRepository  repositories.ChallengeRepository
+	ioVariableRepository repositories.IOVariableRepository
+	userRepository       userRepository.UserRepository
+}
+
+func NewUpdateChallengeUseCase(challengeRepository repositories.ChallengeRepository, ioVariableRepository repositories.IOVariableRepository, userRepository userRepository.UserRepository) *UpdateChallengeUseCase {
+	return &UpdateChallengeUseCase{challengeRepository: challengeRepository, ioVariableRepository: ioVariableRepository, userRepository: userRepository}
+}
+
+func (uc *UpdateChallengeUseCase) Execute(ctx context.Context, input dtos.UpdateChallengeInput) (*Entities.Challenge, error) {
+	// [STEP 1] Verify user is teacher and has permissions to update an exam
+	userEmail, err := services.UserEmailFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := uc.userRepository.GetUserByEmail(ctx, userEmail)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
+	}
+
+	if user.Role != user_entities.UserRoleProfessor {
+		return nil, fmt.Errorf("user does not have permissions to update a challenge")
+	}
+
+	// [STEP 2] Verify challenge exists
+	existingChallenge, err := uc.challengeRepository.GetChallengeByID(ctx, input.ChallengeID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingChallenge == nil {
+		return nil, fmt.Errorf("challenge with id %q does not exist", input.ChallengeID)
+	}
+
+	// [STEP 3] Verify that challenge belongs to teacher
+	if existingChallenge.UserID != user.ID {
+		return nil, fmt.Errorf("user does not have permissions to update this challenge")
+	}
+
+	// [STEP 4] Create challenge update entity with user provided values
+	challenge, err := mapper.MapUpdateChallengeInputToChallengeEntity(existingChallenge, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// [STEP 5] Save challenge with user provided values
+	updatedChallenge, err := domain_services.UpdateChallenge(ctx, challenge, uc.challengeRepository, uc.ioVariableRepository)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedChallenge, nil
+}

@@ -1,0 +1,10 @@
+{
+  "statusCode": 201,
+  "body": {
+    "id": "challenge-123",
+    "title": "Two Sum",
+    "status": "draft",
+    "difficulty": "easy",
+    "examID": "exam-123"
+  }
+}

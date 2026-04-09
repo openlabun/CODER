@@ -1,51 +1,201 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useContext } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import client from '../api/client';
-import { useAuth } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext';
+import { 
+    Clock, 
+    Target, 
+    ChevronLeft, 
+    Play, 
+    Send, 
+    Code, 
+    FileText, 
+    Info, 
+    AlertTriangle,
+    CheckCircle2
+} from 'lucide-react';
 import './ChallengeSolver.css';
+import './Dashboard.css';
 
 const ChallengeSolver = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user } = useContext(AuthContext);
     const [challenge, setChallenge] = useState(null);
     const [code, setCode] = useState('');
-    const [language, setLanguage] = useState('javascript');
+    const [language, setLanguage] = useState('python');
     const [output, setOutput] = useState('');
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchChallenge = async () => {
+            setLoading(true);
             try {
-                const { data } = await client.get(`/challenges/${id}`);
-                setChallenge(data);
-                // Set default code template based on language
-                setCode('// Write your solution here\n');
+                // Ensure ID is passed correctly and try to fetch
+                const response = await client.get(`/challenges/${id}`);
+                setChallenge(response.data);
+                // Set default code template
+                setCode('# Escribe tu solucion aqui\ndef solve(a, b):\n    return a + b\n');
             } catch (error) {
                 console.error('Error fetching challenge:', error);
+                // If 404, maybe it's not published
+                if (error.response?.status === 404) {
+                    console.warn("Challenge not found or not accessible");
+                }
             } finally {
                 setLoading(false);
             }
         };
-        fetchChallenge();
+        if (id) fetchChallenge();
     }, [id]);
 
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const extractPythonFunctionSignature = (sourceCode) => {
+        const match = sourceCode.match(/^\s*(?:async\s+)?def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)\s*(?:->\s*[^:]+)?\s*:/m);
+        if (!match) return '';
+
+        const functionName = match[1];
+        const rawArgs = match[2].trim();
+
+        if (!rawArgs) {
+            return `${functionName}()`;
+        }
+
+        const normalizedArgs = rawArgs
+            .split(',')
+            .map((arg) => arg.trim())
+            .filter(Boolean)
+            .map((arg) => arg.replace(/^\*+/, ''))
+            .map((arg) => arg.split(':')[0])
+            .map((arg) => arg.split('=')[0])
+            .map((arg) => arg.trim())
+            .filter(Boolean);
+
+        return `${functionName}(${normalizedArgs.join(', ')})`;
+    };
+
+    const formatResultsOutput = (submission, results) => {
+        if (!results.length) {
+            return `Submission ${submission?.ID || submission?.id || ''} creada. Aun no hay resultados.`;
+        }
+
+        const lines = [];
+        lines.push(`Submission: ${submission?.ID || submission?.id || 'N/A'}`);
+        lines.push(`Lenguaje: ${submission?.Language || submission?.language || 'python'}`);
+        lines.push('');
+        lines.push('Resultados por caso de prueba:');
+
+        results.forEach((result, index) => {
+            const status = (result.Status || result.status || 'unknown').toLowerCase();
+            const errorMessage = result.ErrorMessage || result.errorMessage || '';
+            let line = `- Caso ${index + 1}: ${status}`;
+            if (errorMessage) {
+                line += ` | error: ${errorMessage}`;
+            }
+            lines.push(line);
+        });
+
+        return lines.join('\n');
+    };
+
     const handleSubmit = async () => {
+        if (!code.trim()) {
+            setOutput('No puedes enviar codigo vacio.');
+            return;
+        }
+
+        setSubmitting(true);
+        setOutput('Enviando solucion...');
+
         try {
-            const { data } = await client.post('/submissions', {
-                challengeId: id,
+            const functionSignature = extractPythonFunctionSignature(code);
+            if (!functionSignature) {
+                setOutput('Debes definir una funcion en Python antes de enviar. Ejemplo: def solve(a, b):');
+                return;
+            }
+
+            const sessionId = localStorage.getItem('session_id') || undefined;
+            const payload = {
+                challengeID: id,
                 code,
-                language
-            });
-            setOutput(data.output || 'Submission received');
+                function: functionSignature,
+                language,
+            };
+
+            if (sessionId) {
+                payload.sessionID = sessionId;
+            }
+
+            const { data } = await client.post('/submissions', payload);
+            const submissionId = data?.id || data?.ID;
+
+            if (!submissionId) {
+                setOutput('La API no retorno un ID de submission.');
+                return;
+            }
+
+            setOutput('Solucion enviada. Ejecutando pruebas...');
+
+            const maxAttempts = 40;
+            for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+                const res = await client.get(`/submissions/${submissionId}`);
+                const submission = res?.data?.Submission || res?.data?.submission;
+                const results = res?.data?.Results || res?.data?.results || [];
+
+                if (Array.isArray(results) && results.length > 0) {
+                    const hasPendingResults = results.some((result) => {
+                        const status = (result.Status || result.status || '').toLowerCase();
+                        return status === 'queued' || status === 'running';
+                    });
+
+                    if (!hasPendingResults) {
+                        setOutput(formatResultsOutput(submission, results));
+                        return;
+                    }
+                }
+
+                await sleep(1500);
+            }
+
+            setOutput('La solucion fue enviada, pero la evaluacion sigue en proceso. Revisa tu historial de envios en unos segundos.');
         } catch (error) {
-            setOutput('Error submitting solution');
+            const apiMessage = error?.response?.data?.error || error?.message;
+            setOutput(apiMessage ? `Error submitting solution: ${apiMessage}` : 'Error submitting solution');
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    if (loading) return <div>Loading...</div>;
-    if (!challenge) return <div>Challenge not found</div>;
+    if (loading) {
+        return (
+            <div className="dashboard-loading">
+                <div className="loader-orbit">
+                    <div className="orbit-dot"></div>
+                </div>
+                <p>Preparando desafío...</p>
+            </div>
+        );
+    }
+    
+    if (!challenge) {
+        return (
+            <div className="dashboard-loading error">
+                <div className="error-icon" style={{fontSize: '3rem', marginBottom: '1rem'}}>🎯</div>
+                <h2>Desafío no encontrado</h2>
+                <p>No se pudo cargar la información del reto o no tienes permisos.</p>
+                <button 
+                    onClick={() => navigate(-1)} 
+                    className="btn-retry" 
+                    style={{marginTop: '2rem'}}
+                >
+                    Volver Atrás
+                </button>
+            </div>
+        );
+    }
 
     if (user?.role === 'professor' || user?.role === 'admin') {
         return (
@@ -117,12 +267,11 @@ const ChallengeSolver = () => {
             <div className="editor-container">
                 <div className="editor-header">
                     <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                        <option value="javascript">JavaScript</option>
                         <option value="python">Python</option>
-                        <option value="cpp">C++</option>
-                        <option value="java">Java</option>
                     </select>
-                    <button onClick={handleSubmit} className="btn-primary">Submit</button>
+                    <button onClick={handleSubmit} className="btn-primary" disabled={submitting}>
+                        {submitting ? 'Evaluando...' : 'Submit'}
+                    </button>
                 </div>
                 <Editor
                     height="80vh"

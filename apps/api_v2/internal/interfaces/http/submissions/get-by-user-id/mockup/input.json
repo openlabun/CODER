@@ -1,0 +1,11 @@
+{
+  "method": "GET",
+  "path": "/submissions/user/{userId}",
+  "pathParams": {
+    "userId": "usr-123"
+  },
+  "query": {
+    "status": "pending"
+  },
+  "body": null
+}

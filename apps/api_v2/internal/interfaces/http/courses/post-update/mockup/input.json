@@ -1,0 +1,12 @@
+{
+  "method": "POST",
+  "path": "/courses/{id}",
+  "pathParams": {
+    "id": "course-123"
+  },
+  "query": {},
+  "body": {
+    "name": "Algorithms 1 - Updated",
+    "description": "Updated description"
+  }
+}

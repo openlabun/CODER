@@ -1,0 +1,11 @@
+{
+  "statusCode": 200,
+  "body": {
+    "id": "challenge-123",
+    "title": "Two Sum",
+    "description": "Return indexes of two numbers that add up to target",
+    "status": "published",
+    "difficulty": "easy",
+    "examID": "exam-123"
+  }
+}

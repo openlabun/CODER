@@ -1,0 +1,17 @@
+{
+  "method": "PATCH",
+  "path": "/submissions/results/{resultId}",
+  "pathParams": {
+    "resultId": "result-123"
+  },
+  "headers": {
+    "WorkerKey": "CHANGE_THIS_WORKER_KEY_123"
+  },
+  "query": {},
+  "body": {
+    "status": "accepted",
+    "timeExecution": 12,
+    "output": "42",
+    "error": null
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/courses/{id}/challenges",
+  "pathParams": {
+    "id": "course-123"
+  },
+  "query": {},
+  "body": null
+}

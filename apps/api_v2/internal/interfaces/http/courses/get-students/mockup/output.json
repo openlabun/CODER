@@ -1,0 +1,11 @@
+{
+  "statusCode": 200,
+  "body": [
+    {
+      "id": "usr-student-123",
+      "username": "Student Test",
+      "email": "student@example.com",
+      "role": "student"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "method": "PATCH",
+  "path": "/exams/{id}",
+  "pathParams": {
+    "id": "exam-123"
+  },
+  "query": {},
+  "body": {
+    "title": "Midterm 1 Updated",
+    "description": "Updated description",
+    "try_limit": 3
+  }
+}

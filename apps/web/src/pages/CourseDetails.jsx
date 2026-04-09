@@ -9,7 +9,7 @@ import {
     createExamSession
 } from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
-import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, Target, ChevronRight, Code, Edit } from 'lucide-react';
+import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, Target, ChevronRight, Code, Edit, ArrowRight } from 'lucide-react';
 import Swal from 'sweetalert2';
 import './Courses.css';
 import './CourseActions.css';
@@ -136,24 +136,7 @@ const CourseDetails = () => {
         }
     };
 
-    const handleStartExam = async (examId) => {
-        try {
-            const userId = user?.id || user?.ID || '';
-            const session = await createExamSession(examId, userId);
-            const sessionId = session?.id || session?.ID;
-            if (sessionId) {
-                localStorage.setItem('session_id', sessionId);
-            }
-            navigate(`/exam/${examId}`);
-        } catch (err) {
-            const apiMessage = err?.response?.data?.error || err?.message || 'No se pudo iniciar el examen';
-            if (String(apiMessage).toLowerCase().includes('active session')) {
-                navigate(`/exam/${examId}`);
-                return;
-            }
-            Swal.fire({ icon: 'error', title: 'Error', text: apiMessage });
-        }
-    };
+
 
     if (loading) return <div className="loading">Cargando curso...</div>;
     const isProfessor = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
@@ -274,89 +257,79 @@ const CourseDetails = () => {
                         <p>Los exámenes aparecerán aquí cuando sean creados.</p>
                     </div>
                 ) : (
-                    <div className="exams-grid-new">
+                    <div className="challenges-grid-compact">
                                 {exams.map(exam => {
                                     const examId = exam.id || exam.ID;
+                                    const title = exam.title || exam.Title;
+                                    const desc = exam.description || exam.Description || 'Sin descripción disponible.';
                                     const visibility = String(exam.visibility || exam.Visibility || 'private').toLowerCase();
                                     const endTime = exam.endTime || exam.EndTime;
                                     const isClosed = Boolean(endTime && new Date(endTime) <= new Date());
                                     const isVisible = visibility !== 'private';
                                     const isStudentVisible = visibility === 'public' || visibility === 'course';
-                           
-                           return (
-                            <div key={examId} className={`exam-card-new ${isClosed ? 'closed' : ''}`}>
-                                <div className="exam-card-info">
-                                    <div className="exam-card-top">
-                                        <h3>{exam.title || exam.Title}</h3>
-                                        <div className="exam-status-badges">
-                                            {isClosed && <span className="status-badge closed">Cerrado</span>}
-                                            {!isVisible && <span className="status-badge private">Privado</span>}
-                                        </div>
-                                    </div>
-                                    <div className="exam-meta-grid">
-                                         <div className="exam-meta-item">
-                                             <Clock size={14} />
-                                             <span>{Math.floor((exam.timeLimit || exam.TimeLimit) / 60)} min</span>
-                                         </div>
-                                         <div className="exam-meta-item">
-                                             <Calendar size={14} />
-                                             <span>{new Date(exam.startTime || exam.StartTime).toLocaleDateString()}</span>
-                                         </div>
-                                     </div>
-                                </div>
+                                    const timeLimit = exam.timeLimit || exam.TimeLimit || 3600;
+                                    const startTime = exam.startTime || exam.StartTime;
 
-                                <div className="exam-card-actions">
-                                    {isProfessor ? (
-                                        <div className="exam-admin-group">
-                                            <button 
-                                                className="exam-action-btn edit"
-                                                onClick={() => navigate(`/exam/${examId}/edit`)}
-                                                title="Editar Examen"
-                                            >
-                                                <Edit size={16} />
-                                            </button>
-                                            <button 
-                                                className={`exam-action-btn ${isVisible ? 'visible' : 'hidden'}`}
-                                                onClick={() => handleToggleVisibility(examId)}
-                                                disabled={processingId === examId}
-                                                title={isVisible ? "Ocultar Examen" : "Hacer Visible"}
-                                            >
-                                                {isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
-                                            </button>
-                                            {!isClosed && (
-                                                <button 
-                                                    className="exam-action-btn close"
-                                                    onClick={() => handleCloseExam(examId)}
-                                                    disabled={processingId === examId}
-                                                    title="Cerrar Examen"
-                                                >
-                                                    <Lock size={16} />
-                                                </button>
-                                            )}
-                                            <button 
-                                                className="exam-action-btn delete"
-                                                onClick={() => handleDeleteExam(examId)}
-                                                disabled={processingId === examId}
-                                                title="Eliminar Examen"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                    return (
+                                        <div key={examId} className={`challenge-card-mini public-exam-card ${isClosed ? 'closed' : ''}`}>
+                                            <div className="card-accent public"></div>
+                                            <div className="card-main">
+                                                <div className="card-top">
+                                                    <div className="title-area">
+                                                        <Trophy size={16} className="title-icon highlight" />
+                                                        <h3>{title}</h3>
+                                                    </div>
+                                                    <div className="badge-group">
+                                                        {isClosed && <span className="status-badge closed">Cerrado</span>}
+                                                        {!isVisible && <span className="status-badge private">Privado</span>}
+                                                        {isVisible && <span className="status-badge public">{visibility === 'course' ? 'Curso' : 'Público'}</span>}
+                                                    </div>
+                                                </div>
+                                                <p className="description-text">{desc}</p>
+                                                
+                                                <div className="card-footer-mini">
+                                                    <div className="stats-mini">
+                                                        <div className="stat">
+                                                            <Clock size={14} />
+                                                            <span>{Math.floor(timeLimit / 60)} min</span>
+                                                        </div>
+                                                        <div className="stat">
+                                                            <Calendar size={14} />
+                                                            <span>{startTime ? new Date(startTime).toLocaleDateString() : 'Siempre'}</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="actions-wrapper">
+                                                        {isProfessor ? (
+                                                            <div className="exam-admin-group">
+                                                                <button onClick={() => navigate(`/exam/${examId}/edit`)} className="btn-action-mini primary" title="Editar">
+                                                                    <Edit size={14} /> Editar
+                                                                </button>
+                                                                <button onClick={() => handleToggleVisibility(examId)} className="btn-action-mini" disabled={processingId === examId} title="Visibilidad">
+                                                                    {isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+                                                                </button>
+                                                                {!isClosed && (
+                                                                    <button onClick={() => handleCloseExam(examId)} className="btn-action-mini" disabled={processingId === examId} title="Cerrar Examen">
+                                                                        <Lock size={14} />
+                                                                    </button>
+                                                                )}
+                                                                <button onClick={() => handleDeleteExam(examId)} className="btn-action-mini delete" disabled={processingId === examId} title="Eliminar Examen">
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            !isClosed && isStudentVisible && (
+                                                                <Link to={`/exam/${examId}`} className="btn-action-mini primary">
+                                                                    Iniciar Examen <ArrowRight size={16} />
+                                                                </Link>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    ) : (
-                                        !isClosed && isStudentVisible && (
-                                            <button
-                                                type="button"
-                                                className="btn-enter-exam"
-                                                onClick={() => handleStartExam(examId)}
-                                            >
-                                                Iniciar <ChevronRight size={14} />
-                                            </button>
-                                        )
-                                    )}
-                                </div>
-                            </div>
-                           );
-                        })}
+                                    );
+                                })}
                     </div>
                 )}
             </section>

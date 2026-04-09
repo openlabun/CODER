@@ -132,9 +132,30 @@ const ExamRunner = () => {
                         applySession(activeSession, realSid);
                         return { id: realSid, status: 'active', ...activeSession };
                     }
+
+                    // Step 4: Session is for a DIFFERENT exam → close it and create new
+                    if (realSid) {
+                        try {
+                            await client.post(`/submissions/sessions/${realSid}/close`);
+                            localStorage.removeItem('session_id');
+                        } catch (closeErr) {
+                            console.warn('Failed to close old session:', closeErr);
+                        }
+
+                        // Retry creating a new session
+                        try {
+                            const newSession = await tryCreate();
+                            const sid = newSession?.id || newSession?.ID;
+                            if (sid) {
+                                applySession(newSession, sid);
+                                return newSession;
+                            }
+                        } catch (retryErr) {
+                            console.error('Retry after close failed:', retryErr);
+                        }
+                    }
                 } catch (hbErr) {
                     // Heartbeat failed — session may already be frozen/expired
-                    // This is actually good — means we can try creating again
                     console.warn('Heartbeat probe failed (session may be frozen):', hbErr);
                     localStorage.removeItem('session_id');
 
@@ -151,15 +172,11 @@ const ExamRunner = () => {
                     }
                 }
 
-                // Session exists for a different exam (or same exam but we couldn't reuse)
-                // We can't close it (professor-only endpoint), so inform the user
+                // All recovery attempts failed
                 Swal.fire({
                     icon: 'info',
                     title: 'Sesión activa existente',
-                    html: `Tienes una sesión activa${sessionExamId !== examId ? ' en otro examen' : ''} que impide crear una nueva.<br/><br/>` +
-                          `<strong>Opciones:</strong><br/>` +
-                          `• Espera ~1 minuto para que la sesión anterior expire automáticamente y recarga la página.<br/>` +
-                          `• Pide a tu profesor que cierre la sesión desde su panel.`,
+                    html: 'No se pudo recuperar ni cerrar la sesión anterior.<br/>Contacta a tu profesor para asistencia.',
                 });
                 return null;
             }
@@ -256,12 +273,33 @@ const ExamRunner = () => {
         };
     }, [sessionId, navigate]);
 
-    // Clear session from localStorage when browser is closed/refreshed
-    // (The session will freeze naturally on the backend after heartbeats stop)
+    // Close session when browser is closed or refreshed
     useEffect(() => {
         if (!sessionId) return;
 
         const handleBeforeUnload = () => {
+            const sid = sessionId || localStorage.getItem('session_id');
+            if (!sid) return;
+
+            const baseURL = client.defaults.baseURL || '';
+            const token = localStorage.getItem('token');
+            const email = localStorage.getItem('user_email');
+            const url = `${baseURL}/submissions/sessions/${sid}/close`;
+
+            try {
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-User-Email': email || '',
+                        'Content-Type': 'application/json',
+                    },
+                    keepalive: true,
+                    body: '{}',
+                });
+            } catch (e) {
+                // Best-effort
+            }
             localStorage.removeItem('session_id');
         };
 
@@ -283,7 +321,11 @@ const ExamRunner = () => {
                     clearInterval(timerRef.current);
                     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
 
-                    // Stop heartbeat — session will freeze/expire on backend naturally
+                    // Close session on the backend
+                    const sid = sessionId || localStorage.getItem('session_id');
+                    if (sid) {
+                        client.post(`/submissions/sessions/${sid}/close`).catch(() => {});
+                    }
                     localStorage.removeItem('session_id');
                     setSessionId(null);
 
@@ -460,9 +502,15 @@ const ExamRunner = () => {
         });
 
         if (isConfirmed) {
-            // Stop heartbeat — backend will freeze session after ~60s inactivity.
-            // On next exam entry, CreateSession auto-expires frozen sessions.
-            // (Note: close endpoint is professor-only, so students can't call it)
+            // Close session on the backend
+            const activeSessionId = sessionId || localStorage.getItem('session_id');
+            if (activeSessionId) {
+                try {
+                    await client.post(`/submissions/sessions/${activeSessionId}/close`);
+                } catch (err) {
+                    console.warn('Failed to close session:', err);
+                }
+            }
             if (heartbeatRef.current) clearInterval(heartbeatRef.current);
             if (timerRef.current) clearInterval(timerRef.current);
             localStorage.removeItem('session_id');

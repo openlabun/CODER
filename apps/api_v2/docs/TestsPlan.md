@@ -487,7 +487,7 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 7: Obtener la sesión
   
   ```
-  go test -v ./test/use_cases/submission -run 
+  go test -v ./test/use_cases/submission -run TestSessionHeartbeat
   ```
 
 - **Congelamiento y Bloqueo de Sesiones:**
@@ -519,7 +519,7 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 13: Obtener la sesión y comprobar que está bloqueada
   
   ```
-  go test -v ./test/use_cases/submission -run
+  go test -v ./test/use_cases/submission -run TestSessionFreezeAndBlock
   ```
 
 - **Creación y obtención de Revisiones (`Submission`):**
@@ -549,7 +549,7 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 12: Obtener el `status` de la revisión
   
   ```
-  go test -v ./test/use_cases/submission -run
+  go test -v ./test/use_cases/submission -run TestSubmissionCreateAndRead
   ```
 
 - **Revisiones Inválidas:**
@@ -593,7 +593,7 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 19: Crear una revisión (espera `error`)
   
   ```
-  
+  go test -v ./test/use_cases/submission -run TestInvalidSubmissions
   ```
 
 - **Ejecución de Revisiones:**
@@ -615,7 +615,7 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 8: Obtener el `status` de la revisión hasta que su estado sea `accepted`
   
   ```
-  
+  go test -v ./test/use_cases/submission -run TestSubmissionExecution
   ```
 
 - **Puntaje de Revisiones:**
@@ -641,7 +641,65 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 9: Confirmar valor del atributo `Score` de la revisión corresponde a 6
   
   ```
-  
+  go test -v ./test/use_cases/submission -run TestSubmissionScoring
   ```
 
 ### Pruebas de Rendimiento
+
+Este es un conjunto de pruebas desarrolladas para **medir la resiliencia del sistema** ante solicitudes recurrentes en secciones específicas de los casos de uso contemplados para la aplicación. Para cada sección marcada como **crítica** se ejecutarán *n* solicitudes simultáneas y se medirá el tiempo de respuesta de cada una y el tiempo promedio. 
+
+Posterior a la finalización del paso se mostrarán los datos individuales de cada medición. Y al finalizar la prueba se mostrará la solicitud que más demoró, la que menos y el promedio.
+
+- **Inicios de sesión simultáneos:**
+  
+  - Paso 1: Registro de usuarios de estudiantes (**crítica**)
+  
+  - Paso 2: Inicio de sesión de usuarios de estudiantes (**crítica**)
+  
+  - Paso 3: Refrescar token (**crítica**)
+  
+  - Paso 4: Obtener datos del usuario (**crítica**)
+
+- **Lista de exámenes (`Exam`) públicos:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear exámenes públicos (**crítica**)
+  
+  - Paso 3: Iniciar sesión con usuario de estudiante
+  
+  - Paso 4: Obtener lista de exámenes públicos (**crítica**)
+
+- **Activación y Heartbeat de sesiones (`Session`):**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público
+  
+  - Paso 3: Iniciar sesión con usuarios de estudiantes (**crítica**)
+  
+  - Paso 4: Cada usuario creará una sesión (**crítica**)
+  
+  - Paso 5: Cada usuario hará heartbeat a la sesión (**crítica**)
+  
+  - Paso 6: Esperar el tiempo de `FREEZE_TIME`
+  
+  - Paso 7: Cada usuario hará heartbeat a la sesión (**crítica**)
+
+- **Revisiones (`Submission`) simultáneas:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público
+  
+  - Paso 3: Crear reto
+  
+  - Paso 4: Crear casos de prueba
+  
+  - Paso 5: Crear punto de examen
+  
+  - Paso 6: Iniciar sesión con usuarios de estudiantes (**crítica**)
+  
+  - Paso 7: Cada usuario subirá una revisión (**crítica**)
+  
+  - Paso 8: Cada usuario revisará el estado de la revisión hasta obtener `accepted` (**crítica**)

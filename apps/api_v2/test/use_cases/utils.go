@@ -11,9 +11,6 @@ import (
 
 func EnsureAuthUserAccess(t *testing.T, app *container.Application, email, password, name string) *user_dtos.UserAccess {
 	t.Helper()
-
-	t.Logf("[STEP] Attempt login for %s", email)
-	t.Logf("password: %s", password)
 	access, err := app.UserModule.Login.Execute(email, password)
 	if err != nil {
 		t.Logf("login failed for %s: %v", email, err)
@@ -34,40 +31,14 @@ func EnsureAuthUserAccess(t *testing.T, app *container.Application, email, passw
 	return registered
 }
 
-func BuildContext(token string, email string) context.Context {
+func buildContext(token string, email string) context.Context {
 	ctx := context.Background()
 	ctx = services.WithAccessToken(ctx, token)
 	ctx = services.WithUserEmail(ctx, email)
 	return ctx
 }
 
-func TeacherCourseCtx(teacherAccess *user_dtos.UserAccess) context.Context {
-	return BuildContext(teacherAccess.Token.AccessToken, teacherAccess.UserData.Email)
-}
-
-func StudentCtx (studentAccess *user_dtos.UserAccess) context.Context {
-	return BuildContext(studentAccess.Token.AccessToken, studentAccess.UserData.Email)
-}
-
-
-func EnsureTeacherAccess(t *testing.T, app *container.Application) *user_dtos.UserAccess {
-	t.Helper()
-	t.Log("[AUTH] Intentando login de profesor")
-
-	email := "test@test.com"
-	password := "Password123!"
-
-	return EnsureAuthUserAccess(t, app, email, password, "Teacher Test")
-}
-
-
-func EnsureStudentAccess(t *testing.T, app *container.Application) *user_dtos.UserAccess {
-	t.Helper()
-	t.Log("[AUTH] Intentando login de estudiante")
-
-	email := "stud@test.com"
-	password := "Password123!"
-
-	return EnsureAuthUserAccess(t, app, email, password, "Student Test")
+func BuildUserCtx(access *user_dtos.UserAccess) context.Context {
+	return buildContext(access.Token.AccessToken, access.UserData.Email)
 }
 

@@ -3,6 +3,8 @@ package session_states
 import (
 	"fmt"
 	"time"
+	"os"
+	"strconv"
 
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	SessionEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
@@ -87,7 +89,7 @@ func ApplyTranstion(session *SessionEntities.Session, to SessionEntities.Session
 	return nil
 }
 
-func validateSessionExamBinding(session *SessionEntities.Session, exam ExamEntities.Exam) error {
+func validateSessionExamBinding(session *SessionEntities.Session, exam *ExamEntities.Exam) error {
 	if session.ExamID == "" {
 		return fmt.Errorf("session exam id is empty")
 	}
@@ -103,9 +105,9 @@ func validateSessionExamBinding(session *SessionEntities.Session, exam ExamEntit
 	return nil
 }
 
-func shouldExpireSession(session *SessionEntities.Session, exam ExamEntities.Exam, now time.Time) bool {
+func shouldExpireSession(session *SessionEntities.Session, exam *ExamEntities.Exam, now time.Time) bool {
 	if validateStateTransition(session, SessionEntities.SessionStatusExpired) != nil {
-		return true
+		return false
 	}
 
 	// If exam has unlimited time, it cannot expire
@@ -127,6 +129,9 @@ func shouldExpireSession(session *SessionEntities.Session, exam ExamEntities.Exa
 		}
 	}
 
+	// Update timeLeft
+	session.TimeLeft = int(session.StartedAt.Add(time.Duration(exam.TimeLimit) * time.Second).Sub(now).Seconds())
+
 	// Check if session has no time left
 	if session.TimeLeft <= 0 {
 		return true
@@ -136,19 +141,25 @@ func shouldExpireSession(session *SessionEntities.Session, exam ExamEntities.Exa
 }
 
 func shouldFreezeSession(session *SessionEntities.Session, now time.Time) bool {
+	freeze_time, err := strconv.Atoi(os.Getenv("SESSION_FREEZE_TIME"))
+	if err != nil {
+		freeze_time = 60 // default freeze time in seconds
+	}
+	freeze_time_duration := time.Duration(freeze_time) * time.Second
+	
 	if validateStateTransition(session, SessionEntities.SessionStatusFrozen) != nil {
 		return false
 	}
 
 	// If user has been inactive for more than 60 seconds, freeze the session
-	if now.Sub(session.LastHeartbeat) > 60*time.Second { //TODO: make this configurable from env
+	if now.Sub(session.LastHeartbeat) > freeze_time_duration {
 		return true
 	}
 
 	return false
 }
 
-func shouldBlockSession(session *SessionEntities.Session, exam ExamEntities.Exam) bool {
+func shouldBlockSession(session *SessionEntities.Session, exam *ExamEntities.Exam) bool {
 	if validateStateTransition(session, SessionEntities.SessionStatusBlocked) != nil {
 		return false
 	}
@@ -168,7 +179,7 @@ func shouldBlockSession(session *SessionEntities.Session, exam ExamEntities.Exam
 
 func UpdateSessionStatus(
 	session *SessionEntities.Session,
-	exam ExamEntities.Exam,
+	exam *ExamEntities.Exam,
 	now time.Time,
 	heartbeat bool,
 ) error {
@@ -199,6 +210,12 @@ func UpdateSessionStatus(
 
 	if heartbeat {
 		session.LastHeartbeat = now
+
+		if session.Status == SessionEntities.SessionStatusFrozen {
+			if err := ApplyTranstion(session, SessionEntities.SessionStatusActive); err != nil {
+				return fmt.Errorf("failed to reactivate session on heartbeat: %w", err)
+			}
+		}
 	}
 
 	return nil

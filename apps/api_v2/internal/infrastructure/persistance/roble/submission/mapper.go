@@ -20,7 +20,6 @@ func submissionToRecord(submission *Entities.Submission) map[string]any {
 	return map[string]any{
 		"ID":          strings.TrimSpace(submission.ID),
 		"Code":        submission.Code,
-		"Function":    strings.TrimSpace(submission.Function),
 		"Language":    string(submission.Language),
 		"Score":       submission.Score,
 		"TimeMsTotal": submission.TimeMsTotal,
@@ -35,7 +34,6 @@ func submissionToRecord(submission *Entities.Submission) map[string]any {
 func submissionToUpdates(submission *Entities.Submission) map[string]any {
 	return map[string]any{
 		"Code":        submission.Code,
-		"Function":    strings.TrimSpace(submission.Function),
 		"Language":    string(submission.Language),
 		"Score":       submission.Score,
 		"TimeMsTotal": submission.TimeMsTotal,
@@ -52,7 +50,6 @@ func recordToSubmission(record map[string]any) (*Entities.Submission, error) {
 	return submission_factory.ExistingSubmission(
 		asString(record["ID"]),
 		asString(record["Code"]),
-		asString(record["Function"]),
 		Entities.ProgrammingLanguage(asString(record["Language"])),
 		asInt(record["Score"]),
 		asInt(record["TimeMsTotal"]),

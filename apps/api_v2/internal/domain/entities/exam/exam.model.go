@@ -30,5 +30,5 @@ type Exam struct {
 	CreatedAt       time.Time		`json:"created_at"`
 	UpdatedAt       time.Time		`json:"updated_at"`
 	ProfessorID     string			`json:"professor_id"`
-	CourseID        string			`json:"course_id"` // Optional
+	CourseID        *string			`json:"course_id"` // Optional
 }

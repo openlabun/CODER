@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	
+	validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
@@ -70,7 +71,13 @@ func (uc *CloseExamUseCase) Execute(ctx context.Context, input dtos.CloseExamInp
 		return nil, err
 	}
 
-	// [STEP 6] Save updated exam entity
+	// [STEP 6] Validate that exam end time is not in the past
+	if err := validations.ValidateExamEndTime(exam, now); err != nil {
+		return nil, err
+	}
+
+
+	// [STEP 7] Save updated exam entity
 	exam, err = uc.examRepository.UpdateExam(ctx, exam)
 	if err != nil {
 		return nil, err

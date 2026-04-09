@@ -8,6 +8,7 @@ import (
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	exam_validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
@@ -62,7 +63,15 @@ func (uc *UpdateExamUseCase) Execute(ctx context.Context, input dtos.UpdateExamI
 		return nil, err
 	}
 
-	// [STEP 4] Save updated exam entity
+	// [STEP 4] If EndTime is being updated, validate it is not in the past
+	if input.EndTime != nil {
+		now := services.Now()
+		if err := exam_validations.ValidateExamEndTime(exam, now); err != nil {
+			return nil, err
+		}
+	}
+
+	// [STEP 5] Save updated exam entity
 	exam, err = uc.examRepository.UpdateExam(ctx, exam)
 	if err != nil {
 		return nil, err

@@ -8,18 +8,22 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	Entity "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	session_states "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 )
 
 type HeartBeatSessionUseCase struct {
 	userRepository userRepository.UserRepository
+	examRepository examRepository.ExamRepository
 	sessionRepository submissionRepository.SessionRepository
 }
 
-func NewHeartBeatSessionUseCase(userRepository userRepository.UserRepository, sessionRepository submissionRepository.SessionRepository) *HeartBeatSessionUseCase {
+func NewHeartBeatSessionUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, sessionRepository submissionRepository.SessionRepository) *HeartBeatSessionUseCase {
 	return &HeartBeatSessionUseCase{
 		userRepository:  userRepository,
+		examRepository:  examRepository,
 		sessionRepository: sessionRepository,
 	}
 }
@@ -52,10 +56,16 @@ func (uc *HeartBeatSessionUseCase) Execute(ctx context.Context, input dtos.Heart
 		return nil, fmt.Errorf("no active session found for student")
 	}
 
-	// [STEP 4] Update its last_heartbeat timestamp
-	active_session, err = uc.sessionRepository.UpdateSession(ctx, active_session)
+	// [STEP 4] Get exam for the session
+	exam, err := uc.examRepository.GetExamByID(ctx, active_session.ExamID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get exam for session: %w", err)
+	}
+
+	// [STEP 4] Update its last_heartbeat timestamp
+	err = session_states.UpdateSessionStatus(active_session, exam, services.Now(), true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update session status: %w", err)
 	}
 
 	// [STEP 5] Save in database and return session entity

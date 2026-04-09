@@ -39,7 +39,7 @@ func (uc *GetPublicExamsUseCase) Execute(ctx context.Context) ([]*Entities.Exam,
 	}
 
 	// [STEP 2] Get all published exams
-	public_exams, err := uc.examRepository.GetPublicExams(ctx, string(Entities.ChallengeStatusPublished))
+	public_exams, err := uc.examRepository.GetPublicExams(ctx, string(Entities.VisibilityPublic))
 	if err != nil {
 		return nil, err
 	}

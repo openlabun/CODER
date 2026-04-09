@@ -126,11 +126,11 @@ func (r *ExamRepository) GetPublicExams(ctx context.Context, visibility string) 
 	// TODO: Replace with null comparison in DB query
 	public_records := make([]map[string]any, 0, len(records))
 	for _, record := range records {
-		if record["CourseID"] != nil {
+		if record["CourseID"] == nil || strings.TrimSpace(fmt.Sprint(record["CourseID"])) == "" {
 			public_records = append(public_records, record)
 		}
 	}
-
+	
 	exams := make([]*Entities.Exam, 0, len(public_records))
 	for _, record := range public_records {
 		exam, mapErr := recordToExam(record)

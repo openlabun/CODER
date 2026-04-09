@@ -100,7 +100,7 @@ func upsertIOVariable(
 ) (*examEntities.IOVariable, error) {
 	existing, err := ioVariableRepository.GetIOVariableByID(ctx, ioVariable.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get IO variable by ID: %w", err)
 	}
 
 	if existing == nil {

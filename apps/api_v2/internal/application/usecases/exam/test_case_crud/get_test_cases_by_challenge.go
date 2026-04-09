@@ -104,13 +104,13 @@ func (uc *GetTestCasesByChallengeUseCase) Execute(ctx context.Context, input dto
 		}
 
 		// [STEP 5.3] Validate if exam is public for course and student is in the course associated with the exam
-		if exam.Visibility == exam_entities.VisibilityCourse {
+		if exam.Visibility == exam_entities.VisibilityCourse && exam.CourseID != nil {
 			courses, err := uc.courseRepository.GetCoursesByStudentID(ctx, user.ID)
 			if err != nil {
 				return nil, fmt.Errorf("error retrieving courses for student with id %q: %v", user.ID, err)
 			}
 
-			if !studentInCourse(exam.CourseID, courses) {
+			if !studentInCourse(*exam.CourseID, courses) {
 				return nil, fmt.Errorf("user does not have permissions to view test cases for challenge with id %q", input.ChallengeID)
 			}
 		// [STEP 5.4] Validate if exam is not public

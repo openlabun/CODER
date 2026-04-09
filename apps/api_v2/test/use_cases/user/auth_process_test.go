@@ -30,7 +30,7 @@ func TestAuthProcess(t *testing.T) {
 	t.Logf("[OK] Student access resolved. studentID=%s", studentAccess.UserData.ID)
 
 	t.Log("[STEP 4] Get user data for teacher and verify consistency")
-	ctx := utils.BuildContext(teacherAccess.Token.AccessToken, teacherAccess.UserData.Email)
+	ctx := utils.BuildUserCtx(teacherAccess)
 	teacherData, err := app.UserModule.GetData.Execute(ctx, "test@test.com")
 	if err != nil {
 		t.Fatalf("teacher get data failed: %v", err)
@@ -47,7 +47,7 @@ func TestAuthProcess(t *testing.T) {
 	t.Log("[OK] Teacher get-data validated")
 
 	t.Log("[STEP 5] Get user data for student and verify consistency")
-	ctx = utils.BuildContext(studentAccess.Token.AccessToken, studentAccess.UserData.Email)
+	ctx = utils.BuildUserCtx(studentAccess)
 	studentData, err := app.UserModule.GetData.Execute(ctx, "stud@test.com")
 	if err != nil {
 		t.Fatalf("student get data failed: %v", err)

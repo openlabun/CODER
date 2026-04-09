@@ -15,7 +15,7 @@ func NewSession(studentID string, exam *ExamEntities.Exam) (*Entities.Session, e
 	now := time.Now()
 
 	timeLeft := 0
-	if exam.TimeLimit < 0 {
+	if exam.TimeLimit > 0 {
 		timeLeft = exam.TimeLimit
 	}
 	

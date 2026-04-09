@@ -16,7 +16,6 @@ import (
 func MapCreateSubmissionInputToSubmissionEntity(userID string, input dtos.CreateSubmissionInput) (*Entities.Submission, error) {
 	submission, err := factory.NewSubmission(
 		input.Code,
-		input.Function,
 		Entities.ProgrammingLanguage(input.Language),
 		input.ChallengeID,
 		input.SessionID,
@@ -90,16 +89,12 @@ func MapSubmissionResultToPublishedDTO(
 	test_case examEntities.TestCase, 
 	challenge examEntities.Challenge,
 ) *dtos.SubmissionResultPublishedDTO {
-
-	code, err := services.AppendFunctionCall(submission.Code,submission.Function, submission.Language, test_case.Input)
-	if err != nil {
-		return nil
-	}
-
+	input := services.ExtractInputFromTestCase(test_case)
 
 	return &dtos.SubmissionResultPublishedDTO{
 		SubmissionID: submission.ID,
-		Code: code,
+		Code: submission.Code,
+		Input: input,
 		ResultID: result.ID,
 		TimeLimitMs: challenge.WorkerTimeLimit,
 		MemoryLimitMb: challenge.WorkerMemoryLimit,

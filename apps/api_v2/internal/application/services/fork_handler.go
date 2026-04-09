@@ -26,8 +26,15 @@ func ForkChallenge(ctx context.Context,
 	}
 
 	// [STEP 2] Fork IO Variables of Challenge
-	output := forkIOVariable(challenge.OutputVariable)
-	input := forkIOVariables(challenge.InputVariables)
+	output, err := forkIOVariable(challenge.OutputVariable)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fork challenge output variable: %w", err)
+	}
+
+	input, err := forkIOVariables(challenge.InputVariables)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fork challenge input variables: %w", err)
+	}
 
 	// [STEP 3] Create new Challenge with forked IO Variables
 	forkedChallenge, err := factory.NewChallenge(
@@ -39,7 +46,7 @@ func ForkChallenge(ctx context.Context,
 		challenge.WorkerTimeLimit,
 		challenge.WorkerMemoryLimit,
 		input,
-		output,
+		*output,
 		challenge.Constraints,
 		userID,
 	)
@@ -78,13 +85,20 @@ func forkTestCase(testCase *Entities.TestCase,
 		return nil, fmt.Errorf("testCase is nil")
 	}
 
-	input := forkIOVariables(testCase.Input)
-	output := forkIOVariable(testCase.ExpectedOutput)
+	input, err := forkIOVariables(testCase.Input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fork test case input: %w", err)
+	}
+
+	output, err := forkIOVariable(testCase.ExpectedOutput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fork test case output: %w", err)
+	}
 
 	return factory.NewTestCase(
 		testCase.Name,
 		input,
-		output,
+		*output,
 		testCase.IsSample,
 		testCase.Points,
 		newChallengeID,
@@ -106,18 +120,22 @@ func forkTestCases(testCases []*Entities.TestCase,
 	return forkedTestCases, nil
 }
 
-func forkIOVariable(ioVar Entities.IOVariable) Entities.IOVariable {
-	return Entities.IOVariable{
-		Name:  ioVar.Name,
-		Type:  ioVar.Type,
-		Value: ioVar.Value,
-	}
+func forkIOVariable(ioVar Entities.IOVariable) (*Entities.IOVariable, error) {
+	return factory.NewIOVariable(
+		ioVar.Name,
+		ioVar.Type,
+		ioVar.Value,
+	)
 }
 
-func forkIOVariables(ioVars []Entities.IOVariable) []Entities.IOVariable {
+func forkIOVariables(ioVars []Entities.IOVariable) ([]Entities.IOVariable, error) {
 	forkedVars := make([]Entities.IOVariable, len(ioVars))
 	for i, ioVar := range ioVars {
-		forkedVars[i] = forkIOVariable(ioVar)
+		forkedVar, err := forkIOVariable(ioVar)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fork IO variable %s: %w", ioVar.Name, err)
+		}
+		forkedVars[i] = *forkedVar
 	}
-	return forkedVars
+	return forkedVars, nil
 }

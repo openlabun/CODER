@@ -6,6 +6,7 @@ from typing import Optional
 class SubmissionResult:
     submission_id: str
     code: str
+    input: str
     result_id: str
     status: str
     var_type: type

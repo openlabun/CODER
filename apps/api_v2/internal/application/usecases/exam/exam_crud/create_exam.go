@@ -6,6 +6,7 @@ import (
 	
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
+	courseRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 
@@ -16,12 +17,14 @@ import (
 
 type CreateExamUseCase struct {
 	userRepository userRepository.UserRepository
+	courseRepository courseRepository.CourseRepository
 	examRepository examRepository.ExamRepository
 }
 
-func NewCreateExamUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository) *CreateExamUseCase {
+func NewCreateExamUseCase(userRepository userRepository.UserRepository, courseRepository courseRepository.CourseRepository, examRepository examRepository.ExamRepository) *CreateExamUseCase {
 	return &CreateExamUseCase{
 		userRepository: userRepository,
+		courseRepository: courseRepository,
 		examRepository: examRepository,
 	}
 }
@@ -44,6 +47,18 @@ func (uc *CreateExamUseCase) Execute(ctx context.Context, input dtos.CreateExamI
 
 	if user.Role != user_entities.UserRoleProfessor {
 		return nil, fmt.Errorf("user does not have permissions to create an exam")
+	}
+
+	// [STEP 2] Validate course association if provided
+	if input.CourseID != nil {
+		course, err := uc.courseRepository.GetCourseByID(ctx, *input.CourseID)
+		if err != nil {
+			return nil, err
+		}
+		
+		if course == nil {
+			return nil, fmt.Errorf("course with ID %q does not exist", *input.CourseID)
+		}
 	}
 
 	// [STEP 2] Create exam entity with user provided values

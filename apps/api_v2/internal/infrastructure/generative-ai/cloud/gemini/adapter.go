@@ -47,6 +47,7 @@ func (s *GeminiAdapter) GenerateContent(ctx context.Context, prompt string) (str
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-goog-api-key", s.apiKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

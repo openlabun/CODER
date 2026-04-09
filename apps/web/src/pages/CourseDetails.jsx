@@ -138,7 +138,8 @@ const CourseDetails = () => {
 
     const handleStartExam = async (examId) => {
         try {
-            const session = await createExamSession(examId);
+            const userId = user?.id || user?.ID || '';
+            const session = await createExamSession(examId, userId);
             const sessionId = session?.id || session?.ID;
             if (sessionId) {
                 localStorage.setItem('session_id', sessionId);
@@ -185,57 +186,53 @@ const CourseDetails = () => {
                 )}
             </div>
 
-            <section className="challenges-section-new">
-                <div className="section-header">
-                    <h2>🎯 Retos del Curso</h2>
-                    {isProfessor && (
+            {isProfessor && (
+                <section className="challenges-section-new">
+                    <div className="section-header">
+                        <h2>🎯 Retos del Curso</h2>
                         <button className="btn-add-mini" onClick={() => navigate(`/challenges/create?courseId=${id}`)}>
                             Nuevo Reto
                         </button>
-                    )}
-                </div>
-                {challenges.length === 0 ? (
-                    <div className="empty-state-mini-alt">
-                        <div className="empty-state-icon">🎯</div>
-                        <h3>No hay retos todavía</h3>
-                        <p>Aún no se han asignado retos a este curso.</p>
-                        {isProfessor && (
+                    </div>
+                    {challenges.length === 0 ? (
+                        <div className="empty-state-mini-alt">
+                            <div className="empty-state-icon">🎯</div>
+                            <h3>No hay retos todavía</h3>
+                            <p>Aún no se han asignado retos a este curso.</p>
                             <p className="empty-state-hint" style={{marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.7}}>
                                 Haz clic en "Nuevo Reto" para añadir desafíos.
                             </p>
-                        )}
-                    </div>
-                ) : (
-                    <div className="challenges-grid-compact">
-                        {challenges.map(challenge => (
-                            <div key={challenge.id} className="challenge-card-mini">
-                                <div className={`card-accent ${challenge.difficulty}`}></div>
-                                <div className="card-main">
-                                    <div className="card-top">
-                                        <div className="title-area">
-                                            <Code size={16} className="title-icon" />
-                                            <h3>{challenge.title}</h3>
-                                        </div>
-                                        <span className={`diff-pill ${challenge.difficulty}`}>
-                                            {challenge.difficulty === 'easy' ? 'Fácil' : challenge.difficulty === 'hard' ? 'Difícil' : 'Medio'}
-                                        </span>
-                                    </div>
-                                    <p className="description-text">
-                                        {challenge.description || 'Sin descripción disponible.'}
-                                    </p>
-                                    <div className="card-footer-mini">
-                                        <div className="stats-mini">
-                                            <div className="stat">
-                                                <Clock size={12} />
-                                                <span>{challenge.workerTimeLimit || 1000}ms</span>
+                        </div>
+                    ) : (
+                        <div className="challenges-grid-compact">
+                            {challenges.map(challenge => (
+                                <div key={challenge.id} className="challenge-card-mini">
+                                    <div className={`card-accent ${challenge.difficulty}`}></div>
+                                    <div className="card-main">
+                                        <div className="card-top">
+                                            <div className="title-area">
+                                                <Code size={16} className="title-icon" />
+                                                <h3>{challenge.title}</h3>
                                             </div>
-                                            <div className="stat">
-                                                <Target size={12} />
-                                                <span>{challenge.workerMemoryLimit || 256}MB</span>
-                                            </div>
+                                            <span className={`diff-pill ${challenge.difficulty}`}>
+                                                {challenge.difficulty === 'easy' ? 'Fácil' : challenge.difficulty === 'hard' ? 'Difícil' : 'Medio'}
+                                            </span>
                                         </div>
-                                        <div className="actions-wrapper">
-                                            {isProfessor && (
+                                        <p className="description-text">
+                                            {challenge.description || 'Sin descripción disponible.'}
+                                        </p>
+                                        <div className="card-footer-mini">
+                                            <div className="stats-mini">
+                                                <div className="stat">
+                                                    <Clock size={12} />
+                                                    <span>{challenge.workerTimeLimit || 1000}ms</span>
+                                                </div>
+                                                <div className="stat">
+                                                    <Target size={12} />
+                                                    <span>{challenge.workerMemoryLimit || 256}MB</span>
+                                                </div>
+                                            </div>
+                                            <div className="actions-wrapper">
                                                 <div className="teacher-actions">
                                                     <button 
                                                         className="action-btn edit" 
@@ -248,18 +245,18 @@ const CourseDetails = () => {
                                                         <Edit size={14} />
                                                     </button>
                                                 </div>
-                                            )}
-                                            <Link to={`/challenge/${challenge.id}`} className="btn-action-mini">
-                                                Resolver <ChevronRight size={14} />
-                                            </Link>
+                                                <Link to={`/challenge/${challenge.id}`} className="btn-action-mini">
+                                                    Resolver <ChevronRight size={14} />
+                                                </Link>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section>
+                            ))}
+                        </div>
+                    )}
+                </section>
+            )}
 
             <section className="exams-section-new">
                 <div className="section-header">
@@ -311,6 +308,13 @@ const CourseDetails = () => {
                                 <div className="exam-card-actions">
                                     {isProfessor ? (
                                         <div className="exam-admin-group">
+                                            <button 
+                                                className="exam-action-btn edit"
+                                                onClick={() => navigate(`/exam/${examId}/edit`)}
+                                                title="Editar Examen"
+                                            >
+                                                <Edit size={16} />
+                                            </button>
                                             <button 
                                                 className={`exam-action-btn ${isVisible ? 'visible' : 'hidden'}`}
                                                 onClick={() => handleToggleVisibility(examId)}

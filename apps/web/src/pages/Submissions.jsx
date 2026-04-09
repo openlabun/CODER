@@ -22,17 +22,31 @@ const Submissions = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const { user } = useContext(AuthContext);
+    const isProfessor = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
 
     useEffect(() => {
         const fetchSubmissions = async () => {
-            if (!user?.id) return;
+            if (!user) return;
+            const userId = user.id || user.ID;
+            if (!userId) {
+                setLoading(false);
+                return;
+            }
             try {
-                // Using user-specific endpoint to avoid broad list errors
-                const { data } = await client.get(`/submissions/user/${user.id}`);
+                // Students use /submissions/{id}, professors use /submissions/user/{id}
+                const endpoint = isProfessor 
+                    ? `/submissions/user/${userId}` 
+                    : `/submissions/${userId}`;
+                const { data } = await client.get(endpoint);
                 setSubmissions(Array.isArray(data) ? data : (data.items || []));
             } catch (err) {
                 console.error('Error loading submissions:', err);
-                setError('No se pudieron cargar tus envíos.');
+                // Don't show error for students if endpoint returns empty
+                if (!isProfessor) {
+                    setSubmissions([]);
+                } else {
+                    setError('No se pudieron cargar los envíos.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -84,8 +98,11 @@ const Submissions = () => {
                     <div className="icon-circle-mini">
                         <Terminal size={32} />
                     </div>
-                    <h3>Sin envíos todavía</h3>
-                    <p>¡Acepta un reto y envía tu primera solución!</p>
+                    <h3>{isProfessor ? 'Sin envíos todavía' : 'Historial de Envíos'}</h3>
+                    <p>{isProfessor 
+                        ? '¡Los envíos de tus estudiantes aparecerán aquí!' 
+                        : 'Tus envíos se registran dentro de cada examen que resuelves. Accede a un examen desde "Exámenes Públicos" o desde tu curso para ver tu progreso.'}
+                    </p>
                 </div>
             ) : (
                 <div className="submissions-list-mini">

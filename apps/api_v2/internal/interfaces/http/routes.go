@@ -176,13 +176,13 @@ func registerCoursesRoutes(app *fiber.App, appContainer *container.Application) 
 func registerExamsRoutes(app *fiber.App, appContainer *container.Application) {
 	exams := app.Group("/exams")
 	exams.Post("/", exam_post_create.Handler(appContainer))
+	exams.Get("/public", exam_get_public.Handler(appContainer))
 	exams.Get("/course/:courseId", exam_get_by_course_id.Handler(appContainer))
 	exams.Get("/:id", exam_get_by_id.Handler(appContainer))
 	exams.Patch("/:id", exam_patch_update.Handler(appContainer))
 	exams.Delete("/:id", exam_delete_by_id.Handler(appContainer))
 	exams.Post("/:id/visibility", exam_post_change_visibility.Handler(appContainer))
 	exams.Post("/:id/close", exam_post_close.Handler(appContainer))
-	exams.Get("/public", exam_get_public.Handler(appContainer))
 	exams.Get("/:examId/items", exam_get_exam_items.Handler(appContainer))
 }
 

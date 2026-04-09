@@ -43,19 +43,6 @@ const ExamRunner = () => {
         }
     }, [user, id, navigate]);
 
-    const extractPythonFunctionSignature = (sourceCode) => {
-        const match = sourceCode.match(/^\s*(?:async\s+)?def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)\s*(?:->\s*[^:]+)?\s*:/m);
-        if (!match) return '';
-        const functionName = match[1];
-        const rawArgs = match[2].trim();
-        if (!rawArgs) return `${functionName}()`;
-        const normalizedArgs = rawArgs
-            .split(',').map(a => a.trim()).filter(Boolean)
-            .map(a => a.replace(/^\*+/, '')).map(a => a.split(':')[0])
-            .map(a => a.split('=')[0]).map(a => a.trim()).filter(Boolean);
-        return `${functionName}(${normalizedArgs.join(', ')})`;
-    };
-
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
     // Format seconds as MM:SS or HH:MM:SS
@@ -324,7 +311,7 @@ const ExamRunner = () => {
                     // Close session on the backend
                     const sid = sessionId || localStorage.getItem('session_id');
                     if (sid) {
-                        client.post(`/submissions/sessions/${sid}/close`).catch(() => {});
+                        client.post(`/submissions/sessions/${sid}/close`).catch(() => { });
                     }
                     localStorage.removeItem('session_id');
                     setSessionId(null);
@@ -386,22 +373,17 @@ const ExamRunner = () => {
             // Try to create/retrieve session one more time
             const session = await ensureSession(id);
             if (!session) {
-                Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No se pudo obtener una sesión activa. Reintenta o vuelve a entrar al examen.' });
+                Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No se pudo obtener una sesión activa. Reintenta o vuelve a entrar al examen.', customClass: { container: 'swal-ultra-high-z' } });
                 return;
             }
         }
 
         const activeSessionId = sessionId || localStorage.getItem('session_id');
         if (!activeSessionId) {
-            Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No hay una sesión de examen activa. Vuelve a entrar al examen.' });
+            Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No hay una sesión de examen activa. Vuelve a entrar al examen.', customClass: { container: 'swal-ultra-high-z' } });
             return;
         }
 
-        const functionSignature = extractPythonFunctionSignature(currentCode);
-        if (!functionSignature) {
-            setOutput('Debes definir una función en Python. Ejemplo: def solve(a, b):');
-            return;
-        }
 
         setSubmitting(true);
         setOutput('Enviando solución...');
@@ -415,11 +397,10 @@ const ExamRunner = () => {
             }
 
             const { data } = await client.post('/submissions', {
-                challenge_id: challengeId,
                 code: currentCode,
-                function: functionSignature,
-                language,
-                session_id: activeSessionId,
+                language: language,
+                challenge_id: challengeId,
+                session_id: activeSessionId
             });
 
             const submissionId = data?.id || data?.ID;
@@ -467,8 +448,12 @@ const ExamRunner = () => {
 
                         if (score === 100) {
                             Swal.fire({
-                                icon: 'success', title: '¡Correcto!', text: `Todos los casos de prueba pasaron. (${currentChallenge.points} pts)`,
-                                timer: 2500, toast: true, position: 'top-end', showConfirmButton: false
+                                icon: 'success',
+                                title: '¡Correcto!',
+                                text: `Todos los casos de prueba pasaron. (+${currentChallenge.points} pts)`,
+                                confirmButtonText: 'Genial',
+                                customClass: { container: 'swal-ultra-high-z' },
+                                backdrop: `rgba(0,0,0,0.4)`
                             });
                         }
 
@@ -483,6 +468,12 @@ const ExamRunner = () => {
         } catch (err) {
             const msg = err?.response?.data?.error || err?.message || 'Error al enviar';
             setOutput(`Error: ${msg}`);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Envío',
+                text: msg,
+                customClass: { container: 'swal-ultra-high-z' }
+            });
         } finally {
             setSubmitting(false);
         }
@@ -771,53 +762,53 @@ const ExamRunner = () => {
 
                             {/* Output panel: Redesigned for maximum visibility */}
                             <div style={{
-                                height: output ? '250px' : '50px', 
+                                height: output ? '250px' : '50px',
                                 background: '#0d1117',
-                                borderTop: '2px solid #30363d', 
+                                borderTop: '2px solid #30363d',
                                 transition: 'height 0.3s ease-in-out',
-                                overflow: 'auto', 
+                                overflow: 'auto',
                                 padding: '1rem 1.5rem',
                                 boxShadow: '0 -4px 15px rgba(0,0,0,0.5)'
                             }}>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between', 
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
                                     alignItems: 'center',
                                     marginBottom: output ? '1rem' : 0,
                                     paddingBottom: output ? '0.75rem' : 0,
                                     borderBottom: output ? '1px solid rgba(255,255,255,0.1)' : 'none'
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{ 
-                                            width: '8px', 
-                                            height: '8px', 
-                                            borderRadius: '50%', 
+                                        <div style={{
+                                            width: '8px',
+                                            height: '8px',
+                                            borderRadius: '50%',
                                             background: currentResult?.status === 'accepted' ? '#10b981' : currentResult ? '#ef4444' : '#8b949e',
                                             boxShadow: currentResult ? `0 0 8px ${currentResult?.status === 'accepted' ? '#10b981' : '#ef4444'}` : 'none'
                                         }}></div>
-                                        <span style={{ 
-                                            color: '#e6edf3', 
-                                            fontSize: '0.9rem', 
-                                            fontWeight: 800, 
-                                            letterSpacing: '1px' 
+                                        <span style={{
+                                            color: '#e6edf3',
+                                            fontSize: '0.9rem',
+                                            fontWeight: 800,
+                                            letterSpacing: '1px'
                                         }}>
                                             CONSOLA DE RESULTADOS
                                         </span>
                                     </div>
-                                    
+
                                     {currentResult && (
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <span style={{ 
-                                                fontSize: '0.85rem', 
-                                                fontWeight: 700, 
+                                            <span style={{
+                                                fontSize: '0.85rem',
+                                                fontWeight: 700,
                                                 color: currentResult.status === 'accepted' ? '#10b981' : '#ef4444'
                                             }}>
                                                 {currentResult.status === 'accepted' ? 'ACEPTADO' : 'FALLIDO'}
                                             </span>
                                             <span style={{
-                                                fontSize: '1rem', 
-                                                fontWeight: 900, 
-                                                padding: '4px 12px', 
+                                                fontSize: '1rem',
+                                                fontWeight: 900,
+                                                padding: '4px 12px',
                                                 borderRadius: '8px',
                                                 background: currentResult.status === 'accepted' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
                                                 color: currentResult.status === 'accepted' ? '#10b981' : '#ef4444',
@@ -829,12 +820,12 @@ const ExamRunner = () => {
                                     )}
                                 </div>
                                 {output && (
-                                    <pre style={{ 
-                                        color: '#d1d5db', 
-                                        fontSize: '1rem', 
+                                    <pre style={{
+                                        color: '#d1d5db',
+                                        fontSize: '1rem',
                                         lineHeight: '1.6',
-                                        marginTop: '0.5rem', 
-                                        whiteSpace: 'pre-wrap', 
+                                        marginTop: '0.5rem',
+                                        whiteSpace: 'pre-wrap',
                                         fontFamily: '"Fira Code", "JetBrains Mono", monospace',
                                         padding: '0.5rem 0'
                                     }}>

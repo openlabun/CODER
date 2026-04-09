@@ -447,7 +447,7 @@ La API expone su especificación OpenAPI en formato YAML en `GET /docs/openapi.y
 
 ## 8. Plan de Pruebas
 
-El plan de pruebas de CODER define la estrategia para verificar que el sistema funciona correctamente y cumple con los requerimientos funcionales y no funcionales establecidos. Las pruebas están organizadas en cuatro categorías: pruebas por componente (unitarias y funcionales), pruebas de integración, pruebas de seguridad y pruebas de rendimiento. A continuación se presenta un resumen de cada categoría; la versión completa con el detalle paso a paso de cada caso puede consultarse en el documento [TestsPlan.md](TestsPlan.md) ubicado en esta misma carpeta.
+El plan de pruebas de CODER define la estrategia para verificar que el sistema funciona correctamente y cumple con los requerimientos funcionales y no funcionales establecidos. Las pruebas están organizadas en cuatro categorías: pruebas por componente (unitarias y funcionales), pruebas de integración, pruebas de seguridad y pruebas de rendimiento. A continuación se presenta un resumen de cada categoría; la versión completa con el detalle paso a paso de cada caso puede consultarse en el documento [TestsPlan.md](informes/TestsPlan.md) ubicado en la carpeta `informes/`.
 
 ### a. Pruebas por componentes
 

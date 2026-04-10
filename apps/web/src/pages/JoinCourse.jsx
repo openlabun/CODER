@@ -33,7 +33,7 @@ const JoinCourse = () => {
 
         setLoading(true);
         try {
-            await client.post('/courses/enroll', { enrollmentCode });
+            await client.post('/courses/enroll', { enrollment_code: enrollmentCode });
             setSuccess('¡Te has inscrito correctamente en el curso!');
             setTimeout(() => {
                 navigate('/courses');

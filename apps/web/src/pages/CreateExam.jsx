@@ -77,7 +77,7 @@ const CreateExam = () => {
 
         try {
             const payload = {
-                course_id: courseId || '',
+                course_id: courseId || null,
                 title: formData.title,
                 description: formData.description,
                 visibility: formData.visibility,
@@ -86,7 +86,7 @@ const CreateExam = () => {
                 time_limit: parseInt(formData.timeLimit) * 60, // A segundos
                 try_limit: parseInt(formData.tryLimit),
                 allow_late_submissions: formData.allowLateSubmissions,
-                professor_id: user.id
+                professor_id: user.id || user.ID || ''
             };
 
             await createExam(payload);
@@ -243,7 +243,7 @@ const CreateExam = () => {
                             <h2>Visibilidad</h2>
                         </div>
 
-                        <div className="radio-group">
+                        <div className="radio-group grid-2">
                             <label className={`radio-card ${formData.visibility === 'course' ? 'active' : ''}`}>
                                 <input
                                     type="radio"
@@ -254,7 +254,35 @@ const CreateExam = () => {
                                 />
                                 <div className="radio-content">
                                     <span className="radio-title">Solo mi Curso</span>
-                                    <small>Solo visible para estudiantes de este curso</small>
+                                    <small>Visible solo para estudiantes inscritos</small>
+                                </div>
+                            </label>
+
+                            <label className={`radio-card ${formData.visibility === 'public' ? 'active' : ''}`}>
+                                <input
+                                    type="radio"
+                                    name="visibility"
+                                    value="public"
+                                    checked={formData.visibility === 'public'}
+                                    onChange={handleChange}
+                                />
+                                <div className="radio-content">
+                                    <span className="radio-title">Público Global</span>
+                                    <small>Visible para toda la comunidad RobleCode</small>
+                                </div>
+                            </label>
+
+                            <label className={`radio-card ${formData.visibility === 'teachers' ? 'active' : ''}`}>
+                                <input
+                                    type="radio"
+                                    name="visibility"
+                                    value="teachers"
+                                    checked={formData.visibility === 'teachers'}
+                                    onChange={handleChange}
+                                />
+                                <div className="radio-content">
+                                    <span className="radio-title">Solo Profesores</span>
+                                    <small>Colabora con otros docentes</small>
                                 </div>
                             </label>
 
@@ -267,8 +295,8 @@ const CreateExam = () => {
                                     onChange={handleChange}
                                 />
                                 <div className="radio-content">
-                                    <span className="radio-title">Privado</span>
-                                    <small>Solo visible para ti (Borrador)</small>
+                                    <span className="radio-title">Privado / Borrador</span>
+                                    <small>Solo tú puedes verlo y editarlo</small>
                                 </div>
                             </label>
                         </div>

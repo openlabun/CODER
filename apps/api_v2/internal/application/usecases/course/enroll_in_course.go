@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	userEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
@@ -22,7 +23,7 @@ func NewEnrollInCourseUseCase(courseRepository repositories.CourseRepository, us
 }
 
 func (uc *EnrollInCourseUseCase) Execute(ctx context.Context, input dtos.EnrolledInCourseInput) (*Entities.Course, error) {
-	// [STEP 1] Check if student exists using ID or email
+	// [STEP 1] Check if student exists using ID or email, fallback to authenticated user
 	var student *userEntities.User
 	if input.StudentID != nil {
 		student_, err := uc.userRepository.GetUserByID(ctx, *input.StudentID)
@@ -37,7 +38,16 @@ func (uc *EnrollInCourseUseCase) Execute(ctx context.Context, input dtos.Enrolle
 		}
 		student = student_
 	} else {
-		return nil, fmt.Errorf("student_id or student_email must be provided")
+		// Fallback to authenticated user
+		userEmail, err := services.UserEmailFromContext(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("student_id or student_email must be provided, or user must be authenticated")
+		}
+		student_, err := uc.userRepository.GetUserByEmail(ctx, userEmail)
+		if err != nil {
+			return nil, err
+		}
+		student = student_
 	}
 
 	if student == nil {
@@ -45,7 +55,17 @@ func (uc *EnrollInCourseUseCase) Execute(ctx context.Context, input dtos.Enrolle
 	}
 
 	// [STEP 2] Check if course exists
-	course, err := uc.courseRepository.GetCourseByID(ctx, input.CourseID)
+	var course *Entities.Course
+	var err error
+
+	if input.CourseID != "" {
+		course, err = uc.courseRepository.GetCourseByID(ctx, input.CourseID)
+	} else if input.EnrollmentCode != "" {
+		course, err = uc.courseRepository.GetCourseByEnrollmentCode(ctx, input.EnrollmentCode)
+	} else {
+		return nil, fmt.Errorf("course_id or enrollment_code must be provided")
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +80,12 @@ func (uc *EnrollInCourseUseCase) Execute(ctx context.Context, input dtos.Enrolle
 		return nil, err
 	}
 
-	if studentAlreadyEnrolled(enrollment, input.CourseID) {
+	if studentAlreadyEnrolled(enrollment, course.ID) {
 		return nil, fmt.Errorf("student is already enrolled in this course")
 	}
 
 	// [STEP 4] Enroll student in course
-	err = uc.courseRepository.AddStudentToCourse(ctx, input.CourseID, student.ID)
+	err = uc.courseRepository.AddStudentToCourse(ctx, course.ID, student.ID)
 	if err != nil {
 		return nil, err
 	}

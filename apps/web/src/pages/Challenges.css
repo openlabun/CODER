@@ -1,12 +1,12 @@
 .challenges-page {
-    padding: 1.5rem;
+    padding: 2rem;
     max-width: 1400px;
     margin: 0 auto;
-    animation: challengesFadeIn 0.5s ease-out;
+    animation: challengesFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes challengesFadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -14,379 +14,197 @@
 .page-header-compact {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
+    align-items: flex-end;
+    margin-bottom: 3rem;
     gap: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 .header-info h1 {
-    font-size: 1.875rem;
-    font-weight: 950;
-    color: #1e293b;
-    margin: 0 0 0.25rem 0;
-    letter-spacing: -0.03em;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #1a1a1a;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.04em;
+    background: linear-gradient(135deg, #1a1a1a 0%, #c8102e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .header-info p {
-    font-size: 0.875rem;
-    color: #64748b;
+    font-size: 1rem;
+    color: #666;
     margin: 0;
+    font-weight: 500;
 }
 
-/* Search Bar */
+/* Glassmorphism Search Bar */
 .search-bar-mini {
     position: relative;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 0 1rem;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    padding: 0 1.25rem;
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 320px;
-    height: 44px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
-    transition: all 0.2s ease;
+    gap: 12px;
+    width: 380px;
+    height: 52px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
 }
 
 .search-bar-mini:focus-within {
     border-color: #c8102e;
-    box-shadow: 0 0 0 4px rgba(200, 16, 46, 0.05);
+    background: #fff;
+    box-shadow: 0 15px 30px -10px rgba(200, 16, 46, 0.15);
+    transform: translateY(-2px);
 }
-
-.search-bar-mini svg { color: #94a3b8; }
 
 .search-bar-mini input {
     border: none;
     background: transparent;
     width: 100%;
-    font-size: 0.875rem;
-    color: #1e293b;
+    font-size: 0.95rem;
+    color: #1a1a1a;
     font-weight: 600;
 }
 
-.search-bar-mini input:focus { outline: none; }
-
-/* Grid */
-.challenges-grid-compact {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 1.25rem;
-}
-
-/* Challenge Card Mini */
-.challenge-card-mini {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 20px;
-    text-decoration: none;
+.header-actions-mini {
     display: flex;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-
-.challenge-card-mini:hover {
-    transform: translateY(-4px);
-    border-color: #c8102e;
-    box-shadow: 0 12px 20px -8px rgba(200, 16, 46, 0.15);
-}
-
-.card-accent {
-    width: 6px;
-    height: 100%;
-    flex-shrink: 0;
-}
-.card-accent.easy { background: #22c55e; }
-.card-accent.medium { background: #f59e0b; }
-.card-accent.hard { background: #ef4444; }
-
-.card-main {
-    padding: 1.25rem;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.card-top {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.75rem;
+    gap: 1rem;
 }
 
-.title-area {
+.btn-create-mini {
     display: flex;
     align-items: center;
     gap: 8px;
+    background: linear-gradient(135deg, #c8102e 0%, #a00d25 100%);
+    color: white;
+    border: none;
+    padding: 0 1.5rem;
+    height: 52px; /* Matches search bar */
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: 0 8px 16px -4px rgba(200, 16, 46, 0.25);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.title-icon { color: #c8102e; }
+.btn-create-mini:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px -8px rgba(200, 16, 46, 0.4);
+    background: linear-gradient(135deg, #e31837 0%, #c8102e 100%);
+}
+
+.btn-create-mini:active {
+    transform: translateY(1px);
+}
+
+/* Premium Card Design */
+.challenges-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 2rem;
+}
+
+.challenge-card-mini {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.04);
+    border-radius: 24px;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+.challenge-card-mini:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 25px 50px -12px rgba(200, 16, 46, 0.12);
+    border-color: rgba(200, 16, 46, 0.1);
+}
+
+.card-accent {
+    height: 6px;
+    width: 100%;
+}
+.card-accent.easy { background: linear-gradient(90deg, #10b981, #34d399); }
+.card-accent.medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.card-accent.hard { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+.card-main {
+    padding: 1.75rem;
+    flex: 1;
+}
 
 .title-area h3 {
-    font-size: 1rem;
-    font-weight: 850;
-    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1a1a1a;
     margin: 0;
+    line-height: 1.2;
 }
 
 .diff-pill {
-    font-size: 0.65rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    border-radius: 100px;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
 }
 
-.diff-pill.easy { background: #f0fdf4; color: #16a34a; }
-.diff-pill.medium { background: #fffbeb; color: #d97706; }
-.diff-pill.hard { background: #fff1f2; color: #ef4444; }
-
 .description-text {
-    font-size: 0.8125rem;
-    color: #64748b;
-    margin: 0 0 1.25rem 0;
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-size: 0.9rem;
+    color: #666;
+    margin: 1rem 0 1.5rem 0;
+    line-height: 1.6;
 }
 
 .card-footer-mini {
-    margin-top: auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background: #fcfcfc;
+    padding: 1.25rem 1.75rem;
+    border-top: 1px solid #f0f0f0;
 }
-
-.stats-mini {
-    display: flex;
-    gap: 12px;
-}
-
-.stat {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #94a3b8;
-}
-
-.stat svg { opacity: 0.7; }
 
 .btn-action-mini {
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: #c8102e;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: #fff1f2;
-    padding: 6px 12px;
-    border-radius: 10px;
-    transition: all 0.2s;
+    background: #1a1a1a;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-weight: 700;
 }
 
 .challenge-card-mini:hover .btn-action-mini {
     background: #c8102e;
-    color: white;
 }
 
-/* Empty State Mini */
-.empty-state-mini {
-    background: white;
-    border: 1px dashed #e2e8f0;
-    border-radius: 24px;
-    padding: 4rem 2rem;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.25rem;
-}
-
-.icon-circle {
-    width: 64px;
-    height: 64px;
-    background: #f8fafc;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #94a3b8;
-}
-
-.empty-state-mini h3 {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: #1e293b;
-    margin: 0;
-}
-
-.empty-state-mini p {
-    font-size: 0.875rem;
-    color: #64748b;
-    margin: 0;
-}
-
-/* Skeleton Adapt */
-.skeleton-card {
-    height: 160px;
-    background: #f8fafc;
-    border-style: dashed;
-}
-
-.card-content-skeleton {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, #f1f5f9 25%, #f8fafc 50%, #f1f5f9 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite linear;
-}
-
-@keyframes shimmer {
-    to { background-position: -200% 0; }
-}
-
-/* Retry Button - Institutional Premium */
-.btn-retry {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 30px;
-    background: #c8102e;
-    color: white;
-    border: none;
-    border-radius: 100px;
-    font-weight: 850;
-    text-transform: uppercase;
-    font-size: 0.8125rem;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(200, 16, 46, 0.2);
-}
-
-.btn-retry:hover {
-    background: #a50d26;
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(200, 16, 46, 0.35);
-}
-
-.btn-retry:active {
-    transform: translateY(0) scale(0.98);
-}
-
-.btn-retry svg {
-    animation: rotateBtn 2s linear infinite paused;
-}
-
-.btn-retry:hover svg {
-    animation-play-state: running;
-}
-
-@keyframes rotateBtn {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(-360deg); }
-}
-
-@media (max-width: 900px) {
-    .page-header-compact { flex-direction: column; align-items: flex-start; gap: 1rem; }
-    .search-bar-mini { width: 100%; }
-}
-
-@media (max-width: 480px) {
-    .challenges-grid-compact { grid-template-columns: 1fr; }
-}
-
-/* Management Actions & Status */
-.badge-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
+/* Status Badges */
 .status-badge {
-    font-size: 0.6rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    padding: 2px 8px;
+    padding: 4px 10px;
     border-radius: 6px;
-    background: #f1f5f9;
-    color: #475569;
-    border: 1px solid #e2e8f0;
+    font-size: 0.65rem;
+    font-weight: 700;
 }
+.status-badge.published { background: #dcfce7; color: #15803d; }
+.status-badge.draft { background: #fef3c7; color: #b45309; }
 
-.status-badge.published {
-    background: #ecfdf5;
-    color: #059669;
-    border-color: #d1fae5;
-}
-
-.status-badge.draft {
-    background: #fffbeb;
-    color: #d97706;
-    border-color: #fef3c7;
-}
-
-.status-badge.archived {
-    background: #f8fafc;
-    color: #94a3b8;
-    border-color: #e2e8f0;
-}
-
-.actions-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
+/* Teacher Actions */
 .teacher-actions {
-    display: flex;
-    gap: 6px;
+    background: rgba(255,255,255,0.9);
+    padding: 6px;
+    border-radius: 100px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .action-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: #64748b;
-}
-
-.action-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    border-color: #cbd5e1;
-    color: #1e293b;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-}
-
-.action-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.action-btn.publish:hover { background: #ecfdf5; color: #059669; border-color: #10b981; }
-.action-btn.archive:hover { background: #f8fafc; color: #475569; border-color: #94a3b8; }
-.action-btn.edit:hover { background: #eff6ff; color: #2563eb; border-color: #3b82f6; }
-.action-btn.delete:hover { background: #fff1f2; color: #e11d48; border-color: #f43f5e; }
-
-.challenge-card-mini.archived {
-    opacity: 0.7;
-    filter: grayscale(0.5);
-}
-
-.challenge-card-mini.archived:hover {
-    filter: grayscale(0);
-    opacity: 1;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
 }

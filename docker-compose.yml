@@ -9,7 +9,7 @@ services:
             dockerfile: Dockerfile.prod
         restart: always
         expose:
-            - "${APIV2_PORT:-4000}:${APIV2_PORT:-4000}"
+            - "${APIV2_PORT:-4000}"
         env_file:
             - .env.dev
         environment:
@@ -68,7 +68,7 @@ services:
             - ./apps/web:/usr/src/app
             - /usr/src/app/node_modules
         env_file:
-            - .env.dev
+            - .env.prod
         networks:
             - judge_net
         depends_on:

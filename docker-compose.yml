@@ -68,7 +68,7 @@ services:
             - ./apps/web:/usr/src/app
             - /usr/src/app/node_modules
         env_file:
-            - .env.prod
+            - .env.production
         networks:
             - judge_net
         depends_on:

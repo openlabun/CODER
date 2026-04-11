@@ -11,7 +11,7 @@ services:
         expose:
             - "${APIV2_PORT:-4000}"
         env_file:
-            - .env.dev
+            - .env.production
         environment:
             - APIV2_PORT=${APIV2_PORT:-4000}
             - RABBITMQ_URL=${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}
@@ -43,7 +43,7 @@ services:
         command: python main.py
         restart: always
         env_file:
-            - .env.dev
+            - .env.production
         environment:
             - API_BASE_URL=http://apiv2:${APIV2_PORT:-4000}
             - RABBITMQ_URL=${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}

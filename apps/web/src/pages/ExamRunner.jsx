@@ -638,206 +638,215 @@ const ExamRunner = () => {
                     })}
                 </div>
 
-                {/* CENTER: Problem Description */}
-                {currentChallenge && (
-                    <>
-                        <div className="problem-description" style={{
-                            width: '35%', overflowY: 'auto', padding: '1.5rem', background: '#fafafa',
-                            borderRight: '1px solid #e5e7eb'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                                <Code size={18} style={{ color: '#c8102e' }} />
-                                <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>{currentChallenge.title}</h2>
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                                <span style={{
-                                    padding: '3px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700,
-                                    background: currentChallenge.difficulty === 'easy' ? '#dcfce7' : currentChallenge.difficulty === 'hard' ? '#fee2e2' : '#fef3c7',
-                                    color: currentChallenge.difficulty === 'easy' ? '#15803d' : currentChallenge.difficulty === 'hard' ? '#b91c1c' : '#b45309'
-                                }}>
-                                    {currentChallenge.difficulty === 'easy' ? 'Fácil' : currentChallenge.difficulty === 'hard' ? 'Difícil' : 'Medio'}
-                                </span>
-                                <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: '#e0e7ff', color: '#3730a3' }}>
-                                    {currentChallenge.points} pts
-                                </span>
-                            </div>
-                            <p style={{ lineHeight: 1.7, color: '#444', fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>
-                                {currentChallenge.description}
-                            </p>
-                            {currentChallenge.constraints && (
-                                <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff7ed', borderRadius: '10px', border: '1px solid #fed7aa' }}>
-                                    <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#9a3412' }}>⚡ Restricciones</h4>
-                                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#78350f' }}>{currentChallenge.constraints}</p>
+                {/* CENTER + RIGHT (Problem, Editor, Console) */}
+                {currentChallenge ? (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                        
+                        {/* TOP SECTION: Description + Editor */}
+                        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                            
+                            {/* CENTER: Problem Description */}
+                            <div className="problem-description" style={{
+                                width: '40%', overflowY: 'auto', padding: '1.5rem', background: '#fafafa',
+                                borderRight: '1px solid #3d3d50'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                    <Code size={18} style={{ color: '#c8102e' }} />
+                                    <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>{currentChallenge.title}</h2>
                                 </div>
-                            )}
+                                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                    <span style={{
+                                        padding: '3px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700,
+                                        background: currentChallenge.difficulty === 'easy' ? '#dcfce7' : currentChallenge.difficulty === 'hard' ? '#fee2e2' : '#fef3c7',
+                                        color: currentChallenge.difficulty === 'easy' ? '#15803d' : currentChallenge.difficulty === 'hard' ? '#b91c1c' : '#b45309'
+                                    }}>
+                                        {currentChallenge.difficulty === 'easy' ? 'Fácil' : currentChallenge.difficulty === 'hard' ? 'Difícil' : 'Medio'}
+                                    </span>
+                                    <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: '#e0e7ff', color: '#3730a3' }}>
+                                        {currentChallenge.points} pts
+                                    </span>
+                                </div>
+                                <p style={{ lineHeight: 1.7, color: '#444', fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>
+                                    {currentChallenge.description}
+                                </p>
+                                {currentChallenge.constraints && (
+                                    <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff7ed', borderRadius: '10px', border: '1px solid #fed7aa' }}>
+                                        <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#9a3412' }}>⚡ Restricciones</h4>
+                                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#78350f' }}>{currentChallenge.constraints}</p>
+                                    </div>
+                                )}
 
-                            {/* Nav buttons */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', gap: '0.5rem' }}>
-                                <button
-                                    disabled={currentIndex === 0}
-                                    onClick={() => handleSelectChallenge(currentIndex - 1)}
-                                    style={{
-                                        flex: 1, padding: '0.6rem', border: '1px solid #ddd', borderRadius: '10px',
-                                        background: 'white', cursor: currentIndex === 0 ? 'not-allowed' : 'pointer',
-                                        opacity: currentIndex === 0 ? 0.4 : 1, fontWeight: 600, fontSize: '0.85rem',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
-                                    }}
-                                >
-                                    <ChevronLeft size={16} /> Anterior
-                                </button>
-                                <button
-                                    disabled={currentIndex === challenges.length - 1}
-                                    onClick={() => handleSelectChallenge(currentIndex + 1)}
-                                    style={{
-                                        flex: 1, padding: '0.6rem', border: '1px solid #ddd', borderRadius: '10px',
-                                        background: 'white', cursor: currentIndex === challenges.length - 1 ? 'not-allowed' : 'pointer',
-                                        opacity: currentIndex === challenges.length - 1 ? 0.4 : 1, fontWeight: 600, fontSize: '0.85rem',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
-                                    }}
-                                >
-                                    Siguiente <ChevronRight size={16} />
-                                </button>
+                                {/* Nav buttons */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', gap: '0.5rem' }}>
+                                    <button
+                                        disabled={currentIndex === 0}
+                                        onClick={() => handleSelectChallenge(currentIndex - 1)}
+                                        style={{
+                                            flex: 1, padding: '0.6rem', border: '1px solid #ddd', borderRadius: '10px',
+                                            background: 'white', cursor: currentIndex === 0 ? 'not-allowed' : 'pointer',
+                                            opacity: currentIndex === 0 ? 0.4 : 1, fontWeight: 600, fontSize: '0.85rem',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                                        }}
+                                    >
+                                        <ChevronLeft size={16} /> Anterior
+                                    </button>
+                                    <button
+                                        disabled={currentIndex === challenges.length - 1}
+                                        onClick={() => handleSelectChallenge(currentIndex + 1)}
+                                        style={{
+                                            flex: 1, padding: '0.6rem', border: '1px solid #ddd', borderRadius: '10px',
+                                            background: 'white', cursor: currentIndex === challenges.length - 1 ? 'not-allowed' : 'pointer',
+                                            opacity: currentIndex === challenges.length - 1 ? 0.4 : 1, fontWeight: 600, fontSize: '0.85rem',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                                        }}
+                                    >
+                                        Siguiente <ChevronRight size={16} />
+                                    </button>
+                                </div>
                             </div>
+
+                            {/* RIGHT: Code Editor */}
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#1e1e1e', minWidth: 0, minHeight: 0 }}>
+                                {/* Editor toolbar */}
+                                <div style={{
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    padding: '0.5rem 1rem', background: '#2d2d3d', borderBottom: '1px solid #3d3d50'
+                                }}>
+                                    <select value={language} onChange={(e) => setLanguage(e.target.value)}
+                                        style={{ background: '#1e1e2e', color: 'white', border: '1px solid #555', borderRadius: '6px', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}>
+                                        <option value="python">Python</option>
+                                    </select>
+                                    {(() => {
+                                        const tryLimitVal = exam?.tryLimit || exam?.TryLimit || exam?.try_limit || -1;
+                                        const chAttempts = currentChallenge ? (attemptMap[currentChallenge.id] || 0) : 0;
+                                        const limitReached = tryLimitVal > 0 && chAttempts >= tryLimitVal;
+                                        const isDisabled = submitting || examFinished || limitReached;
+
+                                        let btnText = 'Enviar Solución';
+                                        if (examFinished) btnText = 'Examen Finalizado';
+                                        else if (limitReached) btnText = 'Límite alcanzado';
+                                        else if (submitting) btnText = 'Evaluando...';
+
+                                        return (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                {tryLimitVal > 0 && (
+                                                    <span style={{
+                                                        fontSize: '0.75rem', fontWeight: 700, color: limitReached ? '#ef4444' : '#9ca3af',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        {chAttempts}/{tryLimitVal} intentos
+                                                    </span>
+                                                )}
+                                                <button onClick={handleSubmit} disabled={isDisabled}
+                                                    style={{
+                                                        background: isDisabled ? '#555' : 'linear-gradient(135deg, #c8102e, #a00d25)',
+                                                        color: 'white', border: 'none', borderRadius: '10px',
+                                                        padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.85rem',
+                                                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: '6px',
+                                                        opacity: isDisabled ? 0.6 : 1
+                                                    }}>
+                                                    <Send size={14} /> {btnText}
+                                                </button>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+
+                                {/* Monaco Editor */}
+                                <div style={{ flex: 1, minHeight: 0 }}>
+                                    <Editor
+                                        height="100%"
+                                        theme="vs-dark"
+                                        language={language}
+                                        value={currentCode}
+                                        onChange={handleCodeChange}
+                                        options={{ minimap: { enabled: false }, fontSize: 14, padding: { top: 12 } }}
+                                    />
+                                </div>
+                            </div>
+
                         </div>
 
-                        {/* RIGHT: Code Editor + Output */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#1e1e1e' }}>
-                            {/* Editor toolbar */}
+                        {/* BOTTOM SECTION: Output panel */}
+                        <div style={{
+                            height: output ? '300px' : '50px',
+                            flexShrink: 0,
+                            background: '#0d1117',
+                            borderTop: '2px solid #30363d',
+                            transition: 'height 0.3s ease-in-out',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}>
                             <div style={{
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                padding: '0.5rem 1rem', background: '#2d2d3d', borderBottom: '1px solid #3d3d50'
-                            }}>
-                                <select value={language} onChange={(e) => setLanguage(e.target.value)}
-                                    style={{ background: '#1e1e2e', color: 'white', border: '1px solid #555', borderRadius: '6px', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}>
-                                    <option value="python">Python</option>
-                                </select>
-                                {(() => {
-                                    const tryLimitVal = exam?.tryLimit || exam?.TryLimit || exam?.try_limit || -1;
-                                    const chAttempts = currentChallenge ? (attemptMap[currentChallenge.id] || 0) : 0;
-                                    const limitReached = tryLimitVal > 0 && chAttempts >= tryLimitVal;
-                                    const isDisabled = submitting || examFinished || limitReached;
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '0.75rem 1.5rem',
+                                background: '#161b22',
+                                borderBottom: output ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                                cursor: 'pointer'
+                            }} onClick={() => setOutput(output ? '' : ' Esperando envío...')}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{
+                                        width: '8px',
+                                        height: '8px',
+                                        borderRadius: '50%',
+                                        background: currentResult?.status === 'accepted' ? '#10b981' : currentResult ? '#ef4444' : '#8b949e',
+                                        boxShadow: currentResult ? `0 0 8px ${currentResult?.status === 'accepted' ? '#10b981' : '#ef4444'}` : 'none'
+                                    }}></div>
+                                    <span style={{
+                                        color: '#e6edf3',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 800,
+                                        letterSpacing: '1px'
+                                    }}>
+                                        CONSOLA DE RESULTADOS {output ? '▼' : '▲'}
+                                    </span>
+                                </div>
 
-                                    let btnText = 'Enviar Solución';
-                                    if (examFinished) btnText = 'Examen Finalizado';
-                                    else if (limitReached) btnText = 'Límite alcanzado';
-                                    else if (submitting) btnText = 'Evaluando...';
-
-                                    return (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            {tryLimitVal > 0 && (
-                                                <span style={{
-                                                    fontSize: '0.75rem', fontWeight: 700, color: limitReached ? '#ef4444' : '#9ca3af',
-                                                    whiteSpace: 'nowrap'
-                                                }}>
-                                                    {chAttempts}/{tryLimitVal} intentos
-                                                </span>
-                                            )}
-                                            <button onClick={handleSubmit} disabled={isDisabled}
-                                                style={{
-                                                    background: isDisabled ? '#555' : 'linear-gradient(135deg, #c8102e, #a00d25)',
-                                                    color: 'white', border: 'none', borderRadius: '10px',
-                                                    padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.85rem',
-                                                    cursor: isDisabled ? 'not-allowed' : 'pointer',
-                                                    display: 'flex', alignItems: 'center', gap: '6px',
-                                                    opacity: isDisabled ? 0.6 : 1
-                                                }}>
-                                                <Send size={14} /> {btnText}
-                                            </button>
-                                        </div>
-                                    );
-                                })()}
-                            </div>
-
-                            {/* Monaco Editor */}
-                            <div style={{ flex: 1 }}>
-                                <Editor
-                                    height="100%"
-                                    theme="vs-dark"
-                                    language={language}
-                                    value={currentCode}
-                                    onChange={handleCodeChange}
-                                    options={{ minimap: { enabled: false }, fontSize: 14, padding: { top: 12 } }}
-                                />
-                            </div>
-
-                            {/* Output panel: Redesigned for maximum visibility */}
-                            <div style={{
-                                height: output ? '250px' : '50px',
-                                background: '#0d1117',
-                                borderTop: '2px solid #30363d',
-                                transition: 'height 0.3s ease-in-out',
-                                overflow: 'auto',
-                                padding: '1rem 1.5rem',
-                                boxShadow: '0 -4px 15px rgba(0,0,0,0.5)'
-                            }}>
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginBottom: output ? '1rem' : 0,
-                                    paddingBottom: output ? '0.75rem' : 0,
-                                    borderBottom: output ? '1px solid rgba(255,255,255,0.1)' : 'none'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{
-                                            width: '8px',
-                                            height: '8px',
-                                            borderRadius: '50%',
-                                            background: currentResult?.status === 'accepted' ? '#10b981' : currentResult ? '#ef4444' : '#8b949e',
-                                            boxShadow: currentResult ? `0 0 8px ${currentResult?.status === 'accepted' ? '#10b981' : '#ef4444'}` : 'none'
-                                        }}></div>
+                                {currentResult && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <span style={{
-                                            color: '#e6edf3',
-                                            fontSize: '0.9rem',
-                                            fontWeight: 800,
-                                            letterSpacing: '1px'
+                                            fontSize: '0.85rem',
+                                            fontWeight: 700,
+                                            color: currentResult.status === 'accepted' ? '#10b981' : '#ef4444'
                                         }}>
-                                            CONSOLA DE RESULTADOS
+                                            {currentResult.status === 'accepted' ? 'ACEPTADO' : 'FALLIDO'}
+                                        </span>
+                                        <span style={{
+                                            fontSize: '1rem',
+                                            fontWeight: 900,
+                                            padding: '4px 12px',
+                                            borderRadius: '8px',
+                                            background: currentResult.status === 'accepted' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                            color: currentResult.status === 'accepted' ? '#10b981' : '#ef4444',
+                                            border: `1px solid ${currentResult.status === 'accepted' ? '#10b981' : '#ef4444'}`
+                                        }}>
+                                            {currentResult.score}%
                                         </span>
                                     </div>
-
-                                    {currentResult && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <span style={{
-                                                fontSize: '0.85rem',
-                                                fontWeight: 700,
-                                                color: currentResult.status === 'accepted' ? '#10b981' : '#ef4444'
-                                            }}>
-                                                {currentResult.status === 'accepted' ? 'ACEPTADO' : 'FALLIDO'}
-                                            </span>
-                                            <span style={{
-                                                fontSize: '1rem',
-                                                fontWeight: 900,
-                                                padding: '4px 12px',
-                                                borderRadius: '8px',
-                                                background: currentResult.status === 'accepted' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                                                color: currentResult.status === 'accepted' ? '#10b981' : '#ef4444',
-                                                border: `1px solid ${currentResult.status === 'accepted' ? '#10b981' : '#ef4444'}`
-                                            }}>
-                                                {currentResult.score}%
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
+                                )}
+                            </div>
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.5rem' }}>
                                 {output && (
                                     <pre style={{
                                         color: '#d1d5db',
                                         fontSize: '1rem',
                                         lineHeight: '1.6',
-                                        marginTop: '0.5rem',
+                                        margin: 0,
                                         whiteSpace: 'pre-wrap',
-                                        fontFamily: '"Fira Code", "JetBrains Mono", monospace',
-                                        padding: '0.5rem 0'
+                                        fontFamily: '"Fira Code", "JetBrains Mono", monospace'
                                     }}>
                                         {output}
                                     </pre>
                                 )}
                             </div>
                         </div>
-                    </>
-                )}
 
-                {!currentChallenge && (
+                    </div>
+                ) : (
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa' }}>
                         <div style={{ textAlign: 'center', color: '#999' }}>
                             <Target size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />

@@ -57,7 +57,22 @@ services:
                 condition: service_healthy
         networks:
             - judge_net
-
+    web:
+        build:
+            context: ./apps/web
+            dockerfile: Dockerfile.prod
+        command: npm run dev -- --host
+        ports:
+            - "${WEB_PORT:-5173}:5173"
+        volumes:
+            - ./apps/web:/usr/src/app
+            - /usr/src/app/node_modules
+        env_file:
+            - .env.dev
+        networks:
+            - judge_net
+        depends_on:
+            - apiv2
 networks:
     judge_net:
         driver: bridge

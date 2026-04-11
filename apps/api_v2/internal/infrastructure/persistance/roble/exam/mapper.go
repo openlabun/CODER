@@ -58,8 +58,8 @@ func examToRecord(exam *Entities.Exam) map[string]any {
 		record["Description"] = description
 	}
 
-	if courseID := strings.TrimSpace(exam.CourseID); courseID != "" {
-		record["CourseID"] = courseID
+	if courseID := exam.CourseID; courseID != nil && strings.TrimSpace(*courseID) != "" {
+		record["CourseID"] = strings.TrimSpace(*courseID)
 	}
 
 	if exam.EndTime != nil && !exam.EndTime.IsZero() {
@@ -79,7 +79,7 @@ func examToUpdates(exam *Entities.Exam) map[string]any {
 		"TimeLimit":            exam.TimeLimit,
 		"TryLimit":             exam.TryLimit,
 		"ProfessorID":          strings.TrimSpace(exam.ProfessorID),
-		"CourseID":             strings.TrimSpace(exam.CourseID),
+		"CourseID":             exam.CourseID,
 	}
 
 	if exam.EndTime != nil && !exam.EndTime.IsZero() {
@@ -102,6 +102,13 @@ func recordToExam(record map[string]any) (*Entities.Exam, error) {
 		endTime = &parsedEndTime
 	}
 
+	var courseID *string
+	if rawCourseID, ok := record["CourseID"]; ok {
+		if s := asString(rawCourseID); s != "" {
+			courseID = &s
+		}
+	}
+
 	createdAt, _ := asTime(record["CreatedAt"])
 	updatedAt, _ := asTime(record["UpdatedAt"])
 
@@ -116,7 +123,7 @@ func recordToExam(record map[string]any) (*Entities.Exam, error) {
 		asInt(record["TimeLimit"]),
 		asInt(record["TryLimit"]),
 		asString(record["ProfessorID"]),
-		asString(record["CourseID"]),
+		courseID,
 		createdAt,
 		updatedAt,
 	)

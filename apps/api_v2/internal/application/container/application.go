@@ -85,6 +85,7 @@ type SessionUseCases struct {
 type ExamUseCases struct {
 	CreateExam       *exam_crud_usecases.CreateExamUseCase
 	UpdateExam       *exam_crud_usecases.UpdateExamUseCase
+	CloseExam        *exam_crud_usecases.CloseExamUseCase
 	DeleteExam       *exam_crud_usecases.DeleteExamUseCase
 	GetExamDetails   *exam_crud_usecases.GetExamDetailsUseCase
 	GetExamsByCourse *exam_crud_usecases.GetExamsByCourseUseCase
@@ -157,14 +158,14 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 
 	app.SessionModule = SessionUseCases{
 		CreateSession:    session_usecases.NewCreateSessionUseCase(deps.UserRepository, deps.SessionRepository, deps.ExamRepository),
-		GetActiveSession: session_usecases.NewGetActiveSessionUseCase(deps.SessionRepository, deps.UserRepository),
-		HeartBeatSession: session_usecases.NewHeartBeatSessionUseCase(deps.UserRepository, deps.SessionRepository),
+		GetActiveSession: session_usecases.NewGetActiveSessionUseCase(deps.SessionRepository, deps.UserRepository, deps.ExamRepository),
+		HeartBeatSession: session_usecases.NewHeartBeatSessionUseCase(deps.UserRepository, deps.ExamRepository, deps.SessionRepository),
 		BlockSession:     session_usecases.NewBlockSessionUseCase(deps.SessionRepository, deps.UserRepository),
 		CloseSession:     session_usecases.NewCloseSessionUseCase(deps.SessionRepository, deps.UserRepository),
 	}
 
 	app.SubmissionUseCases = SubmissionUseCases{
-		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
+		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
 		GetSubmissionStatus:     submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
 		GetChallengeSubmissions: submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
 		GetSessionSubmissions:   submission_usecases.NewGetSessionSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository, deps.SessionRepository),
@@ -189,8 +190,9 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	}
 
 	app.ExamModule = ExamUseCases{
-		CreateExam:       exam_crud_usecases.NewCreateExamUseCase(deps.UserRepository, deps.ExamRepository),
+		CreateExam:       exam_crud_usecases.NewCreateExamUseCase(deps.UserRepository, deps.CourseRepository, deps.ExamRepository),
 		UpdateExam:       exam_crud_usecases.NewUpdateExamUseCase(deps.UserRepository, deps.ExamRepository),
+		CloseExam:        exam_crud_usecases.NewCloseExamUseCase(deps.UserRepository, deps.ExamRepository),
 		DeleteExam:       exam_crud_usecases.NewDeleteExamUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
 		GetExamDetails:   exam_crud_usecases.NewGetExamDetailsUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
 		GetExamsByCourse: exam_crud_usecases.NewGetExamsByCourseUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),

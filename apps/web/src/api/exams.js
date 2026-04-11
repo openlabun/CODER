@@ -77,8 +77,8 @@ export const unshareExamWithProfessor = async (examId, professorId) => {
   return unwrapPayload(res.data);
 };
 
-export const createExamSession = async (examId) => {
-  const res = await client.post('/submissions/sessions', { ExamID: examId });
+export const createExamSession = async (examId, userId) => {
+  const res = await client.post('/submissions/sessions', { user_id: userId, exam_id: examId });
   return unwrapPayload(res.data);
 };
 

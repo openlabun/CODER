@@ -4,6 +4,7 @@ def MapSubmissionResult(data: dict) -> SubmissionResult:
     return SubmissionResult(
         submission_id=data["submission_id"],
         code=data["code"],
+        input=data["input"],
         result_id=data["result_id"],
         time_limit_ms=data["time_limit_ms"],
         memory_limit_mb=data["memory_limit_mb"],

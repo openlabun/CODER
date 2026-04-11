@@ -61,7 +61,7 @@ class DockerExecutor(Executor):
 
     def execute(self, submission: SubmissionResult) -> SubmissionResult:
         cmd = [
-            "docker", "run", "--rm",
+            "docker", "run", "--rm", "-i",
             "--network", "none",
             "--memory", f"{submission.memory_limit_mb}m",
             DOCKER_IMAGE,
@@ -79,6 +79,7 @@ class DockerExecutor(Executor):
                 cmd,
                 capture_output=True,
                 text=True,
+                input=submission.input or "",
                 timeout=infra_timeout_s,
             )
 

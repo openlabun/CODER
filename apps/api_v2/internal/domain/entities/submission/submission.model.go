@@ -15,7 +15,6 @@ const (
 type Submission struct {
 	ID          string				`json:"id"`
 	Code        string				`json:"code"`
-	Function    string				`json:"function"`
 	Language    ProgrammingLanguage	`json:"language"`
 
 	// Results

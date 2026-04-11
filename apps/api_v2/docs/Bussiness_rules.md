@@ -118,7 +118,7 @@
 
 - Las revisiones ejecutan todos los casos de prueba y generan un puntaje (atributo `Score`) a partir de ellos.
 
-- Deberán siempre estar vinculadas a un reto (`Challenge`), a una sesión (`Session`) y a un usuario (`User`).
+- Deberán siempre estar vinculadas a un examen (`Exam`), a una sesión (`Session`) y a un usuario (`User`).
 
 #### Resultado de Revisiones (`SubmissionResult`)
 

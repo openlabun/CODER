@@ -16,7 +16,8 @@ import {
     Trash2,
     Send,
     Archive,
-    MoreVertical
+    MoreVertical,
+    PlusCircle
 } from 'lucide-react';
 import './Challenges.css';
 
@@ -33,7 +34,8 @@ const Challenges = () => {
 
     const fetchChallenges = async () => {
         try {
-            const { data } = await client.get('/challenges/mine');
+            const endpoint = isTeacher ? '/challenges' : '/challenges/public';
+            const { data } = await client.get(endpoint);
             setChallenges(Array.isArray(data) ? data : (data.items || []));
         } catch (err) {
             console.error('Error loading challenges:', err);
@@ -44,8 +46,12 @@ const Challenges = () => {
     };
 
     useEffect(() => {
+        if (user && user.role === 'student') {
+            navigate('/public-exams');
+            return;
+        }
         fetchChallenges();
-    }, []);
+    }, [user, navigate]);
 
     const handlePublish = async (e, id) => {
         e.preventDefault();
@@ -162,18 +168,26 @@ const Challenges = () => {
         <div className="challenges-page">
             <header className="page-header-compact">
                 <div className="header-info">
-                    <h1>Desafíos de Programación</h1>
-                    <p>Pon a prueba tu lógica y sube en el ranking institucional</p>
+                    <h1>Repositorio de Retos</h1>
+                    <p>Gestiona tus desafíos de programación y comparte con la comunidad docente</p>
                 </div>
                 
-                <div className="search-bar-mini">
-                    <Search size={18} />
-                    <input 
-                        type="text" 
-                        placeholder="Buscar por título..." 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="header-actions-mini">
+                    <div className="search-bar-mini">
+                        <Search size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Buscar por título..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    {isTeacher && (
+                        <button className="btn-create-mini" onClick={() => navigate('/challenges/create')}>
+                            <PlusCircle size={18} />
+                            <span>Nuevo Reto</span>
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -193,7 +207,7 @@ const Challenges = () => {
                         const isArchived = challenge.status === 'archived';
                         
                         return (
-                            <Link to={`/challenge/${challenge.id}`} key={challenge.id} className={`challenge-card-mini ${isArchived ? 'archived' : ''}`}>
+                            <div key={challenge.id} className={`challenge-card-mini ${isArchived ? 'archived' : ''}`}>
                                 <div className={`card-accent ${diff.class}`}></div>
                                 <div className="card-main">
                                     <div className="card-top">
@@ -267,13 +281,10 @@ const Challenges = () => {
                                                     </button>
                                                 </div>
                                             )}
-                                            <div className="btn-action-mini">
-                                                Resolver <ChevronRight size={16} />
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </Link>
+                            </div>
                         );
                     })}
                 </div>

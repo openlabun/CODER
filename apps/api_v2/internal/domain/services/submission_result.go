@@ -21,7 +21,7 @@ func CreateSubmissionResult(
 
 	hydrated, err := hydrateSubmissionResultIOVariable(ctx, result, ioVariableRepository)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("hydrating submission result: %w", err)
 	}
 
 	return resultRepository.CreateResult(ctx, hydrated)

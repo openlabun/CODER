@@ -33,12 +33,16 @@ const BrowseCourses = () => {
     useEffect(() => {
         const fetchCourses = async () => {
             try {
-                const { data } = await client.get('/courses/browse');
-                setCourses(data);
-                setFilteredCourses(data);
+                // Backend doesn't have a browse endpoint, show enrolled courses
+                const { data } = await client.get('/courses?scope=enrolled');
+                const list = Array.isArray(data) ? data : (data?.items || []);
+                setCourses(list);
+                setFilteredCourses(list);
             } catch (err) {
                 console.error(err);
-                setError('No pudimos cargar los cursos disponibles. Por favor, intenta más tarde.');
+                // If enrolled returns empty or errors, just show empty state
+                setCourses([]);
+                setFilteredCourses([]);
             } finally {
                 setLoading(false);
             }

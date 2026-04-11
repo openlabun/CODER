@@ -61,12 +61,8 @@ services:
         build:
             context: ./apps/web
             dockerfile: Dockerfile.prod
-        command: npm run dev -- --host
         ports:
             - "${WEB_PORT:-5173}:5173"
-        volumes:
-            - ./apps/web:/usr/src/app
-            - /usr/src/app/node_modules
         env_file:
             - .env.production
         networks:

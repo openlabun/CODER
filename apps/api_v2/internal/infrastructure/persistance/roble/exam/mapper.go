@@ -255,19 +255,10 @@ func recordToTestCase(record map[string]any, inputVariables []Entities.IOVariabl
 		output,
 		asBool(record["IsSample"]),
 		asInt(record["Points"]),
-		asBool(firstNonNil(record["Custom"], record["custom"])),
+		asBool(record["Custom"]),
 		asString(record["ChallengeID"]),
 		createdAt,
 	)
-}
-
-func firstNonNil(values ...any) any {
-	for _, value := range values {
-		if value != nil {
-			return value
-		}
-	}
-	return nil
 }
 
 func ioVariableToRecord(variable Entities.IOVariable) map[string]any {

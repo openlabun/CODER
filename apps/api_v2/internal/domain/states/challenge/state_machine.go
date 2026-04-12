@@ -3,6 +3,7 @@ package challenge_states
 import (
 	"fmt"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 )
 
@@ -12,31 +13,31 @@ import (
 //   - Can return from archived to published, but not to draft
 
 var challengeAllowedTransitions = map[Entities.ChallengeStatus]map[Entities.ChallengeStatus]struct{}{
-	Entities.ChallengeStatusDraft: {
-		Entities.ChallengeStatusPublished: {},
+	constants.ChallengeStatusDraft: {
+		constants.ChallengeStatusPublished: {},
 	},
-	Entities.ChallengeStatusPublished: {
-		Entities.ChallengeStatusArchived: {},
-		Entities.ChallengeStatusPrivate:  {},
+	constants.ChallengeStatusPublished: {
+		constants.ChallengeStatusArchived: {},
+		constants.ChallengeStatusPrivate:  {},
 	},
-	Entities.ChallengeStatusPrivate: {
-		Entities.ChallengeStatusPublished: {},
-		Entities.ChallengeStatusArchived: {},
+	constants.ChallengeStatusPrivate: {
+		constants.ChallengeStatusPublished: {},
+		constants.ChallengeStatusArchived: {},
 	},
-	Entities.ChallengeStatusArchived: {
-		Entities.ChallengeStatusPublished: {},
+	constants.ChallengeStatusArchived: {
+		constants.ChallengeStatusPublished: {},
 	},
 }
 
 func IsValidState(state Entities.ChallengeStatus) bool {
 	switch state {
-	case Entities.ChallengeStatusDraft:
+	case constants.ChallengeStatusDraft:
 		return true
-	case Entities.ChallengeStatusPublished:
+	case constants.ChallengeStatusPublished:
 		return true
-	case Entities.ChallengeStatusArchived:
+	case constants.ChallengeStatusArchived:
 		return true
-	case Entities.ChallengeStatusPrivate:
+	case constants.ChallengeStatusPrivate:
 		return true
 	default:
 		return false

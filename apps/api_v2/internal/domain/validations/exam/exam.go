@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 )
 
@@ -23,7 +24,7 @@ func ValidateExam(exam *Entities.Exam) error {
 		return fmt.Errorf("exam professor id is required")
 	}
 
-	if exam.Visibility == Entities.VisibilityCourse && (exam.CourseID == nil || strings.TrimSpace(*exam.CourseID) == "") {
+	if exam.Visibility == constants.VisibilityCourse && (exam.CourseID == nil || strings.TrimSpace(*exam.CourseID) == "") {
 		return fmt.Errorf("course visibility requires course id")
 	}
 

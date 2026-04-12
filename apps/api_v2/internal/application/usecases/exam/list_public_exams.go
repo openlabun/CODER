@@ -7,6 +7,7 @@ import (
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 
@@ -39,14 +40,14 @@ func (uc *GetPublicExamsUseCase) Execute(ctx context.Context) ([]*Entities.Exam,
 	}
 
 	// [STEP 2] Get all published exams
-	public_exams, err := uc.examRepository.GetPublicExams(ctx, string(Entities.VisibilityPublic))
+	public_exams, err := uc.examRepository.GetPublicExams(ctx, string(constants.VisibilityPublic))
 	if err != nil {
 		return nil, err
 	}
 
 	// [STEP 3] If user is a teacher, append exams with visibility for teachers
 	if user.Role == user_entities.UserRoleProfessor {
-		teacher_exams, err := uc.examRepository.GetPublicExams(ctx, string(Entities.VisibilityTeachers))
+		teacher_exams, err := uc.examRepository.GetPublicExams(ctx, string(constants.VisibilityTeachers))
 		if err != nil {
 			return nil, err
 		}

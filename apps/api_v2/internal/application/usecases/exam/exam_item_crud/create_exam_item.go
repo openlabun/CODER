@@ -8,8 +8,9 @@ import (
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam/mapper"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 )
@@ -78,7 +79,7 @@ func (uc *CreateExamItemUseCase) Execute(ctx context.Context, input dtos.CreateE
 	}
 
 	// [STEP 5] If challenge is draft or its archived, throw error
-	if challenge.Status == Entities.ChallengeStatusDraft || challenge.Status == Entities.ChallengeStatusArchived {
+	if challenge.Status == constants.ChallengeStatusDraft || challenge.Status == constants.ChallengeStatusArchived {
 		return nil, fmt.Errorf("challenge with ID %q is not published and cannot be added to the exam", input.ChallengeID)
 	}
 
@@ -95,7 +96,7 @@ func (uc *CreateExamItemUseCase) Execute(ctx context.Context, input dtos.CreateE
 	}
 
 	// [STEP 7] Validate if challenge belongs to user, or if challenge is public
-	if challenge.UserID != user.ID && challenge.Status != Entities.ChallengeStatusPublished {
+	if challenge.UserID != user.ID && challenge.Status != constants.ChallengeStatusPublished {
 		return nil, fmt.Errorf("challenge with ID %q is not owned by the user and is not public", input.ChallengeID)
 	}
 

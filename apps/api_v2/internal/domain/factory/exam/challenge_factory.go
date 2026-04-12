@@ -3,9 +3,10 @@ package exam_factory
 import (
 	"strings"
 	"time"
-	
+
 	"github.com/google/uuid"
 
+	exam_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
 )
@@ -23,10 +24,10 @@ func NewChallenge(
 ) (*Entities.Challenge, error) {
 	now := time.Now()
 	if status == "" {
-		status = Entities.ChallengeStatusDraft
+		status = exam_constants.ChallengeStatusDraft
 	}
 	if difficulty == "" {
-		difficulty = Entities.ChallengeDifficultyEasy
+		difficulty = exam_constants.ChallengeDifficultyEasy
 	}
 
 	challenge := &Entities.Challenge{

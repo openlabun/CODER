@@ -3,13 +3,14 @@ package exam_usecases
 import (
 	"context"
 	"fmt"
-	
+
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+	courseEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	courseRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	courseRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
-	courseEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
@@ -59,19 +60,19 @@ func (uc *GetExamDetailsUseCase) Execute(ctx context.Context, input dtos.GetExam
 
 	// [STEP 3] If user is teacher and is not the owner or exam visibility is not "public" or "teachers"
 	if role == user_entities.UserRoleProfessor && exam.ProfessorID != user.ID {
-		if exam.Visibility != Entities.VisibilityPublic && exam.Visibility != Entities.VisibilityTeachers {
+		if exam.Visibility != constants.VisibilityPublic && exam.Visibility != constants.VisibilityTeachers {
 			return nil, fmt.Errorf("user does not have permissions to view exam details")
 		}
 	}
 
 	// [STEP 4] If user is student and exam visibility is not "public" nor "course"
-	if role == user_entities.UserRoleStudent && exam.Visibility != Entities.VisibilityPublic && exam.Visibility != Entities.VisibilityCourse {
+	if role == user_entities.UserRoleStudent && exam.Visibility != constants.VisibilityPublic && exam.Visibility != constants.VisibilityCourse {
 		return nil, fmt.Errorf("user does not have permissions to view exam details")
 	}
 
 	// [STEP 5] If user is student, get its courses and verify that at least one of them is the course of the exam
-	if role == user_entities.UserRoleStudent && exam.Visibility == Entities.VisibilityCourse && exam.CourseID != nil {
-		if exam.Visibility != Entities.VisibilityCourse {
+	if role == user_entities.UserRoleStudent && exam.Visibility == constants.VisibilityCourse && exam.CourseID != nil {
+		if exam.Visibility != constants.VisibilityCourse {
 			return nil, fmt.Errorf("user does not have permissions to view exam details")
 		}
 		

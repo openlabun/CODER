@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	exam_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
 )
@@ -22,7 +23,7 @@ func NewExam(
 ) (*Entities.Exam, error) {
 	now := time.Now()
 	if visibility == "" {
-		visibility = Entities.VisibilityPrivate
+		visibility = exam_constants.VisibilityPrivate
 	}
 	if startTime.IsZero() {
 		startTime = now

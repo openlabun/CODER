@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission/mapper"
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
-	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
@@ -64,7 +64,7 @@ func (uc *GetChallengeSubmissionsUseCase) Execute(ctx context.Context, input dto
 
 	// [STEP 3] If user is a student, check if the challenge is published
 	if role == user_entities.UserRoleStudent {
-		if challenge.Status != examEntities.ChallengeStatusPublished {
+		if challenge.Status != constants.ChallengeStatusPublished {
 			return nil, fmt.Errorf("challenge with id %q is not published yet or it was archived", input.ChallengeID)
 		}
 	}

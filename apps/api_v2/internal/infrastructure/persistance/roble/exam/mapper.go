@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	exam_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
 )
@@ -171,12 +172,12 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 	tags := asStringList(record["Tags"])
 	status := Entities.ChallengeStatus(asString(record["Status"]))
 	if status == "" {
-		status = Entities.ChallengeStatusDraft
+		status = constants.ChallengeStatusDraft
 	}
 
 	difficulty := Entities.ChallengeDifficulty(asString(record["Difficulty"]))
 	if difficulty == "" {
-		difficulty = Entities.ChallengeDifficultyEasy
+		difficulty = constants.ChallengeDifficultyEasy
 	}
 
 	output := Entities.IOVariable{}

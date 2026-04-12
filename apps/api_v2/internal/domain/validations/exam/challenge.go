@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	StateMachine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/challenge"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	StateMachine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/challenge"
 )
 
 func validateChallengeDifficulty(difficulty Entities.ChallengeDifficulty) error {
 	switch difficulty {
-	case Entities.ChallengeDifficultyEasy, Entities.ChallengeDifficultyMedium, Entities.ChallengeDifficultyHard:
+	case constants.ChallengeDifficultyEasy, constants.ChallengeDifficultyMedium, constants.ChallengeDifficultyHard:
 		return nil
 	default:
 		return fmt.Errorf("invalid challenge difficulty: %q", difficulty)
@@ -19,7 +20,7 @@ func validateChallengeDifficulty(difficulty Entities.ChallengeDifficulty) error 
 
 func validateIOFormat(format Entities.VariableFormat) error {
 	switch format {
-	case Entities.VariableFormatString, Entities.VariableFormatInt, Entities.VariableFormatFloat:
+	case constants.VariableFormatString, constants.VariableFormatInt, constants.VariableFormatFloat:
 		return nil
 	default:
 		return fmt.Errorf("invalid io variable format: %q", format)

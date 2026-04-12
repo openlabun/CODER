@@ -1,8 +1,9 @@
 package mapper
 
 import (
-	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/challenge"
@@ -11,7 +12,7 @@ import (
 func MapIOVariableDTOToIOVariableEntity(input dtos.IOVariableDTO) (*Entities.IOVariable, error) {
 	result, err := factory.NewIOVariable(
 		input.Name,
-		Entities.VariableFormat(input.Type),
+		constants.VariableFormat(input.Type),
 		input.Value,
 	)
 
@@ -56,8 +57,8 @@ func MapCreateChallengeInputToChallengeEntity(input dtos.CreateChallengeInput) (
 		input.Title,
 		input.Description,
 		input.Tags,
-		Entities.ChallengeStatus(input.Status),
-		Entities.ChallengeDifficulty(input.Difficulty),
+		constants.ChallengeStatus(input.Status),
+		constants.ChallengeDifficulty(input.Difficulty),
 		input.WorkerTimeLimit,
 		input.WorkerMemoryLimit,
 	 	inputVariables,
@@ -86,14 +87,14 @@ func MapUpdateChallengeInputToChallengeEntity(existingChallenge *Entities.Challe
 	}
 
 	if input.Status != nil {
-        err := state_machine.ApplyTransition(existingChallenge, Entities.ChallengeStatus(*input.Status))
+		err := state_machine.ApplyTransition(existingChallenge, constants.ChallengeStatus(*input.Status))
         if err != nil {
             return nil, err
         }
     }
 
 	if input.Difficulty != nil {
-		existingChallenge.Difficulty = Entities.ChallengeDifficulty(*input.Difficulty)
+		existingChallenge.Difficulty = constants.ChallengeDifficulty(*input.Difficulty)
 	}
 
 	if input.WorkerTimeLimit != nil {
@@ -129,7 +130,7 @@ func MapUpdateChallengeInputToChallengeEntity(existingChallenge *Entities.Challe
 }
 
 func MapPublishChallengeInputToChallengeEntity(existingChallenge *Entities.Challenge) (*Entities.Challenge, error) {
-	err := state_machine.ApplyTransition(existingChallenge, Entities.ChallengeStatusPublished)
+	err := state_machine.ApplyTransition(existingChallenge, constants.ChallengeStatusPublished)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +138,7 @@ func MapPublishChallengeInputToChallengeEntity(existingChallenge *Entities.Chall
 }
 
 func MapArchiveChallengeInputToChallengeEntity(existingChallenge *Entities.Challenge) (*Entities.Challenge, error) {
-	err := state_machine.ApplyTransition(existingChallenge, Entities.ChallengeStatusArchived)
+	err := state_machine.ApplyTransition(existingChallenge, constants.ChallengeStatusArchived)
 	if err != nil {
 		return nil, err
 	}

@@ -1,14 +1,18 @@
 package challenge_entities
 
-import "time"
+import (
+	"time"
 
-type Visibility string
+	exam_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+)
+
+type Visibility = exam_constants.Visibility
 
 const (
-	VisibilityPublic  Visibility = "public"
-	VisibilityCourse  Visibility = "course"
-	VisibilityTeachers Visibility = "teachers"
-	VisibilityPrivate Visibility = "private"
+	VisibilityPublic   Visibility = exam_constants.VisibilityPublic
+	VisibilityCourse   Visibility = exam_constants.VisibilityCourse
+	VisibilityTeachers Visibility = exam_constants.VisibilityTeachers
+	VisibilityPrivate  Visibility = exam_constants.VisibilityPrivate
 )
 
 type Exam struct {

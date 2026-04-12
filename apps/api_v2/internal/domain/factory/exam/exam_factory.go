@@ -13,7 +13,7 @@ import (
 
 func NewExam(
 	title, description string,
-	visibility Entities.Visibility,
+	visibility exam_constants.Visibility,
 	startTime time.Time,
 	endTime *time.Time,
 	allowLateSubmissions bool,
@@ -62,7 +62,7 @@ func NewExam(
 
 func ExistingExam(
 	id, title, description string,
-	visibility Entities.Visibility,
+	visibility exam_constants.Visibility,
 	startTime time.Time,
 	endTime *time.Time,
 	allowLateSubmissions bool,

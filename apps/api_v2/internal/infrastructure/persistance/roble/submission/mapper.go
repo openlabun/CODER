@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	submission_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
@@ -185,7 +186,7 @@ func recordToIOVariable(record map[string]any) (*ExamEntities.IOVariable, error)
 	return &ExamEntities.IOVariable{
 		ID:    asString(record["ID"]),
 		Name:  asString(record["Name"]),
-		Type:  ExamEntities.VariableFormat(asString(record["Type"])),
+		Type:  constants.VariableFormat(asString(record["Type"])),
 		Value: asString(record["Value"]),
 	}, nil
 }

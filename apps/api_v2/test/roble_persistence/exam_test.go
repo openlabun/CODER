@@ -10,6 +10,7 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 	hasher "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
@@ -122,7 +123,7 @@ func TestExamCRUD(t *testing.T) {
 	exam, err := exam_factory.NewExam(
 		"Integration Exam",
 		"Exam created by integration test",
-		exam_entities.VisibilityCourse,
+		exam_consts.VisibilityCourse,
 		startTime,
 		&endTime,
 		false,
@@ -199,15 +200,15 @@ func TestExamCRUD(t *testing.T) {
 
 	// [STEP 9] Create IOVariables for challenge
 	process.StartStep("Crear IOVariables para Challenge")
-	inputA, err := exam_factory.NewIOVariable("a", exam_entities.VariableFormatInt, "2")
+	inputA, err := exam_factory.NewIOVariable("a", exam_consts.VariableFormatInt, "2")
 	if err != nil {
 		process.Fail("create input io variable", err)
 	}
-	inputB, err := exam_factory.NewIOVariable("b", exam_entities.VariableFormatInt, "3")
+	inputB, err := exam_factory.NewIOVariable("b", exam_consts.VariableFormatInt, "3")
 	if err != nil {
 		process.Fail("create input io variable", err)
 	}
-	output, err := exam_factory.NewIOVariable("sum", exam_entities.VariableFormatInt, "5")
+	output, err := exam_factory.NewIOVariable("sum", exam_consts.VariableFormatInt, "5")
 	if err != nil {
 		process.Fail("create output io variable", err)
 	}
@@ -232,8 +233,8 @@ func TestExamCRUD(t *testing.T) {
 		"Sum Challenge",
 		"Return the sum of two numbers",
 		[]string{"math", "integration"},
-		exam_entities.ChallengeStatusDraft,
-		exam_entities.ChallengeDifficultyEasy,
+		exam_consts.ChallengeStatusDraft,
+		exam_consts.ChallengeDifficultyEasy,
 		1500,
 		256,
 		[]exam_entities.IOVariable{*inputA, *inputB},
@@ -310,7 +311,7 @@ func TestExamCRUD(t *testing.T) {
 	// [STEP 13] Update challenge details and verify changes
 	process.StartStep("Actualizar challenge")
 	createdChallenge.Title = "Sum Challenge Updated"
-	createdChallenge.Status = exam_entities.ChallengeStatusPublished
+	createdChallenge.Status = exam_consts.ChallengeStatusPublished
 	createdChallenge.Tags = []string{"math", "updated"}
 	updatedChallenge, err := challengeRepository.UpdateChallenge(ctx, createdChallenge)
 	if err != nil {
@@ -347,15 +348,15 @@ func TestExamCRUD(t *testing.T) {
 
 	// [STEP 15] Create IOVariables for TestCase
 	process.StartStep("Crear IOVariables for TestCase")
-	tcInputA, err := exam_factory.NewIOVariable("a", exam_entities.VariableFormatInt, "10")
+	tcInputA, err := exam_factory.NewIOVariable("a", exam_consts.VariableFormatInt, "10")
 	if err != nil {
 		process.Fail("create test case input", err)
 	}
-	tcInputB, err := exam_factory.NewIOVariable("b", exam_entities.VariableFormatInt, "15")
+	tcInputB, err := exam_factory.NewIOVariable("b", exam_consts.VariableFormatInt, "15")
 	if err != nil {
 		process.Fail("create test case input", err)
 	}
-	tcOutput, err := exam_factory.NewIOVariable("sum", exam_entities.VariableFormatInt, "25")
+	tcOutput, err := exam_factory.NewIOVariable("sum", exam_consts.VariableFormatInt, "25")
 	if err != nil {
 		process.Fail("create test case output", err)
 	}

@@ -9,7 +9,7 @@ import (
 	StateMachine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/challenge"
 )
 
-func validateChallengeDifficulty(difficulty Entities.ChallengeDifficulty) error {
+func validateChallengeDifficulty(difficulty constants.ChallengeDifficulty) error {
 	switch difficulty {
 	case constants.ChallengeDifficultyEasy, constants.ChallengeDifficultyMedium, constants.ChallengeDifficultyHard:
 		return nil
@@ -18,7 +18,7 @@ func validateChallengeDifficulty(difficulty Entities.ChallengeDifficulty) error 
 	}
 }
 
-func validateIOFormat(format Entities.VariableFormat) error {
+func validateIOFormat(format constants.VariableFormat) error {
 	switch format {
 	case constants.VariableFormatString, constants.VariableFormatInt, constants.VariableFormatFloat:
 		return nil

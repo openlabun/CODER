@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -40,15 +40,15 @@ func TestChallengeCRUD(t *testing.T) {
 		Title:             "Challenge CRUD Test",
 		Description:       "Challenge creado por test CRUD",
 		Tags:              []string{"crud", "challenge"},
-		Status:            string(exam_entities.ChallengeStatusDraft),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusDraft),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1500,
 		WorkerMemoryLimit: 256,
 		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "a", Type: string(exam_entities.VariableFormatInt), Value: "2"},
-			{Name: "b", Type: string(exam_entities.VariableFormatInt), Value: "3"},
+			{Name: "a", Type: string(exam_consts.VariableFormatInt), Value: "2"},
+			{Name: "b", Type: string(exam_consts.VariableFormatInt), Value: "3"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "sum", Type: string(exam_entities.VariableFormatInt), Value: "5"},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "sum", Type: string(exam_consts.VariableFormatInt), Value: "5"},
 		Constraints:    "1 <= a,b <= 1000",
 	})
 	if err != nil {
@@ -65,7 +65,7 @@ func TestChallengeCRUD(t *testing.T) {
 	process.StartStep("Actualiza el reto")
 	updatedTitle := "Challenge CRUD Test Updated"
 	updatedDescription := "Challenge actualizado por test CRUD"
-	updatedDifficulty := string(exam_entities.ChallengeDifficultyMedium)
+	updatedDifficulty := string(exam_consts.ChallengeDifficultyMedium)
 	updatedChallenge, err := process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{
 		ChallengeID: challengeID,
 		Title:       &updatedTitle,

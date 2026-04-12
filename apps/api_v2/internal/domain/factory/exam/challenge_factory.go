@@ -15,8 +15,8 @@ import (
 func NewChallenge(
 	title, description string,
 	tags []string,
-	status Entities.ChallengeStatus,
-	difficulty Entities.ChallengeDifficulty,
+	status exam_constants.ChallengeStatus,
+	difficulty exam_constants.ChallengeDifficulty,
 	workerTimeLimit, workerMemoryLimit int,
 	inputVariables []Entities.IOVariable,
 	outputVariable Entities.IOVariable,
@@ -57,8 +57,8 @@ func NewChallenge(
 func ExistingChallenge(
 	id, title, description string,
 	tags []string,
-	status Entities.ChallengeStatus,
-	difficulty Entities.ChallengeDifficulty,
+	status exam_constants.ChallengeStatus,
+	difficulty exam_constants.ChallengeDifficulty,
 	workerTimeLimit, workerMemoryLimit int,
 	inputVariables []Entities.IOVariable,
 	outputVariable Entities.IOVariable,

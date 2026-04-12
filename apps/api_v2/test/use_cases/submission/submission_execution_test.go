@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	submission_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	submission_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
@@ -64,7 +64,7 @@ func TestSubmissionExecution(t *testing.T) {
 		CourseID:             nil,
 		Title:                "Submission Execution Exam",
 		Description:          "Examen para validación de ejecución",
-		Visibility:           string(exam_entities.VisibilityPublic),
+		Visibility:           string(exam_consts.VisibilityPublic),
 		StartTime:            now.Add(2 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: true,
@@ -83,14 +83,14 @@ func TestSubmissionExecution(t *testing.T) {
 		Title:             "Submission Execution Challenge",
 		Description:       "Challenge para validar ejecución asíncrona",
 		Tags:              []string{"submission", "execution"},
-		Status:            string(exam_entities.ChallengeStatusPublished),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusPublished),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
 		WorkerMemoryLimit: 256,
 		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		Constraints:    "1 <= n <= 1000",
 	})
 	if err != nil {
@@ -103,9 +103,9 @@ func TestSubmissionExecution(t *testing.T) {
 	createdTestCase, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
 		Name: "execution_case",
 		Input: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		},
-		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		IsSample:       true,
 		Points:         10,
 		ChallengeID:    challengeID,

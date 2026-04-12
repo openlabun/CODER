@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 	course_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
@@ -83,7 +83,7 @@ func TestExamCRUD(t *testing.T) {
 		CourseID:             &courseID,
 		Title:                "Exam CRUD Test",
 		Description:          "Created by use case test",
-		Visibility:           string(exam_entities.VisibilityCourse),
+		Visibility:           string(exam_consts.VisibilityCourse),
 		StartTime:            startTime.Format(time.RFC3339),
 		EndTime:              &endTimeStr,
 		AllowLateSubmissions: false,

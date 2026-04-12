@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -32,7 +32,7 @@ func TestChallengeFork(t *testing.T) {
 			_ = process.Application.ChallengeModule.DeleteChallenge.Execute(creatorCtx, exam_dtos.DeleteChallengeInput{ChallengeID: originalChallengeID})
 		}
 	}()
-	
+
 	// [STEP 1] Login as creator teacher
 	process.StartStep("Iniciar sesión con usuario de docente (creador)")
 	creatorAccess := utils.EnsureAuthUserAccess(t, process.Application, creatorEmail, password, "Teacher Creator")
@@ -46,14 +46,14 @@ func TestChallengeFork(t *testing.T) {
 		Title:             "Challenge Fork Original",
 		Description:       "Challenge original para prueba de fork",
 		Tags:              []string{"fork", "original"},
-		Status:            string(exam_entities.ChallengeStatusPrivate),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusPrivate),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1500,
 		WorkerMemoryLimit: 256,
 		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "x", Type: string(exam_entities.VariableFormatInt), Value: "5"},
+			{Name: "x", Type: string(exam_consts.VariableFormatInt), Value: "5"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_entities.VariableFormatInt), Value: "5"},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_consts.VariableFormatInt), Value: "5"},
 		Constraints:    "1 <= x <= 1000",
 	})
 	if err != nil {

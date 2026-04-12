@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 	course_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
@@ -70,7 +70,7 @@ func TestExamFromTeacherView(t *testing.T) {
 		CourseID:             nil,
 		Title:                "Private Teachers View Exam",
 		Description:          "Only owner should access",
-		Visibility:           string(exam_entities.VisibilityPrivate),
+		Visibility:           string(exam_consts.VisibilityPrivate),
 		StartTime:            start.Format(time.RFC3339),
 		EndTime:              &endStr,
 		AllowLateSubmissions: false,
@@ -112,7 +112,7 @@ func TestExamFromTeacherView(t *testing.T) {
 		CourseID:             nil,
 		Title:                "Teachers Visibility Exam",
 		Description:          "Visible for teachers",
-		Visibility:           string(exam_entities.VisibilityTeachers),
+		Visibility:           string(exam_consts.VisibilityTeachers),
 		StartTime:            start.Add(24 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: true,
@@ -184,7 +184,7 @@ func TestExamFromTeacherView(t *testing.T) {
 		CourseID:             &courseID,
 		Title:                "Teachers Course Visibility Exam",
 		Description:          "Teachers-only exam with course relation",
-		Visibility:           string(exam_entities.VisibilityTeachers),
+		Visibility:           string(exam_consts.VisibilityTeachers),
 		StartTime:            start.Add(48 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: true,

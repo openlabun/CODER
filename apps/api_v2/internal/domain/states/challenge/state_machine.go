@@ -12,7 +12,7 @@ import (
 //   - Can make direct transition to published
 //   - Can return from archived to published, but not to draft
 
-var challengeAllowedTransitions = map[Entities.ChallengeStatus]map[Entities.ChallengeStatus]struct{}{
+var challengeAllowedTransitions = map[constants.ChallengeStatus]map[constants.ChallengeStatus]struct{}{
 	constants.ChallengeStatusDraft: {
 		constants.ChallengeStatusPublished: {},
 	},
@@ -29,7 +29,7 @@ var challengeAllowedTransitions = map[Entities.ChallengeStatus]map[Entities.Chal
 	},
 }
 
-func IsValidState(state Entities.ChallengeStatus) bool {
+func IsValidState(state constants.ChallengeStatus) bool {
 	switch state {
 	case constants.ChallengeStatusDraft:
 		return true
@@ -44,7 +44,7 @@ func IsValidState(state Entities.ChallengeStatus) bool {
 	}
 }
 
-func canTransitionState(from Entities.ChallengeStatus, to Entities.ChallengeStatus) bool {
+func canTransitionState(from constants.ChallengeStatus, to constants.ChallengeStatus) bool {
 	if !IsValidState(from) || !IsValidState(to) {
 		return false
 	}
@@ -58,7 +58,7 @@ func canTransitionState(from Entities.ChallengeStatus, to Entities.ChallengeStat
 	return allowed
 }
 
-func validateStateTransition(challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
+func validateStateTransition(challenge *Entities.Challenge, to constants.ChallengeStatus) error {
 	if !IsValidState(challenge.Status) {
 		return fmt.Errorf("invalid challenge state: %q", challenge.Status)
 	}
@@ -74,7 +74,7 @@ func validateStateTransition(challenge *Entities.Challenge, to Entities.Challeng
 	return nil
 }
 
-func ApplyTransition(challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
+func ApplyTransition(challenge *Entities.Challenge, to constants.ChallengeStatus) error {
 	if err := validateStateTransition(challenge, to); err != nil {
 		return err
 	}

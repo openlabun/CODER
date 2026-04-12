@@ -117,7 +117,7 @@ func recordToExam(record map[string]any) (*Entities.Exam, error) {
 		asString(record["ID"]),
 		asString(record["Title"]),
 		asString(record["Description"]),
-		Entities.Visibility(asString(record["Visibility"])),
+		constants.Visibility(asString(record["Visibility"])),
 		startTime,
 		endTime,
 		asBool(record["AllowLateSubmissions"]),
@@ -170,12 +170,12 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 	updatedAt, _ := asTime(record["UpdatedAt"])
 
 	tags := asStringList(record["Tags"])
-	status := Entities.ChallengeStatus(asString(record["Status"]))
+	status := constants.ChallengeStatus(asString(record["Status"]))
 	if status == "" {
 		status = constants.ChallengeStatusDraft
 	}
 
-	difficulty := Entities.ChallengeDifficulty(asString(record["Difficulty"]))
+	difficulty := constants.ChallengeDifficulty(asString(record["Difficulty"]))
 	if difficulty == "" {
 		difficulty = constants.ChallengeDifficultyEasy
 	}
@@ -268,7 +268,7 @@ func recordToIOVariable(record map[string]any) (*Entities.IOVariable, error) {
 	return exam_factory.ExistingIOVariable(
 		asString(record["ID"]),
 		asString(record["Name"]),
-		Entities.VariableFormat(asString(record["Type"])),
+		constants.VariableFormat(asString(record["Type"])),
 		asString(record["Value"]),
 	)
 }

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -61,14 +61,14 @@ func TestExamItemChallengePrivacy(t *testing.T) {
 		Title:             "Creator Private Challenge",
 		Description:       "Challenge privado para prueba de privacidad",
 		Tags:              []string{"privacy", "private"},
-		Status:            string(exam_entities.ChallengeStatusPrivate),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusPrivate),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
 		WorkerMemoryLimit: 256,
 		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "x", Type: string(exam_entities.VariableFormatInt), Value: "1"},
+			{Name: "x", Type: string(exam_consts.VariableFormatInt), Value: "1"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_entities.VariableFormatInt), Value: "1"},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_consts.VariableFormatInt), Value: "1"},
 		Constraints:    "x >= 0",
 	})
 	if err != nil {
@@ -80,14 +80,14 @@ func TestExamItemChallengePrivacy(t *testing.T) {
 		Title:             "Creator Published Challenge",
 		Description:       "Challenge publicado para prueba de privacidad",
 		Tags:              []string{"privacy", "published"},
-		Status:            string(exam_entities.ChallengeStatusPublished),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusPublished),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
 		WorkerMemoryLimit: 256,
 		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "x", Type: string(exam_entities.VariableFormatInt), Value: "2"},
+			{Name: "x", Type: string(exam_consts.VariableFormatInt), Value: "2"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_entities.VariableFormatInt), Value: "2"},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_consts.VariableFormatInt), Value: "2"},
 		Constraints:    "x >= 0",
 	})
 	if err != nil {
@@ -109,7 +109,7 @@ func TestExamItemChallengePrivacy(t *testing.T) {
 		CourseID:             nil,
 		Title:                "ExamItem Challenge Privacy Exam",
 		Description:          "Exam de observador para pruebas de challenge privacy",
-		Visibility:           string(exam_entities.VisibilityPrivate),
+		Visibility:           string(exam_consts.VisibilityPrivate),
 		StartTime:            now.Add(3 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: false,
@@ -129,14 +129,14 @@ func TestExamItemChallengePrivacy(t *testing.T) {
 		Title:             "Observer Own Challenge",
 		Description:       "Challenge propio del observador",
 		Tags:              []string{"privacy", "own"},
-		Status:            string(exam_entities.ChallengeStatusPrivate),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusPrivate),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
 		WorkerMemoryLimit: 256,
 		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "x", Type: string(exam_entities.VariableFormatInt), Value: "3"},
+			{Name: "x", Type: string(exam_consts.VariableFormatInt), Value: "3"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_entities.VariableFormatInt), Value: "3"},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_consts.VariableFormatInt), Value: "3"},
 		Constraints:    "x >= 0",
 	})
 	if err != nil {

@@ -3,14 +3,14 @@ package usecases_test
 import (
 	"context"
 	"fmt"
-	"testing"
-	"time"
 	"os"
 	"strconv"
+	"testing"
+	"time"
 
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	submission_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	submission_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
@@ -57,7 +57,7 @@ func TestSessionFreezeAndBlock(t *testing.T) {
 		CourseID:             nil,
 		Title:                "Session Freeze Block Exam",
 		Description:          "Examen para pruebas de bloqueo y congelamiento",
-		Visibility:           string(exam_entities.VisibilityPublic),
+		Visibility:           string(exam_consts.VisibilityPublic),
 		StartTime:            now.Add(2 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: true,
@@ -125,7 +125,7 @@ func TestSessionFreezeAndBlock(t *testing.T) {
 
 	// [STEP 8] Wait for time to trigger freeze
 	process.StartStep("Esperar tiempo para congelamiento de examen")
-	freeze_time, err :=  strconv.Atoi(os.Getenv("SESSION_FREEZE_TIME"))
+	freeze_time, err := strconv.Atoi(os.Getenv("SESSION_FREEZE_TIME"))
 	if err != nil {
 		freeze_time = 60 // default freeze time if env variable is not set or invalid
 	}

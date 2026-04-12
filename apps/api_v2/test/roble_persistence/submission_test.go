@@ -7,13 +7,12 @@ import (
 	"testing"
 	"time"
 
-	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
-	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
-	hasher "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+	submission_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
-	submission_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	course_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/course"
 	exam_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
 	submission_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
@@ -22,6 +21,7 @@ import (
 	roble_exam_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 	roble_submission_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
+	hasher "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 )
 
@@ -333,7 +333,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	process.StartStep("Crear Submission")
 	submission, err := submission_factory.NewSubmission(
 		"print(1+2)",
-		submission_entities.LanguagePython,
+		submission_consts.LanguagePython,
 		challengeID,
 		sessionID,
 		teacherID,
@@ -432,7 +432,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	process.Log("Actual output IOVariable creada y persistida")
 
 	result.ActualOutput = actualOutput
-	result.Status = submission_entities.SubmissionStatusAccepted
+	result.Status = submission_consts.SubmissionStatusAccepted
 	
 	createdResult, err := resultRepository.CreateResult(ctx, result)
 	if err != nil {
@@ -473,7 +473,7 @@ func TestSubmissionCRUD(t *testing.T) {
 		_ = ioVariableRepository.DeleteIOVariable(ctx, updatedActualOutput.ID)
 	} ()
 
-	createdResult.Status = submission_entities.SubmissionStatusWrongAnswer
+	createdResult.Status = submission_consts.SubmissionStatusWrongAnswer
 	createdResult.ActualOutput = updatedActualOutput
 	createdResult.ErrorMessage = nil
 
@@ -481,7 +481,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	if err != nil {
 		process.Fail("update result", err)
 	}
-	if updatedResult == nil || updatedResult.Status != submission_entities.SubmissionStatusWrongAnswer {
+	if updatedResult == nil || updatedResult.Status != submission_consts.SubmissionStatusWrongAnswer {
 		process.Fail("update result", fmt.Errorf("expected updated result status"))
 	}
 	process.Log(fmt.Sprintf("Result actualizado. status=%s", updatedResult.Status))

@@ -7,6 +7,7 @@ import (
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 
 	submissionPorts "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/submission"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
@@ -77,7 +78,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 	if session.StudentID != user.ID {
 		return nil, fmt.Errorf("session with id %q does not belong to student %q", input.SessionID, user.Username)
 	}
-	if session.Status != Entities.SessionStatusActive {
+	if session.Status != constants.SessionStatusActive {
 		return nil, fmt.Errorf("session with id %q is not active", input.SessionID)
 	}	
 
@@ -100,7 +101,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 	}
 
 	// [STEP 6] Validate session is still active after status update
-	if session.Status != Entities.SessionStatusActive {
+	if session.Status != constants.SessionStatusActive {
 		return nil, fmt.Errorf("session with id %q is not active", input.SessionID)
 	}
 

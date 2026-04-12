@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	submission_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	submission_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+	submission_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -170,7 +170,7 @@ func TestSubmissionExecution(t *testing.T) {
 		if statusOutput != nil && len(statusOutput.Results) > 0 {
 			allAccepted := true
 			for _, r := range statusOutput.Results {
-				if r.Status != submission_entities.SubmissionStatusAccepted {
+				if r.Status != submission_consts.SubmissionStatusAccepted {
 					allAccepted = false
 					break
 				}

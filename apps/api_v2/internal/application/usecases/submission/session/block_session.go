@@ -7,11 +7,12 @@ import (
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
-	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	Entity "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
-	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
+	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
 )
 
 type BlockSessionUseCase struct {
@@ -54,7 +55,7 @@ func (uc *BlockSessionUseCase) Execute(ctx context.Context, input dtos.BlockSess
 	}
 
 	// [STEP 4] Block Session
-	err = state_machine.ApplyTranstion(session, Entity.SessionStatusBlocked)
+	err = state_machine.ApplyTranstion(session, constants.SessionStatusBlocked)
 	if err != nil {
 		return nil, fmt.Errorf("session is not active and cannot be blocked, got error: %w", err)
 	}

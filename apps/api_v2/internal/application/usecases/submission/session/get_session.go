@@ -7,12 +7,13 @@ import (
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
-	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	Entity "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
-	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
+	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
 )
 
 type GetActiveSessionUseCase struct {
@@ -95,7 +96,7 @@ func (uc *GetActiveSessionUseCase) Execute(ctx context.Context, input dtos.GetAc
 	var active_session *Entity.Session
 	
 	if session != nil {
-		if session.Status == Entity.SessionStatusActive || session.Status == Entity.SessionStatusFrozen {
+		if session.Status == constants.SessionStatusActive || session.Status == constants.SessionStatusFrozen {
 			active_session = session
 		}
 	}

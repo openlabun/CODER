@@ -5,8 +5,9 @@ import (
 
 	"github.com/google/uuid"
 
-	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/submission"
 )
 
@@ -15,7 +16,7 @@ func NewSubmissionResult(submissionID, testCaseID string) (*Entities.SubmissionR
 		ID:           uuid.New().String(),
 		SubmissionID: strings.TrimSpace(submissionID),
 		TestCaseID:   strings.TrimSpace(testCaseID),
-		Status:       Entities.SubmissionStatusQueued,
+		Status:       constants.SubmissionStatusQueued,
 		ActualOutput: nil,
 		ErrorMessage: nil,
 	}
@@ -29,7 +30,7 @@ func NewSubmissionResult(submissionID, testCaseID string) (*Entities.SubmissionR
 
 func ExistingSubmissionResult(
 	id, submissionID, testCaseID string,
-	status Entities.SubmissionStatus,
+	status constants.SubmissionStatus,
 	actualOutput *ExamEntities.IOVariable,
 	errorMessage *string,
 ) (*Entities.SubmissionResult, error) {

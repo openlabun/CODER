@@ -6,6 +6,7 @@ import (
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
@@ -16,7 +17,7 @@ import (
 func MapCreateSubmissionInputToSubmissionEntity(userID string, input dtos.CreateSubmissionInput) (*Entities.Submission, error) {
 	submission, err := factory.NewSubmission(
 		input.Code,
-		Entities.ProgrammingLanguage(input.Language),
+		constants.ProgrammingLanguage(input.Language),
 		input.ChallengeID,
 		input.SessionID,
 		userID,
@@ -68,7 +69,7 @@ func MapResultInputToSubmissionResultEntity(input dtos.UpdateResultInput, submis
 	}
 	submissionResult.ErrorMessage = input.Error
 
-	status := Entities.SubmissionStatus(input.Status)
+	status := constants.SubmissionStatus(input.Status)
 
 	valid := state_machine.IsValidState(status)
 	if !valid {

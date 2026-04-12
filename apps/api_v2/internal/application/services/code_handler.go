@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	submission_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
-	submissionEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
 func makeFunctionCall(functionName string, inputs []entities.IOVariable) (string, error) {
@@ -67,18 +67,18 @@ func replaceVariable(functionCall string, variableName string, variableValue str
 	return out.String()
 }
 
-func AppendFunctionCall(code string, function string, language submissionEntities.ProgrammingLanguage, inputs []entities.IOVariable) (string, error) {
+func AppendFunctionCall(code string, function string, language submission_constants.ProgrammingLanguage, inputs []entities.IOVariable) (string, error) {
 	function_call, err := makeFunctionCall(function, inputs)
 	if err != nil {
 		return "", err
 	}
 
 	switch language {
-	case submissionEntities.LanguagePython:
+	case submission_constants.LanguagePython:
 		function_call = "print(" + function_call + ")"
-	case submissionEntities.LanguageJava:
+	case submission_constants.LanguageJava:
 		function_call = "System.out.println(" + function_call + ");"
-	case submissionEntities.LanguageCPP:
+	case submission_constants.LanguageCPP:
 		function_call = "cout << " + function_call + " << endl;"
 	default:
 		return "", fmt.Errorf("language not implemented")

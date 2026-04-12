@@ -11,6 +11,11 @@ type CodeTemplateDTO struct {
 	Template string `json:"template"`
 }
 
+type DefaultCodeTemplatesInput struct {
+	Inputs []IOVariableDTO `json:"input_variables"`
+	Output IOVariableDTO   `json:"output_variable"`
+}
+
 type CreateChallengeInput struct {
 	Title             string            `json:"title"`
 	Description       string            `json:"description"`

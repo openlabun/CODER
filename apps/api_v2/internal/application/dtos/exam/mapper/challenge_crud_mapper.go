@@ -70,6 +70,20 @@ func MapCodeTemplatesListDTOToCodeTemplatesEntity(input []dtos.CodeTemplateDTO) 
 	return codeTemplates, nil
 }
 
+func MapDefaultCodeTemplatesInputToEntities(input dtos.DefaultCodeTemplatesInput) ([]Entities.IOVariable, *Entities.IOVariable, error) {
+	inputVariables, err := MapIOVariablesDTOToIOVariablesEntity(input.Inputs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	outputVariable, err := MapIOVariableDTOToIOVariableEntity(input.Output)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return inputVariables, outputVariable, nil
+}
+
 
 func MapCreateChallengeInputToChallengeEntity(input dtos.CreateChallengeInput) (*Entities.Challenge, error) {
 	outputVariable, err := MapIOVariableDTOToIOVariableEntity(input.OutputVariable)

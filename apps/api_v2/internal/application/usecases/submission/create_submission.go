@@ -170,13 +170,18 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 }
 
 func (uc *CreateSubmissionUseCase) createSubmissionResultsForTestCases(ctx context.Context, submissionID string, testCase examEntities.TestCase) (*Entities.SubmissionResult, error) {
-	// [STEP 11.1] Create submission result entity with user provided values
+	// [STEP 11.1] If TestCase is custom, discard
+	if testCase.Custom {
+		return nil, nil
+	}
+	
+	// [STEP 11.2] Create submission result entity with user provided values
 	submissionResult, err := mapper.MapSubmissionResultEntity(submissionID, testCase.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map submission result entity: %w", err)
 	}
 
-	// [STEP 11.2] Save submission result in database
+	// [STEP 11.3] Save submission result in database
 	result, err := domain_services.CreateSubmissionResult(ctx, submissionResult, uc.resultRepository, uc.ioVariableRepository)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create submission result: %w", err)

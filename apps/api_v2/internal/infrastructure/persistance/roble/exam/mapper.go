@@ -140,6 +140,7 @@ func challengeToRecord(challenge *Entities.Challenge) map[string]any {
 		"Difficulty":        string(challenge.Difficulty),
 		"WorkerTimeLimit":   challenge.WorkerTimeLimit,
 		"WorkerMemoryLimit": challenge.WorkerMemoryLimit,
+		"CodeTemplate":      codeTemplateFieldValue(challenge.CodeTemplates),
 		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
 		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
@@ -158,6 +159,7 @@ func challengeToUpdates(challenge *Entities.Challenge) map[string]any {
 		"Difficulty":        string(challenge.Difficulty),
 		"WorkerTimeLimit":   challenge.WorkerTimeLimit,
 		"WorkerMemoryLimit": challenge.WorkerMemoryLimit,
+		"CodeTemplate":      codeTemplateFieldValue(challenge.CodeTemplates),
 		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
 		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
@@ -180,6 +182,14 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 		difficulty = constants.ChallengeDifficultyEasy
 	}
 
+	codeTemplates := asCodeTemplateList(record["CodeTemplate"])
+	if len(codeTemplates) == 0 {
+		codeTemplates = asCodeTemplateList(record["CodeTemplates"])
+	}
+	if len(codeTemplates) == 0 {
+		codeTemplates = asCodeTemplateList(record["code_template"])
+	}
+
 	output := Entities.IOVariable{}
 	if outputVariable != nil {
 		output = *outputVariable
@@ -194,6 +204,7 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 		difficulty,
 		asInt(record["WorkerTimeLimit"]),
 		asInt(record["WorkerMemoryLimit"]),
+		codeTemplates,
 		inputVariables,
 		output,
 		asString(record["Constraints"]),
@@ -476,4 +487,89 @@ func asStringList(v any) []string {
 
 func listFieldValue(values []string) map[string]any {
 	return map[string]any{"values": values}
+}
+
+func codeTemplateFieldValue(templates []Entities.CodeTemplate) map[string]any {
+	values := make([]map[string]any, 0, len(templates))
+	for _, tpl := range templates {
+		language := strings.TrimSpace(string(tpl.Language))
+		template := strings.TrimSpace(tpl.Template)
+		if language == "" || template == "" {
+			continue
+		}
+
+		values = append(values, map[string]any{
+			"Language": language,
+			"Template": template,
+		})
+	}
+
+	return map[string]any{"values": values}
+}
+
+func asCodeTemplateList(v any) []Entities.CodeTemplate {
+	if v == nil {
+		return nil
+	}
+
+	switch value := v.(type) {
+	case map[string]any:
+		if wrapped, ok := value["values"]; ok {
+			return asCodeTemplateList(wrapped)
+		}
+
+		language := asString(value["Language"])
+		if language == "" {
+			language = asString(value["language"])
+		}
+		template := asString(value["Template"])
+		if template == "" {
+			template = asString(value["template"])
+		}
+		if language == "" || template == "" {
+			return nil
+		}
+
+		item, err := exam_factory.ExistingCodeTemplate(language, template)
+		if err != nil {
+			return nil
+		}
+
+		return []Entities.CodeTemplate{item}
+	case []any:
+		result := make([]Entities.CodeTemplate, 0, len(value))
+		for _, raw := range value {
+			parsed := asCodeTemplateList(raw)
+			if len(parsed) > 0 {
+				result = append(result, parsed...)
+			}
+		}
+		return result
+	case []map[string]any:
+		result := make([]Entities.CodeTemplate, 0, len(value))
+		for _, raw := range value {
+			parsed := asCodeTemplateList(raw)
+			if len(parsed) > 0 {
+				result = append(result, parsed...)
+			}
+		}
+		return result
+	case string:
+		raw := strings.TrimSpace(value)
+		if raw == "" {
+			return nil
+		}
+
+		var parsedAny []any
+		if err := json.Unmarshal([]byte(raw), &parsedAny); err == nil {
+			return asCodeTemplateList(parsedAny)
+		}
+
+		var parsedObj map[string]any
+		if err := json.Unmarshal([]byte(raw), &parsedObj); err == nil {
+			return asCodeTemplateList(parsedObj)
+		}
+	}
+
+	return nil
 }

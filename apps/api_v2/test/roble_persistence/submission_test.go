@@ -179,6 +179,7 @@ func TestSubmissionCRUD(t *testing.T) {
 		exam_consts.ChallengeDifficultyEasy,
 		1500,
 		256,
+		[]exam_entities.CodeTemplate{},
 		[]exam_entities.IOVariable{*inputA},
 		*output,
 		"1 <= a <= 1000",

@@ -90,7 +90,36 @@ const ExamRunner = () => {
             return createRes?.data;
         };
 
-        // Step 1: Try to create a new session
+        const userId = user?.id || user?.ID || '';
+
+        // Step 1: Try to fetch the active session (bypassing the cached one entirely)
+        try {
+            const activeRes = await client.get(`/submissions/sessions/active?user_id=${userId}`);
+            const activeSession = activeRes?.data;
+            const sid = activeSession?.id || activeSession?.ID;
+            const sessionExamId = activeSession?.exam_id || activeSession?.ExamID || activeSession?.examID || '';
+
+            if (sid) {
+                // Step 2: If session is for THIS exam, reuse it (e.g. student refreshed or navigated back)
+                if (sessionExamId === examId || String(sessionExamId) === String(examId)) {
+                    applySession(activeSession, sid);
+                    return { id: sid, status: 'active', ...activeSession };
+                } else {
+                    // Step 3: Session is for a DIFFERENT exam -> close it and create a new one
+                    try {
+                        await client.post(`/submissions/sessions/${sid}/close`);
+                        localStorage.removeItem('session_id');
+                    } catch (closeErr) {
+                        console.warn('Failed to close old active session:', closeErr);
+                    }
+                }
+            }
+        } catch (err) {
+            // No active session or error fetching it, that's fine, we will create one below
+            console.warn('No active session found or error fetching it:', err);
+        }
+
+        // Step 4: Try to create a new session
         try {
             const newSession = await tryCreate();
             const sid = newSession?.id || newSession?.ID;
@@ -100,75 +129,8 @@ const ExamRunner = () => {
             }
         } catch (err) {
             const apiMsg = err?.response?.data?.error || err?.message || '';
-
-            // Step 2: Backend says "already has active session"
-            if (apiMsg.toLowerCase().includes('active session')) {
-                // Discover the real active session via heartbeat probe
-                const probeId = localStorage.getItem('session_id') || 'probe';
-                let realSid = null;
-                let sessionExamId = '';
-
-                try {
-                    const hbRes = await client.post(`/submissions/sessions/${probeId}/heartbeat`);
-                    const activeSession = hbRes?.data;
-                    realSid = activeSession?.id || activeSession?.ID;
-                    sessionExamId = activeSession?.exam_id || activeSession?.ExamID || activeSession?.examID || '';
-
-                    // Step 3: If session is for THIS exam, reuse it (student refreshed the page)
-                    if (realSid && sessionExamId === examId) {
-                        applySession(activeSession, realSid);
-                        return { id: realSid, status: 'active', ...activeSession };
-                    }
-
-                    // Step 4: Session is for a DIFFERENT exam → close it and create new
-                    if (realSid) {
-                        try {
-                            await client.post(`/submissions/sessions/${realSid}/close`);
-                            localStorage.removeItem('session_id');
-                        } catch (closeErr) {
-                            console.warn('Failed to close old session:', closeErr);
-                        }
-
-                        // Retry creating a new session
-                        try {
-                            const newSession = await tryCreate();
-                            const sid = newSession?.id || newSession?.ID;
-                            if (sid) {
-                                applySession(newSession, sid);
-                                return newSession;
-                            }
-                        } catch (retryErr) {
-                            console.error('Retry after close failed:', retryErr);
-                        }
-                    }
-                } catch (hbErr) {
-                    // Heartbeat failed — session may already be frozen/expired
-                    console.warn('Heartbeat probe failed (session may be frozen):', hbErr);
-                    localStorage.removeItem('session_id');
-
-                    // Try creating immediately — frozen session will be auto-expired by backend
-                    try {
-                        const newSession = await tryCreate();
-                        const sid = newSession?.id || newSession?.ID;
-                        if (sid) {
-                            applySession(newSession, sid);
-                            return newSession;
-                        }
-                    } catch (retryErr) {
-                        console.error('Retry after frozen failed:', retryErr);
-                    }
-                }
-
-                // All recovery attempts failed
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Sesión activa existente',
-                    html: 'No se pudo recuperar ni cerrar la sesión anterior.<br/>Contacta a tu profesor para asistencia.',
-                });
-                return null;
-            }
-
             console.error('Failed to create session:', err);
+            
             Swal.fire({
                 icon: 'error',
                 title: 'Error al iniciar sesión de examen',
@@ -253,49 +215,14 @@ const ExamRunner = () => {
 
         // Send first heartbeat immediately
         sendHeartbeat();
-        heartbeatRef.current = setInterval(sendHeartbeat, 30000);
+        heartbeatRef.current = setInterval(sendHeartbeat, 15000);
 
         return () => {
             if (heartbeatRef.current) clearInterval(heartbeatRef.current);
         };
     }, [sessionId, navigate]);
 
-    // Close session when browser is closed or refreshed
-    useEffect(() => {
-        if (!sessionId) return;
-
-        const handleBeforeUnload = () => {
-            const sid = sessionId || localStorage.getItem('session_id');
-            if (!sid) return;
-
-            const baseURL = client.defaults.baseURL || '';
-            const token = localStorage.getItem('token');
-            const email = localStorage.getItem('user_email');
-            const url = `${baseURL}/submissions/sessions/${sid}/close`;
-
-            try {
-                fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'X-User-Email': email || '',
-                        'Content-Type': 'application/json',
-                    },
-                    keepalive: true,
-                    body: '{}',
-                });
-            } catch (e) {
-                // Best-effort
-            }
-            localStorage.removeItem('session_id');
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, [sessionId]);
+    // We no longer close session on browser close/refresh. Let it stay active.
 
     // Countdown timer
     useEffect(() => {

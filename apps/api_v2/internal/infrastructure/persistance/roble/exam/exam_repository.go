@@ -130,12 +130,14 @@ func (r *ExamRepository) GetPublicExams(ctx context.Context, visibility string) 
 			public_records = append(public_records, record)
 		}
 	}
-	
+
 	exams := make([]*Entities.Exam, 0, len(public_records))
 	for _, record := range public_records {
 		exam, mapErr := recordToExam(record)
 		if mapErr != nil {
-			return nil, mapErr
+			// Ignore malformed records to avoid failing the whole listing.
+			// This is specially relevant for legacy records with invalid visibility/course combinations.
+			continue
 		}
 		if exam != nil {
 			exams = append(exams, exam)
@@ -168,7 +170,9 @@ func (r *ExamRepository) GetExamsByCourseID(ctx context.Context, courseID string
 	for _, record := range records {
 		exam, mapErr := recordToExam(record)
 		if mapErr != nil {
-			return nil, mapErr
+			// Ignore malformed records to avoid failing the whole listing.
+			// This is specially relevant for legacy records with invalid visibility/course combinations.
+			continue
 		}
 		if exam != nil {
 			exams = append(exams, exam)
@@ -201,7 +205,9 @@ func (r *ExamRepository) GetExamsByTeacherID(ctx context.Context, teacherID stri
 	for _, record := range records {
 		exam, mapErr := recordToExam(record)
 		if mapErr != nil {
-			return nil, mapErr
+			// Ignore malformed records to avoid failing the whole listing.
+			// This is specially relevant for legacy records with invalid visibility/course combinations.
+			continue
 		}
 		if exam != nil {
 			exams = append(exams, exam)

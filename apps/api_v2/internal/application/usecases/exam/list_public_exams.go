@@ -14,8 +14,8 @@ import (
 )
 
 type GetPublicExamsUseCase struct {
-	userRepository      userRepository.UserRepository
-	examRepository      examRepository.ExamRepository
+	userRepository userRepository.UserRepository
+	examRepository examRepository.ExamRepository
 }
 
 func NewGetPublicExamsUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository) *GetPublicExamsUseCase {
@@ -38,7 +38,7 @@ func (uc *GetPublicExamsUseCase) Execute(ctx context.Context) ([]*Entities.Exam,
 		return nil, fmt.Errorf("user not found")
 	}
 
-	// [STEP 2] Get all published exams
+	// [STEP 2] Get all published exams (visible to all)
 	public_exams, err := uc.examRepository.GetPublicExams(ctx, string(Entities.VisibilityPublic))
 	if err != nil {
 		return nil, err
@@ -51,8 +51,20 @@ func (uc *GetPublicExamsUseCase) Execute(ctx context.Context) ([]*Entities.Exam,
 			return nil, err
 		}
 		public_exams = append(public_exams, teacher_exams...)
-	}
 
+		// [STEP 3B] Append user's private exams and course-specific exams
+		user_exams, err := uc.examRepository.GetExamsByTeacherID(ctx, user.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Filter and append only private and course-visibility exams created by this teacher
+		for _, exam := range user_exams {
+			if exam.Visibility == Entities.VisibilityPrivate || exam.Visibility == Entities.VisibilityCourse {
+				public_exams = append(public_exams, exam)
+			}
+		}
+	}
 
 	return public_exams, nil
 }

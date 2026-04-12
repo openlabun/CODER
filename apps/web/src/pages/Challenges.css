@@ -249,6 +249,72 @@
     background: #c8102e;
 }
 
+.challenges-page .public-exam-card .card-footer-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.challenges-page .public-exam-card .stats-mini {
+    justify-content: flex-start;
+    gap: 1rem;
+}
+
+.challenges-page .public-exam-card .exam-timing-flags {
+    margin-top: 0.2rem;
+}
+
+.challenges-page .public-exam-card .actions-wrapper {
+    margin-top: 0.15rem;
+}
+
+.challenges-page .public-exam-card .exam-primary-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border-radius: 12px;
+    padding: 0.55rem 0.95rem;
+    text-decoration: none;
+    font-size: 0.96rem;
+    font-weight: 800;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.challenges-page .public-exam-card .exam-primary-btn:hover {
+    transform: translateY(-1px);
+}
+
+.challenges-page .public-exam-card .exam-primary-btn.professor {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.challenges-page .public-exam-card .exam-primary-btn.professor:hover {
+    color: #1e3a8a;
+    border-color: #93c5fd;
+    background: #dbeafe;
+}
+
+.challenges-page .public-exam-card .exam-primary-btn.student {
+    color: white;
+    background: #111827;
+    box-shadow: 0 6px 16px rgba(17, 24, 39, 0.24);
+}
+
+.challenges-page .public-exam-card .exam-primary-btn.student:hover {
+    background: #0f172a;
+}
+
+.challenges-page .public-exam-card .exam-primary-btn.student.disabled {
+    background: #e2e8f0;
+    color: #64748b;
+    border-color: #cbd5e1;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
 /* Status Badges */
 .challenges-page .status-badge {
     display: inline-flex;
@@ -265,6 +331,12 @@
 .challenges-page .status-badge.draft { background: #fef3c7; color: #b45309; }
 .challenges-page .status-badge.private { background: #e2e8f0; color: #334155; }
 .challenges-page .status-badge.archived { background: #fee2e2; color: #b91c1c; }
+.challenges-page .status-badge.public { background: #dbeafe; color: #1e40af; }
+.challenges-page .status-badge.course { background: #fef3c7; color: #92400e; }
+.challenges-page .status-badge.teachers { background: #ede9fe; color: #5b21b6; }
+.challenges-page .status-badge.closed { background: #fee2e2; color: #991b1b; }
+.challenges-page .status-badge.late { background: #dcfce7; color: #166534; }
+.challenges-page .status-badge.overtime { background: #fff7ed; color: #9a3412; }
 
 /* Teacher Actions */
 .challenges-page .teacher-actions {
@@ -389,5 +461,4 @@
     .search-bar-mini {
         width: 100%;
     }
-}
 }

@@ -827,7 +827,7 @@ paths:
                 visual_identity: "#7000ff"
                 code: ALG-101
                 year: 2026
-                semester: "01"
+                semester: "10"
                 enrollment_code: ALG101-ENR
                 enrollment_url: https://example.edu/enroll/ALG101-ENR
                 teacher_id: usr-teacher-123
@@ -2414,23 +2414,22 @@ components:
           type: string
         difficulty:
           type: string
-        workerTimeLimit:
+        worker_time_limit:
           type: integer
-        workerMemoryLimit:
+        worker_memory_limit:
           type: integer
-        inputVariables:
+        code_template:
+          type: object
+          additionalProperties:
+            type: string
+          description: Mapa language -> template
+        input_variables:
           type: array
           items:
             $ref: "#/components/schemas/IOVariableDTO"
-        outputVariable:
+        output_variable:
           $ref: "#/components/schemas/IOVariableDTO"
         constraints:
-          type: string
-        createdAt:
-          type: string
-        updatedAt:
-          type: string
-        userId:
           type: string
       required:
         - title
@@ -2438,37 +2437,35 @@ components:
         - tags
         - status
         - difficulty
-        - workerTimeLimit
-        - workerMemoryLimit
-        - inputVariables
-        - outputVariable
+        - worker_time_limit
+        - worker_memory_limit
+        - code_template
+        - input_variables
+        - output_variable
         - constraints
-        - createdAt
-        - updatedAt
-        - userId
       example:
         title: Two Sum
         description: Return indexes of two numbers that add up to target
         tags: [arrays, hashmap]
         status: draft
         difficulty: easy
-        workerTimeLimit: 1500
-        workerMemoryLimit: 256
-        inputVariables:
+        worker_time_limit: 1500
+        worker_memory_limit: 256
+        code_template:
+          python: "def solve():\n    pass"
+          java: "class Solution { }"
+        input_variables:
           - name: nums
             type: string
             value: 2,7,11,15
           - name: target
             type: int
             value: "9"
-        outputVariable:
+        output_variable:
           name: indexes
           type: string
           value: 0,1
         constraints: 2 <= n <= 10000
-        createdAt: "2026-03-25T10:00:00Z"
-        updatedAt: "2026-03-25T10:00:00Z"
-        userId: usr-123
     ChallengesPostCreateOutput201:
       type: object
       properties:
@@ -2496,7 +2493,35 @@ components:
       required:
         - statusCode
         - body
-      example: *a11
+      example:
+        statusCode: 201
+        body:
+          id: challenge-123
+          title: Two Sum
+          description: Return indexes of two numbers that add up to target
+          tags: [arrays, hashmap]
+          status: draft
+          difficulty: easy
+          worker_time_limit: 1500
+          worker_memory_limit: 256
+          code_template:
+            python: "def solve():\n    pass"
+            java: "class Solution { }"
+          input_variables:
+            - name: nums
+              type: string
+              value: 2,7,11,15
+            - name: target
+              type: int
+              value: "9"
+          output_variable:
+            name: indexes
+            type: string
+            value: 0,1
+          constraints: 2 <= n <= 10000
+          created_at: "2026-03-25T10:00:00Z"
+          updated_at: "2026-03-25T10:00:00Z"
+          user_id: usr-123
     ChallengesGetListOutput200:
       type: object
       properties:
@@ -2526,7 +2551,35 @@ components:
       required:
         - statusCode
         - body
-      example: *a12
+      example:
+        statusCode: 200
+        body:
+          - id: challenge-123
+            title: Two Sum
+            description: Return indexes of two numbers that add up to target
+            tags: [arrays, hashmap]
+            status: published
+            difficulty: easy
+            worker_time_limit: 1500
+            worker_memory_limit: 256
+            code_template:
+              python: "def solve():\n    pass"
+              java: "class Solution { }"
+            input_variables:
+              - name: nums
+                type: string
+                value: 2,7,11,15
+              - name: target
+                type: int
+                value: "9"
+            output_variable:
+              name: indexes
+              type: string
+              value: 0,1
+            constraints: 2 <= n <= 10000
+            created_at: "2026-03-25T10:00:00Z"
+            updated_at: "2026-03-25T10:00:00Z"
+            user_id: usr-123
     ChallengesGetByIdOutput200:
       type: object
       properties:
@@ -2541,23 +2594,84 @@ components:
               type: string
             description:
               type: string
+            tags:
+              type: array
+              items:
+                type: string
             status:
               type: string
             difficulty:
               type: string
-            examID:
+            worker_time_limit:
+              type: integer
+            worker_memory_limit:
+              type: integer
+            code_template:
+              type: object
+              additionalProperties:
+                type: string
+            input_variables:
+              type: array
+              items:
+                $ref: "#/components/schemas/IOVariableDTO"
+            output_variable:
+              $ref: "#/components/schemas/IOVariableDTO"
+            constraints:
+              type: string
+            created_at:
+              type: string
+            updated_at:
+              type: string
+            user_id:
               type: string
           required:
             - id
             - title
             - description
+            - tags
             - status
             - difficulty
-            - examID
+            - worker_time_limit
+            - worker_memory_limit
+            - code_template
+            - input_variables
+            - output_variable
+            - constraints
+            - created_at
+            - updated_at
+            - user_id
       required:
         - statusCode
         - body
-      example: *a13
+      example:
+        statusCode: 200
+        body:
+          id: challenge-123
+          title: Two Sum
+          description: Return indexes of two numbers that add up to target
+          tags: [arrays, hashmap]
+          status: published
+          difficulty: easy
+          worker_time_limit: 1500
+          worker_memory_limit: 256
+          code_template:
+            python: "def solve():\n    pass"
+            java: "class Solution { }"
+          input_variables:
+            - name: nums
+              type: string
+              value: 2,7,11,15
+            - name: target
+              type: int
+              value: "9"
+          output_variable:
+            name: indexes
+            type: string
+            value: 0,1
+          constraints: 2 <= n <= 10000
+          created_at: "2026-03-25T10:00:00Z"
+          updated_at: "2026-03-25T10:00:00Z"
+          user_id: usr-123
     ChallengesPatchUpdateInput:
       type: object
       properties:
@@ -2580,21 +2694,53 @@ components:
           properties:
             title:
               type: string
+            description:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+            status:
+              type: string
             difficulty:
               type: string
-            workerTimeLimit:
+            worker_time_limit:
               type: integer
+            worker_memory_limit:
+              type: integer
+            code_template:
+              type: object
+              additionalProperties:
+                type: string
+            input_variables:
+              type: array
+              items:
+                $ref: "#/components/schemas/IOVariableDTO"
+            output_variable:
+              $ref: "#/components/schemas/IOVariableDTO"
+            constraints:
+              type: string
           required:
             - title
-            - difficulty
-            - workerTimeLimit
       required:
         - method
         - path
         - pathParams
         - query
         - body
-      example: *a14
+      example:
+        method: PATCH
+        path: /challenges/{id}
+        pathParams:
+          id: challenge-123
+        query: {}
+        body:
+          title: Two Sum Updated
+          worker_time_limit: 2000
+          worker_memory_limit: 384
+          code_template:
+            python: "def solve():\n    return []"
+            java: "class Solution { }"
     ChallengesPatchUpdateOutput200:
       type: object
       properties:
@@ -2607,19 +2753,86 @@ components:
               type: string
             title:
               type: string
+            description:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+            status:
+              type: string
             difficulty:
               type: string
-            workerTimeLimit:
+            worker_time_limit:
               type: integer
+            worker_memory_limit:
+              type: integer
+            code_template:
+              type: object
+              additionalProperties:
+                type: string
+            input_variables:
+              type: array
+              items:
+                $ref: "#/components/schemas/IOVariableDTO"
+            output_variable:
+              $ref: "#/components/schemas/IOVariableDTO"
+            constraints:
+              type: string
+            created_at:
+              type: string
+            updated_at:
+              type: string
+            user_id:
+              type: string
           required:
             - id
             - title
+            - description
+            - tags
+            - status
             - difficulty
-            - workerTimeLimit
+            - worker_time_limit
+            - worker_memory_limit
+            - code_template
+            - input_variables
+            - output_variable
+            - constraints
+            - created_at
+            - updated_at
+            - user_id
       required:
         - statusCode
         - body
-      example: *a15
+      example:
+        statusCode: 200
+        body:
+          id: challenge-123
+          title: Two Sum Updated
+          description: Return indexes of two numbers that add up to target
+          tags: [arrays, hashmap]
+          status: draft
+          difficulty: easy
+          worker_time_limit: 2000
+          worker_memory_limit: 384
+          code_template:
+            python: "def solve():\n    return []"
+            java: "class Solution { }"
+          input_variables:
+            - name: nums
+              type: string
+              value: 2,7,11,15
+            - name: target
+              type: int
+              value: "9"
+          output_variable:
+            name: indexes
+            type: string
+            value: 0,1
+          constraints: 2 <= n <= 10000
+          created_at: "2026-03-25T10:00:00Z"
+          updated_at: "2026-03-25T10:30:00Z"
+          user_id: usr-123
     ChallengesDeleteByIdOutput200:
       type: object
       properties:

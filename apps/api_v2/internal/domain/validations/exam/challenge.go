@@ -78,6 +78,10 @@ func ValidateChallenge(challenge *Entities.Challenge) error {
 		}
 	}
 
+	if len(challenge.CodeTemplates) == 0 {
+		return fmt.Errorf("challenge must define at least one code available with its template")
+	}
+
 	if err := ValidateIOVariable(challenge.OutputVariable); err != nil {
 		return fmt.Errorf("invalid challenge output variable: %w", err)
 	}

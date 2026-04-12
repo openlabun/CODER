@@ -2,92 +2,11 @@ package services
 
 import (
 	"fmt"
-	"strings"
 
-	submission_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 )
-
-func makeFunctionCall(functionName string, inputs []entities.IOVariable) (string, error) {
-	for _, input := range inputs {
-		// For string inputs, we need to add quotes around them
-		if input.Type == "string" {
-			input.Value = "\"" + input.Value + "\""
-		}
-
-		// Replace input.Name in functionName with input.Value
-		functionName = replaceVariable(functionName, input.Name, input.Value)
-	}
-
-	return functionName, nil
-}
-
-func isIdentifierChar(b byte) bool {
-	return (b >= 'a' && b <= 'z') ||
-		(b >= 'A' && b <= 'Z') ||
-		(b >= '0' && b <= '9') ||
-		b == '_'
-}
-
-func replaceVariable(functionCall string, variableName string, variableValue string) string {
-	if variableName == "" {
-		return functionCall
-	}
-
-	var out strings.Builder
-	start := 0
-	searchFrom := 0
-
-	for {
-		idx := strings.Index(functionCall[searchFrom:], variableName)
-		if idx == -1 {
-			break
-		}
-
-		idx += searchFrom
-		end := idx + len(variableName)
-
-		leftOK := idx == 0 || !isIdentifierChar(functionCall[idx-1])
-		rightOK := end >= len(functionCall) || !isIdentifierChar(functionCall[end])
-
-		if leftOK && rightOK {
-			out.WriteString(functionCall[start:idx])
-			out.WriteString(variableValue)
-			start = end
-		}
-
-		searchFrom = end
-	}
-
-	if start == 0 {
-		return functionCall
-	}
-
-	out.WriteString(functionCall[start:])
-	return out.String()
-}
-
-func AppendFunctionCall(code string, function string, language submission_constants.ProgrammingLanguage, inputs []entities.IOVariable) (string, error) {
-	function_call, err := makeFunctionCall(function, inputs)
-	if err != nil {
-		return "", err
-	}
-
-	switch language {
-	case submission_constants.LanguagePython:
-		function_call = "print(" + function_call + ")"
-	case submission_constants.LanguageJava:
-		function_call = "System.out.println(" + function_call + ");"
-	case submission_constants.LanguageCPP:
-		function_call = "cout << " + function_call + " << endl;"
-	default:
-		return "", fmt.Errorf("language not implemented")
-	}
-
-	code = code + "\n" + function_call
-
-	return code, nil
-}
 
 func ExtractInputFromTestCase(test_case entities.TestCase) string {
 	var inputs string
@@ -99,4 +18,93 @@ func ExtractInputFromTestCase(test_case entities.TestCase) string {
 		}
 	}
 	return inputs
+}
+
+func CreateTemplate (inputs []entities.IOVariable, output *entities.IOVariable, language constants.ProgrammingLanguage) (string, error) {
+	var template string
+	// Get if language is now available
+	if !languageIsSupported(language) {
+		return "", fmt.Errorf("language %q is not supported for default template creation", language)
+	}
+
+	switch language {
+		case constants.LanguagePython:
+			template = buildTemplatePython(inputs, output)
+		case constants.LanguageJava:
+			template = "//NOT IMPLEMENTED"
+		case constants.LanguageCPP:
+			template = "//NOT IMPLEMENTED"
+		default:
+			return "", fmt.Errorf("Language not supported for default template building")
+	}
+
+	return template, nil
+}
+
+func languageIsSupported(language constants.ProgrammingLanguage) bool {
+	for _, supportedLanguage := range constants.SupportedProgrammingLanguages {
+		if language == supportedLanguage {
+			return true
+		}
+	}
+	return false
+}
+
+func buildTemplatePython (inputs []entities.IOVariable, output *entities.IOVariable) string {
+	template := createInputsCallPython(inputs)
+	template += createOutputDeclarationPython(output)
+	template += "\n# Write your code here\n\n"
+	template += createOutputPrintPython(output)
+	return template
+}
+
+func createInputsCallPython (inputs []entities.IOVariable) string {
+	inputsCall := ""
+	for _, input := range inputs {
+		if inputsCall != "" {
+			continue
+		}
+		
+		// Append a line of (var_name) = input() for each input variable depending of type
+		switch input.Type {
+			case exam_consts.VariableFormatInt:
+				inputsCall += fmt.Sprintf("%s = int(input())\n", input.Name)
+			case exam_consts.VariableFormatFloat:
+				inputsCall += fmt.Sprintf("%s = float(input())\n", input.Name)
+			case exam_consts.VariableFormatString:
+				inputsCall += fmt.Sprintf("%s = input()\n", input.Name)
+		}
+	}
+
+	return inputsCall
+}  
+
+func createOutputPrintPython (output *entities.IOVariable) string {
+	outputPrint := ""
+	if output == nil {
+		return outputPrint
+	}
+
+	switch output.Type {
+		case exam_consts.VariableFormatInt, exam_consts.VariableFormatFloat, exam_consts.VariableFormatString:
+			outputPrint = fmt.Sprintf("print(%s)\n", output.Name)
+	}
+	return outputPrint
+}
+
+func createOutputDeclarationPython (output *entities.IOVariable) string {
+	outputDeclaration := ""
+	if output == nil {
+		return outputDeclaration
+	}
+
+	switch output.Type {
+		case exam_consts.VariableFormatInt:
+			outputDeclaration = fmt.Sprintf("%s = 0\n", output.Name)
+		case exam_consts.VariableFormatFloat:
+			outputDeclaration = fmt.Sprintf("%s = 0.0\n", output.Name)
+		case exam_consts.VariableFormatString:
+			outputDeclaration = fmt.Sprintf("%s = \"\"\n", output.Name)
+	}
+	return outputDeclaration
 }

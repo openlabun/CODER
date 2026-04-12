@@ -42,6 +42,35 @@ func MapIOVariablesDTOToIOVariablesEntity(input []dtos.IOVariableDTO) ([]Entitie
 	return inputVariables, nil
 }
 
+func MapCodeTemplateDTOToCodeTemplateEntity(input dtos.CodeTemplateDTO) (*Entities.CodeTemplate, error) {
+	result, err := factory.NewCodeTemplate(
+		input.Language,
+		input.Template,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func MapCodeTemplatesListDTOToCodeTemplatesEntity(input []dtos.CodeTemplateDTO) ([]Entities.CodeTemplate, error) {
+	var codeTemplates []Entities.CodeTemplate
+	for _, templateDTO := range input {
+		template, err := MapCodeTemplateDTOToCodeTemplateEntity(templateDTO)
+		if err != nil {
+			return nil, err
+		}
+
+		if template == nil {
+			return nil, err
+		}
+
+		codeTemplates = append(codeTemplates, *template)
+	}
+	return codeTemplates, nil
+}
+
+
 func MapCreateChallengeInputToChallengeEntity(input dtos.CreateChallengeInput) (*Entities.Challenge, error) {
 	outputVariable, err := MapIOVariableDTOToIOVariableEntity(input.OutputVariable)
 	if err != nil {
@@ -49,6 +78,11 @@ func MapCreateChallengeInputToChallengeEntity(input dtos.CreateChallengeInput) (
 	}
 
 	inputVariables, err := MapIOVariablesDTOToIOVariablesEntity(input.InputVariables)
+	if err != nil {
+		return nil, err
+	}
+
+	codeTemplate, err := MapCodeTemplatesListDTOToCodeTemplatesEntity(input.CodeTemplates)
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +95,7 @@ func MapCreateChallengeInputToChallengeEntity(input dtos.CreateChallengeInput) (
 		constants.ChallengeDifficulty(input.Difficulty),
 		input.WorkerTimeLimit,
 		input.WorkerMemoryLimit,
+		codeTemplate,
 	 	inputVariables,
 		*outputVariable,
 		input.Constraints,
@@ -103,6 +138,14 @@ func MapUpdateChallengeInputToChallengeEntity(existingChallenge *Entities.Challe
 
 	if input.WorkerMemoryLimit != nil {
 		existingChallenge.WorkerMemoryLimit = *input.WorkerMemoryLimit
+	}
+
+	if input.CodeTemplates != nil {
+		codeTemplates, err := MapCodeTemplatesListDTOToCodeTemplatesEntity(*input.CodeTemplates)
+		if err != nil {
+			return nil, err
+		}
+		existingChallenge.CodeTemplates = codeTemplates
 	}
 
 	if input.InputVariables != nil {

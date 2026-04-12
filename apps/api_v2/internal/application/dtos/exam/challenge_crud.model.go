@@ -6,6 +6,11 @@ type IOVariableDTO struct {
 	Value string `json:"value"`
 }
 
+type CodeTemplateDTO struct {
+	Language string `json:"language"`
+	Template string `json:"template"`
+}
+
 type CreateChallengeInput struct {
 	Title             string            `json:"title"`
 	Description       string            `json:"description"`
@@ -14,6 +19,7 @@ type CreateChallengeInput struct {
 	Difficulty        string            `json:"difficulty"`
 	WorkerTimeLimit   int               `json:"worker_time_limit"`
 	WorkerMemoryLimit int               `json:"worker_memory_limit"`
+	CodeTemplates 	  []CodeTemplateDTO `json:"code_template"`
 	InputVariables    []IOVariableDTO   `json:"input_variables"`
 	OutputVariable    IOVariableDTO     `json:"output_variable"`
 	Constraints       string            `json:"constraints"`
@@ -29,6 +35,7 @@ type UpdateChallengeInput struct {
 	Difficulty        *string           `json:"difficulty"`
 	WorkerTimeLimit   *int              `json:"worker_time_limit"`
 	WorkerMemoryLimit *int              `json:"worker_memory_limit"`
+	CodeTemplates 	  *[]CodeTemplateDTO `json:"code_template"`
 	InputVariables    *[]IOVariableDTO   `json:"input_variables"`
 	OutputVariable    *IOVariableDTO     `json:"output_variable"`
 	Constraints       *string           `json:"constraints"`

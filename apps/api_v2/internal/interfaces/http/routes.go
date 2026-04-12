@@ -133,8 +133,6 @@ func registerAuthRoutes(app *fiber.App, appContainer *container.Application) {
 
 func registerAIRoutes(app *fiber.App, appContainer *container.Application) {
 	ai := app.Group("/ai")
-	ai.Post("/generate-challenge-ideas", mockHandler("ai/post-generate-challenge-ideas/mockup/output.json", fiber.StatusOK))
-	ai.Post("/generate-test-cases", mockHandler("ai/post-generate-test-cases/mockup/output.json", fiber.StatusOK))
 	ai.Post("/generate-full-challenge", post_generate_full_challenge.Handler(appContainer))
 	ai.Post("/generate-exam", post_generate_exam.Handler(appContainer))
 }

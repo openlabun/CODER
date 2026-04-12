@@ -140,7 +140,7 @@ func challengeToRecord(challenge *Entities.Challenge) map[string]any {
 		"Difficulty":        string(challenge.Difficulty),
 		"WorkerTimeLimit":   challenge.WorkerTimeLimit,
 		"WorkerMemoryLimit": challenge.WorkerMemoryLimit,
-		"CodeTemplate":      codeTemplateFieldValue(challenge.CodeTemplates),
+		"CodeTemplates":      codeTemplateFieldValue(challenge.CodeTemplates),
 		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
 		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
@@ -159,7 +159,7 @@ func challengeToUpdates(challenge *Entities.Challenge) map[string]any {
 		"Difficulty":        string(challenge.Difficulty),
 		"WorkerTimeLimit":   challenge.WorkerTimeLimit,
 		"WorkerMemoryLimit": challenge.WorkerMemoryLimit,
-		"CodeTemplate":      codeTemplateFieldValue(challenge.CodeTemplates),
+		"CodeTemplates":      codeTemplateFieldValue(challenge.CodeTemplates),
 		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
 		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
@@ -182,7 +182,7 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 		difficulty = constants.ChallengeDifficultyEasy
 	}
 
-	codeTemplates := asCodeTemplateList(record["CodeTemplate"])
+	codeTemplates := asCodeTemplateList(record["CodeTemplates"])
 	if len(codeTemplates) == 0 {
 		codeTemplates = asCodeTemplateList(record["CodeTemplates"])
 	}

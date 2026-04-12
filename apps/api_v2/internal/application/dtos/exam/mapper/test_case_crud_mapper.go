@@ -24,6 +24,7 @@ func MapCreateTestCaseInputToTestCaseEntity(input dtos.CreateTestCaseInput) (*ch
 		*outputVariable,
 		input.IsSample,
 		input.Points,
+		false,
 		input.ChallengeID,
 	)
 

@@ -81,6 +81,7 @@ func MapCreateCustomExecutionInputToEntities(userID string, input dtos.CreateCus
 		*output,
 		true,
 		0,
+		true,
 		input.ChallengeID,
 	)
 

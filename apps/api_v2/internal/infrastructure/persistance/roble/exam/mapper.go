@@ -187,7 +187,7 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 		codeTemplates = asCodeTemplateList(record["CodeTemplates"])
 	}
 	if len(codeTemplates) == 0 {
-		codeTemplates = asCodeTemplateList(record["code_template"])
+		codeTemplates = asCodeTemplateList(record["code_templates"])
 	}
 
 	output := Entities.IOVariable{}

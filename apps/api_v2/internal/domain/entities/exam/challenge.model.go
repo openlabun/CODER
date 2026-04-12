@@ -3,8 +3,8 @@ package challenge_entities
 import (
 	"time"
 
-	sub_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+	sub_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 )
 
 type Challenge struct {
@@ -22,7 +22,7 @@ type Challenge struct {
 	WorkerMemoryLimit int `json:"worker_memory_limit"` // in MB
 
 	// Code Templates
-	CodeTemplates  []CodeTemplate `json:"code_template"`
+	CodeTemplates []CodeTemplate `json:"code_templates"`
 
 	// I/O Considerations
 	InputVariables []IOVariable `json:"input_variables"`

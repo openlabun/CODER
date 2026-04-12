@@ -43,6 +43,7 @@ import (
 	exam_post_change_visibility "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-change-visibility"
 	exam_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-close"
 	exam_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-create"
+	challenge_post_default_code_templates "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-default-code-templates"
 	sub_get_by_challenge_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-challenge-id"
 	sub_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-id"
 	sub_get_by_user_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-user-id"
@@ -143,6 +144,7 @@ func registerChallengesRoutes(app *fiber.App, appContainer *container.Applicatio
 	challenges.Get("/", challenge_get_list.Handler(appContainer))
 	challenges.Get("/public", challenge_get_public.Handler(appContainer))
 	challenges.Get("/:id", challenge_get_by_id.Handler(appContainer))
+	challenges.Post("/default-code-templates", challenge_post_default_code_templates.Handler(appContainer))
 	challenges.Patch("/:id", challenge_patch_update.Handler(appContainer))
 	challenges.Delete("/:id", challenge_delete_by_id.Handler(appContainer))
 	challenges.Post("/:id/publish", challenge_post_publish.Handler(appContainer))

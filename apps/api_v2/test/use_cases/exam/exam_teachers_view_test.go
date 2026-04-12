@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 	course_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 
 	test "github.com/openlabun/CODER/apps/api_v2/test"
@@ -159,11 +159,11 @@ func TestExamFromTeacherView(t *testing.T) {
 	createdCourse, err := process.Application.CourseModule.CreateCourse.Execute(teacherCtx, course_dtos.CreateCourseInput{
 		Name:           "Teachers View Course",
 		Description:    "Course for teachers visibility test",
-		Visibility:     string(course_entities.CourseVisibilityPublic),
-		VisualIdentity: string(course_entities.CourseColourBlue),
+		Visibility:     string(consts.CourseVisibilityPublic),
+		VisualIdentity: string(consts.CourseColourBlue),
 		Code:           fmt.Sprintf("TV-%d", now.Unix()%100000),
 		Year:           now.Year(),
-		Semester:       string(course_entities.AcademicFirstPeriod),
+		Semester:       string(consts.AcademicFirstPeriod),
 		EnrollmentCode: enrollmentCode,
 		EnrollmentURL:  "https://example.test/enroll/" + enrollmentCode,
 		TeacherID:      teacherID,

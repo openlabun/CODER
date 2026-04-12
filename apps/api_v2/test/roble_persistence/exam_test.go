@@ -10,6 +10,7 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 	hasher "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
@@ -84,10 +85,10 @@ func TestExamCRUD(t *testing.T) {
 	course, err := course_factory.NewCourse(
 		"Exam Integration Course",
 		"Course for exam integration test",
-		course_entities.CourseVisibilityPublic,
-		course_entities.CourseColourBlue,
+		consts.CourseVisibilityPublic,
+		consts.CourseColourBlue,
 		courseCode,
-		&course_entities.Period{Year: now.Year(), Semester: course_entities.AcademicFirstPeriod},
+		&course_entities.Period{Year: now.Year(), Semester: consts.AcademicFirstPeriod},
 		enrollmentCode,
 		"https://example.test/enroll/"+enrollmentCode,
 		teacherID,

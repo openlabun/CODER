@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 	hasher "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
@@ -86,10 +87,10 @@ func TestSubmissionCRUD(t *testing.T) {
 	course, err := course_factory.NewCourse(
 		"Submission Integration Course",
 		"Course for submission/session/result integration",
-		course_entities.CourseVisibilityPublic,
-		course_entities.CourseColourBlue,
+		consts.CourseVisibilityPublic,
+		consts.CourseColourBlue,
 		courseCode,
-		&course_entities.Period{Year: now.Year(), Semester: course_entities.AcademicFirstPeriod},
+		&course_entities.Period{Year: now.Year(), Semester: consts.AcademicFirstPeriod},
 		enrollmentCode,
 		"https://example.test/enroll/"+enrollmentCode,
 		teacherID,

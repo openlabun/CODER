@@ -18,6 +18,7 @@ func MapCreateSubmissionInputToSubmissionEntity(userID string, input dtos.Create
 	submission, err := factory.NewSubmission(
 		input.Code,
 		constants.ProgrammingLanguage(input.Language),
+		true,
 		input.ChallengeID,
 		input.SessionID,
 		userID,

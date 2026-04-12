@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	submission_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+	submission_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	submission_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
@@ -25,6 +25,7 @@ func submissionToRecord(submission *Entities.Submission) map[string]any {
 		"Language":    string(submission.Language),
 		"Score":       submission.Score,
 		"TimeMsTotal": submission.TimeMsTotal,
+		"Scorable":    submission.Scorable,
 		"CreatedAt":   submission.CreatedAt.UTC().Format(time.RFC3339),
 		"UpdatedAt":   submission.UpdatedAt.UTC().Format(time.RFC3339),
 		"ChallengeID": strings.TrimSpace(submission.ChallengeID),
@@ -39,6 +40,7 @@ func submissionToUpdates(submission *Entities.Submission) map[string]any {
 		"Language":    string(submission.Language),
 		"Score":       submission.Score,
 		"TimeMsTotal": submission.TimeMsTotal,
+		"Scorable":    submission.Scorable,
 		"ChallengeID": strings.TrimSpace(submission.ChallengeID),
 		"SessionID":   strings.TrimSpace(submission.SessionID),
 		"UserID":      strings.TrimSpace(submission.UserID),
@@ -55,6 +57,7 @@ func recordToSubmission(record map[string]any) (*Entities.Submission, error) {
 		submission_constants.ProgrammingLanguage(asString(record["Language"])),
 		asInt(record["Score"]),
 		asInt(record["TimeMsTotal"]),
+		asBool(record["Scorable"]),
 		createdAt,
 		updatedAt,
 		asString(record["ChallengeID"]),
@@ -294,6 +297,28 @@ func asInt(v any) int {
 	}
 
 	return 0
+}
+
+func asBool(v any) bool {
+	switch value := v.(type) {
+	case bool:
+		return value
+	case string:
+		s := strings.ToLower(strings.TrimSpace(value))
+		return s == "true" || s == "1" || s == "yes"
+	case int:
+		return value != 0
+	case int32:
+		return value != 0
+	case int64:
+		return value != 0
+	case float32:
+		return value != 0
+	case float64:
+		return value != 0
+	default:
+		return false
+	}
 }
 
 func asTime(v any) (time.Time, bool) {

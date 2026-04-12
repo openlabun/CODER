@@ -11,7 +11,12 @@ import (
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/submission"
 )
 
-func NewSubmission(code string, language constants.ProgrammingLanguage, challengeID, sessionID, userID string) (*Entities.Submission, error) {
+func NewSubmission(
+	code string, 
+	language constants.ProgrammingLanguage,
+	scorable bool, 
+	challengeID, sessionID, userID string,
+) (*Entities.Submission, error) {
 	now := time.Now()
 	submission := &Entities.Submission{
 		ID:          uuid.New().String(),
@@ -19,6 +24,7 @@ func NewSubmission(code string, language constants.ProgrammingLanguage, challeng
 		Language:    language,
 		Score:       0,
 		TimeMsTotal: 0,
+		Scorable:    scorable,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 		ChallengeID: strings.TrimSpace(challengeID),
@@ -37,6 +43,7 @@ func ExistingSubmission(
 	id, code string,
 	language constants.ProgrammingLanguage,
 	score, timeMsTotal int,
+	scorable bool,
 	createdAt, updatedAt time.Time,
 	challengeID, sessionID, userID string,
 ) (*Entities.Submission, error) {
@@ -46,6 +53,7 @@ func ExistingSubmission(
 		Language:    language,
 		Score:       score,
 		TimeMsTotal: timeMsTotal,
+		Scorable: 	 scorable,
 		CreatedAt:   createdAt,
 		UpdatedAt:   updatedAt,
 		ChallengeID: strings.TrimSpace(challengeID),

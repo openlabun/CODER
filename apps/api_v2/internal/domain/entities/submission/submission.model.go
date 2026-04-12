@@ -14,6 +14,7 @@ type Submission struct {
 	// Results
 	Score       int					`json:"score"`
 	TimeMsTotal int					`json:"time_ms_total"`
+	Scorable	bool 				`json:"scorable"`
 
 	// Metadata
 	CreatedAt   time.Time			`json:"created_at"`

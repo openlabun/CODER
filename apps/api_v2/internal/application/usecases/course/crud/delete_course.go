@@ -8,7 +8,7 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
@@ -37,7 +37,7 @@ func (uc *DeleteCourseUseCase) Execute(ctx context.Context, input dtos.DeleteCou
 		return err
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
+	if user.Role != user_constants.UserRoleProfessor {
 		return fmt.Errorf("user does not have permissions to create a course")
 	}
 

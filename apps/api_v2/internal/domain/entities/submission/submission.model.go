@@ -2,20 +2,14 @@ package Submission_entities
 
 import (
 	"time"
-)
 
-type ProgrammingLanguage string
-
-const (
-	LanguagePython ProgrammingLanguage = "python"
-	LanguageCPP	ProgrammingLanguage = "cpp"
-	LanguageJava	ProgrammingLanguage = "java"
+	submission_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 )
 
 type Submission struct {
 	ID          string				`json:"id"`
 	Code        string				`json:"code"`
-	Language    ProgrammingLanguage	`json:"language"`
+	Language    submission_constants.ProgrammingLanguage	`json:"language"`
 
 	// Results
 	Score       int					`json:"score"`

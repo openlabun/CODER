@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	submission_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	submission_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
@@ -50,7 +52,7 @@ func recordToSubmission(record map[string]any) (*Entities.Submission, error) {
 	return submission_factory.ExistingSubmission(
 		asString(record["ID"]),
 		asString(record["Code"]),
-		Entities.ProgrammingLanguage(asString(record["Language"])),
+		submission_constants.ProgrammingLanguage(asString(record["Language"])),
 		asInt(record["Score"]),
 		asInt(record["TimeMsTotal"]),
 		createdAt,
@@ -113,7 +115,7 @@ func recordToSession(record map[string]any) (*Entities.Session, error) {
 		asString(record["ID"]),
 		asString(record["StudentID"]),
 		asString(record["ExamID"]),
-		Entities.SessionStatus(asString(record["Status"])),
+		submission_constants.SessionStatus(asString(record["Status"])),
 		asInt(record["Attempts"]),
 		asInt(record["TimeLeft"]),
 		startedAt,
@@ -175,7 +177,7 @@ func recordToResult(record map[string]any, actualOutput *ExamEntities.IOVariable
 		asString(record["ID"]),
 		asString(record["SubmissionID"]),
 		asString(record["TestCaseID"]),
-		Entities.SubmissionStatus(asString(record["Status"])),
+		submission_constants.SubmissionStatus(asString(record["Status"])),
 		actualOutput,
 		errMsg,
 	)
@@ -185,7 +187,7 @@ func recordToIOVariable(record map[string]any) (*ExamEntities.IOVariable, error)
 	return &ExamEntities.IOVariable{
 		ID:    asString(record["ID"]),
 		Name:  asString(record["Name"]),
-		Type:  ExamEntities.VariableFormat(asString(record["Type"])),
+		Type:  constants.VariableFormat(asString(record["Type"])),
 		Value: asString(record["Value"]),
 	}, nil
 }

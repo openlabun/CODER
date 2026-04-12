@@ -6,11 +6,12 @@ import (
 
 	"github.com/google/uuid"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/submission"
 )
 
-func NewSubmission(code string, language Entities.ProgrammingLanguage, challengeID, sessionID, userID string) (*Entities.Submission, error) {
+func NewSubmission(code string, language constants.ProgrammingLanguage, challengeID, sessionID, userID string) (*Entities.Submission, error) {
 	now := time.Now()
 	submission := &Entities.Submission{
 		ID:          uuid.New().String(),
@@ -34,7 +35,7 @@ func NewSubmission(code string, language Entities.ProgrammingLanguage, challenge
 
 func ExistingSubmission(
 	id, code string,
-	language Entities.ProgrammingLanguage,
+	language constants.ProgrammingLanguage,
 	score, timeMsTotal int,
 	createdAt, updatedAt time.Time,
 	challengeID, sessionID, userID string,

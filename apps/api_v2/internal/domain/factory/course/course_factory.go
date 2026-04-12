@@ -7,12 +7,13 @@ import (
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/course"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 )
 
 func NewCourse(
 	name, description string,
-	visibility Entities.CourseVisibility,
-	visualIdentity Entities.CourseColour,
+	visibility consts.CourseVisibility,
+	visualIdentity consts.CourseColour,
 	code string,
 	period *Entities.Period,
 	enrollmentCode, enrollmentURL, professorID string,
@@ -20,7 +21,7 @@ func NewCourse(
 	now := time.Now()
 
 	if visualIdentity == "" {
-		visualIdentity = Entities.CourseColourBlue
+		visualIdentity = consts.CourseColourBlue
 	}
 
 	course := &Entities.Course{
@@ -47,8 +48,8 @@ func NewCourse(
 
 func ExistingCourse(
 	id, name, description string,
-	visibility Entities.CourseVisibility,
-	visualIdentity Entities.CourseColour,
+	visibility consts.CourseVisibility,
+	visualIdentity consts.CourseColour,
 	code string,
 	period *Entities.Period,
 	enrollmentCode, enrollmentURL, professorID string,

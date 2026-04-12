@@ -73,6 +73,10 @@ func PostExamCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body map[s
 	return doJSONRequest(t, app, "POST", "/exams/", body, authHeaders(access))
 }
 
+func PostExamDefaultCodeTemplates(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/challenges/default-code-templates", body, authHeaders(access))
+}
+
 func PatchExamUpdate(t *testing.T, app *fiber.App, access *HTTPAccess, examID string, body map[string]any) *HTTPResponse {
 	path := fmt.Sprintf("/exams/%s", examID)
 	return doJSONRequest(t, app, "PATCH", path, body, authHeaders(access))

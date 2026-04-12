@@ -7,9 +7,10 @@ import (
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 
 	submissionPorts "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/submission"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
@@ -62,7 +63,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
-	if user.Role == user_entities.UserRoleProfessor {
+	if user.Role == user_constants.UserRoleProfessor {
 		return nil, fmt.Errorf("only students have permissions to make submissions")
 	}
 
@@ -77,7 +78,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 	if session.StudentID != user.ID {
 		return nil, fmt.Errorf("session with id %q does not belong to student %q", input.SessionID, user.Username)
 	}
-	if session.Status != Entities.SessionStatusActive {
+	if session.Status != constants.SessionStatusActive {
 		return nil, fmt.Errorf("session with id %q is not active", input.SessionID)
 	}	
 
@@ -100,7 +101,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 	}
 
 	// [STEP 6] Validate session is still active after status update
-	if session.Status != Entities.SessionStatusActive {
+	if session.Status != constants.SessionStatusActive {
 		return nil, fmt.Errorf("session with id %q is not active", input.SessionID)
 	}
 
@@ -116,7 +117,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		return nil, err
 	}
 
-	// [STEP 9] Get challenge
+	// [STEP 9] Get challenge and validate language is allowed
 	challenge, err := uc.challengeRepository.GetChallengeByID(ctx, input.ChallengeID)
 	if err != nil {
 		return nil, err
@@ -124,6 +125,10 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 
 	if challenge == nil {
 		return nil, fmt.Errorf("challenge with id %q does not exist", input.ChallengeID)
+	}
+
+	if challenge.GetLanguageTemplate(submission.Language) == nil {
+		return nil, fmt.Errorf("language %q is not allowed for challenge with id %q", submission.Language, input.ChallengeID)
 	}
 
 	// [STEP 10] Get test cases of the challenge

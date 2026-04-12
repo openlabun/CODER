@@ -444,6 +444,18 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   go test -v ./test/use_cases/exam -run TestExamItemPrivacy
   ```
 
+- **Generación de Plantilla de Código:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente (creador)
+  
+  - Paso 2: Crear un reto
+  
+  - Paso 3: Crear casos de prueba
+  
+  - Paso 4: Obtener plantillas por defecto para el reto
+  
+  - Paso 5: Validar que se reciban todas las variables esperadas y el print con el output
+
 ##### Módulo de Revisiones
 
 - **CRUD de Sesiones (`Session`):**

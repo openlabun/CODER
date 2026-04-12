@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -25,7 +25,7 @@ func TestChallengeStates(t *testing.T) {
 			_ = process.Application.ChallengeModule.DeleteChallenge.Execute(teacherCtx, exam_dtos.DeleteChallengeInput{ChallengeID: challengeID})
 		}
 	}()
-	
+
 	// [STEP 1] Login as teacher
 	process.StartStep("Iniciar sesión con usuario de docente")
 	teacherAccess := utils.EnsureAuthUserAccess(t, process.Application, teacherEmail, password, "Teacher Test")
@@ -38,14 +38,17 @@ func TestChallengeStates(t *testing.T) {
 		Title:             "Challenge States Test",
 		Description:       "Challenge creado para validar transiciones",
 		Tags:              []string{"states", "challenge"},
-		Status:            string(exam_entities.ChallengeStatusDraft),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusDraft),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
 		WorkerMemoryLimit: 256,
-		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		CodeTemplates: []exam_dtos.CodeTemplateDTO{
+			{Language: "python", Template: "def solve() { return; }"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		InputVariables: []exam_dtos.IOVariableDTO{
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "10"},
+		},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		Constraints:    "1 <= n <= 1000",
 	})
 	if err != nil {
@@ -72,7 +75,7 @@ func TestChallengeStates(t *testing.T) {
 	if err != nil {
 		process.Fail("get challenge details", err)
 	}
-	if challenge == nil || challenge.Title != step3Title || challenge.Status != exam_entities.ChallengeStatusDraft {
+	if challenge == nil || challenge.Title != step3Title || challenge.Status != exam_consts.ChallengeStatusDraft {
 		process.Fail("get challenge details", fmt.Errorf("unexpected challenge state after step 4"))
 	}
 	process.EndStep()
@@ -87,7 +90,7 @@ func TestChallengeStates(t *testing.T) {
 
 	// [STEP 6] Get challenge details and validate published state
 	process.StartStep("Actualiza el reto (espera error)")
-	invalidDraft := string(exam_entities.ChallengeStatusDraft)
+	invalidDraft := string(exam_consts.ChallengeStatusDraft)
 	_, err = process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{ChallengeID: challengeID, Status: &invalidDraft})
 	if err == nil {
 		process.Fail("invalid transition published->draft", fmt.Errorf("expected error on invalid transition"))
@@ -97,7 +100,7 @@ func TestChallengeStates(t *testing.T) {
 
 	// [STEP 7] Update the challenge to archived
 	process.StartStep("Actualiza el reto a estado private")
-	toPrivate := string(exam_entities.ChallengeStatusPrivate)
+	toPrivate := string(exam_consts.ChallengeStatusPrivate)
 	_, err = process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{ChallengeID: challengeID, Status: &toPrivate})
 	if err != nil {
 		process.Fail("transition published->private", err)
@@ -123,7 +126,7 @@ func TestChallengeStates(t *testing.T) {
 
 	// [STEP 10] Get challenge details and validate archived state
 	process.StartStep("Actualiza el reto (espera error)")
-	invalidPrivate := string(exam_entities.ChallengeStatusPrivate)
+	invalidPrivate := string(exam_consts.ChallengeStatusPrivate)
 	_, err = process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{ChallengeID: challengeID, Status: &invalidPrivate})
 	if err == nil {
 		process.Fail("invalid transition archived->private", fmt.Errorf("expected error on invalid transition"))

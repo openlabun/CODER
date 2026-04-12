@@ -179,7 +179,12 @@ func TestSubmissionCRUD(t *testing.T) {
 		exam_consts.ChallengeDifficultyEasy,
 		1500,
 		256,
-		[]exam_entities.CodeTemplate{},
+		[]exam_entities.CodeTemplate{
+			{
+				Language: "python",
+				Template: "def solve(a):\n    return a + 3\n",
+			},
+		},
 		[]exam_entities.IOVariable{*inputA},
 		*output,
 		"1 <= a <= 1000",
@@ -335,6 +340,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	submission, err := submission_factory.NewSubmission(
 		"print(1+2)",
 		submission_consts.LanguagePython,
+		true,
 		challengeID,
 		sessionID,
 		teacherID,

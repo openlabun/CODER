@@ -117,7 +117,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		return nil, err
 	}
 
-	// [STEP 9] Get challenge
+	// [STEP 9] Get challenge and validate language is allowed
 	challenge, err := uc.challengeRepository.GetChallengeByID(ctx, input.ChallengeID)
 	if err != nil {
 		return nil, err
@@ -125,6 +125,10 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 
 	if challenge == nil {
 		return nil, fmt.Errorf("challenge with id %q does not exist", input.ChallengeID)
+	}
+
+	if challenge.GetLanguageTemplate(submission.Language) == nil {
+		return nil, fmt.Errorf("language %q is not allowed for challenge with id %q", submission.Language, input.ChallengeID)
 	}
 
 	// [STEP 10] Get test cases of the challenge

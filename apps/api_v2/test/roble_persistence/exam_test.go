@@ -388,6 +388,7 @@ func TestExamCRUD(t *testing.T) {
 		*tcOutput,
 		true,
 		10,
+		false,
 		challengeID,
 	)
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	courseRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	examItemRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
@@ -66,14 +66,14 @@ func (uc *GetTestCasesByChallengeUseCase) Execute(ctx context.Context, input dto
 	}
 
 	// [STEP 4] If user is professor, validate that exam belongs to the teacher or is public/teacher
-	if role == user_entities.UserRoleProfessor && challenge.UserID != user.ID {
+	if role == user_constants.UserRoleProfessor && challenge.UserID != user.ID {
 		if challenge.Status != constants.ChallengeStatusPublished {
 			return nil, fmt.Errorf("user is not the owner of the challenge with id %q", challenge.ID)
 		}
 	}
 
 	// [STEP 5] If user is student, make validations to check if he has access
-	if role == user_entities.UserRoleStudent {
+	if role == user_constants.UserRoleStudent {
 		// [STEP 5.1] If challenge is not published, student cannot access
 		if challenge.Status != constants.ChallengeStatusPublished {
 			return nil, fmt.Errorf("challenge with id %q is not published yet", challenge.ID)
@@ -126,7 +126,7 @@ func (uc *GetTestCasesByChallengeUseCase) Execute(ctx context.Context, input dto
 	}
 
 	// [STEP 7] If user is student, filter test cases to return only public ones
-	if role == user_entities.UserRoleStudent {
+	if role == user_constants.UserRoleStudent {
 		testCases = filterPublicTestCases(testCases)
 	}
 

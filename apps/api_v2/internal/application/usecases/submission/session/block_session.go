@@ -9,7 +9,7 @@ import (
 
 	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	Entity "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
@@ -44,7 +44,7 @@ func (uc *BlockSessionUseCase) Execute(ctx context.Context, input dtos.BlockSess
 	}
 
 	// [STEP 2] Verify if user is student
-	if user.Role == user_entities.UserRoleStudent {
+	if user.Role == user_constants.UserRoleStudent {
 		return nil, fmt.Errorf("students are not allowed to block sessions")
 	}
 	

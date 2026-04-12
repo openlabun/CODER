@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 )
 
@@ -75,8 +75,8 @@ func TestTeacherAuth(t *testing.T) {
 
 	// [STEP 4] Validate teacher role
 	process.StartStep("Validar rol de Docente")
-	if access.UserData.Role != user_entities.UserRoleProfessor {
-		process.Fail("teacher role", fmt.Errorf("expected role %s, got %s", user_entities.UserRoleProfessor, access.UserData.Role))
+	if access.UserData.Role != user_constants.UserRoleProfessor {
+		process.Fail("teacher role", fmt.Errorf("expected role %s, got %s", user_constants.UserRoleProfessor, access.UserData.Role))
 	}
 	process.Log(fmt.Sprintf("Rol validado: %s", access.UserData.Role))
 

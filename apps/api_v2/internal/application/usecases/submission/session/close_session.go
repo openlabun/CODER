@@ -9,7 +9,7 @@ import (
 
 	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	Entity "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
@@ -50,7 +50,7 @@ func (uc *CloseSessionUseCase) Execute(ctx context.Context, input dtos.CloseSess
 	}
 
 	// [STEP 3] Verify if student is owner of the session
-	if user.Role == user_entities.UserRoleStudent && session.StudentID != user.ID {
+	if user.Role == user_constants.UserRoleStudent && session.StudentID != user.ID {
 		return nil, fmt.Errorf("user is not the owner of the session")
 	}
 

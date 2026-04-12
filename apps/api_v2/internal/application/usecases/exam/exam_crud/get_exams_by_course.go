@@ -6,7 +6,7 @@ import (
 
 	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	courseRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
@@ -62,7 +62,7 @@ func (uc *GetExamsByCourseUseCase) Execute(ctx context.Context, input dtos.GetEx
 	}
 
 	// [STEP 4] If user is student, filter exams by visibility
-	if user.Role == user_entities.UserRoleStudent {
+	if user.Role == user_constants.UserRoleStudent {
 		filteredExams := []*Entities.Exam{}
 		for _, exam := range exams {
 			if exam.Visibility == constants.VisibilityCourse {

@@ -9,7 +9,7 @@ import (
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
@@ -53,7 +53,7 @@ func (uc *GetExamItemsUseCase) Execute(ctx context.Context, input dtos.GetExamIt
 	}
 
 	// [STEP 3] If user is teacher Verify that exam belongs to the teacher or exam is public/teachers
-	if role == user_entities.UserRoleProfessor {
+	if role == user_constants.UserRoleProfessor {
 		if exam.ProfessorID != user.ID && exam.Visibility != constants.VisibilityPublic && exam.Visibility != constants.VisibilityTeachers {
 			return nil, fmt.Errorf("user does not have permissions to access this exam")
 		}

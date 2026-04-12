@@ -1,23 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 import { 
     AlertCircle, 
     Search, 
-    Trophy, 
     Code, 
-    ChevronRight, 
-    Zap,
     Target,
     RotateCcw,
     Edit2,
     Trash2,
     Send,
     Archive,
-    MoreVertical,
-    PlusCircle
+    PlusCircle,
+    Clock3,
+    TestTube2,
+    Eye,
+    EyeOff,
+    Filter
 } from 'lucide-react';
 import './Challenges.css';
 
@@ -29,14 +30,50 @@ const Challenges = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [processingId, setProcessingId] = useState(null);
+    const [visibilityFilter, setVisibilityFilter] = useState('all');
+    const [testCaseSummary, setTestCaseSummary] = useState({});
 
-    const isTeacher = user?.role === 'professor' || user?.role === 'admin';
+    const isTeacher = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
 
     const fetchChallenges = async () => {
+        setLoading(true);
+
         try {
             const endpoint = isTeacher ? '/challenges' : '/challenges/public';
             const { data } = await client.get(endpoint);
-            setChallenges(Array.isArray(data) ? data : (data.items || []));
+            const list = Array.isArray(data) ? data : (data.items || []);
+            setChallenges(list);
+
+            // Load public/private test case count per challenge for richer cards.
+            if (isTeacher && list.length > 0) {
+                const countsEntries = await Promise.all(
+                    list.map(async (challenge) => {
+                        const challengeId = challenge.id || challenge.ID;
+                        if (!challengeId) return [challengeId, { public: 0, private: 0 }];
+
+                        try {
+                            const res = await client.get(`/test-cases/challenge/${challengeId}`);
+                            const tcList = Array.isArray(res.data) ? res.data : (res.data?.items || []);
+
+                            const summary = tcList.reduce((acc, tc) => {
+                                const isSample = Boolean(tc.is_sample ?? tc.isSample ?? tc.IsSample);
+                                if (isSample) acc.public += 1;
+                                else acc.private += 1;
+                                return acc;
+                            }, { public: 0, private: 0 });
+
+                            return [challengeId, summary];
+                        } catch (tcErr) {
+                            console.warn(`No se pudieron cargar test cases para challenge ${challengeId}`, tcErr);
+                            return [challengeId, { public: 0, private: 0 }];
+                        }
+                    })
+                );
+
+                setTestCaseSummary(Object.fromEntries(countsEntries));
+            } else {
+                setTestCaseSummary({});
+            }
         } catch (err) {
             console.error('Error loading challenges:', err);
             setError('Error al conectar con el servidor.');
@@ -81,6 +118,7 @@ const Challenges = () => {
 
     const handleArchive = async (e, id) => {
         e.preventDefault();
+
         setProcessingId(id);
         try {
             await client.post(`/challenges/${id}/archive`);
@@ -122,12 +160,19 @@ const Challenges = () => {
 
     const handleEdit = (e, id) => {
         e.preventDefault();
+
         navigate(`/challenges/edit/${id}`);
     };
 
-    const filteredChallenges = challenges.filter(c => 
-        c.title?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const normalizeStatus = (status) => String(status || 'draft').toLowerCase();
+
+    const filteredChallenges = challenges.filter((c) => {
+        const title = String(c.title || c.Title || '').toLowerCase();
+        const matchesSearch = title.includes(searchTerm.toLowerCase());
+        const status = normalizeStatus(c.status || c.Status);
+        const matchesVisibility = visibilityFilter === 'all' ? true : status === visibilityFilter;
+        return matchesSearch && matchesVisibility;
+    });
 
     if (loading) return (
         <div className="challenges-page">
@@ -164,6 +209,26 @@ const Challenges = () => {
         return { label: 'Medio', class: 'medium' };
     };
 
+    const getVisibilityMeta = (status) => {
+        const s = normalizeStatus(status);
+        if (s === 'published') return { label: 'Publicado', class: 'published', icon: <Eye size={14} /> };
+        if (s === 'private') return { label: 'Privado', class: 'private', icon: <EyeOff size={14} /> };
+        if (s === 'archived') return { label: 'Archivado', class: 'archived', icon: <Archive size={14} /> };
+        return { label: 'Borrador', class: 'draft', icon: <Edit2 size={14} /> };
+    };
+
+    const getWorkerTimeLimit = (challenge) => (
+        challenge.workerTimeLimit || challenge.WorkerTimeLimit || challenge.worker_time_limit || 1000
+    );
+
+    const visibilityFilters = [
+        { key: 'all', label: 'Todos' },
+        { key: 'draft', label: 'Borrador' },
+        { key: 'published', label: 'Publicado' },
+        { key: 'private', label: 'Privado' },
+        { key: 'archived', label: 'Archivado' },
+    ];
+
     return (
         <div className="challenges-page">
             <header className="page-header-compact">
@@ -191,6 +256,27 @@ const Challenges = () => {
                 </div>
             </header>
 
+            {isTeacher && (
+                <section className="visibility-filter-row">
+                    <div className="filter-label">
+                        <Filter size={14} />
+                        <span>Filtrar por visibilidad:</span>
+                    </div>
+                    <div className="filter-chips">
+                        {visibilityFilters.map((filterItem) => (
+                            <button
+                                key={filterItem.key}
+                                type="button"
+                                className={`filter-chip ${visibilityFilter === filterItem.key ? 'active' : ''}`}
+                                onClick={() => setVisibilityFilter(filterItem.key)}
+                            >
+                                {filterItem.label}
+                            </button>
+                        ))}
+                    </div>
+                </section>
+            )}
+
             {filteredChallenges.length === 0 ? (
                 <div className="empty-state-mini">
                     <div className="icon-circle">
@@ -202,85 +288,91 @@ const Challenges = () => {
             ) : (
                 <div className="challenges-grid-compact">
                     {filteredChallenges.map((challenge) => {
-                        const diff = getDifficultyLabel(challenge.difficulty);
-                        const isPublished = challenge.status === 'published';
-                        const isArchived = challenge.status === 'archived';
+                        const diff = getDifficultyLabel(challenge.difficulty || challenge.Difficulty);
+                        const status = normalizeStatus(challenge.status || challenge.Status);
+                        const isPublished = status === 'published';
+                        const isArchived = status === 'archived';
+                        const visibilityMeta = getVisibilityMeta(status);
+                        const challengeId = challenge.id || challenge.ID;
+                        const tcCount = testCaseSummary[challengeId] || { public: 0, private: 0 };
+                        const timeLimit = getWorkerTimeLimit(challenge);
                         
                         return (
-                            <div key={challenge.id} className={`challenge-card-mini ${isArchived ? 'archived' : ''}`}>
+                            <div key={challengeId} className={`challenge-card-mini ${isArchived ? 'archived' : ''}`}>
                                 <div className={`card-accent ${diff.class}`}></div>
                                 <div className="card-main">
                                     <div className="card-top">
                                         <div className="title-area">
                                             <Code size={16} className="title-icon" />
-                                            <h3>{challenge.title}</h3>
-                                        </div>
-                                        <div className="badge-group">
-                                            {isTeacher && (
-                                                <span className={`status-badge ${challenge.status}`}>
-                                                    {challenge.status}
-                                                </span>
-                                            )}
-                                            <span className={`diff-pill ${diff.class}`}>
-                                                {diff.label}
-                                            </span>
+                                            <h3>{challenge.title || challenge.Title || 'Reto sin título'}</h3>
                                         </div>
                                     </div>
-                                    <p className="description-text">{challenge.description}</p>
+
+                                    <div className="meta-badges-row">
+                                        {isTeacher && (
+                                            <span className={`status-badge ${visibilityMeta.class}`}>
+                                                {visibilityMeta.icon}
+                                                {visibilityMeta.label}
+                                            </span>
+                                        )}
+                                        <span className={`diff-pill ${diff.class}`}>
+                                            {diff.label}
+                                        </span>
+                                    </div>
+
+                                    {isTeacher && (
+                                        <div className="teacher-actions teacher-actions-top">
+                                            {!isPublished && (
+                                                <button 
+                                                    className="action-btn publish" 
+                                                    title={isArchived ? 'Republicar' : 'Publicar'}
+                                                    onClick={(e) => handlePublish(e, challengeId)}
+                                                    disabled={processingId === challengeId}
+                                                >
+                                                    {isArchived ? <RotateCcw size={14} /> : <Send size={14} />}
+                                                </button>
+                                            )}
+                                            {!isArchived && (
+                                                <button 
+                                                    className="action-btn archive" 
+                                                    title="Archivar"
+                                                    onClick={(e) => handleArchive(e, challengeId)}
+                                                    disabled={processingId === challengeId}
+                                                >
+                                                    <Archive size={14} />
+                                                </button>
+                                            )}
+                                            <button 
+                                                className="action-btn edit" 
+                                                title="Editar"
+                                                onClick={(e) => handleEdit(e, challengeId)}
+                                                disabled={processingId === challengeId}
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button 
+                                                className="action-btn delete" 
+                                                title="Eliminar"
+                                                onClick={(e) => handleDelete(e, challengeId)}
+                                                disabled={processingId === challengeId}
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    <p className="description-text">{challenge.description || challenge.Description || 'Sin descripción disponible.'}</p>
                                     
                                     <div className="card-footer-mini">
                                         <div className="stats-mini">
                                             <div className="stat">
-                                                <Trophy size={14} />
-                                                <span>100 pts</span>
+                                                <Clock3 size={14} />
+                                                <span>{timeLimit} ms</span>
                                             </div>
                                             <div className="stat">
-                                                <Zap size={14} />
-                                                <span>{challenge.attempts || 0} envíos</span>
+                                                <TestTube2 size={14} />
+                                                <span>{tcCount.public} públicas / {tcCount.private} privadas</span>
                                             </div>
-                                        </div>
-                                        
-                                        <div className="actions-wrapper">
-                                            {isTeacher && (
-                                                <div className="teacher-actions">
-                                                    {!isPublished && !isArchived && (
-                                                        <button 
-                                                            className="action-btn publish" 
-                                                            title="Publicar"
-                                                            onClick={(e) => handlePublish(e, challenge.id)}
-                                                            disabled={processingId === challenge.id}
-                                                        >
-                                                            <Send size={14} />
-                                                        </button>
-                                                    )}
-                                                    {!isArchived && (
-                                                        <button 
-                                                            className="action-btn archive" 
-                                                            title="Archivar"
-                                                            onClick={(e) => handleArchive(e, challenge.id)}
-                                                            disabled={processingId === challenge.id}
-                                                        >
-                                                            <Archive size={14} />
-                                                        </button>
-                                                    )}
-                                                    <button 
-                                                        className="action-btn edit" 
-                                                        title="Editar"
-                                                        onClick={(e) => handleEdit(e, challenge.id)}
-                                                        disabled={processingId === challenge.id}
-                                                    >
-                                                        <Edit2 size={14} />
-                                                    </button>
-                                                    <button 
-                                                        className="action-btn delete" 
-                                                        title="Eliminar"
-                                                        onClick={(e) => handleDelete(e, challenge.id)}
-                                                        disabled={processingId === challenge.id}
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </div>

@@ -7,3 +7,7 @@ const (
 	LanguageCPP    ProgrammingLanguage = "cpp"
 	LanguageJava   ProgrammingLanguage = "java"
 )
+
+var SupportedProgrammingLanguages = []ProgrammingLanguage{
+	LanguagePython,
+}

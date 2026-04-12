@@ -50,6 +50,9 @@ func TestChallengeFork(t *testing.T) {
 		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1500,
 		WorkerMemoryLimit: 256,
+		CodeTemplates: []exam_dtos.CodeTemplateDTO{
+			{Language: "python", Template: "def solve() { return; }"},
+		},
 		InputVariables: []exam_dtos.IOVariableDTO{
 			{Name: "x", Type: string(exam_consts.VariableFormatInt), Value: "5"},
 		},

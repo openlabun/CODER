@@ -44,6 +44,9 @@ func TestChallengeFromTeacherView(t *testing.T) {
 		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1400,
 		WorkerMemoryLimit: 256,
+		CodeTemplates: []exam_dtos.CodeTemplateDTO{
+			{Language: "python", Template: "def solve() { return; }"},
+		},
 		InputVariables: []exam_dtos.IOVariableDTO{
 			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "7"},
 		},

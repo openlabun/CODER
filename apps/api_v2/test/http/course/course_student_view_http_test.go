@@ -28,7 +28,7 @@ func TestCourseFromStudentViewHTTP(t *testing.T) {
 		}
 	}()
 
-	// [STEP 1] Login Teacher user 
+	// [STEP 1] Login Teacher user
 	process.StartStep("Inicio de sesion con usuario docente")
 	teacherAccess = httputils.EnsureAuthUserAccess(t, app, teacherEmail, password, "Teacher Test")
 	teacherID = teacherAccess.UserID
@@ -46,7 +46,7 @@ func TestCourseFromStudentViewHTTP(t *testing.T) {
 		"visual_identity": "blue",
 		"code":            fmt.Sprintf("CSV-%d", now.Unix()%100000),
 		"year":            now.Year(),
-		"semester":        "01",
+		"semester":        "10",
 		"enrollment_code": enrollmentCode,
 		"enrollment_url":  "https://example.test/enroll/" + enrollmentCode,
 		"teacher_id":      teacherID,

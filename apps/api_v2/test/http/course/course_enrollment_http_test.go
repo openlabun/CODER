@@ -48,7 +48,7 @@ func TestCourseEnrollmentHTTP(t *testing.T) {
 		"visual_identity": "blue",
 		"code":            fmt.Sprintf("CENR-%d", now.Unix()%100000),
 		"year":            now.Year(),
-		"semester":        "01",
+		"semester":        "10",
 		"enrollment_code": enrollmentCode,
 		"enrollment_url":  "https://example.test/enroll/" + enrollmentCode,
 		"teacher_id":      teacherID,

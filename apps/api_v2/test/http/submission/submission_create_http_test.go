@@ -131,7 +131,6 @@ func TestSubmissionCreateAndReadHTTP(t *testing.T) {
 	resp = httputils.PostSubmissionCreate(t, app, studentAccess, map[string]any{
 		"code":         "def solve(n):\n    return n",
 		"language":     "python",
-		"score":        0,
 		"challenge_id": challengeID,
 		"session_id":   sessionID,
 	})

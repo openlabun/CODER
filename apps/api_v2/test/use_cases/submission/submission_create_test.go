@@ -162,7 +162,6 @@ func TestSubmissionCreateAndRead(t *testing.T) {
 	createdSubmission, err := process.Application.SubmissionUseCases.CreateSubmission.Execute(studentCtx, submission_dtos.CreateSubmissionInput{
 		Code:        "def solve(n):\n    return n",
 		Language:    "python",
-		Score:       0,
 		ChallengeID: challengeID,
 		SessionID:   sessionID,
 	})

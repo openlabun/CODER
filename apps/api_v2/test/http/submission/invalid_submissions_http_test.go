@@ -135,7 +135,6 @@ func TestInvalidSubmissionsHTTP(t *testing.T) {
 	resp = httputils.PostSubmissionCreate(t, app, studentAccess, map[string]any{
 		"code":         "import sys\nprint(sys.stdin.read().strip())",
 		"language":     "python",
-		"score":        0,
 		"challenge_id": challengeID,
 		"session_id":   "session-not-found",
 	})
@@ -163,7 +162,6 @@ func TestInvalidSubmissionsHTTP(t *testing.T) {
 	resp = httputils.PostSubmissionCreate(t, app, studentAccess, map[string]any{
 		"code":         "import sys\nprint(sys.stdin.read().strip())",
 		"language":     "python",
-		"score":        0,
 		"challenge_id": challengeID,
 		"session_id":   firstSessionID,
 	})
@@ -179,7 +177,6 @@ func TestInvalidSubmissionsHTTP(t *testing.T) {
 	resp = httputils.PostSubmissionCreate(t, app, studentAccess, map[string]any{
 		"code":         "import sys\nprint(sys.stdin.read().strip())",
 		"language":     "python",
-		"score":        0,
 		"challenge_id": challengeID,
 		"session_id":   firstSessionID,
 	})
@@ -221,7 +218,6 @@ func TestInvalidSubmissionsHTTP(t *testing.T) {
 	resp = httputils.PostSubmissionCreate(t, app, studentAccess, map[string]any{
 		"code":         "import sys\nprint(sys.stdin.read().strip())",
 		"language":     "python",
-		"score":        0,
 		"challenge_id": challengeID,
 		"session_id":   blockedSessionID,
 	})
@@ -249,7 +245,6 @@ func TestInvalidSubmissionsHTTP(t *testing.T) {
 	resp = httputils.PostSubmissionCreate(t, app, studentAccess, map[string]any{
 		"code":         "import sys\nprint(sys.stdin.read().strip())",
 		"language":     "python",
-		"score":        0,
 		"challenge_id": challengeID,
 		"session_id":   thirdSessionID,
 	})

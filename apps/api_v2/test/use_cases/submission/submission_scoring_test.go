@@ -192,7 +192,6 @@ func TestSubmissionScoring(t *testing.T) {
 	createdSubmission, err := process.Application.SubmissionUseCases.CreateSubmission.Execute(studentCtx, submission_dtos.CreateSubmissionInput{
 		Code:        "import sys\nprint(int(sys.stdin.read().strip()) * 2)",
 		Language:    "python",
-		Score:       0,
 		ChallengeID: challengeID,
 		SessionID:   sessionID,
 	})

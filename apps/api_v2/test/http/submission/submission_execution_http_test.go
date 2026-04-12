@@ -132,7 +132,6 @@ func TestSubmissionExecutionHTTP(t *testing.T) {
 	resp = httputils.PostSubmissionCreate(t, app, studentAccess, map[string]any{
 		"code":         "import sys\nprint(int(sys.stdin.read().strip()))",
 		"language":     "python",
-		"score":        0,
 		"challenge_id": challengeID,
 		"session_id":   sessionID,
 	})

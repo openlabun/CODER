@@ -16,7 +16,7 @@ const clearAuthStorage = () => {
   window.dispatchEvent(new Event('auth:logout'));
 };
 
-const refreshAccessToken = async () => {
+export const refreshAccessToken = async () => {
   if (refreshPromise) {
     return refreshPromise;
   }

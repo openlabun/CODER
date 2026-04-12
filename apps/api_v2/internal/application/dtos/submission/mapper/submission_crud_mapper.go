@@ -3,6 +3,7 @@ package mapper
 import (
 	"fmt"
 
+	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam/mapper"
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
@@ -31,6 +32,64 @@ func MapCreateSubmissionInputToSubmissionEntity(userID string, input dtos.Create
 	return submission, nil
 }
 
+func MapCreateExecutionInputToSubmissionEntity(userID string, input dtos.CreateExecutionInput) (*Entities.Submission, error) {
+	submission, err := factory.NewSubmission(
+		input.Code,
+		constants.ProgrammingLanguage(input.Language),
+		false,
+		input.ChallengeID,
+		input.SessionID,
+		userID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return submission, nil
+}
+
+func MapCreateCustomExecutionInputToEntities(userID string, input dtos.CreateCustomExecutionInput) (*Entities.Submission, *examEntities.TestCase, error) {
+	submission, err := factory.NewSubmission(
+		input.Code,
+		constants.ProgrammingLanguage(input.Language),
+		false,
+		input.ChallengeID,
+		input.SessionID,
+		userID,
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	inputs, err := mapper.MapIOVariablesDTOToIOVariablesEntity(input.Inputs)
+	
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to map input variables: %w", err)
+	}
+
+	output, err := mapper.MapIOVariableDTOToIOVariableEntity(input.Output)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to map output variable: %w", err)
+	}
+
+	testCase, err := exam_factory.NewTestCase(
+		"Custom Test Case",
+		inputs,
+		*output,
+		true,
+		0,
+		input.ChallengeID,
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return submission, testCase, nil
+}
 func MapSubmissionResultEntity (submissionID string, testCaseID string) (*Entities.SubmissionResult, error) {
 	submissionResult, err := factory.NewSubmissionResult(
 		submissionID,

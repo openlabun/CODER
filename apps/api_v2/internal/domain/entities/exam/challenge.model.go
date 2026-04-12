@@ -3,6 +3,7 @@ package challenge_entities
 import (
 	"time"
 
+	sub_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 )
 
@@ -20,6 +21,9 @@ type Challenge struct {
 	WorkerTimeLimit   int `json:"worker_time_limit"`   // in ms
 	WorkerMemoryLimit int `json:"worker_memory_limit"` // in MB
 
+	// Code Templates
+	CodeTemplates  []CodeTemplate `json:"code_template"`
+
 	// I/O Considerations
 	InputVariables []IOVariable `json:"input_variables"`
 	OutputVariable IOVariable   `json:"output_variable"`
@@ -29,4 +33,13 @@ type Challenge struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	UserID    string    `json:"user_id"`
+}
+
+func (c *Challenge) GetLanguageTemplate(language sub_constants.ProgrammingLanguage) *CodeTemplate {
+	for _, template := range c.CodeTemplates {
+		if template.Language == language {
+			return &template
+		}
+	}
+	return nil
 }

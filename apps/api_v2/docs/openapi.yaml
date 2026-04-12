@@ -37,6 +37,7 @@ info:
     - GET /courses/{id}/students
     - DELETE /courses/{id}/students/{studentId}
     - POST /exams/
+    - POST /exams/default-code-templates
     - GET /exams/public
     - GET /exams/course/{courseId}
     - GET /exams/{id}
@@ -699,6 +700,54 @@ paths:
                     removed: true
         '400':
           description: Invalid id or domain error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /challenges/default-code-templates:
+    post:
+      tags: [Challenges]
+      summary: Generate default code templates by language
+      description: |
+        Generates starter code templates for all supported languages using input/output variable definitions.
+        This endpoint is restricted to professor role in the current use case.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamDefaultCodeTemplatesRequest'
+            examples:
+              basic_math:
+                value:
+                  input_variables:
+                    - name: a
+                      type: int
+                      value: "2"
+                    - name: b
+                      type: int
+                      value: "3"
+                  output_variable:
+                    name: result
+                    type: int
+                    value: "5"
+      responses:
+        '200':
+          description: Default templates generated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamDefaultCodeTemplatesResponse'
+              examples:
+                templates:
+                  value:
+                    python: "def solve(a, b):\n    # TODO\n    return 0"
+                    javascript: "function solve(a, b) {\n  // TODO\n  return 0;\n}"
+                    java: "public class Main {\n  public static int solve(int a, int b) {\n    // TODO\n    return 0;\n  }\n}"
+                    cpp: "int solve(int a, int b) {\n  // TODO\n  return 0;\n}"
+        '400':
+          description: Invalid payload or domain/permission error.
           content:
             application/json:
               schema:
@@ -3027,6 +3076,21 @@ components:
           type: integer
         professor_id:
           type: string
+
+    ExamDefaultCodeTemplatesRequest:
+      type: object
+      required: [input_variables, output_variable]
+      properties:
+        input_variables:
+          type: array
+          items:
+            $ref: '#/components/schemas/IOVariableInput'
+        output_variable:
+          $ref: '#/components/schemas/IOVariableInput'
+
+    ExamDefaultCodeTemplatesResponse:
+      allOf:
+        - $ref: '#/components/schemas/CodeTemplatesMap'
 
     ExamUpdateRequest:
       type: object

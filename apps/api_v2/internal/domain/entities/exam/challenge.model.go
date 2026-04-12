@@ -3,24 +3,7 @@ package challenge_entities
 import (
 	"time"
 
-	exam_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
-)
-
-type ChallengeStatus = exam_constants.ChallengeStatus
-
-const (
-	ChallengeStatusDraft     ChallengeStatus = exam_constants.ChallengeStatusDraft
-	ChallengeStatusPublished ChallengeStatus = exam_constants.ChallengeStatusPublished
-	ChallengeStatusPrivate   ChallengeStatus = exam_constants.ChallengeStatusPrivate
-	ChallengeStatusArchived  ChallengeStatus = exam_constants.ChallengeStatusArchived
-)
-
-type ChallengeDifficulty = exam_constants.ChallengeDifficulty
-
-const (
-	ChallengeDifficultyEasy   ChallengeDifficulty = exam_constants.ChallengeDifficultyEasy
-	ChallengeDifficultyMedium ChallengeDifficulty = exam_constants.ChallengeDifficultyMedium
-	ChallengeDifficultyHard   ChallengeDifficulty = exam_constants.ChallengeDifficultyHard
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 )
 
 type Challenge struct {
@@ -30,8 +13,8 @@ type Challenge struct {
 	Tags        []string `json:"tags"`
 
 	// State and Access Control
-	Status     ChallengeStatus     `json:"status"` // state machine: draft -> published|private -> archived
-	Difficulty ChallengeDifficulty `json:"difficulty"`
+	Status     constants.ChallengeStatus     `json:"status"` // state machine: draft -> published|private -> archived
+	Difficulty constants.ChallengeDifficulty `json:"difficulty"`
 
 	// Worker Constraints
 	WorkerTimeLimit   int `json:"worker_time_limit"`   // in ms

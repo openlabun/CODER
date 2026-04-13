@@ -4,6 +4,33 @@
     margin: 0 auto;
 }
 
+.exam-loading-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 1.25rem;
+    color: var(--primary-color, #c8102e);
+}
+
+.exam-loading-spinner {
+    animation: exam-spin 0.9s linear infinite;
+    color: var(--primary-color, #c8102e);
+}
+
+@keyframes exam-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.exam-loading-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-muted, #64748b);
+    margin: 0;
+}
+
 .page-header {
     margin-bottom: 30px;
 }

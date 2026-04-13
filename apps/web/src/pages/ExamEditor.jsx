@@ -6,7 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 import {
     Save, X, Clock, Calendar, FileText, Layout, Trash2,
-    PlusCircle, ChevronRight, Code, Target, Search, Info
+    PlusCircle, ChevronRight, Code, Target, Search, Info, Loader2
 } from 'lucide-react';
 import './CreateCourse.css';
 import './Challenges.css';
@@ -252,8 +252,9 @@ const ExamEditor = () => {
     });
 
     if (loading) return (
-        <div className="create-course-page">
-            <div className="page-header"><div className="header-content"><h1>Cargando examen...</h1></div></div>
+        <div className="exam-loading-screen">
+            <Loader2 className="exam-loading-spinner" size={48} />
+            <p className="exam-loading-text">Cargando examen...</p>
         </div>
     );
 

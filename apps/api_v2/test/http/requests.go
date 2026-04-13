@@ -212,6 +212,14 @@ func PostSubmissionCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body
 	return doJSONRequest(t, app, "POST", "/submissions/", body, authHeaders(access))
 }
 
+func PostSubmissionCreateWithoutScore(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/submissions/without-score", body, authHeaders(access))
+}
+
+func PostSubmissionCreateCustom(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/submissions/custom", body, authHeaders(access))
+}
+
 func GetSubmissionByID(t *testing.T, app *fiber.App, access *HTTPAccess, submissionID string) *HTTPResponse {
 	path := fmt.Sprintf("/submissions/%s", submissionID)
 	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))

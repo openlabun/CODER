@@ -25,6 +25,10 @@ const ExamRunner = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [output, setOutput] = useState('');
+    const [publicCasesMap, setPublicCasesMap] = useState({}); // { challengeId: testCases[] }
+    const [publicCasesLoading, setPublicCasesLoading] = useState(false);
+    const [publicCasesErrorMap, setPublicCasesErrorMap] = useState({}); // { challengeId: errorMsg }
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     // Session state
     const [sessionId, setSessionId] = useState(null);
@@ -34,6 +38,7 @@ const ExamRunner = () => {
     const [attemptMap, setAttemptMap] = useState({}); // { challengeId: count }
     const heartbeatRef = useRef(null);
     const timerRef = useRef(null);
+    const timeUpHandledRef = useRef(false);
 
     // Professors should use the editor, not the runner
     useEffect(() => {
@@ -297,32 +302,14 @@ const ExamRunner = () => {
         };
     }, [sessionId]);
 
-    // Countdown timer
+    // Countdown timer — pure decrement only, no side effects inside updater
     useEffect(() => {
         if (timeLeft == null || timeLeft <= 0) return;
 
         timerRef.current = setInterval(() => {
             setTimeLeft(prev => {
-                if (prev == null) return null;
-                if (prev <= 1) {
+                if (prev == null || prev <= 1) {
                     clearInterval(timerRef.current);
-                    if (heartbeatRef.current) clearInterval(heartbeatRef.current);
-
-                    // Close session on the backend
-                    const sid = sessionId || localStorage.getItem('session_id');
-                    if (sid) {
-                        client.post(`/submissions/sessions/${sid}/close`).catch(() => { });
-                    }
-                    localStorage.removeItem('session_id');
-                    setSessionId(null);
-
-                    setExamFinished(true);
-                    Swal.fire({
-                        icon: 'warning',
-                        title: '⏰ Tiempo agotado',
-                        html: 'El tiempo del examen ha finalizado.',
-                        confirmButtonText: 'Ver resultados'
-                    });
                     return 0;
                 }
                 return prev - 1;
@@ -332,11 +319,106 @@ const ExamRunner = () => {
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [timeLeft != null && timeLeft > 0]); // re-run only when timer starts
+    }, [timeLeft != null && timeLeft > 0]); // re-run only when timer starts/stops
+
+    // End-of-exam side effects — separated so they run in a proper effect, not inside a setState updater
+    useEffect(() => {
+        if (timeLeft !== 0 || timeUpHandledRef.current) return;
+        timeUpHandledRef.current = true;
+
+        if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+
+        const sid = sessionId || localStorage.getItem('session_id');
+        if (sid) {
+            client.post(`/submissions/sessions/${sid}/close`).catch(() => { });
+        }
+        localStorage.removeItem('session_id');
+        setSessionId(null);
+        setExamFinished(true);
+
+        Swal.fire({
+            icon: 'warning',
+            title: '⏰ Tiempo agotado',
+            html: 'El tiempo del examen ha finalizado.',
+            confirmButtonText: 'Ver resultados'
+        });
+    }, [timeLeft, sessionId]);
 
     const currentChallenge = challenges[currentIndex] || null;
     const currentCode = currentChallenge ? (codeMap[currentChallenge.id] || '') : '';
     const currentResult = currentChallenge ? (resultMap[currentChallenge.id] || null) : null;
+    const currentPublicCases = currentChallenge ? (publicCasesMap[currentChallenge.id] || []) : [];
+    const currentPublicCasesError = currentChallenge ? (publicCasesErrorMap[currentChallenge.id] || '') : '';
+
+    useEffect(() => {
+        const challengeId = currentChallenge?.id;
+        if (!challengeId) return;
+
+        // Avoid refetching if already loaded for this challenge
+        if (Object.prototype.hasOwnProperty.call(publicCasesMap, challengeId)) return;
+
+        let isCancelled = false;
+        setPublicCasesLoading(true);
+
+        const fetchPublicCases = async () => {
+            try {
+                const { data } = await client.get(`/test-cases/challenge/${challengeId}`, {
+                    params: { exam_id: id },
+                });
+
+                const rawCases = Array.isArray(data) ? data : (data?.items || []);
+                const normalizedCases = rawCases
+                    .filter(tc => {
+                        const isSample = tc?.is_sample ?? tc?.isSample ?? tc?.IsSample;
+                        return isSample === true || isSample === 1 || isSample === 'true';
+                    })
+                    .map((tc, index) => ({
+                        id: tc?.id || tc?.ID || `${challengeId}-${index}`,
+                        name: tc?.name || tc?.Name || `Caso ${index + 1}`,
+                        input: tc?.input || tc?.Input || [],
+                        expectedOutput: tc?.expected_output || tc?.expectedOutput || tc?.ExpectedOutput || null,
+                    }));
+
+                if (!isCancelled) {
+                    setPublicCasesMap(prev => ({ ...prev, [challengeId]: normalizedCases }));
+                }
+            } catch (err) {
+                if (!isCancelled) {
+                    const msg = err?.response?.data?.error || 'No se pudieron cargar los casos públicos.';
+                    setPublicCasesErrorMap(prev => ({ ...prev, [challengeId]: msg }));
+                    setPublicCasesMap(prev => ({ ...prev, [challengeId]: [] }));
+                }
+            } finally {
+                if (!isCancelled) {
+                    setPublicCasesLoading(false);
+                }
+            }
+        };
+
+        fetchPublicCases();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [currentChallenge?.id, id, publicCasesMap]);
+
+    const formatCaseValue = (value) => {
+        if (value == null) return '-';
+        if (Array.isArray(value)) {
+            const joined = value.map(v => formatCaseValue(v)).join(', ');
+            return `[${joined}]`;
+        }
+        if (typeof value === 'object') {
+            const candidate = value.value ?? value.Value ?? value.default ?? value.Default;
+            if (candidate != null) return formatCaseValue(candidate);
+            try {
+                return JSON.stringify(value);
+            } catch {
+                return String(value);
+            }
+        }
+        return String(value);
+    };
 
     const handleCodeChange = (value) => {
         if (!currentChallenge) return;
@@ -384,6 +466,18 @@ const ExamRunner = () => {
             return;
         }
 
+        // Confirmation before sending
+        const { isConfirmed } = await Swal.fire({
+            title: '¿Enviar solución?',
+            text: '¿Estás seguro de que deseas enviar tu código para evaluación?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, enviar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#c8102e',
+            customClass: { container: 'swal-ultra-high-z' }
+        });
+        if (!isConfirmed) return;
 
         setSubmitting(true);
         setOutput('Enviando solución...');
@@ -594,48 +688,82 @@ const ExamRunner = () => {
 
             {/* MAIN AREA */}
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                {/* LEFT SIDEBAR: Challenge List */}
+                {/* LEFT SIDEBAR: Challenge List (collapsible) */}
                 <div style={{
-                    width: '260px', background: '#252536', color: 'white',
-                    display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0
+                    width: sidebarOpen ? '260px' : '56px', background: '#252536', color: 'white',
+                    display: 'flex', flexDirection: 'column', flexShrink: 0,
+                    transition: 'width 0.25s ease', overflow: 'hidden'
                 }}>
-                    <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                        <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, opacity: 0.7 }}>RETOS DEL EXAMEN</h3>
+                    {/* Header with toggle */}
+                    <div style={{
+                        padding: sidebarOpen ? '1rem' : '0.75rem 0',
+                        borderBottom: '1px solid rgba(255,255,255,0.08)',
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: sidebarOpen ? 'space-between' : 'center',
+                        flexShrink: 0
+                    }}>
+                        {sidebarOpen && (
+                            <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, opacity: 0.7, whiteSpace: 'nowrap' }}>
+                                RETOS DEL EXAMEN
+                            </h3>
+                        )}
+                        <button
+                            onClick={() => setSidebarOpen(o => !o)}
+                            title={sidebarOpen ? 'Ocultar lista' : 'Ver lista de retos'}
+                            style={{
+                                background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '6px',
+                                color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', width: '28px', height: '28px', flexShrink: 0,
+                                transition: 'background 0.2s'
+                            }}
+                        >
+                            {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+                        </button>
                     </div>
-                    {challenges.map((ch, idx) => {
-                        const chResult = resultMap[ch.id];
-                        const isActive = idx === currentIndex;
-                        const isSolved = chResult?.status === 'accepted';
-                        const isFailed = chResult && chResult.status !== 'accepted';
-                        return (
-                            <button
-                                key={ch.id}
-                                onClick={() => handleSelectChallenge(idx)}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                    padding: '0.85rem 1rem', border: 'none', textAlign: 'left',
-                                    background: isActive ? 'rgba(200,16,46,0.2)' : 'transparent',
-                                    color: 'white', cursor: 'pointer', width: '100%',
-                                    borderLeft: isActive ? '3px solid #c8102e' : '3px solid transparent',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{
-                                    width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700,
-                                    background: isSolved ? '#10b981' : isFailed ? '#ef4444' : isActive ? '#c8102e' : 'rgba(255,255,255,0.1)',
-                                }}>
-                                    {isSolved ? <CheckCircle2 size={14} /> : isFailed ? <XCircle size={14} /> : idx + 1}
-                                </div>
-                                <div style={{ overflow: 'hidden' }}>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        {ch.title}
+
+                    {/* Challenge items */}
+                    <div style={{ overflowY: 'auto', flex: 1 }}>
+                        {challenges.map((ch, idx) => {
+                            const chResult = resultMap[ch.id];
+                            const isActive = idx === currentIndex;
+                            const isSolved = chResult?.status === 'accepted';
+                            const isFailed = chResult && chResult.status !== 'accepted';
+                            return (
+                                <button
+                                    key={ch.id}
+                                    onClick={() => handleSelectChallenge(idx)}
+                                    title={!sidebarOpen ? ch.title : undefined}
+                                    style={{
+                                        display: 'flex', alignItems: 'center',
+                                        gap: sidebarOpen ? '0.75rem' : 0,
+                                        padding: sidebarOpen ? '0.85rem 1rem' : '0.75rem 0',
+                                        justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                                        border: 'none', textAlign: 'left',
+                                        background: isActive ? 'rgba(200,16,46,0.2)' : 'transparent',
+                                        color: 'white', cursor: 'pointer', width: '100%',
+                                        borderLeft: isActive ? '3px solid #c8102e' : '3px solid transparent',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    <div style={{
+                                        width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700,
+                                        background: isSolved ? '#10b981' : isFailed ? '#ef4444' : isActive ? '#c8102e' : 'rgba(255,255,255,0.1)',
+                                    }}>
+                                        {isSolved ? <CheckCircle2 size={14} /> : isFailed ? <XCircle size={14} /> : idx + 1}
                                     </div>
-                                    <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>{ch.points} pts • {ch.difficulty === 'easy' ? 'Fácil' : ch.difficulty === 'hard' ? 'Difícil' : 'Medio'}</div>
-                                </div>
-                            </button>
-                        );
-                    })}
+                                    {sidebarOpen && (
+                                        <div style={{ overflow: 'hidden' }}>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {ch.title}
+                                            </div>
+                                            <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>{ch.points} pts • {ch.difficulty === 'easy' ? 'Fácil' : ch.difficulty === 'hard' ? 'Difícil' : 'Medio'}</div>
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* CENTER + RIGHT (Problem, Editor, Console) */}
@@ -675,6 +803,53 @@ const ExamRunner = () => {
                                         <p style={{ margin: 0, fontSize: '0.85rem', color: '#78350f' }}>{currentChallenge.constraints}</p>
                                     </div>
                                 )}
+
+                                <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #dbeafe' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                        <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#1e3a8a' }}>🧪 Casos de prueba públicos</h4>
+                                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1d4ed8', background: '#dbeafe', padding: '2px 8px', borderRadius: '999px' }}>
+                                            {currentPublicCases.length}
+                                        </span>
+                                    </div>
+
+                                    {publicCasesLoading && (
+                                        <p style={{ margin: 0, fontSize: '0.82rem', color: '#475569' }}>Cargando casos públicos...</p>
+                                    )}
+
+                                    {!publicCasesLoading && currentPublicCasesError && (
+                                        <p style={{ margin: 0, fontSize: '0.82rem', color: '#b91c1c' }}>{currentPublicCasesError}</p>
+                                    )}
+
+                                    {!publicCasesLoading && !currentPublicCasesError && currentPublicCases.length === 0 && (
+                                        <p style={{ margin: 0, fontSize: '0.82rem', color: '#475569' }}>Este reto no tiene casos públicos visibles.</p>
+                                    )}
+
+                                    {!publicCasesLoading && !currentPublicCasesError && currentPublicCases.length > 0 && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                                            {currentPublicCases.map((testCase, idx) => {
+                                                const inputs = Array.isArray(testCase.input) ? testCase.input : [];
+                                                const inputText = inputs.length > 0
+                                                    ? inputs.map(iv => formatCaseValue(iv)).join(' | ')
+                                                    : '-';
+                                                const expectedText = formatCaseValue(testCase.expectedOutput);
+
+                                                return (
+                                                    <div key={testCase.id} style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.7rem 0.75rem' }}>
+                                                        <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.35rem' }}>
+                                                            Caso {idx + 1}: {testCase.name}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.76rem', color: '#334155', marginBottom: '0.2rem' }}>
+                                                            <strong>Entrada:</strong> <code>{inputText}</code>
+                                                        </div>
+                                                        <div style={{ fontSize: '0.76rem', color: '#334155' }}>
+                                                            <strong>Salida esperada:</strong> <code>{expectedText}</code>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
 
                                 {/* Nav buttons */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', gap: '0.5rem' }}>

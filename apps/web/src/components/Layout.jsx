@@ -8,11 +8,12 @@ const Layout = () => {
     // Hide sidebar on public pages if desired, or keep it consistent
     const isPublic = ['/', '/login', '/register'].includes(location.pathname);
     const showNavbar = location.pathname === '/';
+    const isExamRunner = /^\/exam\/[^/]+$/.test(location.pathname);
 
     return (
         <div className="app-layout">
             {!isPublic && <Sidebar />}
-            <div className={`main-content ${!isPublic ? 'with-sidebar' : ''}`}>
+            <div className={`main-content ${!isPublic ? 'with-sidebar' : ''} ${isExamRunner ? 'full-bleed' : ''}`}>
                 {showNavbar && <Navbar />} 
                 <main>
                     <Outlet />

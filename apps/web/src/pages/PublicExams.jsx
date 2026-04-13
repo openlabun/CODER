@@ -20,7 +20,8 @@ import {
     BookOpen,
     Sparkles,
     Layout,
-    PlusCircle
+    PlusCircle,
+    Loader2
 } from 'lucide-react';
 import './Challenges.css';
 
@@ -116,15 +117,9 @@ const PublicExams = () => {
 
     if (loading) return (
         <div className="challenges-page">
-            <header className="page-header-compact">
-                <div className="skeleton title-skeleton"></div>
-            </header>
-            <div className="challenges-grid-compact">
-                {[...Array(3)].map((_, i) => (
-                    <div key={i} className="challenge-card-mini skeleton-card">
-                        <div className="skeleton card-content-skeleton"></div>
-                    </div>
-                ))}
+            <div className="page-loader">
+                <Loader2 className="page-loader-spinner" size={48} />
+                <p className="page-loader-text">Cargando exámenes...</p>
             </div>
         </div>
     );

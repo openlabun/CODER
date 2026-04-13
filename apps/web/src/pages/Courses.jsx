@@ -154,10 +154,12 @@ const Courses = () => {
                 </div>
             ) : (
                 <div className="courses-grid-new">
-                    {courses.map((course) => (
+                    {courses.map((course) => {
+                        const accentColor = course.visual_identity || '#c8102e';
+                        return (
                         <div key={course.id} className="course-card-new">
                             <Link to={`/courses/${course.id}`} className="card-clickable-area">
-                                <div className="card-icon-area">
+                                <div className="card-icon-area" style={{ backgroundColor: accentColor + '26', color: accentColor }}>
                                     <BookOpen className="course-icon" />
                                 </div>
                                 <div className="card-info-area">
@@ -205,7 +207,8 @@ const Courses = () => {
                                 <ChevronRight size={20} />
                             </Link>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

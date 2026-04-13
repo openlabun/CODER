@@ -31,7 +31,8 @@ const ExamEditor = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [addingItem, setAddingItem] = useState(null);
-    const [updatingItemId, setUpdatingItemId] = useState(null);
+    const [savingAllItems, setSavingAllItems] = useState(false);
+    const [confirmRemoveItemId, setConfirmRemoveItemId] = useState(null);
     const [itemEdits, setItemEdits] = useState({});
 
     const isProfessor = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
@@ -171,44 +172,40 @@ const ExamEditor = () => {
         }
     };
 
-    const handleSaveExamItem = async (itemId) => {
-        const draft = itemEdits[itemId];
-        const parsedOrder = Number.parseInt(draft?.order, 10);
-        const parsedPoints = Number.parseInt(draft?.points, 10);
-
-        if (!Number.isInteger(parsedOrder) || parsedOrder < 1) {
-            Swal.fire({ icon: 'warning', title: 'Orden inválido', text: 'El orden debe ser un número entero mayor o igual a 1.' });
-            return;
+    const handleSaveAllItems = async () => {
+        // Validate all edits before sending
+        for (const [, draft] of Object.entries(itemEdits)) {
+            const parsedOrder = Number.parseInt(draft?.order, 10);
+            const parsedPoints = Number.parseInt(draft?.points, 10);
+            if (!Number.isInteger(parsedOrder) || parsedOrder < 1) {
+                Swal.fire({ icon: 'warning', title: 'Orden inválido', text: 'El orden de cada reto debe ser un entero mayor o igual a 1.' });
+                return;
+            }
+            if (!Number.isInteger(parsedPoints) || parsedPoints < 0) {
+                Swal.fire({ icon: 'warning', title: 'Puntaje inválido', text: 'Los puntos de cada reto deben ser un entero mayor o igual a 0.' });
+                return;
+            }
         }
-
-        if (!Number.isInteger(parsedPoints) || parsedPoints < 0) {
-            Swal.fire({ icon: 'warning', title: 'Puntaje inválido', text: 'Los puntos deben ser un número entero mayor o igual a 0.' });
-            return;
-        }
-
-        setUpdatingItemId(itemId);
+        setSavingAllItems(true);
         try {
-            await client.patch(`/exam-items/${itemId}`, {
-                order: parsedOrder,
-                points: parsedPoints,
-            });
+            await Promise.all(Object.entries(itemEdits).map(([itemId, draft]) =>
+                client.patch(`/exam-items/${itemId}`, {
+                    order: Number.parseInt(draft.order, 10),
+                    points: Number.parseInt(draft.points, 10),
+                })
+            ));
             await refreshExamItems();
-            Swal.fire({ icon: 'success', title: 'Reto actualizado', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
+            Swal.fire({ icon: 'success', title: 'Retos actualizados', timer: 1200, toast: true, position: 'top-end', showConfirmButton: false });
         } catch (err) {
             console.error(err);
-            Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.error || 'No se pudo actualizar el orden o puntaje del reto.' });
+            Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.error || 'No se pudo actualizar el orden o puntaje de los retos.' });
         } finally {
-            setUpdatingItemId(null);
+            setSavingAllItems(false);
         }
     };
 
     // --- Remove Challenge from Exam ---
     const handleRemoveItem = async (itemId) => {
-        const { isConfirmed } = await Swal.fire({
-            title: '¿Quitar reto?', text: 'Se eliminará este reto del examen.',
-            icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, quitar', cancelButtonText: 'Cancelar'
-        });
-        if (!isConfirmed) return;
         try {
             await client.delete(`/exam-items/${itemId}`);
             setExamItems(prev => prev.filter(i => (i.id || i.ID) !== itemId));
@@ -217,15 +214,21 @@ const ExamEditor = () => {
                 delete next[itemId];
                 return next;
             });
+            setConfirmRemoveItemId(null);
             Swal.fire({ icon: 'success', title: 'Reto Eliminado', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
         } catch (err) {
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo quitar el reto.' });
         }
     };
 
-    // Challenges already linked
+    // Challenges already linked — use multiple fallbacks to handle DTO vs entity variations
     const linkedChallengeIds = new Set(
-        examItems.map(item => item.challenge?.id || item.challenge?.ID || item.challengeID || item.challenge_id || '')
+        examItems.flatMap(item => [
+            item.challenge?.id,
+            item.challenge?.ID,
+            item.challenge_id,
+            item.challengeID,
+        ].filter(Boolean))
     );
 
     const normalizeStatus = (status) => String(status || 'draft').toLowerCase();
@@ -347,15 +350,28 @@ const ExamEditor = () => {
                             <Target size={20} />
                             <h2>Retos del Examen ({examItems.length})</h2>
                         </div>
-                        <button
-                            type="button"
-                            className="btn-create-mini"
-                            onClick={() => setShowAddPanel(!showAddPanel)}
-                            style={{ height: '40px', fontSize: '0.85rem' }}
-                        >
-                            <PlusCircle size={16} />
-                            <span>{showAddPanel ? 'Cerrar Panel' : 'Añadir Reto'}</span>
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {examItems.length > 0 && (
+                                <button
+                                    type="button"
+                                    className="btn-primary"
+                                    onClick={handleSaveAllItems}
+                                    disabled={savingAllItems}
+                                    style={{ height: '40px', fontSize: '0.85rem', padding: '0 1rem' }}
+                                >
+                                    {savingAllItems ? 'Guardando...' : <><Save size={15} /> Guardar orden y puntos</>}
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                className="btn-create-mini"
+                                onClick={() => setShowAddPanel(!showAddPanel)}
+                                style={{ height: '40px', fontSize: '0.85rem' }}
+                            >
+                                <PlusCircle size={16} />
+                                <span>{showAddPanel ? 'Cerrar Panel' : 'Añadir Reto'}</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* LIST OF LINKED EXAM ITEMS */}
@@ -376,65 +392,81 @@ const ExamEditor = () => {
                                 const order = itemEdits[itemId]?.order ?? String(getItemOrder(item, idx + 1));
 
                                 return (
-                                    <div key={itemId} className="challenge-card-mini">
+                                    <div key={itemId} className="challenge-card-mini exam-item-card">
                                         <div className={`card-accent ${diff}`}></div>
-                                        <div className="card-main">
+                                        <div className="card-main exam-item-card-main">
                                             <div className="card-top">
-                                                <div className="title-area">
+                                                <div className="title-area exam-item-title">
                                                     <Code size={16} className="title-icon" />
                                                     <h3>{title}</h3>
                                                 </div>
-                                                <div className="badge-group">
-                                                    <span className={`diff-pill ${diff}`}>
-                                                        {diff === 'easy' ? 'Fácil' : diff === 'hard' ? 'Difícil' : 'Medio'}
-                                                    </span>
-                                                    <span className="status-badge published">{points} pts</span>
-                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className="exam-item-delete-btn"
+                                                    onClick={() => setConfirmRemoveItemId(itemId)}
+                                                    aria-label="Quitar reto"
+                                                    data-tooltip="Quitar reto"
+                                                >
+                                                    <Trash2 size={13} />
+                                                </button>
                                             </div>
-                                            <p className="description-text">
+
+                                            <div className="meta-badges-row" style={{ marginTop: '0.5rem' }}>
+                                                <span className={`diff-pill ${diff}`}>
+                                                    {diff === 'easy' ? 'Fácil' : diff === 'hard' ? 'Difícil' : 'Medio'}
+                                                </span>
+                                            </div>
+
+                                            <p className="description-text exam-item-description">
                                                 {ch.description || ch.Description || 'Sin descripción.'}
                                             </p>
-                                            <div className="card-footer-mini" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                                <div className="form-row" style={{ gap: '12px' }}>
-                                                    <div className="form-group" style={{ marginBottom: 0 }}>
-                                                        <label style={{ fontSize: '0.8rem', marginBottom: '6px' }}>Orden</label>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            value={order}
-                                                            onChange={(event) => handleExamItemFieldChange(itemId, 'order', event.target.value)}
-                                                        />
-                                                    </div>
-                                                    <div className="form-group" style={{ marginBottom: 0 }}>
-                                                        <label style={{ fontSize: '0.8rem', marginBottom: '6px' }}>Puntos</label>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            value={points}
-                                                            onChange={(event) => handleExamItemFieldChange(itemId, 'points', event.target.value)}
-                                                        />
-                                                    </div>
+
+                                            <div className="card-footer-mini exam-item-fields">
+                                                <div className="exam-item-field">
+                                                    <span className="exam-item-field-label">Orden</span>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={order}
+                                                        onChange={(event) => handleExamItemFieldChange(itemId, 'order', event.target.value)}
+                                                        className="exam-item-field-input"
+                                                    />
                                                 </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
-                                                    <button
-                                                        type="button"
-                                                        className="btn-primary"
-                                                        onClick={() => handleSaveExamItem(itemId)}
-                                                        disabled={updatingItemId === itemId}
-                                                        style={{ padding: '10px 16px', fontSize: '0.85rem' }}
-                                                    >
-                                                        {updatingItemId === itemId ? 'Guardando...' : <><Save size={15} /> Guardar reto</>}
-                                                    </button>
-                                                    <button
-                                                        className="action-btn delete"
-                                                        onClick={() => handleRemoveItem(itemId)}
-                                                        title="Quitar del examen"
-                                                        style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: '#fee2e2', color: '#dc2626', cursor: 'pointer', flexShrink: 0 }}
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
+                                                <div className="exam-item-field">
+                                                    <span className="exam-item-field-label">Puntos</span>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={points}
+                                                        onChange={(event) => handleExamItemFieldChange(itemId, 'points', event.target.value)}
+                                                        className="exam-item-field-input"
+                                                    />
                                                 </div>
                                             </div>
+
+                                            {confirmRemoveItemId === itemId && (
+                                                <div className="exam-item-delete-confirm">
+                                                    <span>¿Quitar este reto del examen?</span>
+                                                    <div className="exam-item-delete-confirm-actions">
+                                                        <button
+                                                            type="button"
+                                                            className="btn-secondary"
+                                                            onClick={() => setConfirmRemoveItemId(null)}
+                                                            style={{ padding: '6px 10px', fontSize: '0.78rem' }}
+                                                        >
+                                                            Cancelar
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn-primary"
+                                                            onClick={() => handleRemoveItem(itemId)}
+                                                            style={{ padding: '6px 10px', fontSize: '0.78rem' }}
+                                                        >
+                                                            Si, quitar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -485,7 +517,11 @@ const ExamEditor = () => {
                                 ))}
                             </div>
                             {availableChallenges.length === 0 ? (
-                                <p style={{ textAlign: 'center', color: '#999', padding: '1rem' }}>No hay retos disponibles para añadir.</p>
+                                <p style={{ textAlign: 'center', color: '#999', padding: '1rem' }}>
+                                    {challenges.length === 0
+                                        ? 'Aún no tienes retos en tu repositorio.'
+                                        : 'Todos tus retos ya están añadidos a este examen.'}
+                                </p>
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
                                     {availableChallenges.map(ch => {

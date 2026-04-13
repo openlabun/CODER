@@ -380,6 +380,153 @@
     color: white;
 }
 
+/* Exam editor challenge cards */
+.exam-item-card {
+    border: 1px solid #e7e9ee;
+    border-radius: 16px;
+    overflow: visible;
+}
+
+.exam-item-card-main {
+    padding: 0.95rem 1rem 0.85rem;
+}
+
+.exam-item-title h3 {
+    font-size: 1.05rem;
+    line-height: 1.25;
+    margin: 0;
+    font-weight: 700;
+}
+
+.exam-item-delete-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    border: 1px solid #fecaca;
+    background: #fff5f5;
+    color: #dc2626;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.exam-item-delete-btn:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    transform: translateY(-1px);
+}
+
+.exam-item-delete-btn[data-tooltip]:hover::after,
+.exam-item-delete-btn[data-tooltip]:focus-visible::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111827;
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 7px;
+    font-size: 0.7rem;
+    line-height: 1;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.exam-item-delete-btn[data-tooltip]:hover::before,
+.exam-item-delete-btn[data-tooltip]:focus-visible::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 3px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #111827;
+    z-index: 10;
+}
+
+.exam-item-description {
+    font-size: 0.9rem;
+    line-height: 1.45;
+    min-height: auto;
+    margin: 0.7rem 0;
+}
+
+.exam-item-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    background: #fafbfc;
+    border: 1px solid #eceff4;
+    border-radius: 10px;
+    padding: 0.55rem 0.65rem;
+}
+
+.exam-item-field {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.exam-item-field-label {
+    font-size: 0.78rem;
+    color: #596273;
+    min-width: 44px;
+}
+
+.exam-item-field-input {
+    width: 100%;
+    max-width: 78px;
+    padding: 0.3rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #cfd6e0;
+    font-size: 0.85rem;
+    text-align: center;
+    background: #fff;
+}
+
+.exam-item-delete-confirm {
+    margin-top: 0.65rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid #fecaca;
+    background: #fff5f5;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.exam-item-delete-confirm span {
+    font-size: 0.82rem;
+    color: #991b1b;
+    font-weight: 600;
+}
+
+.exam-item-delete-confirm-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+@media (max-width: 768px) {
+    .exam-item-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .exam-item-delete-confirm {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
 .btn-primary:hover:not(:disabled) {
     background: #a00d24; /* Darker red */
     transform: translateY(-2px);

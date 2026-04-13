@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
 import AIAssistantModal from '../components/AIAssistantModal';
@@ -10,16 +10,12 @@ import './Challenges.css';
 const CreateChallenge = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
     const { id } = useParams();
     const isEditing = !!id;
 
     const [activeTab, setActiveTab] = useState('basic');
     const [showPreview, setShowPreview] = useState(false);
     const [showAIModal, setShowAIModal] = useState(false);
-
-    const queryParams = new URLSearchParams(location.search);
-    const courseIdFromUrl = queryParams.get('courseId');
 
     const [formData, setFormData] = useState({
         title: '',
@@ -31,18 +27,15 @@ const CreateChallenge = () => {
         inputVariables: [{ name: 'stdin', type: 'string' }],
         outputVariable: { name: 'stdout', type: 'string' },
         constraints: '',
-        status: 'draft',
-        courseId: courseIdFromUrl || null,
-        examId: queryParams.get('examId') || null
+        status: 'draft'
     });
 
     const [publicTestCases, setPublicTestCases] = useState([]);
     const [hiddenTestCases, setHiddenTestCases] = useState([]);
     const [newTag, setNewTag] = useState('');
     const [loading, setLoading] = useState(false);
+    const [loadingAction, setLoadingAction] = useState('published');
     const [fetching, setFetching] = useState(isEditing);
-    const [courses, setCourses] = useState([]);
-    const [exams, setExams] = useState([]);
 
     useEffect(() => {
         const fetchChallengeForEdit = async () => {
@@ -61,9 +54,7 @@ const CreateChallenge = () => {
                     inputVariables: challenge.inputVariables || challenge.InputVariables || [{ name: 'stdin', type: 'string' }],
                     outputVariable: challenge.outputVariable || challenge.OutputVariable || { name: 'stdout', type: 'string' },
                     constraints: challenge.constraints || challenge.Constraints || '',
-                    status: challenge.status || challenge.Status || 'draft',
-                    courseId: challenge.courseId || challenge.CourseID || null,
-                    examId: challenge.examId || challenge.ExamID || queryParams.get('examId') || null
+                    status: challenge.status || challenge.Status || 'draft'
                 });
 
                 try {
@@ -105,40 +96,10 @@ const CreateChallenge = () => {
             }
         };
 
-        const fetchCourses = async () => {
-            try {
-                const scope = (user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin') ? '?scope=owned' : '';
-                const { data } = await client.get(`/courses${scope}`);
-                const coursesList = Array.isArray(data) ? data : (data.items || []);
-                setCourses(coursesList);
-            } catch (err) {
-                console.error('Error fetching courses:', err);
-            }
-        };
-
         if (user) {
-            fetchCourses();
             if (isEditing) fetchChallengeForEdit();
         }
     }, [id, isEditing, user?.role]);
-
-    useEffect(() => {
-        const fetchExams = async () => {
-            if (!formData.courseId) {
-                setExams([]);
-                return;
-            }
-            try {
-                const { data } = await client.get(`/exams/course/${formData.courseId}`);
-                setExams(Array.isArray(data) ? data : (data.items || []));
-            } catch (err) {
-                console.error('Error fetching exams:', err);
-                setExams([]);
-            }
-        };
-
-        fetchExams();
-    }, [formData.courseId]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -237,6 +198,8 @@ const CreateChallenge = () => {
     const handleSubmit = async (status) => {
         if (!validateForm()) return;
 
+        const requestedStatus = status || formData.status;
+        setLoadingAction(requestedStatus);
         setLoading(true);
         try {
             const payload = {
@@ -257,7 +220,7 @@ const CreateChallenge = () => {
                     value: '' 
                 },
                 constraints: formData.constraints,
-                status: status || formData.status,
+                status: requestedStatus,
                 user_id: user?.id || user?.ID || ''
             };
 
@@ -305,25 +268,24 @@ const CreateChallenge = () => {
                 await Promise.all(tcRequests);
             }
 
-            Swal.fire({
+            setLoading(false);
+
+            const successTitle = isEditing ? 'Reto actualizado' : 'Reto creado';
+            const successText = requestedStatus === 'draft'
+                ? `El reto se guardo como borrador exitosamente.`
+                : `El reto se creo y publico exitosamente.`;
+
+            await Swal.fire({
                 icon: 'success',
-                title: isEditing ? '¡Actualizado!' : '¡Creado!',
-                text: `Reto ${isEditing ? 'actualizado' : 'publicado'} exitosamente`,
-                timer: 1000,
-                showConfirmButton: false,
-                toast: true,
-                position: 'top-end'
+                title: successTitle,
+                text: successText,
+                confirmButtonText: 'Ir al repositorio de retos',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                customClass: { container: 'swal-ultra-high-z' }
             });
 
-            if (formData.courseId && challengeId) {
-                try {
-                    await client.post(`/courses/${formData.courseId}/challenges`, { challengeId });
-                } catch (assignErr) {
-                    console.warn('Silent failure assigning challenge to course:', assignErr);
-                }
-            }
-            
-            setTimeout(() => navigate('/challenges'), 1000);
+            navigate('/challenges');
         } catch (err) {
             console.error('Error en handleSubmit:', err.response?.data || err);
             const serverMsg = err.response?.data?.error || err.response?.data?.message;
@@ -338,6 +300,7 @@ const CreateChallenge = () => {
             });
         } finally {
             setLoading(false);
+            setLoadingAction('published');
         }
     };
 
@@ -385,8 +348,24 @@ const CreateChallenge = () => {
 
     if (fetching) return <div className="loading">Cargando datos...</div>;
 
+    const loadingTitle = isEditing
+        ? 'Actualizando reto...'
+        : loadingAction === 'draft'
+            ? 'Guardando borrador...'
+            : 'Creando reto...';
+
     return (
         <div className="create-challenge-page">
+            {loading && (
+                <div className="challenge-save-overlay" role="status" aria-live="polite">
+                    <div className="challenge-save-card">
+                        <div className="challenge-save-spinner" />
+                        <h2>{loadingTitle}</h2>
+                        <p>Estamos procesando tu reto. Esto puede tardar unos segundos.</p>
+                    </div>
+                </div>
+            )}
+
             <div className="page-header">
                 <div>
                     <h1>{isEditing ? 'Editar Reto' : 'Crear Nuevo Reto'}</h1>
@@ -643,24 +622,8 @@ const CreateChallenge = () => {
                         {activeTab === 'settings' && (
                             <div className="form-section">
                                 <div className="form-group">
-                                    <label>Curso Destino</label>
-                                    <select name="courseId" value={formData.courseId || ''} onChange={handleChange}>
-                                        <option value="">Seleccionar curso...</option>
-                                        {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>Examen Asociado</label>
-                                    <select name="examId" value={formData.examId || ''} onChange={handleChange}>
-                                        <option value="">Ninguno / Autónomo</option>
-                                        {exams.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
-                                    </select>
-                                    <small>Asocia este reto a un examen específico para que aparezca en la evaluación.</small>
-                                </div>
-                                <div className="form-group">
                                     <label>Estado Inicial</label>
-                                    <select name="status" value={formData.status} onChange={handleChange}>
-                                        <option value="draft">Borrador</option>
+                                    <select name="status" value={formData.status === 'draft' ? 'private' : formData.status} onChange={handleChange}>
                                         <option value="published">Publicado</option>
                                         <option value="private">Privado</option>
                                     </select>

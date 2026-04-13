@@ -50,6 +50,8 @@ info:
     - PATCH /exam-items/{id}
     - DELETE /exam-items/{id}
     - POST /submissions/
+    - POST /submissions/without-score
+    - POST /submissions/custom
     - PATCH /submissions/results/{resultId}
     - GET /submissions/user/{userId}
     - GET /submissions/challenge/{challengeId}
@@ -1940,6 +1942,107 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /submissions/execution:
+    post:
+      tags: [Submissions]
+      summary: Create execution without score
+      description: |
+        Creates a submission that executes only sample test cases and does not accumulate score.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionExecutionRequest'
+            examples:
+              execute_without_score:
+                value:
+                  code: "import sys\nprint(int(sys.stdin.read().strip()) * 2)"
+                  language: python
+                  challenge_id: chg-123
+                  session_id: ses-123
+      responses:
+        '201':
+          description: Submission created for execution without score.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+              examples:
+                created:
+                  value:
+                    id: sub-456
+                    code: "import sys\nprint(int(sys.stdin.read().strip()) * 2)"
+                    language: python
+                    score: 0
+                    time_ms_total: 0
+                    created_at: "2026-04-12T16:55:57.121Z"
+                    updated_at: "2026-04-12T16:55:57.121Z"
+                    challenge_id: chg-123
+                    session_id: ses-123
+                    user_id: usr-student
+        '400':
+          description: Invalid payload or domain error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /submissions/execution-custom:
+    post:
+      tags: [Submissions]
+      summary: Create execution with custom test case
+      description: |
+        Creates a submission with a custom test case provided in the request payload.
+        The custom case is executed and published through the worker pipeline.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionCustomExecutionRequest'
+            examples:
+              custom_execution:
+                value:
+                  code: "import sys\nprint(int(sys.stdin.read().strip()) * 2)"
+                  language: python
+                  challenge_id: chg-123
+                  session_id: ses-123
+                  input_variables:
+                    - name: n
+                      type: int
+                      value: "8"
+                  output_variable:
+                    name: out
+                    type: int
+                    value: "16"
+      responses:
+        '201':
+          description: Submission created with custom execution.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmissionResponse'
+              examples:
+                created:
+                  value:
+                    id: sub-789
+                    code: "import sys\nprint(int(sys.stdin.read().strip()) * 2)"
+                    language: python
+                    score: 0
+                    time_ms_total: 0
+                    created_at: "2026-04-12T16:58:57.121Z"
+                    updated_at: "2026-04-12T16:58:57.121Z"
+                    challenge_id: chg-123
+                    session_id: ses-123
+                    user_id: usr-student
+        '400':
+          description: Invalid payload or domain error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /submissions/results/{resultId}:
     patch:
       tags: [Submissions]
@@ -3030,13 +3133,13 @@ components:
     CourseAddStudentRequest:
       type: object
       properties:
-        studentID:
+        courseID:
           type: string
         studentEmail:
           type: string
           format: email
       anyOf:
-        - required: [studentID]
+        - required: [courseID]
         - required: [studentEmail]
 
     ExamCreateRequest:
@@ -3288,6 +3391,38 @@ components:
           type: string
         session_id:
           type: string
+
+    SubmissionExecutionRequest:
+      type: object
+      required: [code, language, challenge_id, session_id]
+      properties:
+        code:
+          type: string
+        language:
+          type: string
+        challenge_id:
+          type: string
+        session_id:
+          type: string
+
+    SubmissionCustomExecutionRequest:
+      type: object
+      required: [code, language, challenge_id, session_id, input_variables, output_variable]
+      properties:
+        code:
+          type: string
+        language:
+          type: string
+        challenge_id:
+          type: string
+        session_id:
+          type: string
+        input_variables:
+          type: array
+          items:
+            $ref: '#/components/schemas/IOVariableInput'
+        output_variable:
+          $ref: '#/components/schemas/IOVariableInput'
 
     SubmissionUpdateResultRequest:
       type: object

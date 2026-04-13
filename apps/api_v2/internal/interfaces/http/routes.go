@@ -48,7 +48,9 @@ import (
 	sub_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-id"
 	sub_get_by_user_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-user-id"
 	sub_patch_update_result "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/patch-update-result"
+	sub_post_create_custom "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create-custom"
 	sub_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create"
+	sub_post_create_without_score "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create-without-score"
 	sub_get_active_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/get-active-session"
 	sub_post_block "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-block"
 	sub_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-close"
@@ -197,6 +199,8 @@ func registerExamItemsRoutes(app *fiber.App, appContainer *container.Application
 func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Application) {
 	submissions := app.Group("/submissions")
 	submissions.Post("/", sub_post_create.Handler(appContainer))
+	submissions.Post("/execute", sub_post_create_without_score.Handler(appContainer))
+	submissions.Post("/execute-custom", sub_post_create_custom.Handler(appContainer))
 	submissions.Patch("/results/:resultId", sub_patch_update_result.Handler(appContainer))
 	submissions.Get("/user/:userId", sub_get_by_user_id.Handler(appContainer))
 	submissions.Get("/challenge/:challengeId", sub_get_by_challenge_id.Handler(appContainer))

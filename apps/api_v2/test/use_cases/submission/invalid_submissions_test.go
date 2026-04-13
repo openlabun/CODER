@@ -157,7 +157,6 @@ func TestInvalidSubmissions(t *testing.T) {
 	_, err = process.Application.SubmissionUseCases.CreateSubmission.Execute(studentCtx, submission_dtos.CreateSubmissionInput{
 		Code:        "import sys\nprint(sys.stdin.read().strip())",
 		Language:    "python",
-		Score:       0,
 		ChallengeID: challengeID,
 		SessionID:   "session-not-found",
 	})
@@ -189,7 +188,6 @@ func TestInvalidSubmissions(t *testing.T) {
 	_, err = process.Application.SubmissionUseCases.CreateSubmission.Execute(studentCtx, submission_dtos.CreateSubmissionInput{
 		Code:        "import sys\nprint(sys.stdin.read().strip())",
 		Language:    "python",
-		Score:       0,
 		ChallengeID: challengeID,
 		SessionID:   firstSessionID,
 	})
@@ -204,7 +202,6 @@ func TestInvalidSubmissions(t *testing.T) {
 	_, err = process.Application.SubmissionUseCases.CreateSubmission.Execute(studentCtx, submission_dtos.CreateSubmissionInput{
 		Code:        "import sys\nprint(sys.stdin.read().strip())",
 		Language:    "python",
-		Score:       0,
 		ChallengeID: challengeID,
 		SessionID:   firstSessionID,
 	})
@@ -257,7 +254,6 @@ func TestInvalidSubmissions(t *testing.T) {
 	_, err = process.Application.SubmissionUseCases.CreateSubmission.Execute(studentCtx, submission_dtos.CreateSubmissionInput{
 		Code:        "import sys\nprint(sys.stdin.read().strip())",
 		Language:    "python",
-		Score:       0,
 		ChallengeID: challengeID,
 		SessionID:   blockedSession.ID,
 	})
@@ -289,7 +285,6 @@ func TestInvalidSubmissions(t *testing.T) {
 	_, err = process.Application.SubmissionUseCases.CreateSubmission.Execute(studentCtx, submission_dtos.CreateSubmissionInput{
 		Code:        "import sys\nprint(sys.stdin.read().strip())",
 		Language:    "python",
-		Score:       0,
 		ChallengeID: challengeID,
 		SessionID:   thirdSessionID,
 	})

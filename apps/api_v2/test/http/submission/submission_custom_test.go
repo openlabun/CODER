@@ -8,8 +8,8 @@ import (
 	httputils "github.com/openlabun/CODER/apps/api_v2/test/http"
 )
 
-func TestSubmissionScoringHTTP(t *testing.T) {
-	process, app := httputils.StartHTTPTestWithApp(t, "Submission Scoring HTTP")
+func TestSubmissionCustomHTTP(t *testing.T) {
+	process, app := httputils.StartHTTPTestWithApp(t, "Submission Custom HTTP")
 	teacherEmail := "test@test.com"
 	studentEmail := "stud@test.com"
 	password := "Password123!"
@@ -21,18 +21,13 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 	var testCaseOneID string
 	var testCaseTwoID string
 	var testCaseThreeID string
-	var examItemID string
 	var sessionID string
 	var submissionID string
 
 	defer func() {
 		if sessionID != "" && teacherAccess != nil {
-			t.Logf("[CLEANUP] Eliminando sesión %s", sessionID)
+			t.Logf("[CLEANUP] Eliminando sesion %s", sessionID)
 			_ = httputils.PostSessionClose(t, app, teacherAccess, sessionID)
-		}
-		if examItemID != "" && teacherAccess != nil {
-			t.Logf("[CLEANUP] Eliminando punto de examen %s", examItemID)
-			_ = httputils.DeleteExamItemByID(t, app, teacherAccess, examItemID)
 		}
 		if testCaseThreeID != "" && teacherAccess != nil {
 			t.Logf("[CLEANUP] Eliminando caso de prueba %s", testCaseThreeID)
@@ -56,17 +51,15 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 		}
 	}()
 
-	// [STEP 1] Login as teacher
 	process.StartStep("Iniciar sesion con usuario de docente")
 	teacherAccess = httputils.EnsureAuthUserAccess(t, app, teacherEmail, password, "Teacher Test")
 	process.EndStep()
 
-	// [STEP 2] Create an exam
 	process.StartStep("Crear examen publico (visibilidad public y sin curso)")
 	now := time.Now().UTC()
 	resp := httputils.PostExamCreate(t, app, teacherAccess, map[string]any{
-		"title":                  "Submission Scoring Exam",
-		"description":            "Examen para validar puntaje de submissions",
+		"title":                  "Submission Custom Exam",
+		"description":            "Examen para validar ejecucion con caso personalizado",
 		"visibility":             "public",
 		"start_time":             now.Add(2 * time.Hour).Format(time.RFC3339),
 		"allow_late_submissions": true,
@@ -78,12 +71,11 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 	examID = httputils.StringField(httputils.MustJSONMap(t, resp), "id")
 	process.EndStep()
 
-	// [STEP 3] Create a challenge
 	process.StartStep("Crear un reto")
 	resp = httputils.PostChallengeCreate(t, app, teacherAccess, map[string]any{
-		"title":               "Submission Scoring Challenge",
-		"description":         "Challenge para validar score",
-		"tags":                []string{"submission", "score"},
+		"title":               "Submission Custom Challenge",
+		"description":         "Challenge para validar caso personalizado",
+		"tags":                []string{"submission", "custom"},
 		"status":              "published",
 		"difficulty":          "easy",
 		"worker_time_limit":   1200,
@@ -91,18 +83,17 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 		"code_templates": map[string]any{
 			"python": "def solve() { return; }",
 		},
-		"input_variables":     []map[string]any{{"name": "n", "type": "int", "value": "2"}},
-		"output_variable":     map[string]any{"name": "out", "type": "int", "value": "4"},
-		"constraints":         "1 <= n <= 1000",
+		"input_variables": []map[string]any{{"name": "n", "type": "int", "value": "2"}},
+		"output_variable": map[string]any{"name": "out", "type": "int", "value": "4"},
+		"constraints":     "1 <= n <= 1000",
 	})
 	httputils.RequireStatus(t, resp, 201, "create challenge")
 	challengeID = httputils.StringField(httputils.MustJSONMap(t, resp), "id")
 	process.EndStep()
 
-	// [STEP 4] Create test cases for the challenge
 	process.StartStep("Crear 2 casos de prueba con valor de 3 puntos")
 	resp = httputils.PostTestCaseCreate(t, app, teacherAccess, map[string]any{
-		"name":            "score_case_1",
+		"name":            "custom_case_1",
 		"input":           []map[string]any{{"name": "n", "type": "int", "value": "2"}},
 		"expected_output": map[string]any{"name": "out", "type": "int", "value": "4"},
 		"is_sample":       false,
@@ -113,7 +104,7 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 	testCaseOneID = httputils.StringField(httputils.MustJSONMap(t, resp), "id")
 
 	resp = httputils.PostTestCaseCreate(t, app, teacherAccess, map[string]any{
-		"name":            "score_case_2",
+		"name":            "custom_case_2",
 		"input":           []map[string]any{{"name": "n", "type": "int", "value": "5"}},
 		"expected_output": map[string]any{"name": "out", "type": "int", "value": "10"},
 		"is_sample":       false,
@@ -124,10 +115,9 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 	testCaseTwoID = httputils.StringField(httputils.MustJSONMap(t, resp), "id")
 	process.EndStep()
 
-	// [STEP 5] Create an exam item with the challenge
 	process.StartStep("Crear un caso de prueba con valor de 6 puntos (debe ser imposible de cumplir)")
 	resp = httputils.PostTestCaseCreate(t, app, teacherAccess, map[string]any{
-		"name":            "score_case_impossible",
+		"name":            "custom_case_impossible",
 		"input":           []map[string]any{{"name": "n", "type": "int", "value": "7"}},
 		"expected_output": map[string]any{"name": "out", "type": "int", "value": "999"},
 		"is_sample":       false,
@@ -138,43 +128,31 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 	testCaseThreeID = httputils.StringField(httputils.MustJSONMap(t, resp), "id")
 	process.EndStep()
 
-	// [STEP 6] Create an exam item with the challenge
-	process.StartStep("Crear un punto de examen")
-	resp = httputils.PostExamItemCreate(t, app, teacherAccess, map[string]any{
-		"exam_id":      examID,
-		"challenge_id": challengeID,
-		"order":        1,
-		"points":       100,
-	})
-	httputils.RequireStatus(t, resp, 201, "create exam item")
-	examItemID = httputils.StringField(httputils.MustJSONMap(t, resp), "id")
-	process.EndStep()
-
-	// [STEP 7] Login as student
 	process.StartStep("Iniciar sesion con usuario de estudiante")
 	studentAccess = httputils.EnsureAuthUserAccess(t, app, studentEmail, password, "Student Test")
 	process.EndStep()
 
-	// [STEP 8] Create a session with the exam
 	process.StartStep("Crear una sesion en el examen")
 	resp = httputils.PostSessionCreate(t, app, studentAccess, map[string]any{"user_id": studentAccess.UserID, "exam_id": examID})
 	httputils.RequireStatus(t, resp, 201, "create session")
 	sessionID = httputils.StringField(httputils.MustJSONMap(t, resp), "id")
 	process.EndStep()
 
-	// [STEP 9] Create a submission for the challenge in the exam item
-	process.StartStep("Crear una revision")
-	resp = httputils.PostSubmissionCreate(t, app, studentAccess, map[string]any{
+	process.StartStep("Crear una revision con un caso de prueba personalizado")
+	resp = httputils.PostSubmissionCreateCustom(t, app, studentAccess, map[string]any{
 		"code":         "import sys\nprint(int(sys.stdin.read().strip()) * 2)",
 		"language":     "python",
 		"challenge_id": challengeID,
 		"session_id":   sessionID,
+		"input_variables": []map[string]any{
+			{"name": "n", "type": "int", "value": "8"},
+		},
+		"output_variable": map[string]any{"name": "out", "type": "int", "value": "16"},
 	})
-	httputils.RequireStatus(t, resp, 201, "create submission")
+	httputils.RequireStatus(t, resp, 201, "create custom submission")
 	submissionID = httputils.StringField(httputils.MustJSONMap(t, resp), "id")
 	process.EndStep()
 
-	// [STEP 10] Get the submission status until it is accepted
 	process.StartStep("Obtener el status de la revision hasta que su estado sea accepted o wrong_answer")
 	deadline := time.Now().Add(2 * time.Minute)
 	var lastStatus map[string]any
@@ -189,7 +167,7 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 
 		status := httputils.MustJSONMap(t, resp)
 		resultsRaw, ok := status["results"].([]any)
-		if !ok || len(resultsRaw) != 3 {
+		if !ok || len(resultsRaw) != 1 {
 			time.Sleep(2 * time.Second)
 			continue
 		}
@@ -217,12 +195,11 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 		time.Sleep(2 * time.Second)
 	}
 	if timedOut {
-		process.Fail("wait scoring terminal status", fmt.Errorf("submission %s did not reach terminal accepted/wrong_answer status before timeout", submissionID))
+		process.Fail("wait custom terminal status", fmt.Errorf("submission %s did not reach terminal accepted/wrong_answer status before timeout", submissionID))
 	}
 	process.EndStep()
 
-	// [STEP 11] Confirm the submission score corresponds to the test cases passed (6 points)
-	process.StartStep("Confirmar valor del atributo Score de la revision corresponde a 6")
+	process.StartStep("Confirmar valor del atributo Score de la revision corresponde a 0")
 	if lastStatus == nil {
 		process.Fail("verify submission score", fmt.Errorf("expected submission status output"))
 	}
@@ -231,8 +208,8 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 		process.Fail("verify submission score", fmt.Errorf("expected submission field in status output"))
 	}
 	score, ok := submission["score"].(float64)
-	if !ok || int(score) != 6 {
-		process.Fail("verify submission score", fmt.Errorf("expected submission score 6, got %v", submission["score"]))
+	if !ok || int(score) != 0 {
+		process.Fail("verify submission score", fmt.Errorf("expected submission score 0, got %v", submission["score"]))
 	}
 	process.EndStep()
 

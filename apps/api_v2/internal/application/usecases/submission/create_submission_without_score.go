@@ -21,7 +21,7 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 )
 
-type CreateSubmissionUseCase struct {
+type CreateSubmissionWithoutScoreUseCase struct {
 	userRepository       userRepository.UserRepository
 	submissionRepository submissionRepository.SubmissionRepository
 	sessionRepository    submissionRepository.SessionRepository
@@ -33,8 +33,8 @@ type CreateSubmissionUseCase struct {
 	publisherPort        submissionPorts.SubmissionPublisherPort
 }
 
-func NewCreateSubmissionUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, examRepository examRepository.ExamRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository, ioVariableRepository examRepository.IOVariableRepository, publisherPort submissionPorts.SubmissionPublisherPort) *CreateSubmissionUseCase {
-	return &CreateSubmissionUseCase{
+func NewCreateSubmissionWithoutScoreUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, examRepository examRepository.ExamRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository, ioVariableRepository examRepository.IOVariableRepository, publisherPort submissionPorts.SubmissionPublisherPort) *CreateSubmissionWithoutScoreUseCase {
+	return &CreateSubmissionWithoutScoreUseCase{
 		userRepository:       userRepository,
 		submissionRepository: submissionRepository,
 		sessionRepository:    sessionRepository,
@@ -47,7 +47,7 @@ func NewCreateSubmissionUseCase(userRepository userRepository.UserRepository, su
 	}
 }
 
-func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.CreateSubmissionInput) (*Entities.Submission, error) {
+func (uc *CreateSubmissionWithoutScoreUseCase) Execute(ctx context.Context, input dtos.CreateExecutionInput) (*Entities.Submission, error) {
 	// [STEP 1] Verify user is student and has permissions to submit
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
@@ -106,7 +106,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 	}
 
 	// [STEP 7] Create submission with user provided values
-	submission, err := mapper.MapCreateSubmissionInputToSubmissionEntity(user.ID, input)
+	submission, err := mapper.MapCreateExecutionInputToSubmissionEntity(user.ID, input)
 	if err != nil {
 		return nil, err
 	}
@@ -169,9 +169,9 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 	return createdSubmission, nil
 }
 
-func (uc *CreateSubmissionUseCase) createSubmissionResultsForTestCases(ctx context.Context, submissionID string, testCase examEntities.TestCase) (*Entities.SubmissionResult, error) {
-	// [STEP 11.1] If TestCase is custom, discard
-	if testCase.Custom {
+func (uc *CreateSubmissionWithoutScoreUseCase) createSubmissionResultsForTestCases (ctx context.Context, submissionID string, testCase examEntities.TestCase) (*Entities.SubmissionResult, error) {
+	// [STEP 11.1] If TestCase is not Sample and its Custom
+	if !testCase.IsSample {
 		return nil, nil
 	}
 	

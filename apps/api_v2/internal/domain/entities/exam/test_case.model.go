@@ -13,6 +13,7 @@ type TestCase struct {
 	// Scoring
 	IsSample       bool			`json:"is_sample"`
 	Points         int			`json:"points"`
+	Custom 		   bool 		`json:"custom"`
 
 	// Metadata
 	CreatedAt      time.Time	`json:"created_at"`

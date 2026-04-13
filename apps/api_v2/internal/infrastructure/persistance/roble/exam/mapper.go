@@ -222,6 +222,7 @@ func testCaseToRecord(testCase *Entities.TestCase) map[string]any {
 		"ExpectedOutput":      strings.TrimSpace(testCase.ExpectedOutput.ID),
 		"IsSample":    testCase.IsSample,
 		"Points":      testCase.Points,
+		"Custom":      testCase.Custom,
 		"CreatedAt":   testCase.CreatedAt.UTC().Format(time.RFC3339),
 		"ChallengeID": strings.TrimSpace(testCase.ChallengeID),
 	}
@@ -234,6 +235,7 @@ func testCaseToUpdates(testCase *Entities.TestCase) map[string]any {
 		"ExpectedOutput":      strings.TrimSpace(testCase.ExpectedOutput.ID),
 		"IsSample":    testCase.IsSample,
 		"Points":      testCase.Points,
+		"Custom":      testCase.Custom,
 		"ChallengeID": strings.TrimSpace(testCase.ChallengeID),
 	}
 }
@@ -253,6 +255,7 @@ func recordToTestCase(record map[string]any, inputVariables []Entities.IOVariabl
 		output,
 		asBool(record["IsSample"]),
 		asInt(record["Points"]),
+		asBool(record["Custom"]),
 		asString(record["ChallengeID"]),
 		createdAt,
 	)

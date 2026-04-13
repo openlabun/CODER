@@ -8,17 +8,30 @@ import (
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	submission_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
+	submission_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission"
 	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	submission_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
 
-func TestSubmissionScoring(t *testing.T) {
-	process := test.StartTestWithApp(t, "Submission Scoring")
+func TestSubmissionWithoutScore(t *testing.T) {
+	process := test.StartTestWithApp(t, "Submission Without Score")
 	teacherEmail := "test@test.com"
 	studentEmail := "stud@test.com"
 	password := "Password123!"
+
+	createWithoutScoreUseCase := submission_usecases.NewCreateSubmissionWithoutScoreUseCase(
+		process.Application.Dependencies.UserRepository,
+		process.Application.Dependencies.SubmissionRepository,
+		process.Application.Dependencies.SessionRepository,
+		process.Application.Dependencies.ExamRepository,
+		process.Application.Dependencies.ChallengeRepository,
+		process.Application.Dependencies.TestCaseRepository,
+		process.Application.Dependencies.SubmissionResultRepository,
+		process.Application.Dependencies.IOVariableRepository,
+		process.Application.Dependencies.PublisherPort,
+	)
 
 	var teacherCtx = context.Background()
 	var studentCtx = context.Background()
@@ -28,7 +41,6 @@ func TestSubmissionScoring(t *testing.T) {
 	var testCaseOneID string
 	var testCaseTwoID string
 	var testCaseThreeID string
-	var examItemID string
 	var sessionID string
 	var submissionID string
 
@@ -36,10 +48,6 @@ func TestSubmissionScoring(t *testing.T) {
 		if sessionID != "" {
 			t.Logf("[CLEANUP] Cerrando sesión %s", sessionID)
 			_, _ = process.Application.SessionModule.CloseSession.Execute(teacherCtx, submission_dtos.CloseSessionInput{SessionID: sessionID})
-		}
-		if examItemID != "" {
-			t.Logf("[CLEANUP] Eliminando exam item %s", examItemID)
-			_ = process.Application.ExamItemModule.DeleteExamItem.Execute(teacherCtx, exam_dtos.DeleteExamItemInput{ID: examItemID})
 		}
 		if testCaseThreeID != "" {
 			t.Logf("[CLEANUP] Eliminando test case 3 %s", testCaseThreeID)
@@ -72,8 +80,8 @@ func TestSubmissionScoring(t *testing.T) {
 	now := time.Now().UTC()
 	createdExam, err := process.Application.ExamModule.CreateExam.Execute(teacherCtx, exam_dtos.CreateExamInput{
 		CourseID:             nil,
-		Title:                "Submission Scoring Exam",
-		Description:          "Examen para validar puntaje de submissions",
+		Title:                "Submission Without Score Exam",
+		Description:          "Examen para validar ejecución sin puntaje",
 		Visibility:           string(exam_consts.VisibilityPublic),
 		StartTime:            now.Add(2 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
@@ -90,9 +98,9 @@ func TestSubmissionScoring(t *testing.T) {
 
 	process.StartStep("Crear un reto")
 	createdChallenge, err := process.Application.ChallengeModule.CreateChallenge.Execute(teacherCtx, exam_dtos.CreateChallengeInput{
-		Title:             "Submission Scoring Challenge",
-		Description:       "Challenge para validar score",
-		Tags:              []string{"submission", "score"},
+		Title:             "Submission Without Score Challenge",
+		Description:       "Challenge para validar score 0",
+		Tags:              []string{"submission", "without-score"},
 		Status:            string(exam_consts.ChallengeStatusPublished),
 		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
@@ -114,12 +122,12 @@ func TestSubmissionScoring(t *testing.T) {
 
 	process.StartStep("Crear 2 casos de prueba con valor de 3 puntos")
 	testCaseOne, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
-		Name: "score_case_1",
+		Name: "without_score_case_1",
 		Input: []exam_dtos.IOVariableDTO{
 			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "2"},
 		},
 		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "4"},
-		IsSample:       false,
+		IsSample:       true,
 		Points:         3,
 		ChallengeID:    challengeID,
 	})
@@ -129,12 +137,12 @@ func TestSubmissionScoring(t *testing.T) {
 	testCaseOneID = testCaseOne.ID
 
 	testCaseTwo, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
-		Name: "score_case_2",
+		Name: "without_score_case_2",
 		Input: []exam_dtos.IOVariableDTO{
 			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "5"},
 		},
 		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "10"},
-		IsSample:       false,
+		IsSample:       true,
 		Points:         3,
 		ChallengeID:    challengeID,
 	})
@@ -146,12 +154,12 @@ func TestSubmissionScoring(t *testing.T) {
 
 	process.StartStep("Crear un caso de prueba con valor de 6 puntos (debe ser imposible de cumplir)")
 	testCaseThree, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
-		Name: "score_case_impossible",
+		Name: "without_score_case_impossible",
 		Input: []exam_dtos.IOVariableDTO{
 			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "7"},
 		},
 		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "999"},
-		IsSample:       false,
+		IsSample:       true,
 		Points:         6,
 		ChallengeID:    challengeID,
 	})
@@ -159,19 +167,6 @@ func TestSubmissionScoring(t *testing.T) {
 		process.Fail("create impossible test case", err)
 	}
 	testCaseThreeID = testCaseThree.ID
-	process.EndStep()
-
-	process.StartStep("Crear un punto de examen")
-	createdExamItem, err := process.Application.ExamItemModule.CreateExamItem.Execute(teacherCtx, exam_dtos.CreateExamItemInput{
-		ExamID:      examID,
-		ChallengeID: challengeID,
-		Order:       1,
-		Points:      100,
-	})
-	if err != nil {
-		process.Fail("create exam item", err)
-	}
-	examItemID = createdExamItem.ID
 	process.EndStep()
 
 	process.StartStep("Iniciar sesión con usuario de estudiante")
@@ -189,14 +184,14 @@ func TestSubmissionScoring(t *testing.T) {
 	process.EndStep()
 
 	process.StartStep("Crear una revisión")
-	createdSubmission, err := process.Application.SubmissionUseCases.CreateSubmission.Execute(studentCtx, submission_dtos.CreateSubmissionInput{
+	createdSubmission, err := createWithoutScoreUseCase.Execute(studentCtx, submission_dtos.CreateExecutionInput{
 		Code:        "import sys\nprint(int(sys.stdin.read().strip()) * 2)",
 		Language:    "python",
 		ChallengeID: challengeID,
 		SessionID:   sessionID,
 	})
 	if err != nil {
-		process.Fail("create submission", err)
+		process.Fail("create submission without score", err)
 	}
 	submissionID = createdSubmission.ID
 	process.EndStep()
@@ -229,16 +224,16 @@ func TestSubmissionScoring(t *testing.T) {
 		time.Sleep(2 * time.Second)
 	}
 	if timedOut {
-		process.Fail("wait scoring terminal status", fmt.Errorf("submission %s did not reach terminal accepted/wrong_answer status before timeout", submissionID))
+		process.Fail("wait without-score terminal status", fmt.Errorf("submission %s did not reach terminal accepted/wrong_answer status before timeout", submissionID))
 	}
 	process.EndStep()
 
-	process.StartStep("Confirmar valor del atributo Score de la revisión corresponde a 6")
+	process.StartStep("Confirmar valor del atributo Score de la revisión corresponde a 0")
 	if lastStatusOutput == nil {
 		process.Fail("verify submission score", fmt.Errorf("expected submission status output"))
 	}
-	if lastStatusOutput.Submission.Score != 6 {
-		process.Fail("verify submission score", fmt.Errorf("expected submission score 6, got %d", lastStatusOutput.Submission.Score))
+	if lastStatusOutput.Submission.Score != 0 {
+		process.Fail("verify submission score", fmt.Errorf("expected submission score 0, got %d", lastStatusOutput.Submission.Score))
 	}
 	process.EndStep()
 

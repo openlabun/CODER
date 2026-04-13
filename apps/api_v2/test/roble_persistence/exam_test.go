@@ -237,7 +237,12 @@ func TestExamCRUD(t *testing.T) {
 		exam_consts.ChallengeDifficultyEasy,
 		1500,
 		256,
-		[]exam_entities.CodeTemplate{},
+		[]exam_entities.CodeTemplate{
+			{
+				Language: "python",
+				Template: "def solve(a):\n    return a + 3\n",
+			},
+		},
 		[]exam_entities.IOVariable{*inputA, *inputB},
 		*output,
 		"1 <= a,b <= 1000",
@@ -383,6 +388,7 @@ func TestExamCRUD(t *testing.T) {
 		*tcOutput,
 		true,
 		10,
+		false,
 		challengeID,
 	)
 	if err != nil {

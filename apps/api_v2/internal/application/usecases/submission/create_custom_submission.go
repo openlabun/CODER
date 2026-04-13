@@ -8,7 +8,6 @@ import (
 
 	submissionPorts "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/submission"
 	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
-	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
@@ -21,7 +20,7 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 )
 
-type CreateSubmissionUseCase struct {
+type CreateCustomSubmissionUseCase struct {
 	userRepository       userRepository.UserRepository
 	submissionRepository submissionRepository.SubmissionRepository
 	sessionRepository    submissionRepository.SessionRepository
@@ -33,8 +32,8 @@ type CreateSubmissionUseCase struct {
 	publisherPort        submissionPorts.SubmissionPublisherPort
 }
 
-func NewCreateSubmissionUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, examRepository examRepository.ExamRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository, ioVariableRepository examRepository.IOVariableRepository, publisherPort submissionPorts.SubmissionPublisherPort) *CreateSubmissionUseCase {
-	return &CreateSubmissionUseCase{
+func NewCreateCustomSubmissionUseCase(userRepository userRepository.UserRepository, submissionRepository submissionRepository.SubmissionRepository, sessionRepository submissionRepository.SessionRepository, examRepository examRepository.ExamRepository, challengeRepository examRepository.ChallengeRepository, testCaseRepository examRepository.TestCaseRepository, resultRepository submissionRepository.SubmissionResultRepository, ioVariableRepository examRepository.IOVariableRepository, publisherPort submissionPorts.SubmissionPublisherPort) *CreateCustomSubmissionUseCase {
+	return &CreateCustomSubmissionUseCase{
 		userRepository:       userRepository,
 		submissionRepository: submissionRepository,
 		sessionRepository:    sessionRepository,
@@ -47,7 +46,7 @@ func NewCreateSubmissionUseCase(userRepository userRepository.UserRepository, su
 	}
 }
 
-func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.CreateSubmissionInput) (*Entities.Submission, error) {
+func (uc *CreateCustomSubmissionUseCase) Execute(ctx context.Context, input dtos.CreateCustomExecutionInput) (*Entities.Submission, error) {
 	// [STEP 1] Verify user is student and has permissions to submit
 	userEmail, err := services.UserEmailFromContext(ctx)
 	if err != nil {
@@ -106,7 +105,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 	}
 
 	// [STEP 7] Create submission with user provided values
-	submission, err := mapper.MapCreateSubmissionInputToSubmissionEntity(user.ID, input)
+	submission, testCase, err := mapper.MapCreateCustomExecutionInputToEntities(user.ID, input)
 	if err != nil {
 		return nil, err
 	}
@@ -141,24 +140,34 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		return nil, fmt.Errorf("no test cases found for challenge with id %q", input.ChallengeID)
 	}
 
-	// [STEP 11] Create submission results for each test case of the challenge
-	var publishedResults []dtos.SubmissionResultPublishedDTO
-	for _, testCase := range testCases {
-		result, err := uc.createSubmissionResultsForTestCases(ctx, createdSubmission.ID, *testCase)
-		if err != nil {
-			return nil, fmt.Errorf("could not create submission results for test cases: %w", err)
-		}
+	// [STEP 11] Save custom test Case
+	testCase, err = domain_services.CreateTestCase(ctx, testCase, uc.testCaseRepository, uc.ioVariableRepository)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save custom test case: %w", err)
+	}
 
-		if result != nil {
-			// [STEP 12] Create DTO for publishing
-			publishedResult := mapper.MapSubmissionResultToPublishedDTO(*createdSubmission, *result, *testCase, *challenge)
-			if publishedResult != nil {
-				publishedResults = append(publishedResults, *publishedResult)
-			}
+	// [STEP 12] Create submission results for each test case of the challenge
+	submissionResult, err := mapper.MapSubmissionResultEntity(submission.ID, testCase.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to map submission result entity: %w", err)
+	}
+
+	// [STEP 13] Save submission result in database
+	result, err := domain_services.CreateSubmissionResult(ctx, submissionResult, uc.resultRepository, uc.ioVariableRepository)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create submission result: %w", err)
+	}
+
+	// [STEP 14] Create DTO for publishing
+	var publishedResults []dtos.SubmissionResultPublishedDTO
+	if result != nil {
+		publishedResult := mapper.MapSubmissionResultToPublishedDTO(*createdSubmission, *result, *testCase, *challenge)
+		if publishedResult != nil {
+			publishedResults = append(publishedResults, *publishedResult)
 		}
 	}
 
-	// [STEP 13] Publish submission created event to message broker for asynchronous processing of submission results
+	// [STEP 15] Publish submission created event to message broker for asynchronous processing of submission results
 	for _, publishedResult := range publishedResults {
 		err = uc.publisherPort.PublishSubmission(publishedResult)
 		if err != nil {
@@ -167,25 +176,4 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 	}
 
 	return createdSubmission, nil
-}
-
-func (uc *CreateSubmissionUseCase) createSubmissionResultsForTestCases(ctx context.Context, submissionID string, testCase examEntities.TestCase) (*Entities.SubmissionResult, error) {
-	// [STEP 11.1] If TestCase is custom, discard
-	if testCase.Custom {
-		return nil, nil
-	}
-	
-	// [STEP 11.2] Create submission result entity with user provided values
-	submissionResult, err := mapper.MapSubmissionResultEntity(submissionID, testCase.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to map submission result entity: %w", err)
-	}
-
-	// [STEP 11.3] Save submission result in database
-	result, err := domain_services.CreateSubmissionResult(ctx, submissionResult, uc.resultRepository, uc.ioVariableRepository)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create submission result: %w", err)
-	}
-
-	return result, nil
 }

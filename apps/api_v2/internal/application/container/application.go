@@ -67,6 +67,8 @@ type ExamItemUseCases struct {
 
 type SubmissionUseCases struct {
 	CreateSubmission        *submission_usecases.CreateSubmissionUseCase
+	CreateSubmissionWithoutScore *submission_usecases.CreateSubmissionWithoutScoreUseCase
+	CreateCustomSubmission  *submission_usecases.CreateCustomSubmissionUseCase
 	GetSubmissionStatus     *submission_usecases.GetSubmissionStatusUseCase
 	GetChallengeSubmissions *submission_usecases.GetChallengeSubmissionsUseCase
 	GetUserSubmissions      *submission_usecases.GetUserSubmissionsUseCase
@@ -167,6 +169,8 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 
 	app.SubmissionUseCases = SubmissionUseCases{
 		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
+		CreateSubmissionWithoutScore: submission_usecases.NewCreateSubmissionWithoutScoreUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
+		CreateCustomSubmission:  submission_usecases.NewCreateCustomSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
 		GetSubmissionStatus:     submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
 		GetChallengeSubmissions: submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
 		GetSessionSubmissions:   submission_usecases.NewGetSessionSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository, deps.SessionRepository),

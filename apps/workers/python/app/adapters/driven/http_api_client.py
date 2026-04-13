@@ -27,7 +27,7 @@ class HTTPAPIClient(APIClient):
 
         for i in range(3):
             try:
-                response = requests.patch(url, json=payload, headers=headers, timeout=5)
+                response = requests.patch(url, json=payload, headers=headers, timeout=15)
 
                 if 200 <= response.status_code < 300:
                     print(f"Successfully updated submission of id {result.result_id} (status: {result.status})", flush=True)

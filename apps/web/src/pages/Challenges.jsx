@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -15,7 +15,6 @@ import {
     Archive,
     PlusCircle,
     Clock3,
-    TestTube2,
     Eye,
     EyeOff,
     Filter
@@ -31,49 +30,19 @@ const Challenges = () => {
     const [error, setError] = useState('');
     const [processingId, setProcessingId] = useState(null);
     const [visibilityFilter, setVisibilityFilter] = useState('all');
-    const [testCaseSummary, setTestCaseSummary] = useState({});
+    const hasFetchedInitialData = useRef(false);
 
     const isTeacher = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
 
     const fetchChallenges = async () => {
         setLoading(true);
+        setError('');
 
         try {
             const endpoint = isTeacher ? '/challenges' : '/challenges/public';
             const { data } = await client.get(endpoint);
             const list = Array.isArray(data) ? data : (data.items || []);
             setChallenges(list);
-
-            // Load public/private test case count per challenge for richer cards.
-            if (isTeacher && list.length > 0) {
-                const countsEntries = await Promise.all(
-                    list.map(async (challenge) => {
-                        const challengeId = challenge.id || challenge.ID;
-                        if (!challengeId) return [challengeId, { public: 0, private: 0 }];
-
-                        try {
-                            const res = await client.get(`/test-cases/challenge/${challengeId}`);
-                            const tcList = Array.isArray(res.data) ? res.data : (res.data?.items || []);
-
-                            const summary = tcList.reduce((acc, tc) => {
-                                const isSample = Boolean(tc.is_sample ?? tc.isSample ?? tc.IsSample);
-                                if (isSample) acc.public += 1;
-                                else acc.private += 1;
-                                return acc;
-                            }, { public: 0, private: 0 });
-
-                            return [challengeId, summary];
-                        } catch (tcErr) {
-                            console.warn(`No se pudieron cargar test cases para challenge ${challengeId}`, tcErr);
-                            return [challengeId, { public: 0, private: 0 }];
-                        }
-                    })
-                );
-
-                setTestCaseSummary(Object.fromEntries(countsEntries));
-            } else {
-                setTestCaseSummary({});
-            }
         } catch (err) {
             console.error('Error loading challenges:', err);
             setError('Error al conectar con el servidor.');
@@ -87,8 +56,27 @@ const Challenges = () => {
             navigate('/public-exams');
             return;
         }
+
+        if (!user || hasFetchedInitialData.current) {
+            return;
+        }
+
+        hasFetchedInitialData.current = true;
         fetchChallenges();
     }, [user, navigate]);
+
+    const updateChallengeStatus = (challengeId, nextStatus) => {
+        setChallenges((prev) => prev.map((challenge) => {
+            const currentId = challenge.id || challenge.ID;
+            if (currentId !== challengeId) return challenge;
+
+            return {
+                ...challenge,
+                status: nextStatus,
+                Status: nextStatus,
+            };
+        }));
+    };
 
     const handlePublish = async (e, id) => {
         e.preventDefault();
@@ -107,8 +95,8 @@ const Challenges = () => {
         setProcessingId(id);
         try {
             await client.post(`/challenges/${id}/publish`);
+            updateChallengeStatus(id, 'published');
             Swal.fire({ icon: 'success', title: 'Publicado', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
-            fetchChallenges();
         } catch (err) {
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo publicar el reto.' });
         } finally {
@@ -122,8 +110,8 @@ const Challenges = () => {
         setProcessingId(id);
         try {
             await client.post(`/challenges/${id}/archive`);
+            updateChallengeStatus(id, 'archived');
             Swal.fire({ icon: 'success', title: 'Archivado', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
-            fetchChallenges();
         } catch (err) {
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo archivar.' });
         } finally {
@@ -149,8 +137,11 @@ const Challenges = () => {
         setProcessingId(id);
         try {
             await client.delete(`/challenges/${id}`);
+            setChallenges((prev) => prev.filter((challenge) => {
+                const challengeId = challenge.id || challenge.ID;
+                return challengeId !== id;
+            }));
             Swal.fire({ icon: 'success', title: 'Eliminado', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
-            fetchChallenges();
         } catch (err) {
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar el reto.' });
         } finally {
@@ -294,7 +285,6 @@ const Challenges = () => {
                         const isArchived = status === 'archived';
                         const visibilityMeta = getVisibilityMeta(status);
                         const challengeId = challenge.id || challenge.ID;
-                        const tcCount = testCaseSummary[challengeId] || { public: 0, private: 0 };
                         const timeLimit = getWorkerTimeLimit(challenge);
                         
                         return (
@@ -368,10 +358,6 @@ const Challenges = () => {
                                             <div className="stat">
                                                 <Clock3 size={14} />
                                                 <span>{timeLimit} ms</span>
-                                            </div>
-                                            <div className="stat">
-                                                <TestTube2 size={14} />
-                                                <span>{tcCount.public} públicas / {tcCount.private} privadas</span>
                                             </div>
                                         </div>
                                     </div>

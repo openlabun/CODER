@@ -26,12 +26,41 @@ const ExamEditor = () => {
     const [examItems, setExamItems] = useState([]);
     const [challenges, setChallenges] = useState([]);
     const [searchChallenge, setSearchChallenge] = useState('');
+    const [challengeVisibilityFilter, setChallengeVisibilityFilter] = useState('all');
     const [showAddPanel, setShowAddPanel] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [addingItem, setAddingItem] = useState(null);
+    const [updatingItemId, setUpdatingItemId] = useState(null);
+    const [itemEdits, setItemEdits] = useState({});
 
     const isProfessor = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
+
+    const getItemId = (item) => item.id || item.ID;
+    const getItemOrder = (item, fallback = 1) => item.order || item.Order || fallback;
+    const getItemPoints = (item) => item.points || item.Points || 0;
+
+    const buildItemEdits = (items) => Object.fromEntries(
+        items.map((item, index) => [getItemId(item), {
+            order: String(getItemOrder(item, index + 1)),
+            points: String(getItemPoints(item)),
+        }])
+    );
+
+    const normalizeExamItems = (items) => [...items].sort((left, right) => {
+        const leftOrder = getItemOrder(left, Number.MAX_SAFE_INTEGER);
+        const rightOrder = getItemOrder(right, Number.MAX_SAFE_INTEGER);
+        return leftOrder - rightOrder;
+    });
+
+    const refreshExamItems = async () => {
+        const itemsRes = await client.get(`/exams/${id}/items`);
+        const items = Array.isArray(itemsRes.data) ? itemsRes.data : (itemsRes.data?.items || []);
+        const normalizedItems = normalizeExamItems(items);
+        setExamItems(normalizedItems);
+        setItemEdits(buildItemEdits(normalizedItems));
+        return normalizedItems;
+    };
 
     // --- Fetch Exam ---
     useEffect(() => {
@@ -64,9 +93,7 @@ const ExamEditor = () => {
                 });
 
                 // Fetch exam items
-                const itemsRes = await client.get(`/exams/${id}/items`);
-                const items = Array.isArray(itemsRes.data) ? itemsRes.data : (itemsRes.data?.items || []);
-                setExamItems(items);
+                await refreshExamItems();
 
                 // Fetch available challenges for adding
                 const chRes = await client.get('/challenges');
@@ -88,6 +115,16 @@ const ExamEditor = () => {
         setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
+    const handleExamItemFieldChange = (itemId, field, value) => {
+        setItemEdits(prev => ({
+            ...prev,
+            [itemId]: {
+                ...prev[itemId],
+                [field]: value,
+            }
+        }));
+    };
+
     // --- Save Exam (PATCH) ---
     const handleSave = async () => {
         setSaving(true);
@@ -104,6 +141,7 @@ const ExamEditor = () => {
 
             await client.patch(`/exams/${id}`, payload);
             Swal.fire({ icon: 'success', title: 'Examen Actualizado', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
+            navigate('/public-exams');
         } catch (err) {
             console.error(err);
             Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.error || 'No se pudo actualizar el examen.' });
@@ -123,16 +161,44 @@ const ExamEditor = () => {
                 order: examItems.length + 1,
                 points: 100
             });
-            // Refresh items
-            const itemsRes = await client.get(`/exams/${id}/items`);
-            const items = Array.isArray(itemsRes.data) ? itemsRes.data : (itemsRes.data?.items || []);
-            setExamItems(items);
+            await refreshExamItems();
             Swal.fire({ icon: 'success', title: 'Reto Añadido', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
         } catch (err) {
             console.error(err);
             Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.error || 'No se pudo añadir el reto.' });
         } finally {
             setAddingItem(null);
+        }
+    };
+
+    const handleSaveExamItem = async (itemId) => {
+        const draft = itemEdits[itemId];
+        const parsedOrder = Number.parseInt(draft?.order, 10);
+        const parsedPoints = Number.parseInt(draft?.points, 10);
+
+        if (!Number.isInteger(parsedOrder) || parsedOrder < 1) {
+            Swal.fire({ icon: 'warning', title: 'Orden inválido', text: 'El orden debe ser un número entero mayor o igual a 1.' });
+            return;
+        }
+
+        if (!Number.isInteger(parsedPoints) || parsedPoints < 0) {
+            Swal.fire({ icon: 'warning', title: 'Puntaje inválido', text: 'Los puntos deben ser un número entero mayor o igual a 0.' });
+            return;
+        }
+
+        setUpdatingItemId(itemId);
+        try {
+            await client.patch(`/exam-items/${itemId}`, {
+                order: parsedOrder,
+                points: parsedPoints,
+            });
+            await refreshExamItems();
+            Swal.fire({ icon: 'success', title: 'Reto actualizado', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.error || 'No se pudo actualizar el orden o puntaje del reto.' });
+        } finally {
+            setUpdatingItemId(null);
         }
     };
 
@@ -146,6 +212,11 @@ const ExamEditor = () => {
         try {
             await client.delete(`/exam-items/${itemId}`);
             setExamItems(prev => prev.filter(i => (i.id || i.ID) !== itemId));
+            setItemEdits(prev => {
+                const next = { ...prev };
+                delete next[itemId];
+                return next;
+            });
             Swal.fire({ icon: 'success', title: 'Reto Eliminado', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
         } catch (err) {
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo quitar el reto.' });
@@ -157,11 +228,24 @@ const ExamEditor = () => {
         examItems.map(item => item.challenge?.id || item.challenge?.ID || item.challengeID || item.challenge_id || '')
     );
 
+    const normalizeStatus = (status) => String(status || 'draft').toLowerCase();
+
     const availableChallenges = challenges.filter(c => {
         const cid = c.id || c.ID;
         if (linkedChallengeIds.has(cid)) return false;
-        if (!searchChallenge) return true;
-        return (c.title || '').toLowerCase().includes(searchChallenge.toLowerCase());
+        
+        // Filtro por título
+        if (searchChallenge && !(c.title || '').toLowerCase().includes(searchChallenge.toLowerCase())) {
+            return false;
+        }
+        
+        // Filtro por visibilidad
+        if (challengeVisibilityFilter !== 'all') {
+            const status = normalizeStatus(c.status || c.Status);
+            if (status !== challengeVisibilityFilter) return false;
+        }
+        
+        return true;
     });
 
     if (loading) return (
@@ -238,16 +322,16 @@ const ExamEditor = () => {
                 {/* --- Visibilidad --- */}
                 <div className="form-section">
                     <div className="section-header"><Layout size={20} /><h2>Visibilidad</h2></div>
-                    <div className="radio-group grid-2">
+                    <div className="radio-group grid-2 visibility-radio-group">
                         {[
                             { value: 'course', title: 'Solo mi Curso', desc: 'Visible solo para estudiantes inscritos' },
                             { value: 'public', title: 'Público Global', desc: 'Visible para toda la comunidad' },
                             { value: 'teachers', title: 'Solo Profesores', desc: 'Colabora con otros docentes' },
                             { value: 'private', title: 'Privado / Borrador', desc: 'Solo tú puedes verlo' },
                         ].map(opt => (
-                            <label key={opt.value} className={`radio-card ${formData.visibility === opt.value ? 'active' : ''}`}>
+                            <label key={opt.value} className={`radio-card visibility-radio-card ${formData.visibility === opt.value ? 'active' : ''}`}>
                                 <input type="radio" name="visibility" value={opt.value} checked={formData.visibility === opt.value} onChange={handleChange} />
-                                <div className="radio-content">
+                                <div className="radio-content visibility-radio-content">
                                     <span className="radio-title">{opt.title}</span>
                                     <small>{opt.desc}</small>
                                 </div>
@@ -288,7 +372,8 @@ const ExamEditor = () => {
                                 const ch = item.challenge || {};
                                 const title = ch.title || ch.Title || `Reto #${idx + 1}`;
                                 const diff = (ch.difficulty || ch.Difficulty || 'medium').toLowerCase();
-                                const points = item.points || item.Points || 0;
+                                const points = itemEdits[itemId]?.points ?? String(getItemPoints(item));
+                                const order = itemEdits[itemId]?.order ?? String(getItemOrder(item, idx + 1));
 
                                 return (
                                     <div key={itemId} className="challenge-card-mini">
@@ -309,16 +394,46 @@ const ExamEditor = () => {
                                             <p className="description-text">
                                                 {ch.description || ch.Description || 'Sin descripción.'}
                                             </p>
-                                            <div className="card-footer-mini" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.8rem', color: '#999' }}>Orden: {item.order || item.Order || idx + 1}</span>
-                                                <button
-                                                    className="action-btn delete"
-                                                    onClick={() => handleRemoveItem(itemId)}
-                                                    title="Quitar del examen"
-                                                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#fee2e2', color: '#dc2626', cursor: 'pointer' }}
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                            <div className="card-footer-mini" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                                <div className="form-row" style={{ gap: '12px' }}>
+                                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                                        <label style={{ fontSize: '0.8rem', marginBottom: '6px' }}>Orden</label>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={order}
+                                                            onChange={(event) => handleExamItemFieldChange(itemId, 'order', event.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                                        <label style={{ fontSize: '0.8rem', marginBottom: '6px' }}>Puntos</label>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={points}
+                                                            onChange={(event) => handleExamItemFieldChange(itemId, 'points', event.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-primary"
+                                                        onClick={() => handleSaveExamItem(itemId)}
+                                                        disabled={updatingItemId === itemId}
+                                                        style={{ padding: '10px 16px', fontSize: '0.85rem' }}
+                                                    >
+                                                        {updatingItemId === itemId ? 'Guardando...' : <><Save size={15} /> Guardar reto</>}
+                                                    </button>
+                                                    <button
+                                                        className="action-btn delete"
+                                                        onClick={() => handleRemoveItem(itemId)}
+                                                        title="Quitar del examen"
+                                                        style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: '#fee2e2', color: '#dc2626', cursor: 'pointer', flexShrink: 0 }}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -339,6 +454,35 @@ const ExamEditor = () => {
                                     onChange={(e) => setSearchChallenge(e.target.value)}
                                     style={{ flex: 1, border: '1px solid #ddd', borderRadius: '10px', padding: '0.6rem 1rem', fontSize: '0.9rem' }}
                                 />
+                            </div>
+
+                            {/* Visibility Filter Chips */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                                {[
+                                    { key: 'all', label: 'Todos' },
+                                    { key: 'draft', label: 'Borrador' },
+                                    { key: 'published', label: 'Publicado' },
+                                    { key: 'private', label: 'Privado' },
+                                ].map(filter => (
+                                    <button
+                                        key={filter.key}
+                                        type="button"
+                                        onClick={() => setChallengeVisibilityFilter(filter.key)}
+                                        style={{
+                                            padding: '0.4rem 0.8rem',
+                                            borderRadius: '20px',
+                                            border: challengeVisibilityFilter === filter.key ? '2px solid #c8102e' : '1px solid #ddd',
+                                            background: challengeVisibilityFilter === filter.key ? '#fca5a5' : 'white',
+                                            color: challengeVisibilityFilter === filter.key ? '#991b1b' : '#666',
+                                            cursor: 'pointer',
+                                            fontSize: '0.8rem',
+                                            fontWeight: challengeVisibilityFilter === filter.key ? '600' : '500',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        {filter.label}
+                                    </button>
+                                ))}
                             </div>
                             {availableChallenges.length === 0 ? (
                                 <p style={{ textAlign: 'center', color: '#999', padding: '1rem' }}>No hay retos disponibles para añadir.</p>

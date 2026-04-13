@@ -9,7 +9,7 @@ import {
     createExamSession
 } from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
-import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, Target, ChevronRight, Code, Edit, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, Target, ChevronRight, Code, Edit, ArrowRight, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import './Courses.css';
 import './CourseActions.css';
@@ -138,7 +138,12 @@ const CourseDetails = () => {
 
 
 
-    if (loading) return <div className="loading">Cargando curso...</div>;
+    if (loading) return (
+        <div className="page-loader">
+            <Loader2 className="page-loader-spinner" size={48} />
+            <p className="page-loader-text">Cargando curso...</p>
+        </div>
+    );
     const isProfessor = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
 
     return (

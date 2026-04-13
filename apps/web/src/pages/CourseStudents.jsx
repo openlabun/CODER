@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import './Courses.css';
 import './CourseActions.css';
@@ -113,7 +113,12 @@ const CourseStudents = () => {
         }
     };
 
-    if (loading) return <div className="loading">Cargando...</div>;
+    if (loading) return (
+        <div className="page-loader">
+            <Loader2 className="page-loader-spinner" size={48} />
+            <p className="page-loader-text">Cargando estudiantes...</p>
+        </div>
+    );
 
     return (
         <div className="course-students-page">

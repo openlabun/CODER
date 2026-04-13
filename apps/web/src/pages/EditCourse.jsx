@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import client from '../api/client';
 import './CreateCourse.css'; // Reuse CreateCourse styles
 
@@ -63,7 +64,12 @@ const EditCourse = () => {
         });
     };
 
-    if (loading) return <div className="loading">Loading...</div>;
+    if (loading) return (
+        <div className="page-loader">
+            <Loader2 className="page-loader-spinner" size={48} />
+            <p className="page-loader-text">Cargando curso...</p>
+        </div>
+    );
 
     return (
         <div className="create-course-page">

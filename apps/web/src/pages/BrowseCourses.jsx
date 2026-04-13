@@ -90,8 +90,8 @@ const BrowseCourses = () => {
         <div className="browse-courses-page">
             <header className="browse-hero-banner">
                 <div className="hero-content-inner">
-                    <div style={{width: '200px', height: '40px', background: '#334155', borderRadius: '100px', margin: '0 auto 20px'}}></div>
-                    <div style={{width: '100%', height: '80px', background: '#334155', borderRadius: '20px', margin: '0 auto'}}></div>
+                    <Loader2 size={48} color="white" style={{ animation: 'rc-spin 0.85s linear infinite', marginBottom: '1rem' }} />
+                    <p style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 500, margin: 0 }}>Buscando cursos disponibles...</p>
                 </div>
             </header>
             <div className="browse-content-area">

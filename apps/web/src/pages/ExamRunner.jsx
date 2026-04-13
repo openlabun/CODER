@@ -25,6 +25,7 @@ const ExamRunner = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [output, setOutput] = useState('');
+    const [publicTestCasesMap, setPublicTestCasesMap] = useState({});
 
     // Session state
     const [sessionId, setSessionId] = useState(null);
@@ -130,7 +131,7 @@ const ExamRunner = () => {
         } catch (err) {
             const apiMsg = err?.response?.data?.error || err?.message || '';
             console.error('Failed to create session:', err);
-            
+
             Swal.fire({
                 icon: 'error',
                 title: 'Error al iniciar sesión de examen',
@@ -153,6 +154,13 @@ const ExamRunner = () => {
                 const challengeList = items
                     .map(item => {
                         const ch = item.challenge || item.Challenge || {};
+                        let parsedTemplates = ch.code_templates || ch.CodeTemplates || {};
+                        while (typeof parsedTemplates === 'string') {
+                            try { parsedTemplates = JSON.parse(parsedTemplates); } catch (e) { parsedTemplates = {}; break; }
+                        }
+                        if (typeof parsedTemplates !== 'object' || parsedTemplates === null || Array.isArray(parsedTemplates)) {
+                            parsedTemplates = {};
+                        }
                         return {
                             ...ch,
                             id: ch.id || ch.ID || item.challenge_id || item.challengeID,
@@ -162,6 +170,7 @@ const ExamRunner = () => {
                             constraints: ch.constraints || ch.Constraints || '',
                             points: item.points || item.Points || 0,
                             order: item.order || item.Order || 0,
+                            code_templates: parsedTemplates
                         };
                     })
                     .filter(ch => ch.id)
@@ -171,10 +180,31 @@ const ExamRunner = () => {
 
                 // Initialize code templates
                 const initialCode = {};
+                const tcPromises = [];
                 challengeList.forEach(ch => {
-                    initialCode[ch.id] = '# Escribe tu solución aquí\ndef solve():\n    pass\n';
+                    const templates = ch.code_templates || ch.CodeTemplates || {};
+                    const langs = Object.keys(templates);
+                    if (langs.length > 0) {
+                        initialCode[ch.id] = templates[langs[0]];
+                    } else {
+                        initialCode[ch.id] = '# Escribe tu solución aquí\ndef solve():\n    pass\n';
+                    }
+
+                    tcPromises.push(client.get(`/test-cases/challenge/${ch.id}?exam_id=${id}`).then(res => ({ id: ch.id, cases: res.data.filter(tc => tc.type === 'public' || tc.is_sample || tc.isSample) })).catch(() => ({ id: ch.id, cases: [] })));
                 });
                 setCodeMap(initialCode);
+
+                if (challengeList.length > 0) {
+                    const templates = challengeList[0].code_templates || challengeList[0].CodeTemplates || {};
+                    const langs = Object.keys(templates);
+                    if (langs.length > 0) setLanguage(langs[0]);
+                }
+
+                Promise.all(tcPromises).then(results => {
+                    const tcMap = {};
+                    results.forEach(r => tcMap[r.id] = r.cases);
+                    setPublicTestCasesMap(tcMap);
+                });
 
                 // --- Create or retrieve the exam session ---
                 await ensureSession(id);
@@ -273,6 +303,14 @@ const ExamRunner = () => {
     const handleSelectChallenge = (idx) => {
         setCurrentIndex(idx);
         setOutput('');
+        const ch = challenges[idx];
+        if (ch) {
+            const templates = ch.code_templates || ch.CodeTemplates || {};
+            const langs = Object.keys(templates);
+            if (langs.length > 0 && !langs.includes(language)) {
+                setLanguage(langs[0]);
+            }
+        }
     };
 
     // Submit solution
@@ -326,6 +364,7 @@ const ExamRunner = () => {
             const { data } = await client.post('/submissions', {
                 code: currentCode,
                 language: language,
+                score: 0,
                 challenge_id: challengeId,
                 session_id: activeSessionId
             });
@@ -568,10 +607,10 @@ const ExamRunner = () => {
                 {/* CENTER + RIGHT (Problem, Editor, Console) */}
                 {currentChallenge ? (
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                        
+
                         {/* TOP SECTION: Description + Editor */}
                         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                            
+
                             {/* CENTER: Problem Description */}
                             <div className="problem-description" style={{
                                 width: '40%', overflowY: 'auto', padding: '1.5rem', background: '#fafafa',
@@ -600,6 +639,20 @@ const ExamRunner = () => {
                                     <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff7ed', borderRadius: '10px', border: '1px solid #fed7aa' }}>
                                         <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#9a3412' }}>⚡ Restricciones</h4>
                                         <p style={{ margin: 0, fontSize: '0.85rem', color: '#78350f' }}>{currentChallenge.constraints}</p>
+                                    </div>
+                                )}
+
+                                {publicTestCasesMap[currentChallenge.id]?.length > 0 && (
+                                    <div style={{ marginTop: '2rem' }}>
+                                        <h4 style={{ margin: '0 0 1rem', fontSize: '0.95rem', color: '#1f2937', fontWeight: 800 }}> Casos de Prueba </h4>
+                                        {publicTestCasesMap[currentChallenge.id].map((tc, idx) => (
+                                            <div key={idx} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
+                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Entrada:</div>
+                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: '0 0 1rem 0' }}>{Array.isArray(tc.input) ? tc.input.map(i => i ? `${i.name} = ${i.value}` : 'nil').join(', ') : JSON.stringify(tc.input)}</pre>
+                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Salida Esperada:</div>
+                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: 0 }}>{tc.expected_output?.value || tc.ExpectedOutput?.value || tc.expectedOutput?.value || ''}</pre>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
 
@@ -641,7 +694,13 @@ const ExamRunner = () => {
                                 }}>
                                     <select value={language} onChange={(e) => setLanguage(e.target.value)}
                                         style={{ background: '#1e1e2e', color: 'white', border: '1px solid #555', borderRadius: '6px', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}>
-                                        <option value="python">Python</option>
+                                        {(() => {
+                                            const templates = currentChallenge?.code_templates || currentChallenge?.CodeTemplates || {};
+                                            const langs = Object.keys(templates).filter(l => ['python', 'javascript', 'java', 'cpp', 'go'].includes(l));
+                                            return langs.length > 0
+                                                ? langs.map(l => <option key={l} value={l}>{l === 'cpp' ? 'C++' : l.charAt(0).toUpperCase() + l.slice(1)}</option>)
+                                                : <option value="python">Python</option>;
+                                        })()}
                                     </select>
                                     {(() => {
                                         const tryLimitVal = exam?.tryLimit || exam?.TryLimit || exam?.try_limit || -1;
@@ -685,7 +744,7 @@ const ExamRunner = () => {
                                     <Editor
                                         height="100%"
                                         theme="vs-dark"
-                                        language={language}
+                                        language={['python', 'javascript', 'java', 'cpp', 'go'].includes(language) ? language : 'python'}
                                         value={currentCode}
                                         onChange={handleCodeChange}
                                         options={{ minimap: { enabled: false }, fontSize: 14, padding: { top: 12 } }}

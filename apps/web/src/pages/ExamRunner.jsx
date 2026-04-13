@@ -27,6 +27,14 @@ const ExamRunner = () => {
     const [output, setOutput] = useState('');
     const [publicTestCasesMap, setPublicTestCasesMap] = useState({});
 
+    // Run Test Modal State
+    const [showRunModal, setShowRunModal] = useState(false);
+    const [runTab, setRunTab] = useState('public');
+    const [selectedPublicCase, setSelectedPublicCase] = useState('');
+    const [customInputs, setCustomInputs] = useState([{ name: 'a', type: 'int', value: '' }]);
+    const [customOutput, setCustomOutput] = useState('');
+    const [customSampleName, setCustomSampleName] = useState('custom_sample');
+
     // Session state
     const [sessionId, setSessionId] = useState(null);
     const [sessionStatus, setSessionStatus] = useState(null);
@@ -723,6 +731,17 @@ const ExamRunner = () => {
                                                         {chAttempts}/{tryLimitVal} intentos
                                                     </span>
                                                 )}
+                                                <button onClick={() => setShowRunModal(true)} disabled={isDisabled}
+                                                    style={{
+                                                        background: isDisabled ? '#555' : 'rgba(255, 255, 255, 0.1)',
+                                                        color: 'white', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '10px',
+                                                        padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.85rem',
+                                                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: '6px',
+                                                        opacity: isDisabled ? 0.6 : 1, transition: 'background 0.2s'
+                                                    }}>
+                                                    <Timer size={14} /> Probar Código
+                                                </button>
                                                 <button onClick={handleSubmit} disabled={isDisabled}
                                                     style={{
                                                         background: isDisabled ? '#555' : 'linear-gradient(135deg, #c8102e, #a00d25)',
@@ -842,6 +861,105 @@ const ExamRunner = () => {
                     </div>
                 )}
             </div>
+
+            {/* RUN TEST MODAL */}
+            {showRunModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+                    background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                }}>
+                    <div style={{
+                        background: '#ffffff', borderRadius: '16px', width: '500px', maxWidth: '90%',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', overflow: 'hidden'
+                    }}>
+                        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Timer size={18} style={{ color: '#c8102e' }} /> Probar Ejecución 
+                                <span style={{ fontSize: '0.7rem', padding: '2px 8px', background: '#fef2f2', color: '#b91c1c', borderRadius: '12px' }}>Modo Prueba</span>
+                            </h3>
+                            <button onClick={() => setShowRunModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+                        <div style={{ padding: '1.5rem' }}>
+                            <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#4b5563' }}>
+                                Ejecuta tu código localmente sin gastar intentos. Selecciona un caso de prueba existente o define uno nuevo.
+                            </p>
+                            
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #f3f4f6' }}>
+                                <button 
+                                    onClick={() => setRunTab('public')}
+                                    style={{ 
+                                        padding: '0.5rem 0', background: 'none', border: 'none', borderBottom: runTab === 'public' ? '2px solid #c8102e' : '2px solid transparent',
+                                        color: runTab === 'public' ? '#111827' : '#6b7280', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s'
+                                    }}>
+                                    Casos Públicos
+                                </button>
+                                <button 
+                                    onClick={() => setRunTab('custom')}
+                                    style={{ 
+                                        padding: '0.5rem 0', background: 'none', border: 'none', borderBottom: runTab === 'custom' ? '2px solid #c8102e' : '2px solid transparent',
+                                        color: runTab === 'custom' ? '#111827' : '#6b7280', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s'
+                                    }}>
+                                    Caso Personalizado
+                                </button>
+                            </div>
+
+                            {runTab === 'public' && (
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Seleccionar Caso de Prueba:</label>
+                                    <select 
+                                        value={selectedPublicCase} 
+                                        onChange={(e) => setSelectedPublicCase(e.target.value)}
+                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.9rem' }}
+                                    >
+                                        <option value="">Selecciona un caso...</option>
+                                        {(publicTestCasesMap[currentChallenge?.id] || []).map((tc, idx) => (
+                                            <option key={idx} value={tc.id || idx}>Caso #{idx + 1} ({tc.expected_output?.value || tc.expectedOutput?.value || 'n/a'})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {runTab === 'custom' && (
+                                <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                    <div style={{ marginBottom: '0.75rem' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Nombre del Caso</label>
+                                        <input type="text" value={customSampleName} onChange={e => setCustomSampleName(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                    </div>
+                                    <div style={{ marginBottom: '0.75rem' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Inputs (Variables)</label>
+                                        {customInputs.map((inp, i) => (
+                                            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                                <input placeholder="Nombre" value={inp.name} onChange={e => { const n = [...customInputs]; n[i].name = e.target.value; setCustomInputs(n); }} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                                <input placeholder="Valor" value={inp.value} onChange={e => { const n = [...customInputs]; n[i].value = e.target.value; setCustomInputs(n); }} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                            </div>
+                                        ))}
+                                        <button onClick={() => setCustomInputs([...customInputs, {name: '', type: 'string', value: ''}])} style={{ background: 'none', border: 'none', color: '#c8102e', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>+ Agregar Variable</button>
+                                    </div>
+                                    <div style={{ marginBottom: '0.5rem' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Salida Esperada</label>
+                                        <input type="text" value={customOutput} onChange={e => setCustomOutput(e.target.value)} placeholder="Ej. 100" style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                    </div>
+                                </div>
+                            )}
+
+                        </div>
+                        <div style={{ padding: '1rem 1.5rem', background: '#f9fafb', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                            <button onClick={() => setShowRunModal(false)} style={{ background: 'transparent', border: '1px solid #d1d5db', borderRadius: '8px', padding: '0.5rem 1rem', fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
+                                Cancelar
+                            </button>
+                            <button onClick={() => {
+                                setShowRunModal(false);
+                                setOutput('⏳ Ejecutando prueba local en el servidor...\n\n(Funcionalidad en construcción por el equipo de backend. Los resultados de los casos de prueba se mostrarán aquí sin descontar los intentos del estudiante.)');
+                            }} style={{ background: '#c8102e', color: 'white', border: 'none', borderRadius: '8px', padding: '0.5rem 1.25rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Timer size={16} /> Ejecutar Prueba
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -187,7 +187,7 @@ const CourseStudents = () => {
             </div>
 
             {isTeacher && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem', marginBottom: '2rem', alignItems: 'stretch' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', marginBottom: '2rem', alignItems: 'stretch' }}>
                     
                     {/* Add Single Student */}
                     <div className="admin-actions-card" style={{ margin: 0 }}>

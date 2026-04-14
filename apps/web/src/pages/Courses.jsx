@@ -15,7 +15,8 @@ import {
     Key,
     AlertCircle,
     RotateCcw,
-    Trash2
+    Trash2,
+    Loader2
 } from 'lucide-react';
 import './Courses.css';
 
@@ -82,9 +83,10 @@ const Courses = () => {
 
     if (loading) return (
         <div className="courses-page-new">
-            <header className="courses-header-new">
-                <div className="skeleton title-skeleton"></div>
-            </header>
+            <div className="page-loader" style={{ paddingBottom: '2rem' }}>
+                <Loader2 className="page-loader-spinner" size={48} />
+                <p className="page-loader-text">Cargando cursos...</p>
+            </div>
             <div className="courses-grid-new">
                 {[...Array(3)].map((_, i) => (
                     <div key={i} className="course-card-new skeleton-card">
@@ -154,10 +156,12 @@ const Courses = () => {
                 </div>
             ) : (
                 <div className="courses-grid-new">
-                    {courses.map((course) => (
+                    {courses.map((course) => {
+                        const accentColor = course.visual_identity || '#c8102e';
+                        return (
                         <div key={course.id} className="course-card-new">
                             <Link to={`/courses/${course.id}`} className="card-clickable-area">
-                                <div className="card-icon-area">
+                                <div className="card-icon-area" style={{ backgroundColor: accentColor + '26', color: accentColor }}>
                                     <BookOpen className="course-icon" />
                                 </div>
                                 <div className="card-info-area">
@@ -205,7 +209,8 @@ const Courses = () => {
                                 <ChevronRight size={20} />
                             </Link>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

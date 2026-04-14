@@ -46,3 +46,71 @@ a {
 button {
   cursor: pointer;
 }
+
+/* ========== Global Page Loader ========== */
+.page-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1.25rem;
+}
+
+.page-loader-spinner {
+  color: var(--primary-color);
+  animation: page-loader-spin 0.85s linear infinite;
+}
+
+@keyframes page-loader-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.page-loader-text {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ========== Dashboard / ChallengeSolver / ExamRunner loader ========== */
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1.5rem;
+}
+
+.dashboard-loading p {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.loader-orbit {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 3px solid rgba(200, 16, 46, 0.15);
+  border-top-color: var(--primary-color);
+  animation: orbit-spin 0.85s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes orbit-spin {
+  to { transform: rotate(360deg); }
+}
+
+.orbit-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  opacity: 0.5;
+}

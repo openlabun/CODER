@@ -25,13 +25,50 @@ const ExamRunner = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [output, setOutput] = useState('');
+    const [publicTestCasesMap, setPublicTestCasesMap] = useState({});
+
+    // Run Test Modal State
+    const [showRunModal, setShowRunModal] = useState(false);
+    const [runTab, setRunTab] = useState('public');
+    const [selectedPublicCase, setSelectedPublicCase] = useState('');
+    const [customInputs, setCustomInputs] = useState([]);
+    const [customOutput, setCustomOutput] = useState('');
+    const [customOutputVarName, setCustomOutputVarName] = useState('out');
+    const [customOutputVarType, setCustomOutputVarType] = useState('string');
+    const [customSampleName, setCustomSampleName] = useState('custom_sample');
+
+    // Pre-fill custom inputs based on the first public testcase
+    useEffect(() => {
+        if (!currentChallenge) return;
+        const cases = publicTestCasesMap[currentChallenge.id];
+        if (cases && cases.length > 0) {
+            const firstCase = Object.assign({}, cases[0]);
+            const inputs = firstCase.input || firstCase.Input || [];
+            const out = firstCase.expected_output || firstCase.expectedOutput || firstCase.ExpectedOutput || {};
+            
+            // Set input shapes without values
+            if (Array.isArray(inputs)) {
+                setCustomInputs(inputs.map(i => ({ name: i.name || i.Name, type: i.type || i.Type, value: '' })));
+            }
+            if (out.name || out.Name) {
+                setCustomOutputVarName(out.name || out.Name);
+                setCustomOutputVarType(out.type || out.Type);
+            }
+        }
+    }, [currentIndex, challenges, publicTestCasesMap]);
 
     // Session state
     const [sessionId, setSessionId] = useState(null);
     const [sessionStatus, setSessionStatus] = useState(null);
     const [timeLeft, setTimeLeft] = useState(null); // in seconds, null = unlimited
     const [examFinished, setExamFinished] = useState(false);
-    const [attemptMap, setAttemptMap] = useState({}); // { challengeId: count }
+    const [attemptMap, setAttemptMap] = useState(() => {
+        // Restore attempt map from localStorage for persistence across refreshes
+        try {
+            const stored = localStorage.getItem('exam_attempt_map');
+            return stored ? JSON.parse(stored) : {};
+        } catch { return {}; }
+    }); // { challengeId: count }
     const heartbeatRef = useRef(null);
     const timerRef = useRef(null);
 
@@ -90,7 +127,36 @@ const ExamRunner = () => {
             return createRes?.data;
         };
 
-        // Step 1: Try to create a new session
+        const userId = user?.id || user?.ID || '';
+
+        // Step 1: Try to fetch the active session (bypassing the cached one entirely)
+        try {
+            const activeRes = await client.get(`/submissions/sessions/active?user_id=${userId}`);
+            const activeSession = activeRes?.data;
+            const sid = activeSession?.id || activeSession?.ID;
+            const sessionExamId = activeSession?.exam_id || activeSession?.ExamID || activeSession?.examID || '';
+
+            if (sid) {
+                // Step 2: If session is for THIS exam, reuse it (e.g. student refreshed or navigated back)
+                if (sessionExamId === examId || String(sessionExamId) === String(examId)) {
+                    applySession(activeSession, sid);
+                    return { id: sid, status: 'active', ...activeSession };
+                } else {
+                    // Step 3: Session is for a DIFFERENT exam -> close it and create a new one
+                    try {
+                        await client.post(`/submissions/sessions/${sid}/close`);
+                        localStorage.removeItem('session_id');
+                    } catch (closeErr) {
+                        console.warn('Failed to close old active session:', closeErr);
+                    }
+                }
+            }
+        } catch (err) {
+            // No active session or error fetching it, that's fine, we will create one below
+            console.warn('No active session found or error fetching it:', err);
+        }
+
+        // Step 4: Try to create a new session
         try {
             const newSession = await tryCreate();
             const sid = newSession?.id || newSession?.ID;
@@ -100,75 +166,8 @@ const ExamRunner = () => {
             }
         } catch (err) {
             const apiMsg = err?.response?.data?.error || err?.message || '';
-
-            // Step 2: Backend says "already has active session"
-            if (apiMsg.toLowerCase().includes('active session')) {
-                // Discover the real active session via heartbeat probe
-                const probeId = localStorage.getItem('session_id') || 'probe';
-                let realSid = null;
-                let sessionExamId = '';
-
-                try {
-                    const hbRes = await client.post(`/submissions/sessions/${probeId}/heartbeat`);
-                    const activeSession = hbRes?.data;
-                    realSid = activeSession?.id || activeSession?.ID;
-                    sessionExamId = activeSession?.exam_id || activeSession?.ExamID || activeSession?.examID || '';
-
-                    // Step 3: If session is for THIS exam, reuse it (student refreshed the page)
-                    if (realSid && sessionExamId === examId) {
-                        applySession(activeSession, realSid);
-                        return { id: realSid, status: 'active', ...activeSession };
-                    }
-
-                    // Step 4: Session is for a DIFFERENT exam → close it and create new
-                    if (realSid) {
-                        try {
-                            await client.post(`/submissions/sessions/${realSid}/close`);
-                            localStorage.removeItem('session_id');
-                        } catch (closeErr) {
-                            console.warn('Failed to close old session:', closeErr);
-                        }
-
-                        // Retry creating a new session
-                        try {
-                            const newSession = await tryCreate();
-                            const sid = newSession?.id || newSession?.ID;
-                            if (sid) {
-                                applySession(newSession, sid);
-                                return newSession;
-                            }
-                        } catch (retryErr) {
-                            console.error('Retry after close failed:', retryErr);
-                        }
-                    }
-                } catch (hbErr) {
-                    // Heartbeat failed — session may already be frozen/expired
-                    console.warn('Heartbeat probe failed (session may be frozen):', hbErr);
-                    localStorage.removeItem('session_id');
-
-                    // Try creating immediately — frozen session will be auto-expired by backend
-                    try {
-                        const newSession = await tryCreate();
-                        const sid = newSession?.id || newSession?.ID;
-                        if (sid) {
-                            applySession(newSession, sid);
-                            return newSession;
-                        }
-                    } catch (retryErr) {
-                        console.error('Retry after frozen failed:', retryErr);
-                    }
-                }
-
-                // All recovery attempts failed
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Sesión activa existente',
-                    html: 'No se pudo recuperar ni cerrar la sesión anterior.<br/>Contacta a tu profesor para asistencia.',
-                });
-                return null;
-            }
-
             console.error('Failed to create session:', err);
+
             Swal.fire({
                 icon: 'error',
                 title: 'Error al iniciar sesión de examen',
@@ -191,6 +190,13 @@ const ExamRunner = () => {
                 const challengeList = items
                     .map(item => {
                         const ch = item.challenge || item.Challenge || {};
+                        let parsedTemplates = ch.code_templates || ch.CodeTemplates || {};
+                        while (typeof parsedTemplates === 'string') {
+                            try { parsedTemplates = JSON.parse(parsedTemplates); } catch (e) { parsedTemplates = {}; break; }
+                        }
+                        if (typeof parsedTemplates !== 'object' || parsedTemplates === null || Array.isArray(parsedTemplates)) {
+                            parsedTemplates = {};
+                        }
                         return {
                             ...ch,
                             id: ch.id || ch.ID || item.challenge_id || item.challengeID,
@@ -200,6 +206,7 @@ const ExamRunner = () => {
                             constraints: ch.constraints || ch.Constraints || '',
                             points: item.points || item.Points || 0,
                             order: item.order || item.Order || 0,
+                            code_templates: parsedTemplates
                         };
                     })
                     .filter(ch => ch.id)
@@ -209,10 +216,37 @@ const ExamRunner = () => {
 
                 // Initialize code templates
                 const initialCode = {};
+                const tcPromises = [];
                 challengeList.forEach(ch => {
-                    initialCode[ch.id] = '# Escribe tu solución aquí\ndef solve():\n    pass\n';
+                    const templates = ch.code_templates || ch.CodeTemplates || {};
+                    const langs = Object.keys(templates);
+                    if (langs.length > 0) {
+                        initialCode[ch.id] = templates[langs[0]];
+                    } else {
+                        initialCode[ch.id] = '# Escribe tu solución aquí\ndef solve():\n    pass\n';
+                    }
+
+                    tcPromises.push(client.get(`/test-cases/challenge/${ch.id}?exam_id=${id}`).then(res => ({
+                        id: ch.id,
+                        cases: res.data.filter(tc => 
+                            (tc.type === 'public' || tc.is_sample || tc.isSample) &&
+                            tc.title !== 'Custom Test Case' && tc.Title !== 'Custom Test Case'
+                        )
+                    })).catch(() => ({ id: ch.id, cases: [] })));
                 });
                 setCodeMap(initialCode);
+
+                if (challengeList.length > 0) {
+                    const templates = challengeList[0].code_templates || challengeList[0].CodeTemplates || {};
+                    const langs = Object.keys(templates);
+                    if (langs.length > 0) setLanguage(langs[0]);
+                }
+
+                Promise.all(tcPromises).then(results => {
+                    const tcMap = {};
+                    results.forEach(r => tcMap[r.id] = r.cases);
+                    setPublicTestCasesMap(tcMap);
+                });
 
                 // --- Create or retrieve the exam session ---
                 await ensureSession(id);
@@ -253,49 +287,14 @@ const ExamRunner = () => {
 
         // Send first heartbeat immediately
         sendHeartbeat();
-        heartbeatRef.current = setInterval(sendHeartbeat, 30000);
+        heartbeatRef.current = setInterval(sendHeartbeat, 15000);
 
         return () => {
             if (heartbeatRef.current) clearInterval(heartbeatRef.current);
         };
     }, [sessionId, navigate]);
 
-    // Close session when browser is closed or refreshed
-    useEffect(() => {
-        if (!sessionId) return;
-
-        const handleBeforeUnload = () => {
-            const sid = sessionId || localStorage.getItem('session_id');
-            if (!sid) return;
-
-            const baseURL = client.defaults.baseURL || '';
-            const token = localStorage.getItem('token');
-            const email = localStorage.getItem('user_email');
-            const url = `${baseURL}/submissions/sessions/${sid}/close`;
-
-            try {
-                fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'X-User-Email': email || '',
-                        'Content-Type': 'application/json',
-                    },
-                    keepalive: true,
-                    body: '{}',
-                });
-            } catch (e) {
-                // Best-effort
-            }
-            localStorage.removeItem('session_id');
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, [sessionId]);
+    // We no longer close session on browser close/refresh. Let it stay active.
 
     // Countdown timer
     useEffect(() => {
@@ -346,6 +345,14 @@ const ExamRunner = () => {
     const handleSelectChallenge = (idx) => {
         setCurrentIndex(idx);
         setOutput('');
+        const ch = challenges[idx];
+        if (ch) {
+            const templates = ch.code_templates || ch.CodeTemplates || {};
+            const langs = Object.keys(templates);
+            if (langs.length > 0 && !langs.includes(language)) {
+                setLanguage(langs[0]);
+            }
+        }
     };
 
     // Submit solution
@@ -355,12 +362,11 @@ const ExamRunner = () => {
             return;
         }
 
-        // Check try limit per challenge
-        const tryLimit = exam?.tryLimit || exam?.TryLimit || exam?.try_limit || -1;
+        // Enforce 1 attempt per challenge (persisted across refreshes)
         const challengeId = currentChallenge?.id;
         const currentAttempts = attemptMap[challengeId] || 0;
-        if (tryLimit > 0 && currentAttempts >= tryLimit) {
-            setOutput(`Has alcanzado el límite de ${tryLimit} intento(s) para este reto.`);
+        if (currentAttempts >= 1) {
+            setOutput('Ya has utilizado tu único intento para este reto.');
             return;
         }
 
@@ -399,6 +405,7 @@ const ExamRunner = () => {
             const { data } = await client.post('/submissions', {
                 code: currentCode,
                 language: language,
+                score: 0,
                 challenge_id: challengeId,
                 session_id: activeSessionId
             });
@@ -431,14 +438,15 @@ const ExamRunner = () => {
 
                         setResultMap(prev => ({ ...prev, [challengeId]: { status, score, results } }));
 
-                        // Track attempt count for this challenge
-                        setAttemptMap(prev => ({ ...prev, [challengeId]: (prev[challengeId] || 0) + 1 }));
+                        // Track attempt count for this challenge and persist
+                        setAttemptMap(prev => {
+                            const updated = { ...prev, [challengeId]: (prev[challengeId] || 0) + 1 };
+                            localStorage.setItem('exam_attempt_map', JSON.stringify(updated));
+                            return updated;
+                        });
 
                         // Build output
-                        const attemptsUsed = (attemptMap[challengeId] || 0) + 1;
-                        const tryLimitVal = exam?.tryLimit || exam?.TryLimit || exam?.try_limit || -1;
-                        const attemptsInfo = tryLimitVal > 0 ? ` | Intentos: ${attemptsUsed}/${tryLimitVal}` : '';
-                        const lines = [`Resultado: ${score}% (${accepted}/${results.length} casos correctos)${attemptsInfo}\n`];
+                        const lines = [`Resultado: ${score}% (${accepted}/${results.length} casos correctos) | Intento: 1/1\n`];
                         results.forEach((r, i) => {
                             const st = (r.Status || r.status || 'unknown').toLowerCase();
                             const err = r.ErrorMessage || r.errorMessage || '';
@@ -533,10 +541,11 @@ const ExamRunner = () => {
             {/* TOP BAR */}
             <div className="solver-header" style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '0.75rem 1.5rem', background: '#1e1e2e', color: 'white', flexShrink: 0
+                padding: '0.75rem 1.5rem', background: '#c8102e', color: 'white', flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(200,16,46,0.3)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Target size={20} style={{ color: '#c8102e' }} />
+                    <Target size={20} style={{ color: '#fff' }} />
                     <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{exam.title || exam.Title}</h2>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -596,11 +605,12 @@ const ExamRunner = () => {
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                 {/* LEFT SIDEBAR: Challenge List */}
                 <div style={{
-                    width: '260px', background: '#252536', color: 'white',
-                    display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0
+                    width: '260px', background: '#ffffff', color: '#1f2937',
+                    display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0,
+                    borderRight: '1px solid #e5e7eb'
                 }}>
-                    <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                        <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, opacity: 0.7 }}>RETOS DEL EXAMEN</h3>
+                    <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+                        <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: '#c8102e', letterSpacing: '0.5px' }}>RETOS DEL EXAMEN</h3>
                     </div>
                     {challenges.map((ch, idx) => {
                         const chResult = resultMap[ch.id];
@@ -614,8 +624,8 @@ const ExamRunner = () => {
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: '0.75rem',
                                     padding: '0.85rem 1rem', border: 'none', textAlign: 'left',
-                                    background: isActive ? 'rgba(200,16,46,0.2)' : 'transparent',
-                                    color: 'white', cursor: 'pointer', width: '100%',
+                                    background: isActive ? 'rgba(200,16,46,0.08)' : 'transparent',
+                                    color: '#1f2937', cursor: 'pointer', width: '100%',
                                     borderLeft: isActive ? '3px solid #c8102e' : '3px solid transparent',
                                     transition: 'all 0.2s'
                                 }}
@@ -623,7 +633,8 @@ const ExamRunner = () => {
                                 <div style={{
                                     width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700,
-                                    background: isSolved ? '#10b981' : isFailed ? '#ef4444' : isActive ? '#c8102e' : 'rgba(255,255,255,0.1)',
+                                    background: isSolved ? '#10b981' : isFailed ? '#ef4444' : isActive ? '#c8102e' : '#f3f4f6',
+                                    color: isSolved || isFailed || isActive ? 'white' : '#6b7280'
                                 }}>
                                     {isSolved ? <CheckCircle2 size={14} /> : isFailed ? <XCircle size={14} /> : idx + 1}
                                 </div>
@@ -631,222 +642,448 @@ const ExamRunner = () => {
                                     <div style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {ch.title}
                                     </div>
-                                    <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>{ch.points} pts • {ch.difficulty === 'easy' ? 'Fácil' : ch.difficulty === 'hard' ? 'Difícil' : 'Medio'}</div>
+                                    <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>{ch.points} pts • {ch.difficulty === 'easy' ? 'Fácil' : ch.difficulty === 'hard' ? 'Difícil' : 'Medio'}</div>
                                 </div>
                             </button>
                         );
                     })}
                 </div>
 
-                {/* CENTER: Problem Description */}
-                {currentChallenge && (
-                    <>
-                        <div className="problem-description" style={{
-                            width: '35%', overflowY: 'auto', padding: '1.5rem', background: '#fafafa',
-                            borderRight: '1px solid #e5e7eb'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                                <Code size={18} style={{ color: '#c8102e' }} />
-                                <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>{currentChallenge.title}</h2>
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                                <span style={{
-                                    padding: '3px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700,
-                                    background: currentChallenge.difficulty === 'easy' ? '#dcfce7' : currentChallenge.difficulty === 'hard' ? '#fee2e2' : '#fef3c7',
-                                    color: currentChallenge.difficulty === 'easy' ? '#15803d' : currentChallenge.difficulty === 'hard' ? '#b91c1c' : '#b45309'
-                                }}>
-                                    {currentChallenge.difficulty === 'easy' ? 'Fácil' : currentChallenge.difficulty === 'hard' ? 'Difícil' : 'Medio'}
-                                </span>
-                                <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: '#e0e7ff', color: '#3730a3' }}>
-                                    {currentChallenge.points} pts
-                                </span>
-                            </div>
-                            <p style={{ lineHeight: 1.7, color: '#444', fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>
-                                {currentChallenge.description}
-                            </p>
-                            {currentChallenge.constraints && (
-                                <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff7ed', borderRadius: '10px', border: '1px solid #fed7aa' }}>
-                                    <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#9a3412' }}>⚡ Restricciones</h4>
-                                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#78350f' }}>{currentChallenge.constraints}</p>
-                                </div>
-                            )}
+                {/* CENTER + RIGHT (Problem, Editor, Console) */}
+                {currentChallenge ? (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-                            {/* Nav buttons */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', gap: '0.5rem' }}>
-                                <button
-                                    disabled={currentIndex === 0}
-                                    onClick={() => handleSelectChallenge(currentIndex - 1)}
-                                    style={{
-                                        flex: 1, padding: '0.6rem', border: '1px solid #ddd', borderRadius: '10px',
-                                        background: 'white', cursor: currentIndex === 0 ? 'not-allowed' : 'pointer',
-                                        opacity: currentIndex === 0 ? 0.4 : 1, fontWeight: 600, fontSize: '0.85rem',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
-                                    }}
-                                >
-                                    <ChevronLeft size={16} /> Anterior
-                                </button>
-                                <button
-                                    disabled={currentIndex === challenges.length - 1}
-                                    onClick={() => handleSelectChallenge(currentIndex + 1)}
-                                    style={{
-                                        flex: 1, padding: '0.6rem', border: '1px solid #ddd', borderRadius: '10px',
-                                        background: 'white', cursor: currentIndex === challenges.length - 1 ? 'not-allowed' : 'pointer',
-                                        opacity: currentIndex === challenges.length - 1 ? 0.4 : 1, fontWeight: 600, fontSize: '0.85rem',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
-                                    }}
-                                >
-                                    Siguiente <ChevronRight size={16} />
-                                </button>
-                            </div>
-                        </div>
+                        {/* TOP SECTION: Description + Editor */}
+                        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-                        {/* RIGHT: Code Editor + Output */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#1e1e1e' }}>
-                            {/* Editor toolbar */}
-                            <div style={{
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                padding: '0.5rem 1rem', background: '#2d2d3d', borderBottom: '1px solid #3d3d50'
+                            {/* CENTER: Problem Description */}
+                            <div className="problem-description" style={{
+                                width: '40%', overflowY: 'auto', padding: '1.5rem', background: '#ffffff',
+                                borderRight: '1px solid #e5e7eb'
                             }}>
-                                <select value={language} onChange={(e) => setLanguage(e.target.value)}
-                                    style={{ background: '#1e1e2e', color: 'white', border: '1px solid #555', borderRadius: '6px', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}>
-                                    <option value="python">Python</option>
-                                </select>
-                                {(() => {
-                                    const tryLimitVal = exam?.tryLimit || exam?.TryLimit || exam?.try_limit || -1;
-                                    const chAttempts = currentChallenge ? (attemptMap[currentChallenge.id] || 0) : 0;
-                                    const limitReached = tryLimitVal > 0 && chAttempts >= tryLimitVal;
-                                    const isDisabled = submitting || examFinished || limitReached;
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                    <Code size={18} style={{ color: '#c8102e' }} />
+                                    <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>{currentChallenge.title}</h2>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                    <span style={{
+                                        padding: '3px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700,
+                                        background: currentChallenge.difficulty === 'easy' ? '#dcfce7' : currentChallenge.difficulty === 'hard' ? '#fee2e2' : '#fef3c7',
+                                        color: currentChallenge.difficulty === 'easy' ? '#15803d' : currentChallenge.difficulty === 'hard' ? '#b91c1c' : '#b45309'
+                                    }}>
+                                        {currentChallenge.difficulty === 'easy' ? 'Fácil' : currentChallenge.difficulty === 'hard' ? 'Difícil' : 'Medio'}
+                                    </span>
+                                    <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, background: '#e0e7ff', color: '#3730a3' }}>
+                                        {currentChallenge.points} pts
+                                    </span>
+                                </div>
+                                <p style={{ lineHeight: 1.7, color: '#444', fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>
+                                    {currentChallenge.description}
+                                </p>
+                                {currentChallenge.constraints && (
+                                    <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff7ed', borderRadius: '10px', border: '1px solid #fed7aa' }}>
+                                        <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#9a3412' }}>⚡ Restricciones</h4>
+                                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#78350f' }}>{currentChallenge.constraints}</p>
+                                    </div>
+                                )}
 
-                                    let btnText = 'Enviar Solución';
-                                    if (examFinished) btnText = 'Examen Finalizado';
-                                    else if (limitReached) btnText = 'Límite alcanzado';
-                                    else if (submitting) btnText = 'Evaluando...';
+                                {publicTestCasesMap[currentChallenge.id]?.length > 0 && (
+                                    <div style={{ marginTop: '2rem' }}>
+                                        <h4 style={{ margin: '0 0 1rem', fontSize: '0.95rem', color: '#1f2937', fontWeight: 800 }}> Casos de Prueba </h4>
+                                        {publicTestCasesMap[currentChallenge.id].map((tc, idx) => (
+                                            <div key={idx} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
+                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Entrada:</div>
+                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: '0 0 1rem 0' }}>{Array.isArray(tc.input) ? tc.input.map(i => i ? `${i.name} = ${i.value}` : 'nil').join(', ') : JSON.stringify(tc.input)}</pre>
+                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Salida Esperada:</div>
+                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: 0 }}>{tc.expected_output?.value || tc.ExpectedOutput?.value || tc.expectedOutput?.value || ''}</pre>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
 
-                                    return (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            {tryLimitVal > 0 && (
+                                {/* Nav buttons */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', gap: '0.5rem' }}>
+                                    <button
+                                        disabled={currentIndex === 0}
+                                        onClick={() => handleSelectChallenge(currentIndex - 1)}
+                                        style={{
+                                            flex: 1, padding: '0.6rem', border: '1px solid #ddd', borderRadius: '10px',
+                                            background: 'white', cursor: currentIndex === 0 ? 'not-allowed' : 'pointer',
+                                            opacity: currentIndex === 0 ? 0.4 : 1, fontWeight: 600, fontSize: '0.85rem',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                                        }}
+                                    >
+                                        <ChevronLeft size={16} /> Anterior
+                                    </button>
+                                    <button
+                                        disabled={currentIndex === challenges.length - 1}
+                                        onClick={() => handleSelectChallenge(currentIndex + 1)}
+                                        style={{
+                                            flex: 1, padding: '0.6rem', border: '1px solid #ddd', borderRadius: '10px',
+                                            background: 'white', cursor: currentIndex === challenges.length - 1 ? 'not-allowed' : 'pointer',
+                                            opacity: currentIndex === challenges.length - 1 ? 0.4 : 1, fontWeight: 600, fontSize: '0.85rem',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                                        }}
+                                    >
+                                        Siguiente <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* RIGHT: Code Editor */}
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#1e1e1e', minWidth: 0, minHeight: 0 }}>
+                                {/* Editor toolbar */}
+                                <div style={{
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    padding: '0.5rem 1rem', background: '#f9fafb', borderBottom: '1px solid #e5e7eb'
+                                }}>
+                                    <select value={language} onChange={(e) => setLanguage(e.target.value)}
+                                        style={{ background: '#ffffff', color: '#1f2937', border: '1px solid #d1d5db', borderRadius: '6px', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}>
+                                        {(() => {
+                                            const templates = currentChallenge?.code_templates || currentChallenge?.CodeTemplates || {};
+                                            const langs = Object.keys(templates).filter(l => ['python', 'javascript', 'java', 'cpp', 'go'].includes(l));
+                                            return langs.length > 0
+                                                ? langs.map(l => <option key={l} value={l}>{l === 'cpp' ? 'C++' : l.charAt(0).toUpperCase() + l.slice(1)}</option>)
+                                                : <option value="python">Python</option>;
+                                        })()}
+                                    </select>
+                                    {(() => {
+                                        const chAttempts = currentChallenge ? (attemptMap[currentChallenge.id] || 0) : 0;
+                                        const limitReached = chAttempts >= 1;
+                                        const isSubmitDisabled = submitting || examFinished || limitReached;
+                                        const isTestDisabled = submitting || examFinished;
+
+                                        let btnText = 'Enviar Solución';
+                                        if (examFinished) btnText = 'Examen Finalizado';
+                                        else if (limitReached) btnText = 'Ya enviado';
+                                        else if (submitting) btnText = 'Evaluando...';
+
+                                        return (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                 <span style={{
-                                                    fontSize: '0.75rem', fontWeight: 700, color: limitReached ? '#ef4444' : '#9ca3af',
+                                                    fontSize: '0.75rem', fontWeight: 700, color: limitReached ? '#ef4444' : '#6b7280',
                                                     whiteSpace: 'nowrap'
                                                 }}>
-                                                    {chAttempts}/{tryLimitVal} intentos
+                                                    {chAttempts}/1 intentos
                                                 </span>
-                                            )}
-                                            <button onClick={handleSubmit} disabled={isDisabled}
-                                                style={{
-                                                    background: isDisabled ? '#555' : 'linear-gradient(135deg, #c8102e, #a00d25)',
-                                                    color: 'white', border: 'none', borderRadius: '10px',
-                                                    padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.85rem',
-                                                    cursor: isDisabled ? 'not-allowed' : 'pointer',
-                                                    display: 'flex', alignItems: 'center', gap: '6px',
-                                                    opacity: isDisabled ? 0.6 : 1
-                                                }}>
-                                                <Send size={14} /> {btnText}
-                                            </button>
-                                        </div>
-                                    );
-                                })()}
+                                                <button onClick={() => setShowRunModal(true)} disabled={isTestDisabled}
+                                                    style={{
+                                                        background: isTestDisabled ? '#e5e7eb' : '#ffffff',
+                                                        color: isTestDisabled ? '#9ca3af' : '#c8102e', border: '1px solid #c8102e', borderRadius: '10px',
+                                                        padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.85rem',
+                                                        cursor: isTestDisabled ? 'not-allowed' : 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: '6px',
+                                                        opacity: isTestDisabled ? 0.6 : 1, transition: 'background 0.2s'
+                                                    }}>
+                                                    <Timer size={14} /> Probar Código
+                                                </button>
+                                                <button onClick={handleSubmit} disabled={isSubmitDisabled}
+                                                    style={{
+                                                        background: isSubmitDisabled ? '#e5e7eb' : '#c8102e',
+                                                        color: isSubmitDisabled ? '#9ca3af' : 'white', border: 'none', borderRadius: '10px',
+                                                        padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.85rem',
+                                                        cursor: isSubmitDisabled ? 'not-allowed' : 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: '6px',
+                                                        opacity: isSubmitDisabled ? 0.6 : 1
+                                                    }}>
+                                                    <Send size={14} /> {btnText}
+                                                </button>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+
+                                {/* Monaco Editor */}
+                                <div style={{ flex: 1, minHeight: 0 }}>
+                                    <Editor
+                                        height="100%"
+                                        theme="vs-dark"
+                                        language={['python', 'javascript', 'java', 'cpp', 'go'].includes(language) ? language : 'python'}
+                                        value={currentCode}
+                                        onChange={handleCodeChange}
+                                        options={{ minimap: { enabled: false }, fontSize: 14, padding: { top: 12 } }}
+                                    />
+                                </div>
                             </div>
 
-                            {/* Monaco Editor */}
-                            <div style={{ flex: 1 }}>
-                                <Editor
-                                    height="100%"
-                                    theme="vs-dark"
-                                    language={language}
-                                    value={currentCode}
-                                    onChange={handleCodeChange}
-                                    options={{ minimap: { enabled: false }, fontSize: 14, padding: { top: 12 } }}
-                                />
-                            </div>
+                        </div>
 
-                            {/* Output panel: Redesigned for maximum visibility */}
+                        {/* BOTTOM SECTION: Output panel */}
+                        <div style={{
+                            height: output ? '300px' : '50px',
+                            flexShrink: 0,
+                            background: '#1a1a2e',
+                            borderTop: '2px solid #c8102e',
+                            transition: 'height 0.3s ease-in-out',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}>
                             <div style={{
-                                height: output ? '250px' : '50px',
-                                background: '#0d1117',
-                                borderTop: '2px solid #30363d',
-                                transition: 'height 0.3s ease-in-out',
-                                overflow: 'auto',
-                                padding: '1rem 1.5rem',
-                                boxShadow: '0 -4px 15px rgba(0,0,0,0.5)'
-                            }}>
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginBottom: output ? '1rem' : 0,
-                                    paddingBottom: output ? '0.75rem' : 0,
-                                    borderBottom: output ? '1px solid rgba(255,255,255,0.1)' : 'none'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{
-                                            width: '8px',
-                                            height: '8px',
-                                            borderRadius: '50%',
-                                            background: currentResult?.status === 'accepted' ? '#10b981' : currentResult ? '#ef4444' : '#8b949e',
-                                            boxShadow: currentResult ? `0 0 8px ${currentResult?.status === 'accepted' ? '#10b981' : '#ef4444'}` : 'none'
-                                        }}></div>
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '0.75rem 1.5rem',
+                                background: '#111827',
+                                borderBottom: output ? '1px solid rgba(200,16,46,0.3)' : 'none',
+                                cursor: 'pointer'
+                            }} onClick={() => setOutput(output ? '' : ' Esperando envío...')}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{
+                                        width: '8px',
+                                        height: '8px',
+                                        borderRadius: '50%',
+                                        background: currentResult?.status === 'accepted' ? '#10b981' : currentResult ? '#ef4444' : '#8b949e',
+                                        boxShadow: currentResult ? `0 0 8px ${currentResult?.status === 'accepted' ? '#10b981' : '#ef4444'}` : 'none'
+                                    }}></div>
+                                    <span style={{
+                                        color: '#e6edf3',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 800,
+                                        letterSpacing: '1px'
+                                    }}>
+                                        CONSOLA DE RESULTADOS {output ? '▼' : '▲'}
+                                    </span>
+                                </div>
+
+                                {currentResult && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <span style={{
-                                            color: '#e6edf3',
-                                            fontSize: '0.9rem',
-                                            fontWeight: 800,
-                                            letterSpacing: '1px'
+                                            fontSize: '0.85rem',
+                                            fontWeight: 700,
+                                            color: currentResult.status === 'accepted' ? '#10b981' : '#ef4444'
                                         }}>
-                                            CONSOLA DE RESULTADOS
+                                            {currentResult.status === 'accepted' ? 'ACEPTADO' : 'FALLIDO'}
+                                        </span>
+                                        <span style={{
+                                            fontSize: '1rem',
+                                            fontWeight: 900,
+                                            padding: '4px 12px',
+                                            borderRadius: '8px',
+                                            background: currentResult.status === 'accepted' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                            color: currentResult.status === 'accepted' ? '#10b981' : '#ef4444',
+                                            border: `1px solid ${currentResult.status === 'accepted' ? '#10b981' : '#ef4444'}`
+                                        }}>
+                                            {currentResult.score}%
                                         </span>
                                     </div>
-
-                                    {currentResult && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <span style={{
-                                                fontSize: '0.85rem',
-                                                fontWeight: 700,
-                                                color: currentResult.status === 'accepted' ? '#10b981' : '#ef4444'
-                                            }}>
-                                                {currentResult.status === 'accepted' ? 'ACEPTADO' : 'FALLIDO'}
-                                            </span>
-                                            <span style={{
-                                                fontSize: '1rem',
-                                                fontWeight: 900,
-                                                padding: '4px 12px',
-                                                borderRadius: '8px',
-                                                background: currentResult.status === 'accepted' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                                                color: currentResult.status === 'accepted' ? '#10b981' : '#ef4444',
-                                                border: `1px solid ${currentResult.status === 'accepted' ? '#10b981' : '#ef4444'}`
-                                            }}>
-                                                {currentResult.score}%
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
+                                )}
+                            </div>
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.5rem' }}>
                                 {output && (
                                     <pre style={{
                                         color: '#d1d5db',
                                         fontSize: '1rem',
                                         lineHeight: '1.6',
-                                        marginTop: '0.5rem',
+                                        margin: 0,
                                         whiteSpace: 'pre-wrap',
-                                        fontFamily: '"Fira Code", "JetBrains Mono", monospace',
-                                        padding: '0.5rem 0'
+                                        fontFamily: '"Fira Code", "JetBrains Mono", monospace'
                                     }}>
                                         {output}
                                     </pre>
                                 )}
                             </div>
                         </div>
-                    </>
-                )}
 
-                {!currentChallenge && (
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa' }}>
-                        <div style={{ textAlign: 'center', color: '#999' }}>
-                            <Target size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                    </div>
+                ) : (
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
+                        <div style={{ textAlign: 'center', color: '#9ca3af' }}>
+                            <Target size={48} style={{ marginBottom: '1rem', opacity: 0.3, color: '#c8102e' }} />
                             <h3>Este examen no tiene retos asignados</h3>
                             <p>Contacta a tu profesor para más información.</p>
                         </div>
                     </div>
                 )}
             </div>
+
+            {/* RUN TEST MODAL */}
+            {showRunModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+                    background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                }}>
+                    <div style={{
+                        background: '#ffffff', borderRadius: '16px', width: '500px', maxWidth: '90%',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', overflow: 'hidden'
+                    }}>
+                        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Timer size={18} style={{ color: '#c8102e' }} /> Probar Ejecución 
+                                <span style={{ fontSize: '0.7rem', padding: '2px 8px', background: '#fef2f2', color: '#b91c1c', borderRadius: '12px' }}>Modo Prueba</span>
+                            </h3>
+                            <button onClick={() => setShowRunModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+                        <div style={{ padding: '1.5rem' }}>
+                            <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#4b5563' }}>
+                                Ejecuta tu código localmente sin gastar intentos. Selecciona un caso de prueba existente o define uno nuevo.
+                            </p>
+                            
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #f3f4f6' }}>
+                                <button 
+                                    onClick={() => setRunTab('public')}
+                                    style={{ 
+                                        padding: '0.5rem 0', background: 'none', border: 'none', borderBottom: runTab === 'public' ? '2px solid #c8102e' : '2px solid transparent',
+                                        color: runTab === 'public' ? '#111827' : '#6b7280', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s'
+                                    }}>
+                                    Casos Públicos
+                                </button>
+                                <button 
+                                    onClick={() => setRunTab('custom')}
+                                    style={{ 
+                                        padding: '0.5rem 0', background: 'none', border: 'none', borderBottom: runTab === 'custom' ? '2px solid #c8102e' : '2px solid transparent',
+                                        color: runTab === 'custom' ? '#111827' : '#6b7280', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s'
+                                    }}>
+                                    Caso Personalizado
+                                </button>
+                            </div>
+
+                            {runTab === 'public' && (
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Seleccionar Caso de Prueba:</label>
+                                    <select 
+                                        value={selectedPublicCase} 
+                                        onChange={(e) => setSelectedPublicCase(e.target.value)}
+                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.9rem' }}
+                                    >
+                                        <option value="">Selecciona un caso...</option>
+                                        {(publicTestCasesMap[currentChallenge?.id] || []).map((tc, idx) => (
+                                            <option key={idx} value={tc.id || idx}>Caso #{idx + 1} ({tc.expected_output?.value || tc.expectedOutput?.value || 'n/a'})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {runTab === 'custom' && (
+                                <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                    <div style={{ marginBottom: '0.75rem' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Nombre del Caso</label>
+                                        <input type="text" value={customSampleName} onChange={e => setCustomSampleName(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                    </div>
+                                    <div style={{ marginBottom: '0.75rem' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Inputs (Variables)</label>
+                                        {customInputs.map((inp, i) => (
+                                            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563', width: '80px' }}>{inp.name} ({inp.type}):</span>
+                                                <input placeholder="Valor..." value={inp.value} onChange={e => { const n = [...customInputs]; n[i].value = e.target.value; setCustomInputs(n); }} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div style={{ marginBottom: '0.5rem' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Salida Esperada ({customOutputVarName})</label>
+                                        <input type="text" value={customOutput} onChange={e => setCustomOutput(e.target.value)} placeholder="Valor de salida esperado" style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                    </div>
+                                </div>
+                            )}
+
+                        </div>
+                        <div style={{ padding: '1rem 1.5rem', background: '#f9fafb', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                            <button onClick={() => setShowRunModal(false)} style={{ background: 'transparent', border: '1px solid #d1d5db', borderRadius: '8px', padding: '0.5rem 1rem', fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
+                                Cancelar
+                            </button>
+                            <button onClick={async () => {
+                                setShowRunModal(false);
+                                setOutput('⏳ Ejecutando prueba local en el servidor...\n\n');
+                                
+                                try {
+                                    let res;
+                                    if (runTab === 'public') {
+                                        // Find the selected public case and run it via execute-custom
+                                        const allCases = publicTestCasesMap[currentChallenge?.id] || [];
+                                        const selected = allCases.find(tc => (tc.id || '') === selectedPublicCase) || allCases[parseInt(selectedPublicCase)] || allCases[0];
+                                        if (!selected) {
+                                            setOutput('No hay caso de prueba público seleccionado.');
+                                            return;
+                                        }
+                                        const inputs = (selected.input || selected.Input || []).map(v => ({
+                                            name: v.name || v.Name,
+                                            type: v.type || v.Type,
+                                            value: String(v.value ?? v.Value ?? '')
+                                        }));
+                                        const expectedOut = selected.expected_output || selected.expectedOutput || selected.ExpectedOutput || {};
+                                        res = await client.post('/submissions/execute-custom', {
+                                            code: currentCode,
+                                            language: language,
+                                            challenge_id: currentChallenge?.id,
+                                            session_id: sessionId,
+                                            input_variables: inputs,
+                                            output_variable: {
+                                                name: expectedOut.name || expectedOut.Name || 'out',
+                                                type: expectedOut.type || expectedOut.Type || 'string',
+                                                value: String(expectedOut.value ?? expectedOut.Value ?? '')
+                                            }
+                                        });
+                                    } else {
+                                        res = await client.post('/submissions/execute-custom', {
+                                            code: currentCode,
+                                            language: language,
+                                            challenge_id: currentChallenge?.id,
+                                            session_id: sessionId,
+                                            input_variables: customInputs,
+                                            output_variable: {
+                                                name: customOutputVarName,
+                                                type: customOutputVarType,
+                                                value: customOutput
+                                            }
+                                        });
+                                    }
+
+                                    let submissionId = res.data?.id || res.data?.ID;
+                                    if (!submissionId && res.data?.Submission) {
+                                        submissionId = res.data.Submission.id || res.data.Submission.ID;
+                                    }
+
+                                    if (!submissionId) {
+                                        setOutput('La API no retornó un ID de ejecución válido.\n\nResultados crudos:\n' + JSON.stringify(res.data, null, 2));
+                                        return;
+                                    }
+
+                                    setOutput('Prueba encolada. Ejecutando...');
+                                    
+                                    // Poll for results
+                                    for (let attempt = 0; attempt < 40; attempt++) {
+                                        const pollRes = await client.get(`/submissions/${submissionId}`);
+                                        const results = pollRes?.data?.Results || pollRes?.data?.results || [];
+
+                                        if (Array.isArray(results) && results.length > 0) {
+                                            const hasPending = results.some(r => {
+                                                const s = String(r?.Status || r?.status || '').toLowerCase();
+                                                return s === 'queued' || s === 'running';
+                                            });
+
+                                            if (!hasPending) {
+                                                const accepted = results.filter(r => String(r?.Status || r?.status || '').toLowerCase() === 'accepted').length;
+                                                const score = Math.round((accepted / results.length) * 100);
+                                                const lines = [`Resultado de Prueba: ${score}% (${accepted}/${results.length} casos correctos)\n`];
+                                                results.forEach((r, i) => {
+                                                    const st = (r.Status || r.status || 'unknown').toLowerCase();
+                                                    const err = r.ErrorMessage || r.errorMessage || '';
+                                                    lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}${err ? ' - ' + err : ''}`);
+                                                });
+                                                lines.push(`\n(Resultados no afectan tus puntajes)`);
+                                                setOutput(lines.join('\n'));
+                                                return;
+                                            }
+                                        }
+                                        await sleep(1000);
+                                        setOutput(`Ejecutando pruebas... (${attempt + 1}s)`);
+                                    }
+                                    
+                                    setOutput('Tiempo de espera agotado para la ejecución local.');
+                                } catch (err) {
+                                    const errorMsg = err?.response?.data?.error || err.message;
+                                    setOutput((prev) => prev + `Status: ❌ Error en la ejecución.\nMotivo: ${errorMsg}`);
+                                }
+                            }} style={{ background: '#c8102e', color: 'white', border: 'none', borderRadius: '8px', padding: '0.5rem 1.25rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Timer size={16} /> Ejecutar Prueba
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

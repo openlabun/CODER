@@ -17,6 +17,10 @@
     padding: 30px;
 }
 
+.main-content.with-sidebar.full-bleed {
+    padding: 0;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .sidebar {

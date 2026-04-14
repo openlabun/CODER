@@ -17,6 +17,7 @@ func NewTestCase(
 	expectedOutput Entities.IOVariable,
 	isSample bool,
 	points int,
+	custom bool,
 	challengeID string,
 ) (*Entities.TestCase, error) {
 	testCase := &Entities.TestCase{
@@ -26,6 +27,7 @@ func NewTestCase(
 		ExpectedOutput: expectedOutput,
 		IsSample:       isSample,
 		Points:         points,
+		Custom: 	    custom,
 		CreatedAt:      time.Now(),
 		ChallengeID:    strings.TrimSpace(challengeID),
 	}
@@ -43,6 +45,7 @@ func ExistingTestCase(
 	expectedOutput Entities.IOVariable,
 	isSample bool,
 	points int,
+	custom bool,
 	challengeID string,
 	createdAt time.Time,
 ) (*Entities.TestCase, error) {
@@ -53,6 +56,7 @@ func ExistingTestCase(
 		ExpectedOutput: expectedOutput,
 		IsSample:       isSample,
 		Points:         points,
+		Custom: 		custom,
 		CreatedAt:      createdAt,
 		ChallengeID:    strings.TrimSpace(challengeID),
 	}

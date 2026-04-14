@@ -3,15 +3,15 @@ package exam_usecases
 import (
 	"context"
 	"fmt"
-	
+
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
+	courseRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	examItemRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	courseRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
-	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
@@ -66,16 +66,16 @@ func (uc *GetTestCasesByChallengeUseCase) Execute(ctx context.Context, input dto
 	}
 
 	// [STEP 4] If user is professor, validate that exam belongs to the teacher or is public/teacher
-	if role == user_entities.UserRoleProfessor && challenge.UserID != user.ID {
-		if challenge.Status != exam_entities.ChallengeStatusPublished {
+	if role == user_constants.UserRoleProfessor && challenge.UserID != user.ID {
+		if challenge.Status != constants.ChallengeStatusPublished {
 			return nil, fmt.Errorf("user is not the owner of the challenge with id %q", challenge.ID)
 		}
 	}
 
 	// [STEP 5] If user is student, make validations to check if he has access
-	if role == user_entities.UserRoleStudent {
+	if role == user_constants.UserRoleStudent {
 		// [STEP 5.1] If challenge is not published, student cannot access
-		if challenge.Status != exam_entities.ChallengeStatusPublished {
+		if challenge.Status != constants.ChallengeStatusPublished {
 			return nil, fmt.Errorf("challenge with id %q is not published yet", challenge.ID)
 		}
 
@@ -104,7 +104,7 @@ func (uc *GetTestCasesByChallengeUseCase) Execute(ctx context.Context, input dto
 		}
 
 		// [STEP 5.3] Validate if exam is public for course and student is in the course associated with the exam
-		if exam.Visibility == exam_entities.VisibilityCourse && exam.CourseID != nil {
+		if exam.Visibility == constants.VisibilityCourse && exam.CourseID != nil {
 			courses, err := uc.courseRepository.GetCoursesByStudentID(ctx, user.ID)
 			if err != nil {
 				return nil, fmt.Errorf("error retrieving courses for student with id %q: %v", user.ID, err)
@@ -114,7 +114,7 @@ func (uc *GetTestCasesByChallengeUseCase) Execute(ctx context.Context, input dto
 				return nil, fmt.Errorf("user does not have permissions to view test cases for challenge with id %q", input.ChallengeID)
 			}
 		// [STEP 5.4] Validate if exam is not public
-		} else if exam.Visibility != exam_entities.VisibilityPublic {
+		} else if exam.Visibility != constants.VisibilityPublic {
 			return nil, fmt.Errorf("exam with id %q is not public", exam.ID)
 		}
 	}
@@ -126,7 +126,7 @@ func (uc *GetTestCasesByChallengeUseCase) Execute(ctx context.Context, input dto
 	}
 
 	// [STEP 7] If user is student, filter test cases to return only public ones
-	if role == user_entities.UserRoleStudent {
+	if role == user_constants.UserRoleStudent {
 		testCases = filterPublicTestCases(testCases)
 	}
 
@@ -136,7 +136,7 @@ func (uc *GetTestCasesByChallengeUseCase) Execute(ctx context.Context, input dto
 func filterPublicTestCases(testCases []*Entities.TestCase) []*Entities.TestCase {
 	publicTestCases := []*Entities.TestCase{}
 	for _, testCase := range testCases {
-		if testCase.IsSample {
+		if testCase.IsSample && !testCase.Custom {
 			publicTestCases = append(publicTestCases, testCase)
 		}
 	}

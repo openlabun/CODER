@@ -6,8 +6,10 @@ import (
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 
+	sub_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 )
 
 func MapCreateExamInputToExamEntity(input dtos.CreateExamInput) (*Entities.Exam, error) {
@@ -30,7 +32,7 @@ func MapCreateExamInputToExamEntity(input dtos.CreateExamInput) (*Entities.Exam,
 	exam, err := factory.NewExam(
 		input.Title,
 		input.Description,
-		Entities.Visibility(input.Visibility),
+		consts.Visibility(input.Visibility),
 		startTime,
 		endTime,
 		input.AllowLateSubmissions,
@@ -56,7 +58,7 @@ func MapUpdateExamInputToExamEntity(existingExam *Entities.Exam, input dtos.Upda
 	}
 
 	if input.Visibility != nil {
-		existingExam.Visibility = Entities.Visibility(*input.Visibility)
+		existingExam.Visibility = consts.Visibility(*input.Visibility)
 	}
 
 	if input.StartTime != nil {
@@ -91,7 +93,7 @@ func MapUpdateExamInputToExamEntity(existingExam *Entities.Exam, input dtos.Upda
 }
 
 func MapExamVisibilityInputToExamEntity (existingExam *Entities.Exam, input dtos.ChangeExamVisibilityInput) (*Entities.Exam, error) {
-	existingExam.Visibility = Entities.Visibility(input.Visibility)
+	existingExam.Visibility = consts.Visibility(input.Visibility)
 	return existingExam, nil
 }
 
@@ -122,4 +124,20 @@ func MapExamItemDTO(examItem *Entities.ExamItem, challenge *Entities.Challenge) 
 	}
 
 	return &dto, nil
+}
+
+func MapExamScore (exam *Entities.Exam, session *sub_entities.Session) (*Entities.ExamScore, error) {
+	if exam == nil {
+		return nil, fmt.Errorf("exam is nil")
+	}
+
+	if session == nil {
+		return nil, fmt.Errorf("session is nil")
+	}
+	
+	return factory.NewExamScore(
+		exam.ID,
+		session.ID,
+		session.StudentID,
+	)
 }

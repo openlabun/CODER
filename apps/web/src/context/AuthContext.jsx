@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useContext } from 'react';
-import client from '../api/client';
+import client, { refreshAccessToken } from '../api/client';
 
 export const AuthContext = createContext();
 
@@ -124,6 +124,24 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('session_id');
         setUser(null);
     };
+
+    useEffect(() => {
+        if (!user) return;
+
+        // Refresh proactively every 19 minutes (19 * 60 * 1000 ms)
+        const intervalTime = 19 * 60 * 1000;
+        const intervalId = setInterval(async () => {
+            try {
+                const newToken = await refreshAccessToken();
+                setUser(prev => prev ? { ...prev, token: newToken } : prev);
+            } catch (error) {
+                console.error('Proactive token refresh failed:', error);
+                logout();
+            }
+        }, intervalTime);
+
+        return () => clearInterval(intervalId);
+    }, [user]);
 
     return (
         <AuthContext.Provider value={{ user, login, register, logout, loading }}>

@@ -8,8 +8,8 @@ import (
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	submission_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
-	submission_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+	submission_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -74,7 +74,7 @@ func TestSubmissionScoring(t *testing.T) {
 		CourseID:             nil,
 		Title:                "Submission Scoring Exam",
 		Description:          "Examen para validar puntaje de submissions",
-		Visibility:           string(exam_entities.VisibilityPublic),
+		Visibility:           string(exam_consts.VisibilityPublic),
 		StartTime:            now.Add(2 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: true,
@@ -93,14 +93,17 @@ func TestSubmissionScoring(t *testing.T) {
 		Title:             "Submission Scoring Challenge",
 		Description:       "Challenge para validar score",
 		Tags:              []string{"submission", "score"},
-		Status:            string(exam_entities.ChallengeStatusPublished),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusPublished),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
 		WorkerMemoryLimit: 256,
-		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "2"},
+		CodeTemplates: []exam_dtos.CodeTemplateDTO{
+			{Language: "python", Template: "def solve() { return; }"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "4"},
+		InputVariables: []exam_dtos.IOVariableDTO{
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "2"},
+		},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "4"},
 		Constraints:    "1 <= n <= 1000",
 	})
 	if err != nil {
@@ -113,9 +116,9 @@ func TestSubmissionScoring(t *testing.T) {
 	testCaseOne, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
 		Name: "score_case_1",
 		Input: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "2"},
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "2"},
 		},
-		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "4"},
+		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "4"},
 		IsSample:       false,
 		Points:         3,
 		ChallengeID:    challengeID,
@@ -128,9 +131,9 @@ func TestSubmissionScoring(t *testing.T) {
 	testCaseTwo, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
 		Name: "score_case_2",
 		Input: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "5"},
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "5"},
 		},
-		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		IsSample:       false,
 		Points:         3,
 		ChallengeID:    challengeID,
@@ -145,9 +148,9 @@ func TestSubmissionScoring(t *testing.T) {
 	testCaseThree, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
 		Name: "score_case_impossible",
 		Input: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "7"},
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "7"},
 		},
-		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "999"},
+		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "999"},
 		IsSample:       false,
 		Points:         6,
 		ChallengeID:    challengeID,
@@ -189,7 +192,6 @@ func TestSubmissionScoring(t *testing.T) {
 	createdSubmission, err := process.Application.SubmissionUseCases.CreateSubmission.Execute(studentCtx, submission_dtos.CreateSubmissionInput{
 		Code:        "import sys\nprint(int(sys.stdin.read().strip()) * 2)",
 		Language:    "python",
-		Score:       0,
 		ChallengeID: challengeID,
 		SessionID:   sessionID,
 	})
@@ -214,7 +216,7 @@ func TestSubmissionScoring(t *testing.T) {
 		if statusOutput != nil && len(statusOutput.Results) == 3 {
 			allTerminal := true
 			for _, r := range statusOutput.Results {
-				if r.Status != submission_entities.SubmissionStatusAccepted && r.Status != submission_entities.SubmissionStatusWrongAnswer {
+				if r.Status != submission_consts.SubmissionStatusAccepted && r.Status != submission_consts.SubmissionStatusWrongAnswer {
 					allTerminal = false
 					break
 				}

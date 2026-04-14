@@ -444,6 +444,18 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   go test -v ./test/use_cases/exam -run TestExamItemPrivacy
   ```
 
+- **Generación de Plantilla de Código:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente (creador)
+  
+  - Paso 2: Crear un reto
+  
+  - Paso 3: Crear casos de prueba
+  
+  - Paso 4: Obtener plantillas por defecto para el reto
+  
+  - Paso 5: Validar que se reciban todas las variables esperadas y el print con el output
+
 ##### Módulo de Revisiones
 
 - **CRUD de Sesiones (`Session`):**
@@ -617,6 +629,46 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   ```
   go test -v ./test/use_cases/submission -run TestSubmissionExecution
   ```
+
+- **Ejecución de Código sin revisión:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (visibilidad `public` y sin curso)
+  
+  - Paso 3: Crear un reto
+  
+  - Paso 4: Crear 2 casos de prueba con valor de 3 puntos
+  
+  - Paso 5: Crear un caso de prueba con valor de 6 puntos (debe ser imposible de cumplir)
+  
+  - Paso 6: Iniciar sesión con usuario de estudiante
+  
+  - Paso 7: Crear una revisión
+  
+  - Paso 8: Obtener el `status` de la revisión hasta que su estado sea `accepted` o `wrong_answer`
+  
+  - Paso 9: Confirmar valor del atributo `Score` de la revisión corresponde a 0
+
+- **Ejecución de Código con caso personalizado:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (visibilidad `public` y sin curso)
+  
+  - Paso 3: Crear un reto
+  
+  - Paso 4: Crear 2 casos de prueba con valor de 3 puntos
+  
+  - Paso 5: Crear un caso de prueba con valor de 6 puntos (debe ser imposible de cumplir)
+  
+  - Paso 6: Iniciar sesión con usuario de estudiante
+  
+  - Paso 7: Crear una revisión con un caso de prueba personalizado
+  
+  - Paso 8: Obtener el `status` de la revisión hasta que su estado sea `accepted` o `wrong_answer`
+  
+  - Paso 9: Confirmar valor del atributo `Score` de la revisión corresponde a 0
 
 - **Puntaje de Revisiones:**
   

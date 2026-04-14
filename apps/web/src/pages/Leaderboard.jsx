@@ -10,7 +10,8 @@ import {
     Target,
     Zap,
     Search,
-    Award
+    Award,
+    Loader2
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Leaderboard.css';
@@ -68,10 +69,9 @@ const Leaderboard = ({ challengeId, courseId }) => {
 
     if (loading) return (
         <div className="leaderboard-page-new">
-            <div className="skeleton title-skeleton-wide"></div>
-            <div className="podium-skeleton"></div>
-            <div className="list-skeleton-mini">
-                {[...Array(5)].map((_, i) => <div key={i} className="skeleton-row-mini shimmer"></div>)}
+            <div className="page-loader">
+                <Loader2 className="page-loader-spinner" size={48} />
+                <p className="page-loader-text">Cargando clasificación...</p>
             </div>
         </div>
     );

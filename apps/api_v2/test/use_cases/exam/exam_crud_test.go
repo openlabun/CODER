@@ -8,8 +8,8 @@ import (
 
 	course_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
@@ -53,11 +53,11 @@ func TestExamCRUD(t *testing.T) {
 	createdCourse, err := process.Application.CourseModule.CreateCourse.Execute(teacherCtx, course_dtos.CreateCourseInput{
 		Name:           "Exam CRUD Course",
 		Description:    "Course for exam CRUD test",
-		Visibility:     string(course_entities.CourseVisibilityPublic),
-		VisualIdentity: string(course_entities.CourseColourBlue),
+		Visibility:     string(consts.CourseVisibilityPublic),
+		VisualIdentity: string(consts.CourseColourBlue),
 		Code:           fmt.Sprintf("EXCRUD-%d", now.Unix()%100000),
 		Year:           now.Year(),
-		Semester:       string(course_entities.AcademicFirstPeriod),
+		Semester:       string(consts.AcademicFirstPeriod),
 		EnrollmentCode: enrollmentCode,
 		EnrollmentURL:  "https://example.test/enroll/" + enrollmentCode,
 		TeacherID:      teacherID,
@@ -83,7 +83,7 @@ func TestExamCRUD(t *testing.T) {
 		CourseID:             &courseID,
 		Title:                "Exam CRUD Test",
 		Description:          "Created by use case test",
-		Visibility:           string(exam_entities.VisibilityCourse),
+		Visibility:           string(exam_consts.VisibilityCourse),
 		StartTime:            startTime.Format(time.RFC3339),
 		EndTime:              &endTimeStr,
 		AllowLateSubmissions: false,

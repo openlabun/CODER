@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	submission_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	submission_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
@@ -17,47 +18,76 @@ const (
 )
 
 func submissionToRecord(submission *Entities.Submission) map[string]any {
-	return map[string]any{
+	record := map[string]any{
 		"ID":          strings.TrimSpace(submission.ID),
 		"Code":        submission.Code,
 		"Language":    string(submission.Language),
 		"Score":       submission.Score,
 		"TimeMsTotal": submission.TimeMsTotal,
+		"Scorable":    submission.Scorable,
 		"CreatedAt":   submission.CreatedAt.UTC().Format(time.RFC3339),
 		"UpdatedAt":   submission.UpdatedAt.UTC().Format(time.RFC3339),
 		"ChallengeID": strings.TrimSpace(submission.ChallengeID),
 		"SessionID":   strings.TrimSpace(submission.SessionID),
 		"UserID":      strings.TrimSpace(submission.UserID),
 	}
+
+	if submission.ExamItemScoreID != nil {
+		if examItemScoreID := strings.TrimSpace(*submission.ExamItemScoreID); examItemScoreID != "" {
+			record["ExamItemScoreID"] = examItemScoreID
+		}
+	}
+
+	return record
 }
 
 func submissionToUpdates(submission *Entities.Submission) map[string]any {
-	return map[string]any{
+	updates := map[string]any{
 		"Code":        submission.Code,
 		"Language":    string(submission.Language),
 		"Score":       submission.Score,
 		"TimeMsTotal": submission.TimeMsTotal,
+		"Scorable":    submission.Scorable,
 		"ChallengeID": strings.TrimSpace(submission.ChallengeID),
 		"SessionID":   strings.TrimSpace(submission.SessionID),
 		"UserID":      strings.TrimSpace(submission.UserID),
 	}
+
+	if submission.ExamItemScoreID != nil {
+		if examItemScoreID := strings.TrimSpace(*submission.ExamItemScoreID); examItemScoreID != "" {
+			updates["ExamItemScoreID"] = examItemScoreID
+		}
+	} else {
+		updates["ExamItemScoreID"] = nil
+	}
+
+	return updates
 }
 
 func recordToSubmission(record map[string]any) (*Entities.Submission, error) {
 	createdAt, _ := asTime(record["CreatedAt"])
 	updatedAt, _ := asTime(record["UpdatedAt"])
 
+	var examItemScoreID *string
+	if record["ExamItemScoreID"] != nil {
+		if trimmedID := strings.TrimSpace(asString(record["ExamItemScoreID"])); trimmedID != "" {
+			examItemScoreID = &trimmedID
+		}
+	}
+
 	return submission_factory.ExistingSubmission(
 		asString(record["ID"]),
 		asString(record["Code"]),
-		Entities.ProgrammingLanguage(asString(record["Language"])),
+		submission_constants.ProgrammingLanguage(asString(record["Language"])),
 		asInt(record["Score"]),
 		asInt(record["TimeMsTotal"]),
+		asBool(record["Scorable"]),
 		createdAt,
 		updatedAt,
 		asString(record["ChallengeID"]),
 		asString(record["SessionID"]),
 		asString(record["UserID"]),
+		examItemScoreID,
 	)
 }
 
@@ -113,7 +143,7 @@ func recordToSession(record map[string]any) (*Entities.Session, error) {
 		asString(record["ID"]),
 		asString(record["StudentID"]),
 		asString(record["ExamID"]),
-		Entities.SessionStatus(asString(record["Status"])),
+		submission_constants.SessionStatus(asString(record["Status"])),
 		asInt(record["Attempts"]),
 		asInt(record["TimeLeft"]),
 		startedAt,
@@ -175,19 +205,10 @@ func recordToResult(record map[string]any, actualOutput *ExamEntities.IOVariable
 		asString(record["ID"]),
 		asString(record["SubmissionID"]),
 		asString(record["TestCaseID"]),
-		Entities.SubmissionStatus(asString(record["Status"])),
+		submission_constants.SubmissionStatus(asString(record["Status"])),
 		actualOutput,
 		errMsg,
 	)
-}
-
-func recordToIOVariable(record map[string]any) (*ExamEntities.IOVariable, error) {
-	return &ExamEntities.IOVariable{
-		ID:    asString(record["ID"]),
-		Name:  asString(record["Name"]),
-		Type:  ExamEntities.VariableFormat(asString(record["Type"])),
-		Value: asString(record["Value"]),
-	}, nil
 }
 
 func firstRecord(res map[string]any) (map[string]any, error) {
@@ -292,6 +313,28 @@ func asInt(v any) int {
 	}
 
 	return 0
+}
+
+func asBool(v any) bool {
+	switch value := v.(type) {
+	case bool:
+		return value
+	case string:
+		s := strings.ToLower(strings.TrimSpace(value))
+		return s == "true" || s == "1" || s == "yes"
+	case int:
+		return value != 0
+	case int32:
+		return value != 0
+	case int64:
+		return value != 0
+	case float32:
+		return value != 0
+	case float64:
+		return value != 0
+	default:
+		return false
+	}
 }
 
 func asTime(v any) (time.Time, bool) {

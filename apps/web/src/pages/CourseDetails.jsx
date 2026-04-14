@@ -9,7 +9,7 @@ import {
     createExamSession
 } from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
-import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, Target, ChevronRight, Code, Edit, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, Target, ChevronRight, Code, Edit, ArrowRight, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import './Courses.css';
 import './CourseActions.css';
@@ -138,7 +138,12 @@ const CourseDetails = () => {
 
 
 
-    if (loading) return <div className="loading">Cargando curso...</div>;
+    if (loading) return (
+        <div className="page-loader">
+            <Loader2 className="page-loader-spinner" size={48} />
+            <p className="page-loader-text">Cargando curso...</p>
+        </div>
+    );
     const isProfessor = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
 
     return (
@@ -168,78 +173,6 @@ const CourseDetails = () => {
                     </div>
                 )}
             </div>
-
-            {isProfessor && (
-                <section className="challenges-section-new">
-                    <div className="section-header">
-                        <h2>🎯 Retos del Curso</h2>
-                        <button className="btn-add-mini" onClick={() => navigate(`/challenges/create?courseId=${id}`)}>
-                            Nuevo Reto
-                        </button>
-                    </div>
-                    {challenges.length === 0 ? (
-                        <div className="empty-state-mini-alt">
-                            <div className="empty-state-icon">🎯</div>
-                            <h3>No hay retos todavía</h3>
-                            <p>Aún no se han asignado retos a este curso.</p>
-                            <p className="empty-state-hint" style={{marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.7}}>
-                                Haz clic en "Nuevo Reto" para añadir desafíos.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="challenges-grid-compact">
-                            {challenges.map(challenge => (
-                                <div key={challenge.id} className="challenge-card-mini">
-                                    <div className={`card-accent ${challenge.difficulty}`}></div>
-                                    <div className="card-main">
-                                        <div className="card-top">
-                                            <div className="title-area">
-                                                <Code size={16} className="title-icon" />
-                                                <h3>{challenge.title}</h3>
-                                            </div>
-                                            <span className={`diff-pill ${challenge.difficulty}`}>
-                                                {challenge.difficulty === 'easy' ? 'Fácil' : challenge.difficulty === 'hard' ? 'Difícil' : 'Medio'}
-                                            </span>
-                                        </div>
-                                        <p className="description-text">
-                                            {challenge.description || 'Sin descripción disponible.'}
-                                        </p>
-                                        <div className="card-footer-mini">
-                                            <div className="stats-mini">
-                                                <div className="stat">
-                                                    <Clock size={12} />
-                                                    <span>{challenge.workerTimeLimit || 1000}ms</span>
-                                                </div>
-                                                <div className="stat">
-                                                    <Target size={12} />
-                                                    <span>{challenge.workerMemoryLimit || 256}MB</span>
-                                                </div>
-                                            </div>
-                                            <div className="actions-wrapper">
-                                                <div className="teacher-actions">
-                                                    <button 
-                                                        className="action-btn edit" 
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            navigate(`/challenges/edit/${challenge.id}`);
-                                                        }}
-                                                        title="Editar"
-                                                    >
-                                                        <Edit size={14} />
-                                                    </button>
-                                                </div>
-                                                <Link to={`/challenge/${challenge.id}`} className="btn-action-mini">
-                                                    Resolver <ChevronRight size={14} />
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </section>
-            )}
 
             <section className="exams-section-new">
                 <div className="section-header">

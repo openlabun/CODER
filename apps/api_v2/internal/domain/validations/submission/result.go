@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	StateMachine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/submission"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	StateMachine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/submission"
 	ExamValidations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
 )
 
@@ -14,11 +15,11 @@ func validateSubmissionResultsDetails(result *Entities.SubmissionResult) error {
 	hasErrorMessage := result.ErrorMessage != nil && strings.TrimSpace(*result.ErrorMessage) != ""
 
 	switch result.Status {
-	case Entities.SubmissionStatusQueued, Entities.SubmissionStatusRunning, Entities.SubmissionStatusTimeout:
+	case constants.SubmissionStatusQueued, constants.SubmissionStatusRunning, constants.SubmissionStatusTimeout:
 		if hasActualOutput || hasErrorMessage {
 			return fmt.Errorf("queued/running result cannot include output or error message")
 		}
-	case Entities.SubmissionStatusAccepted, Entities.SubmissionStatusWrongAnswer, Entities.SubmissionStatusExecuted:
+	case constants.SubmissionStatusAccepted, constants.SubmissionStatusWrongAnswer, constants.SubmissionStatusExecuted:
 		if !hasActualOutput {
 			return fmt.Errorf("accepted/wrong_answer result requires actual output")
 		}
@@ -28,7 +29,7 @@ func validateSubmissionResultsDetails(result *Entities.SubmissionResult) error {
 		if err := ExamValidations.ValidateIOVariable(*result.ActualOutput); err != nil {
 			return fmt.Errorf("invalid actual output: %w", err)
 		}
-	case Entities.SubmissionStatusError:
+	case constants.SubmissionStatusError:
 		if hasActualOutput {
 			return fmt.Errorf("error result cannot include actual output")
 		}

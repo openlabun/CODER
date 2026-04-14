@@ -3,7 +3,7 @@ import {
     CheckCircle, XCircle, Clock, Code,
     Calendar, ChevronRight, ChevronDown, AlertCircle,
     Trophy, RotateCcw, Target, Users,
-    Hash, User, Layers, BookOpen
+    Hash, User, Layers, BookOpen, Loader2
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import client from '../api/client';
@@ -24,6 +24,10 @@ const Submissions = () => {
 
     // Professor: expanded student within an exam
     const [expandedStudentId, setExpandedStudentId] = useState(null);
+    // Student / Professor: expanded challenge within detail
+    const [expandedChallengeId, setExpandedChallengeId] = useState(null);
+    // Professor: expanded attempt (submission) within a student drill-down
+    const [expandedAttemptId, setExpandedAttemptId] = useState(null);
 
     // Fetch exams on mount
     useEffect(() => {
@@ -66,7 +70,6 @@ const Submissions = () => {
                     const subRes = await client.get(`/submissions/challenge/${challengeId}`);
                     const subs = Array.isArray(subRes.data) ? subRes.data : (subRes.data?.items || []);
                     subs.forEach(sub => {
-                        // Attach challenge info to each submission for display
                         const s = sub?.Submission || sub?.submission || sub;
                         const results = sub?.Results || sub?.results || [];
                         allSubmissions.push({
@@ -78,7 +81,6 @@ const Submissions = () => {
                         });
                     });
                 } catch (subErr) {
-                    // Some challenges may not have submissions
                     console.warn(`No submissions for challenge ${challengeId}:`, subErr.message);
                 }
             }
@@ -105,19 +107,15 @@ const Submissions = () => {
         if (expandedExamId === examId) {
             setExpandedExamId(null);
             setExpandedStudentId(null);
+            setExpandedChallengeId(null);
+            setExpandedAttemptId(null);
         } else {
             setExpandedExamId(examId);
             setExpandedStudentId(null);
+            setExpandedChallengeId(null);
+            setExpandedAttemptId(null);
             loadExamDetails(examId);
         }
-    };
-
-    const getStatusInfo = (status) => {
-        const s = (status || 'pending').toLowerCase();
-        if (s === 'accepted' || s === 'success') return { label: 'Aceptado', cls: 'accepted', icon: <CheckCircle size={13} /> };
-        if (s === 'wrong_answer' || s === 'rejected' || s === 'failed') return { label: 'Rechazado', cls: 'rejected', icon: <XCircle size={13} /> };
-        if (s === 'runtime_error' || s === 'error') return { label: 'Error', cls: 'error', icon: <AlertCircle size={13} /> };
-        return { label: 'Pendiente', cls: 'pending', icon: <Clock size={13} /> };
     };
 
     const formatDate = (dateStr) => {
@@ -139,26 +137,29 @@ const Submissions = () => {
             const isExpanded = expandedExamId === examId;
             const details = examDetails[examId];
 
-            // Calculate summary from loaded submissions
+            // Calculate weighted score
+            let totalMaxPoints = 0;
+            let totalEarnedPoints = 0;
             let totalChallenges = 0;
             let solvedChallenges = 0;
-            let totalAttempts = 0;
-            let bestScoreMap = {};
 
             if (details?.loaded) {
-                // Group submissions by challenge, find best score per challenge
-                const challengeMap = {};
+                const challengeBestScores = {};
                 details.submissions.forEach(sub => {
                     const cid = sub.challengeId || sub.challenge_id || sub.ChallengeID;
-                    if (!challengeMap[cid]) challengeMap[cid] = [];
-                    challengeMap[cid].push(sub);
+                    const sc = sub.score || sub.Score || 0;
+                    if (!challengeBestScores[cid] || sc > challengeBestScores[cid]) {
+                        challengeBestScores[cid] = sc;
+                    }
                 });
 
                 totalChallenges = details.items.length;
-                Object.entries(challengeMap).forEach(([cid, subs]) => {
-                    totalAttempts += subs.length;
-                    const best = Math.max(...subs.map(s => s.score || s.Score || 0));
-                    bestScoreMap[cid] = best;
+                details.items.forEach(item => {
+                    const cid = item.challenge?.id || item.challenge?.ID || item.challengeID || item.challenge_id;
+                    const pts = item.points || item.Points || 0;
+                    totalMaxPoints += pts;
+                    const best = challengeBestScores[cid] || 0;
+                    totalEarnedPoints += Math.round((best / 100) * pts);
                     if (best === 100) solvedChallenges++;
                 });
             }
@@ -191,9 +192,9 @@ const Submissions = () => {
                                 <div className="exam-score-summary">
                                     <div className="score-chip">
                                         <Trophy size={14} />
-                                        {solvedChallenges}/{totalChallenges}
+                                        {totalEarnedPoints}/{totalMaxPoints} pts
                                     </div>
-                                    <span className="attempt-count">{totalAttempts} envío{totalAttempts !== 1 ? 's' : ''}</span>
+                                    <span className="attempt-count">{solvedChallenges}/{totalChallenges} resueltos</span>
                                 </div>
                             )}
                             <div className={`expand-chevron ${isExpanded ? 'open' : ''}`}>
@@ -215,6 +216,28 @@ const Submissions = () => {
                             )}
                             {details?.loaded && (
                                 <>
+                                    {/* Score summary bar */}
+                                    {totalMaxPoints > 0 && (
+                                        <div style={{ padding: '1rem 0 0.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            <div style={{ flex: 1, height: '8px', background: '#e2e8f0', borderRadius: '100px', overflow: 'hidden' }}>
+                                                <div style={{
+                                                    width: `${Math.round((totalEarnedPoints / totalMaxPoints) * 100)}%`,
+                                                    height: '100%',
+                                                    background: totalEarnedPoints === totalMaxPoints
+                                                        ? 'linear-gradient(90deg, #16a34a, #22c55e)'
+                                                        : totalEarnedPoints > 0
+                                                            ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
+                                                            : '#ef4444',
+                                                    borderRadius: '100px',
+                                                    transition: 'width 0.5s ease'
+                                                }} />
+                                            </div>
+                                            <span style={{ fontWeight: 900, fontSize: '0.85rem', color: '#1e293b', whiteSpace: 'nowrap' }}>
+                                                {Math.round((totalEarnedPoints / totalMaxPoints) * 100)}%
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {details.items.length === 0 ? (
                                         <div className="detail-empty">Este examen no tiene retos asignados.</div>
                                     ) : (
@@ -226,17 +249,20 @@ const Submissions = () => {
                                                 const pts = item.points || item.Points || 0;
                                                 const diff = (ch.difficulty || ch.Difficulty || 'medium').toLowerCase();
 
-                                                // Find submissions for this challenge
                                                 const mySubs = details.submissions
                                                     .filter(s => (s.challengeId || s.challenge_id || s.ChallengeID) === cid)
                                                     .sort((a, b) => new Date(b.created_at || b.CreatedAt || 0) - new Date(a.created_at || a.CreatedAt || 0));
 
                                                 const bestScore = mySubs.length > 0 ? Math.max(...mySubs.map(s => s.score || s.Score || 0)) : null;
                                                 const isSolved = bestScore === 100;
-                                                const lastSub = mySubs[0];
+                                                const earned = bestScore !== null ? Math.round((bestScore / 100) * pts) : 0;
+                                                const isChExpanded = expandedChallengeId === cid;
 
                                                 return (
-                                                    <div key={cid || idx} className={`challenge-result-card ${isSolved ? 'solved' : mySubs.length > 0 ? 'attempted' : 'unattempted'}`}>
+                                                    <div key={cid || idx} className={`challenge-result-card ${isSolved ? 'solved' : mySubs.length > 0 ? 'attempted' : 'unattempted'}`}
+                                                        onClick={() => setExpandedChallengeId(isChExpanded ? null : cid)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    >
                                                         <div className="cr-header">
                                                             <div className="cr-title-row">
                                                                 <Code size={15} className="cr-icon" />
@@ -246,7 +272,7 @@ const Submissions = () => {
                                                                 <span className={`diff-badge ${diff}`}>
                                                                     {diff === 'easy' ? 'Fácil' : diff === 'hard' ? 'Difícil' : 'Medio'}
                                                                 </span>
-                                                                <span className="pts-badge">{pts} pts</span>
+                                                                <span className="pts-badge">{earned}/{pts} pts</span>
                                                             </div>
                                                         </div>
                                                         <div className="cr-body">
@@ -262,28 +288,38 @@ const Submissions = () => {
                                                                             <span className="cr-attempts">
                                                                                 <Hash size={12} /> {mySubs.length} intento{mySubs.length !== 1 ? 's' : ''}
                                                                             </span>
-                                                                            {lastSub && (
-                                                                                <span className="cr-last-date">
-                                                                                    <Calendar size={11} /> {formatDate(lastSub.created_at || lastSub.CreatedAt)}
-                                                                                </span>
-                                                                            )}
                                                                         </div>
                                                                     </div>
-                                                                    {/* Mini timeline of attempts */}
-                                                                    <div className="cr-attempts-timeline">
-                                                                        {mySubs.slice(0, 5).map((sub, si) => {
-                                                                            const sc = sub.score || sub.Score || 0;
-                                                                            return (
-                                                                                <div key={sub.id || sub.ID || si}
-                                                                                    className={`attempt-dot ${sc === 100 ? 'perfect' : sc >= 50 ? 'partial' : 'low'}`}
-                                                                                    title={`${sc}% — ${formatDate(sub.created_at || sub.CreatedAt)} ${formatTime(sub.created_at || sub.CreatedAt)}`}
-                                                                                />
-                                                                            );
-                                                                        })}
-                                                                        {mySubs.length > 5 && (
-                                                                            <span className="more-attempts">+{mySubs.length - 5}</span>
-                                                                        )}
-                                                                    </div>
+                                                                    {/* Expandable detail: list attempts */}
+                                                                    {isChExpanded && (
+                                                                        <div style={{ marginTop: '0.75rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>
+                                                                            {mySubs.map((sub, si) => {
+                                                                                const sc = sub.score || sub.Score || 0;
+                                                                                return (
+                                                                                    <div key={sub.id || sub.ID || si} style={{
+                                                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                                                        padding: '0.4rem 0.5rem', borderRadius: '8px', marginBottom: '3px',
+                                                                                        background: sc === 100 ? '#f0fdf4' : '#f8fafc', fontSize: '0.78rem', fontWeight: 700
+                                                                                    }}>
+                                                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569' }}>
+                                                                                            {sc === 100 ? <CheckCircle size={12} style={{ color: '#16a34a' }} /> : <XCircle size={12} style={{ color: '#ef4444' }} />}
+                                                                                            Intento #{si + 1}
+                                                                                        </span>
+                                                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                                            <span style={{
+                                                                                                padding: '2px 8px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: 900,
+                                                                                                background: sc === 100 ? '#dcfce7' : sc >= 50 ? '#fef3c7' : '#fee2e2',
+                                                                                                color: sc === 100 ? '#16a34a' : sc >= 50 ? '#d97706' : '#ef4444'
+                                                                                            }}>{sc}%</span>
+                                                                                            <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
+                                                                                                {formatDate(sub.created_at || sub.CreatedAt)} {formatTime(sub.created_at || sub.CreatedAt)}
+                                                                                            </span>
+                                                                                        </span>
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
                                                                 </>
                                                             )}
                                                         </div>
@@ -374,14 +410,14 @@ const Submissions = () => {
                                     <div className="students-table-header">
                                         <div className="st-col student">ESTUDIANTE</div>
                                         <div className="st-col subs">ENVÍOS</div>
-                                        <div className="st-col best">MEJOR SCORE</div>
+                                        <div className="st-col best">SCORE GENERAL</div>
                                         <div className="st-col challenges">RETOS RESUELTOS</div>
                                         <div className="st-col last">ÚLTIMO ENVÍO</div>
                                         <div className="st-col action"></div>
                                     </div>
                                     {Object.entries(studentMap).map(([uid, subs]) => {
                                         const isStudentExpanded = expandedStudentId === uid;
-                                        // Per-challenge best scores
+                                        // Per-challenge best scores for this student
                                         const challengeScores = {};
                                         subs.forEach(s => {
                                             const cid = s.challengeId || s.challenge_id || s.ChallengeID;
@@ -390,8 +426,22 @@ const Submissions = () => {
                                                 challengeScores[cid] = sc;
                                             }
                                         });
+
+                                        // Weighted score for this student
+                                        let studentTotalMax = 0;
+                                        let studentTotalEarned = 0;
                                         const solvedCount = Object.values(challengeScores).filter(sc => sc === 100).length;
-                                        const bestOverall = subs.length > 0 ? Math.max(...subs.map(s => s.score || s.Score || 0)) : 0;
+
+                                        details.items.forEach(item => {
+                                            const cid = item.challenge?.id || item.challenge?.ID || item.challengeID || item.challenge_id;
+                                            const pts = item.points || item.Points || 0;
+                                            studentTotalMax += pts;
+                                            const best = challengeScores[cid] || 0;
+                                            studentTotalEarned += Math.round((best / 100) * pts);
+                                        });
+
+                                        const studentScorePct = studentTotalMax > 0 ? Math.round((studentTotalEarned / studentTotalMax) * 100) : 0;
+
                                         const lastSub = subs.sort((a, b) =>
                                             new Date(b.created_at || b.CreatedAt || 0) - new Date(a.created_at || a.CreatedAt || 0)
                                         )[0];
@@ -400,7 +450,10 @@ const Submissions = () => {
                                             <div key={uid} className="student-row-wrapper">
                                                 <div
                                                     className={`student-row ${isStudentExpanded ? 'expanded' : ''}`}
-                                                    onClick={() => setExpandedStudentId(isStudentExpanded ? null : uid)}
+                                                    onClick={() => {
+                                                        setExpandedStudentId(isStudentExpanded ? null : uid);
+                                                        setExpandedAttemptId(null);
+                                                    }}
                                                 >
                                                     <div className="st-col student">
                                                         <div className="student-avatar">
@@ -414,8 +467,8 @@ const Submissions = () => {
                                                         <span className="sub-count-badge">{subs.length}</span>
                                                     </div>
                                                     <div className="st-col best">
-                                                        <span className={`score-pill ${bestOverall === 100 ? 'perfect' : bestOverall >= 50 ? 'partial' : 'low'}`}>
-                                                            {bestOverall}%
+                                                        <span className={`score-pill ${studentScorePct === 100 ? 'perfect' : studentScorePct >= 50 ? 'partial' : 'low'}`}>
+                                                            {studentTotalEarned}/{studentTotalMax} pts ({studentScorePct}%)
                                                         </span>
                                                     </div>
                                                     <div className="st-col challenges">
@@ -433,34 +486,80 @@ const Submissions = () => {
 
                                                 {isStudentExpanded && (
                                                     <div className="student-submissions-detail">
-                                                        {subs.sort((a, b) =>
-                                                            new Date(b.created_at || b.CreatedAt || 0) - new Date(a.created_at || a.CreatedAt || 0)
-                                                        ).map((sub, si) => {
-                                                            const sc = sub.score || sub.Score || 0;
-                                                            const st = getStatusInfo(sc === 100 ? 'accepted' : sc > 0 ? 'wrong_answer' : 'pending');
+                                                        {/* Per-challenge breakdown for this student */}
+                                                        {details.items.map((item, idx) => {
+                                                            const ch = item.challenge || {};
+                                                            const cid = ch.id || ch.ID || item.challengeID || item.challenge_id;
+                                                            const title = ch.title || ch.Title || `Reto #${idx + 1}`;
+                                                            const pts = item.points || item.Points || 0;
+                                                            const chSubs = subs
+                                                                .filter(s => (s.challengeId || s.challenge_id || s.ChallengeID) === cid)
+                                                                .sort((a, b) => new Date(b.created_at || b.CreatedAt || 0) - new Date(a.created_at || a.CreatedAt || 0));
+                                                            const bestSc = chSubs.length > 0 ? Math.max(...chSubs.map(s => s.score || s.Score || 0)) : 0;
+                                                            const earned = Math.round((bestSc / 100) * pts);
+                                                            const isAttemptExpanded = expandedAttemptId === `${uid}-${cid}`;
+
                                                             return (
-                                                                <div key={sub.id || sub.ID || si} className="sub-detail-row">
-                                                                    <div className="sub-detail-challenge">
-                                                                        <Code size={13} />
-                                                                        <span>{sub.challengeTitle || 'Reto'}</span>
+                                                                <div key={cid || idx}>
+                                                                    <div
+                                                                        className="sub-detail-row"
+                                                                        style={{ cursor: 'pointer' }}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setExpandedAttemptId(isAttemptExpanded ? null : `${uid}-${cid}`);
+                                                                        }}
+                                                                    >
+                                                                        <div className="sub-detail-challenge">
+                                                                            <Code size={13} />
+                                                                            <span>{title}</span>
+                                                                        </div>
+                                                                        <div className="sub-detail-status">
+                                                                            <span className={`status-pill-mini ${bestSc === 100 ? 'accepted' : bestSc > 0 ? 'rejected' : 'pending'}`}>
+                                                                                {bestSc === 100 ? <><CheckCircle size={13} /> Aceptado</> : bestSc > 0 ? <><XCircle size={13} /> Parcial</> : <><Clock size={13} /> Sin intentos</>}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="sub-detail-score">
+                                                                            <Trophy size={12} />
+                                                                            <span>{earned}/{pts} pts</span>
+                                                                        </div>
+                                                                        <div className="sub-detail-lang">
+                                                                            <span>{chSubs.length} intento{chSubs.length !== 1 ? 's' : ''}</span>
+                                                                        </div>
+                                                                        <div className="sub-detail-date">
+                                                                            <div className={`expand-chevron-small ${isAttemptExpanded ? 'open' : ''}`}>
+                                                                                <ChevronDown size={12} />
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="sub-detail-status">
-                                                                        <span className={`status-pill-mini ${st.cls}`}>
-                                                                            {st.icon}
-                                                                            {st.label}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="sub-detail-score">
-                                                                        <Trophy size={12} />
-                                                                        <span>{sc}%</span>
-                                                                    </div>
-                                                                    <div className="sub-detail-lang">
-                                                                        <span>{sub.language || sub.Language || '—'}</span>
-                                                                    </div>
-                                                                    <div className="sub-detail-date">
-                                                                        <Calendar size={11} />
-                                                                        <span>{formatDate(sub.created_at || sub.CreatedAt)} {formatTime(sub.created_at || sub.CreatedAt)}</span>
-                                                                    </div>
+                                                                    {isAttemptExpanded && chSubs.length > 0 && (
+                                                                        <div style={{ padding: '0.25rem 0.5rem 0.5rem 2rem' }}>
+                                                                            {chSubs.map((sub, si) => {
+                                                                                const sc = sub.score || sub.Score || 0;
+                                                                                return (
+                                                                                    <div key={sub.id || sub.ID || si} style={{
+                                                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                                                        padding: '0.35rem 0.6rem', borderRadius: '8px', marginBottom: '2px',
+                                                                                        background: sc === 100 ? '#f0fdf4' : '#f8fafc', fontSize: '0.73rem', fontWeight: 700
+                                                                                    }}>
+                                                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#475569' }}>
+                                                                                            {sc === 100 ? <CheckCircle size={11} style={{ color: '#16a34a' }} /> : <XCircle size={11} style={{ color: '#ef4444' }} />}
+                                                                                            Intento #{si + 1} — {sub.language || sub.Language || '—'}
+                                                                                        </span>
+                                                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                                            <span style={{
+                                                                                                padding: '1px 7px', borderRadius: '100px', fontSize: '0.65rem', fontWeight: 900,
+                                                                                                background: sc === 100 ? '#dcfce7' : sc >= 50 ? '#fef3c7' : '#fee2e2',
+                                                                                                color: sc === 100 ? '#16a34a' : sc >= 50 ? '#d97706' : '#ef4444'
+                                                                                            }}>{sc}%</span>
+                                                                                            <span style={{ color: '#94a3b8', fontSize: '0.65rem' }}>
+                                                                                                {formatDate(sub.created_at || sub.CreatedAt)} {formatTime(sub.created_at || sub.CreatedAt)}
+                                                                                            </span>
+                                                                                        </span>
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             );
                                                         })}
@@ -481,9 +580,10 @@ const Submissions = () => {
     // ============ RENDER ============
     if (loading) return (
         <div className="submissions-page-mini">
-            <header className="page-header-mini">
-                <div className="skeleton title-skeleton"></div>
-            </header>
+            <div className="page-loader" style={{ paddingBottom: '2rem' }}>
+                <Loader2 className="page-loader-spinner" size={48} />
+                <p className="page-loader-text">Cargando envíos...</p>
+            </div>
             <div className="skeleton-table-mini">
                 {[...Array(4)].map((_, i) => (
                     <div key={i} className="skeleton-row-mini shimmer"></div>
@@ -499,8 +599,7 @@ const Submissions = () => {
                     <h1>{isProfessor ? 'Resultados de Exámenes' : 'Mi Historial de Exámenes'}</h1>
                     <p>{isProfessor
                         ? 'Revisa los envíos de tus estudiantes por examen'
-                        : 'Consulta tu progreso y resultados en cada examen'}
-                    </p>
+                        : 'Consulta tu progreso y resultados en cada examen'}</p>
                 </div>
             </header>
 
@@ -521,8 +620,7 @@ const Submissions = () => {
                     <h3>Sin exámenes disponibles</h3>
                     <p>{isProfessor
                         ? 'Los exámenes que crees aparecerán aquí con los resultados de tus estudiantes.'
-                        : 'Los exámenes públicos que estén disponibles aparecerán aquí.'}
-                    </p>
+                        : 'Los exámenes públicos que estén disponibles aparecerán aquí.'}</p>
                 </div>
             ) : (
                 <div className="exams-list">

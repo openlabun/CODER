@@ -7,7 +7,7 @@ import (
 	"time"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -19,9 +19,9 @@ type RabbitMQAdapter struct {
 
 func NewRabbitMQAdapter() (*RabbitMQAdapter, error) {
 	queues := map[string]string{
-		string(entities.LanguagePython): getEnvOrDefault("PYTHON_QUEUE", "python.queue"),
-		string(entities.LanguageJava):   getEnvOrDefault("JAVA_QUEUE", "java.queue"),
-		string(entities.LanguageCPP):    getEnvOrDefault("CPP_QUEUE", "cpp.queue"),
+		string(constants.LanguagePython): getEnvOrDefault("PYTHON_QUEUE", "python.queue"),
+		string(constants.LanguageJava):   getEnvOrDefault("JAVA_QUEUE", "java.queue"),
+		string(constants.LanguageCPP):    getEnvOrDefault("CPP_QUEUE", "cpp.queue"),
 	}
 
 	amqpURL := getEnvOrDefault("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/")

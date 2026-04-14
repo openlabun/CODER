@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -40,14 +40,17 @@ func TestChallengeFromTeacherView(t *testing.T) {
 		Title:             "Challenge Teachers View",
 		Description:       "Challenge para validar visibilidad entre docentes",
 		Tags:              []string{"teachers-view", "challenge"},
-		Status:            string(exam_entities.ChallengeStatusPrivate),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusPrivate),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1400,
 		WorkerMemoryLimit: 256,
-		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "7"},
+		CodeTemplates: []exam_dtos.CodeTemplateDTO{
+			{Language: "python", Template: "def solve() { return; }"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "7"},
+		InputVariables: []exam_dtos.IOVariableDTO{
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "7"},
+		},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "7"},
 		Constraints:    "1 <= n <= 100",
 	})
 	if err != nil {
@@ -121,6 +124,6 @@ func TestChallengeFromTeacherView(t *testing.T) {
 	}
 	process.Log("Recibió ERROR, como se esperaba")
 	process.EndStep()
-	
+
 	process.End()
 }

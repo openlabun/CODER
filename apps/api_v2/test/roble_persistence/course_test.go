@@ -9,6 +9,7 @@ import (
 
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 	hasher "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
@@ -76,12 +77,12 @@ func TestCourseCRUD (t *testing.T) {
 	course, err := factory.NewCourse(
 		"Integration Course",
 		"Created by integration test",
-		course_entities.CourseVisibilityPublic,
-		course_entities.CourseColourBlue,
+		consts.CourseVisibilityPublic,
+		consts.CourseColourBlue,
 		fmt.Sprintf("IT-%d", now.Unix()%100000),
 		&course_entities.Period{
 			Year:     now.Year(),
-			Semester: course_entities.AcademicFirstPeriod,
+			Semester: consts.AcademicFirstPeriod,
 		},
 		enrollmentCode,
 		"https://example.test/enroll/"+enrollmentCode,

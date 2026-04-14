@@ -7,7 +7,7 @@ import (
 	"time"
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -52,7 +52,7 @@ func TestExamItemPrivacy(t *testing.T) {
 		CourseID:             nil,
 		Title:                "ExamItem Privacy Exam",
 		Description:          "Exam para pruebas de privacidad de exam items",
-		Visibility:           string(exam_entities.VisibilityPrivate),
+		Visibility:           string(exam_consts.VisibilityPrivate),
 		StartTime:            now.Add(2 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: false,
@@ -69,14 +69,17 @@ func TestExamItemPrivacy(t *testing.T) {
 		Title:             "ExamItem Privacy Challenge",
 		Description:       "Challenge para pruebas de privacidad",
 		Tags:              []string{"exam-item", "privacy"},
-		Status:            string(exam_entities.ChallengeStatusPublished),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusPublished),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
 		WorkerMemoryLimit: 256,
-		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "x", Type: string(exam_entities.VariableFormatInt), Value: "7"},
+		CodeTemplates: []exam_dtos.CodeTemplateDTO{
+			{Language: "python", Template: "def solve() { return; }"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_entities.VariableFormatInt), Value: "7"},
+		InputVariables: []exam_dtos.IOVariableDTO{
+			{Name: "x", Type: string(exam_consts.VariableFormatInt), Value: "7"},
+		},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_consts.VariableFormatInt), Value: "7"},
 		Constraints:    "x >= 0",
 	})
 	if err != nil {

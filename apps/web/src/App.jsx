@@ -27,6 +27,9 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* ExamRunner is full-page, no sidebar/layout wrapper */}
+        <Route path="exam/:id" element={<ProtectedRoute><ExamRunner /></ProtectedRoute>} />
+
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
@@ -41,7 +44,6 @@ function App() {
           <Route path="courses/browse" element={<ProtectedRoute><BrowseCourses /></ProtectedRoute>} />
           <Route path="courses/:id" element={<ProtectedRoute><CourseDetails /></ProtectedRoute>} />
           <Route path="courses/:id/students" element={<ProtectedRoute><CourseStudents /></ProtectedRoute>} />
-          <Route path="exam/:id" element={<ProtectedRoute><ExamRunner /></ProtectedRoute>} />
           <Route path="exam/:id/edit" element={<ProtectedRoute><ExamEditor /></ProtectedRoute>} />
           <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="submissions" element={<ProtectedRoute><Submissions /></ProtectedRoute>} />

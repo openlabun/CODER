@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -44,14 +44,17 @@ func TestTestCaseCRUD(t *testing.T) {
 		Title:             "Challenge for TestCase CRUD",
 		Description:       "Challenge auxiliar para test case CRUD",
 		Tags:              []string{"testcase", "crud"},
-		Status:            string(exam_entities.ChallengeStatusDraft),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusDraft),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
 		WorkerMemoryLimit: 256,
-		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "x", Type: string(exam_entities.VariableFormatInt), Value: "1"},
+		CodeTemplates: []exam_dtos.CodeTemplateDTO{
+			{Language: "python", Template: "def solve() { return; }"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "1"},
+		InputVariables: []exam_dtos.IOVariableDTO{
+			{Name: "x", Type: string(exam_consts.VariableFormatInt), Value: "1"},
+		},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "1"},
 		Constraints:    "1 <= x <= 1000",
 	})
 	if err != nil {
@@ -68,7 +71,7 @@ func TestTestCaseCRUD(t *testing.T) {
 	_, err = process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
 		Name:           "invalid_test_case",
 		Input:          []exam_dtos.IOVariableDTO{},
-		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "1"},
+		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "1"},
 		IsSample:       true,
 		Points:         0,
 		ChallengeID:    challengeID,
@@ -84,10 +87,10 @@ func TestTestCaseCRUD(t *testing.T) {
 	createdTestCase, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
 		Name: "sample_valid",
 		Input: []exam_dtos.IOVariableDTO{
-			{Name: "a", Type: string(exam_entities.VariableFormatInt), Value: "2"},
-			{Name: "b", Type: string(exam_entities.VariableFormatInt), Value: "3"},
+			{Name: "a", Type: string(exam_consts.VariableFormatInt), Value: "2"},
+			{Name: "b", Type: string(exam_consts.VariableFormatInt), Value: "3"},
 		},
-		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "sum", Type: string(exam_entities.VariableFormatInt), Value: "5"},
+		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "sum", Type: string(exam_consts.VariableFormatInt), Value: "5"},
 		IsSample:       true,
 		Points:         10,
 		ChallengeID:    challengeID,

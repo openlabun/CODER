@@ -3,6 +3,7 @@ package submission_states
 import (
 	"fmt"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
@@ -19,43 +20,43 @@ import (
 // If a submission is in the accepted/wrong_answer state: ExpectedOutput and ActualOutput may be populated for feedback purposes
 // If a submission is in the error state: ErrorMessage may be populated with details about the error
 
-var submissionAllowedTransitions = map[Entities.SubmissionStatus]map[Entities.SubmissionStatus]struct{}{
-	Entities.SubmissionStatusQueued: {
-		Entities.SubmissionStatusRunning: {},
+var submissionAllowedTransitions = map[constants.SubmissionStatus]map[constants.SubmissionStatus]struct{}{
+	constants.SubmissionStatusQueued: {
+		constants.SubmissionStatusRunning: {},
 	},
-	Entities.SubmissionStatusRunning: {
-		Entities.SubmissionStatusExecuted: {},
-		Entities.SubmissionStatusTimeout:  {},
-		Entities.SubmissionStatusError:    {},
+	constants.SubmissionStatusRunning: {
+		constants.SubmissionStatusExecuted: {},
+		constants.SubmissionStatusTimeout:  {},
+		constants.SubmissionStatusError:    {},
 	},
-	Entities.SubmissionStatusExecuted: {
-		Entities.SubmissionStatusAccepted:    {},
-		Entities.SubmissionStatusWrongAnswer: {},
+	constants.SubmissionStatusExecuted: {
+		constants.SubmissionStatusAccepted:    {},
+		constants.SubmissionStatusWrongAnswer: {},
 	},
 }
 
-func IsValidState(state Entities.SubmissionStatus) bool {
+func IsValidState(state constants.SubmissionStatus) bool {
 	switch state {
-	case Entities.SubmissionStatusQueued:
+	case constants.SubmissionStatusQueued:
 		return true
-	case Entities.SubmissionStatusRunning:
+	case constants.SubmissionStatusRunning:
 		return true
-	case Entities.SubmissionStatusTimeout:
+	case constants.SubmissionStatusTimeout:
 		return true
-	case Entities.SubmissionStatusExecuted:
+	case constants.SubmissionStatusExecuted:
 		return true
-	case Entities.SubmissionStatusAccepted:
+	case constants.SubmissionStatusAccepted:
 		return true
-	case Entities.SubmissionStatusWrongAnswer:
+	case constants.SubmissionStatusWrongAnswer:
 		return true
-	case Entities.SubmissionStatusError:
+	case constants.SubmissionStatusError:
 		return true
 	default:
 		return false
 	}
 }
 
-func canTransitionState(from Entities.SubmissionStatus, to Entities.SubmissionStatus) bool {
+func canTransitionState(from constants.SubmissionStatus, to constants.SubmissionStatus) bool {
 	if !IsValidState(from) || !IsValidState(to) {
 		return false
 	}
@@ -69,7 +70,7 @@ func canTransitionState(from Entities.SubmissionStatus, to Entities.SubmissionSt
 	return allowed
 }
 
-func validateStateTransition(submission *Entities.SubmissionResult, to Entities.SubmissionStatus) error {
+func validateStateTransition(submission *Entities.SubmissionResult, to constants.SubmissionStatus) error {
 	if !IsValidState(submission.Status) {
 		return fmt.Errorf("invalid submission state: %q", submission.Status)
 	}
@@ -85,7 +86,7 @@ func validateStateTransition(submission *Entities.SubmissionResult, to Entities.
 	return nil
 }
 
-func ApplyTransition(submission *Entities.SubmissionResult, to Entities.SubmissionStatus) error {
+func ApplyTransition(submission *Entities.SubmissionResult, to constants.SubmissionStatus) error {
 	if err := validateStateTransition(submission, to); err != nil {
 		return err
 	}

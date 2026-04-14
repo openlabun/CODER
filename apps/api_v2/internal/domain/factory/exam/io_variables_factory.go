@@ -7,9 +7,10 @@ import (
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
+	exam_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 )
 
-func NewIOVariable(name string, variableType Entities.VariableFormat, value string) (*Entities.IOVariable, error) {
+func NewIOVariable(name string, variableType exam_constants.VariableFormat, value string) (*Entities.IOVariable, error) {
 	ioVariable := &Entities.IOVariable{
 		ID:    uuid.New().String(),
 		Name:  strings.TrimSpace(name),
@@ -24,7 +25,7 @@ func NewIOVariable(name string, variableType Entities.VariableFormat, value stri
 	return ioVariable, nil
 }
 
-func ExistingIOVariable(id, name string, variableType Entities.VariableFormat, value string) (*Entities.IOVariable, error) {
+func ExistingIOVariable(id, name string, variableType exam_constants.VariableFormat, value string) (*Entities.IOVariable, error) {
 	ioVariable := &Entities.IOVariable{
 		ID:    strings.TrimSpace(id),
 		Name:  strings.TrimSpace(name),

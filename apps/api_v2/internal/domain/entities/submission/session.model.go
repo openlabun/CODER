@@ -2,16 +2,8 @@ package Submission_entities
 
 import (
 	"time"
-)
 
-type SessionStatus string
-
-const (
-	SessionStatusActive   SessionStatus = "active"
-	SessionStatusCompleted SessionStatus = "completed"
-	SessionStatusExpired   SessionStatus = "expired"
-	SessionStatusBlocked   SessionStatus = "blocked"
-	SessionStatusFrozen	SessionStatus = "frozen"
+	submission_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 )
 
 type Session struct {
@@ -21,7 +13,7 @@ type Session struct {
 
 	// Status
 	// State machine: active|frozen -> completed|expired|blocked
-	Status 	 SessionStatus	 `json:"status"`
+	Status 	 submission_constants.SessionStatus	 `json:"status"`
 	Attempts int			 `json:"attempts"`
 	TimeLeft int 			 `json:"time_left"` // in seconds, -1 for unlimited
 	

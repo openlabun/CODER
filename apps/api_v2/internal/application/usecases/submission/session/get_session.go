@@ -7,12 +7,13 @@ import (
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
-	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	Entity "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
-	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
+	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/session"
 )
 
 type GetActiveSessionUseCase struct {
@@ -49,7 +50,7 @@ func (uc *GetActiveSessionUseCase) Execute(ctx context.Context, input dtos.GetAc
 
 	// [STEP 2] If user is teacher get user id from input
 	studentID := user.ID
-	if role == user_entities.UserRoleProfessor {
+	if role == user_constants.UserRoleProfessor {
 		if input.UserID == nil {
 			return nil, fmt.Errorf("student_id is required for teachers to get a student session")
 		}
@@ -95,7 +96,7 @@ func (uc *GetActiveSessionUseCase) Execute(ctx context.Context, input dtos.GetAc
 	var active_session *Entity.Session
 	
 	if session != nil {
-		if session.Status == Entity.SessionStatusActive || session.Status == Entity.SessionStatusFrozen {
+		if session.Status == constants.SessionStatusActive || session.Status == constants.SessionStatusFrozen {
 			active_session = session
 		}
 	}

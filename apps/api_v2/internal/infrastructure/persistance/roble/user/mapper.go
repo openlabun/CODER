@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	UserFactory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/user"
 )
@@ -34,7 +35,7 @@ func RecordToUser(record map[string]any, connection bool) *Entities.User {
 		asString(record["ID"]),
 		asString(record["Username"]),
 		asString(record["Email"]),
-		Entities.UserRole(asString(record["Role"])),
+		constants.UserRole(asString(record["Role"])),
 		time_created,
 		time_last_connection,
 		connection,

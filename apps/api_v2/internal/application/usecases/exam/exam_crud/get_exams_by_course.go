@@ -3,12 +3,13 @@ package exam_usecases
 import (
 	"context"
 	"fmt"
-	
+
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
-	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	courseRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
+	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
@@ -61,10 +62,10 @@ func (uc *GetExamsByCourseUseCase) Execute(ctx context.Context, input dtos.GetEx
 	}
 
 	// [STEP 4] If user is student, filter exams by visibility
-	if user.Role == user_entities.UserRoleStudent {
+	if user.Role == user_constants.UserRoleStudent {
 		filteredExams := []*Entities.Exam{}
 		for _, exam := range exams {
-			if exam.Visibility == Entities.VisibilityCourse {
+			if exam.Visibility == constants.VisibilityCourse {
 				filteredExams = append(filteredExams, exam)
 			}
 		}

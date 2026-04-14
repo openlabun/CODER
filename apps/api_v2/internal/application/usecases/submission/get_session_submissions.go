@@ -9,7 +9,7 @@ import (
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission/mapper"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
@@ -64,7 +64,7 @@ func (uc *GetSessionSubmissionsUseCase) Execute(ctx context.Context, input dtos.
 	}
 
 	// [STEP 3] If user is a student, verify that session belongs to him
-	if role == user_entities.UserRoleStudent && session.StudentID != user.ID {
+	if role == user_constants.UserRoleStudent && session.StudentID != user.ID {
 		return nil, fmt.Errorf("session with id %q does not belong to user with email %q", input.SessionID, userEmail)
 	}
 

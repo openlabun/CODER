@@ -810,7 +810,7 @@
     },
     {
       "name": "models/imagen-4.0-generate-preview-06-06",
-      "version": "01",
+      "version": "10",
       "displayName": "Imagen 4 (Preview)",
       "description": "Vertex served Imagen 4.0 model",
       "inputTokenLimit": 480,
@@ -821,7 +821,7 @@
     },
     {
       "name": "models/imagen-4.0-ultra-generate-preview-06-06",
-      "version": "01",
+      "version": "10",
       "displayName": "Imagen 4 Ultra (Preview)",
       "description": "Vertex served Imagen 4.0 ultra model",
       "inputTokenLimit": 480,

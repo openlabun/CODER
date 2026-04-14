@@ -8,7 +8,7 @@ import (
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
@@ -42,7 +42,7 @@ func (uc *DeleteChallengeUseCase) Execute(ctx context.Context, input dtos.Delete
 		return err
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
+	if user.Role != user_constants.UserRoleProfessor {
 		return fmt.Errorf("user does not have permissions to delete an exam")
 	}
 

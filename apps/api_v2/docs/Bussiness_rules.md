@@ -74,6 +74,8 @@
 
 - Cada reto deberá contar con un time límite de ejecución y una memoria límite para el worker. **(No podrá exceder determinados valores fijados en las variables en producción)**.
 
+- Los retos contarán con `Templates` para el código, estos se podrán solicitar a la API para usar la plantilla por defecto o se podrá modificar para brindar soluciones predeterminadas, tener en cuenta que **si no se suministra un lenguaje** junto a su template, se considerará que el lenguaje **no está permitido** para resolver el reto.
+
 - Los retos deberán contar con unas consideraciones de entrada/salida. Para ello deberán ingresar por cada variable los siguientes valores:
   
   - Nombre (`Name`)

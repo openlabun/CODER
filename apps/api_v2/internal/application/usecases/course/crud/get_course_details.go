@@ -10,6 +10,7 @@ import (
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	userRepositoty "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 )
 
 type GetCourseDetailsUseCase struct {
@@ -48,7 +49,7 @@ func (uc *GetCourseDetailsUseCase) Execute(ctx context.Context, input dtos.GetCo
 	}
 
 	// [STEP 3] If user is not owner and course is blocked, return error
-	if course.Visibility == Entities.CourseVisibilityBlocked && course.ProfessorID != user.ID {
+	if course.Visibility == consts.CourseVisibilityBlocked && course.ProfessorID != user.ID {
 		return nil, fmt.Errorf("course not found")
 	}
 

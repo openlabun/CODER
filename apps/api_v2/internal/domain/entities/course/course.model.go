@@ -1,37 +1,13 @@
 package course_entities
 
-import "time"
-
-type CourseColour string
-
-const (
-	CourseColourRed    CourseColour = "#ff0055"
-	CourseColourGreen  CourseColour = "#00ff9d"
-	CourseColourBlue   CourseColour = "#7000ff"
-	CourseColourYellow CourseColour = "#ffcc00"
-	CourseColourOrange  CourseColour = "#ff6b35"
-	CourseColourPurple  CourseColour = "#9d00ff"
-)
-
-type CourseVisibility string
-
-const (
-	CourseVisibilityPublic  CourseVisibility = "public"
-	CourseVisibilityPrivate CourseVisibility = "private"
-	CourseVisibilityBlocked CourseVisibility = "blocked"
-)
-
-type AcademicPeriod string
-
-const (
-	AcademicFirstPeriod    AcademicPeriod = "01"
-	AcademicIntersemestral AcademicPeriod = "02"
-	AcademicSecondPeriod   AcademicPeriod = "03"
+import (
+	"time"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 )
 
 type Period struct {
 	Year   int					`json:"year"`
-	Semester AcademicPeriod		`json:"semester"`
+	Semester consts.AcademicPeriod		`json:"semester"`
 }
 
 type Course struct {
@@ -40,10 +16,10 @@ type Course struct {
 	Description    string `json:"description"` // (Optional)
 
 	// Access Control
-	Visibility     CourseVisibility `json:"visibility"`
+	Visibility     consts.CourseVisibility `json:"visibility"`
 
 	// Visual Identity
-	VisualIdentity CourseColour `json:"visual_identity"` 
+	VisualIdentity consts.CourseColour `json:"visual_identity"` 
 
 	// Course Institution Data
 	Code           string `json:"code"` 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
@@ -47,7 +47,7 @@ func (uc *DeleteTestCaseUseCase) Execute(ctx context.Context, input dtos.DeleteT
 		return fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
+	if user.Role != user_constants.UserRoleProfessor {
 		return fmt.Errorf("user does not have permissions to create an exam")
 	}
 

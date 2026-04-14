@@ -7,7 +7,7 @@ import (
 	"time"
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -61,14 +61,17 @@ func TestTestCaseFromStudentView(t *testing.T) {
 		Title:             "Challenge for TestCase Student View",
 		Description:       "Challenge auxiliar para vista estudiante",
 		Tags:              []string{"testcase", "student-view"},
-		Status:            string(exam_entities.ChallengeStatusDraft),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusDraft),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
 		WorkerMemoryLimit: 256,
-		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		CodeTemplates: []exam_dtos.CodeTemplateDTO{
+			{Language: "python", Template: "def solve() { return; }"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		InputVariables: []exam_dtos.IOVariableDTO{
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "10"},
+		},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		Constraints:    "1 <= n <= 1000",
 	})
 	if err != nil {
@@ -82,9 +85,9 @@ func TestTestCaseFromStudentView(t *testing.T) {
 	sample, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
 		Name: "sample_case",
 		Input: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		},
-		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		IsSample:       true,
 		Points:         0,
 		ChallengeID:    challengeID,
@@ -100,9 +103,9 @@ func TestTestCaseFromStudentView(t *testing.T) {
 	hiddenCase, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
 		Name: "hidden_case",
 		Input: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "11"},
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "11"},
 		},
-		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "11"},
+		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "11"},
 		IsSample:       false,
 		Points:         10,
 		ChallengeID:    challengeID,
@@ -126,7 +129,7 @@ func TestTestCaseFromStudentView(t *testing.T) {
 		CourseID:             nil,
 		Title:                "TestCase Student View Exam",
 		Description:          "Exam público para acceder a test cases",
-		Visibility:           string(exam_entities.VisibilityPublic),
+		Visibility:           string(exam_consts.VisibilityPublic),
 		StartTime:            now.Add(2 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: true,

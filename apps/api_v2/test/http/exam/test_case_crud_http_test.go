@@ -44,6 +44,9 @@ func TestTestCaseCRUDHTTP(t *testing.T) {
 		"difficulty":          "easy",
 		"worker_time_limit":   1200,
 		"worker_memory_limit": 256,
+		"code_templates": map[string]any{
+			"python": "def solve() { return; }",
+		},
 		"input_variables":     []map[string]any{{"name": "x", "type": "int", "value": "1"}},
 		"output_variable":     map[string]any{"name": "out", "type": "int", "value": "1"},
 		"constraints":         "1 <= x <= 1000",

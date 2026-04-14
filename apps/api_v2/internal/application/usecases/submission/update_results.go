@@ -9,6 +9,7 @@ import (
 
 	passwordHasher "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 	userPort "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
@@ -98,28 +99,22 @@ func (uc *UpdateResultUseCase) Execute(ctx context.Context, input dtos.UpdateRes
 	}
 
 	// [STEP 5] Check results if status is executed, it changes status to accepted or wrong_answer
-	if updatedResult.Status == Entities.SubmissionStatusExecuted {
+	if updatedResult.Status == constants.SubmissionStatusExecuted {
 		updatedResult, err = services.CheckSubmissionResult(updatedResult, testCase)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check submission result: %w", err)
 		}
 	}
 
-	// [STEP 6] Validate if submission result is accepted, if it is, update submission score
-	if updatedResult.Status == Entities.SubmissionStatusAccepted {
+	// [STEP 6] Validate if submission result is accepted and its not a Sample, if it is, update submission score
+	if updatedResult.Status == constants.SubmissionStatusAccepted && !testCase.IsSample && !testCase.Custom {
 		// [STEP 6.1] Retrieve the submission
 		submission, err := uc.submissionRepository.GetSubmissionByID(ctx, submissionResult.SubmissionID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve submission for result update: %w", err)
 		}
 
-		// [STEP 6.2] Retrieve the test case to get the points
-		testCase, err := uc.testCaseRepository.GetTestCaseByID(ctx, submissionResult.TestCaseID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve test case for result update: %w", err)
-		}
-
-		// [STEP 6.3] Update the submission score
+		// [STEP 6.2] Update the submission score
 		submission.Score = submission.Score + testCase.Points
 		_, err = uc.submissionRepository.UpdateSubmission(ctx, submission)
 		if err != nil {

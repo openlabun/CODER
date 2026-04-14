@@ -73,6 +73,10 @@ func PostExamCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body map[s
 	return doJSONRequest(t, app, "POST", "/exams/", body, authHeaders(access))
 }
 
+func PostExamDefaultCodeTemplates(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/challenges/default-code-templates", body, authHeaders(access))
+}
+
 func PatchExamUpdate(t *testing.T, app *fiber.App, access *HTTPAccess, examID string, body map[string]any) *HTTPResponse {
 	path := fmt.Sprintf("/exams/%s", examID)
 	return doJSONRequest(t, app, "PATCH", path, body, authHeaders(access))
@@ -210,6 +214,14 @@ func GetActiveSession(t *testing.T, app *fiber.App, access *HTTPAccess, userID s
 
 func PostSubmissionCreate(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
 	return doJSONRequest(t, app, "POST", "/submissions/", body, authHeaders(access))
+}
+
+func PostSubmissionCreateWithoutScore(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/submissions/without-score", body, authHeaders(access))
+}
+
+func PostSubmissionCreateCustom(t *testing.T, app *fiber.App, access *HTTPAccess, body map[string]any) *HTTPResponse {
+	return doJSONRequest(t, app, "POST", "/submissions/custom", body, authHeaders(access))
 }
 
 func GetSubmissionByID(t *testing.T, app *fiber.App, access *HTTPAccess, submissionID string) *HTTPResponse {

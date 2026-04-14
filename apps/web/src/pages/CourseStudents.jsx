@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Copy, Link as LinkIcon, UploadCloud, FileText, CheckCircle2, Key } from 'lucide-react';
 import Swal from 'sweetalert2';
 import './Courses.css';
 import './CourseActions.css';
@@ -19,6 +19,8 @@ const CourseStudents = () => {
     const isTeacher = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
     const [searchEmail, setSearchEmail] = useState('');
     const [adding, setAdding] = useState(false);
+    const [csvFile, setCsvFile] = useState(null);
+    const [isUploadingCsv, setIsUploadingCsv] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -48,7 +50,7 @@ const CourseStudents = () => {
 
         setAdding(true);
         try {
-            await client.post(`/courses/${id}/students`, { studentID: email });
+            await client.post(`/courses/${id}/students`, { studentEmail: email });
             
             Swal.fire({
                 icon: 'success',
@@ -113,6 +115,63 @@ const CourseStudents = () => {
         }
     };
 
+    const copyToClipboard = (text, type) => {
+        navigator.clipboard.writeText(text);
+        Swal.fire({
+            icon: 'success',
+            title: '¡Copiado!',
+            text: `El ${type} ha sido copiado al portapapeles.`,
+            timer: 1500,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    };
+
+    const handleCsvUpload = async () => {
+        if (!csvFile) return;
+        setIsUploadingCsv(true);
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const text = e.target.result;
+            // Basic parsing: split by newline, comma, semicolon and extract emails
+            const words = text.split(/[\n\r,;]+/);
+            const emails = words.map(w => w.trim()).filter(w => w.includes('@'));
+
+            if (emails.length === 0) {
+                Swal.fire({ icon: 'warning', title: 'Archivo sin correos', text: 'No se encontraron direcciones de correo en el archivo CSV.' });
+                setIsUploadingCsv(false);
+                return;
+            }
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const email of emails) {
+                try {
+                    await client.post(`/courses/${id}/students`, { studentEmail: email });
+                    successCount++;
+                } catch (err) {
+                    failCount++;
+                }
+            }
+
+            Swal.fire({
+                icon: 'info',
+                title: 'Proceso CSV finalizado',
+                html: `Se intentó inscribir a <b>${emails.length}</b> estudiantes.<br/><br/>
+                       <span style="color: green">Éxito: ${successCount}</span><br/>
+                       <span style="color: red">Fallidos / Ya inscritos: ${failCount}</span>`
+            });
+            
+            setCsvFile(null);
+            setIsUploadingCsv(false);
+            fetchData();
+        };
+        reader.readAsText(csvFile);
+    };
+
     if (loading) return <div className="loading">Cargando...</div>;
 
     return (
@@ -128,34 +187,95 @@ const CourseStudents = () => {
             </div>
 
             {isTeacher && (
-                <div className="admin-actions-card">
-                    <h3>Añadir Estudiante</h3>
-                    <p>Agrega un alumno directamente usando su correo electrónico.</p>
-                    <form className="add-student-form" onSubmit={handleAddStudent}>
-                        <div className="input-with-helper">
-                            <div className="input-group">
-                                <input
-                                    type="text"
-                                    placeholder="usuario o correo@uninorte.edu.co"
-                                    value={searchEmail}
-                                    onChange={(e) => setSearchEmail(e.target.value)}
-                                    required
-                                />
-                                <button type="submit" className="btn-add-student" disabled={adding}>
-                                    {adding ? 'Añadiendo...' : 'Añadir al Curso'}
-                                </button>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', marginBottom: '2rem', alignItems: 'stretch' }}>
+                    
+                    {/* Add Single Student */}
+                    <div className="admin-actions-card" style={{ margin: 0 }}>
+                        <h3>Añadir Estudiante</h3>
+                        <p>Agrega un alumno usando su correo.</p>
+                        <form className="add-student-form" onSubmit={handleAddStudent} style={{ marginTop: '1rem' }}>
+                            <div className="input-with-helper">
+                                <div className="input-group">
+                                    <input
+                                        type="text"
+                                        placeholder="usuario o correo@uninorte.edu.co"
+                                        value={searchEmail}
+                                        onChange={(e) => setSearchEmail(e.target.value)}
+                                        required
+                                    />
+                                    <button type="submit" className="btn-add-student" disabled={adding}>
+                                        {adding ? 'Añadiendo...' : 'Añadir al Curso'}
+                                    </button>
+                                </div>
+                                {!searchEmail.includes('@') && searchEmail.length > 2 && (
+                                    <button 
+                                        type="button" 
+                                        className="helper-link"
+                                        onClick={() => setSearchEmail(searchEmail.trim() + '@uninorte.edu.co')}
+                                    >
+                                        Completar con @uninorte.edu.co
+                                    </button>
+                                )}
                             </div>
-                            {!searchEmail.includes('@') && searchEmail.length > 2 && (
-                                <button 
-                                    type="button" 
-                                    className="helper-link"
-                                    onClick={() => setSearchEmail(searchEmail.trim() + '@uninorte.edu.co')}
-                                >
-                                    Completar con @uninorte.edu.co
+                        </form>
+                    </div>
+
+                    {/* Auto CSV */}
+                    <div className="admin-actions-card" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
+                        <h3>Carga Automática CSV</h3>
+                        <p>Inscribe múltiples estudiantes. Típicamente los correos separados por comas o por líneas.</p>
+                        <div style={{ marginTop: 'auto', paddingTop: '1rem', display: 'flex', gap: '10px' }}>
+                            <input 
+                                type="file" 
+                                accept=".csv" 
+                                id="csv-upload"
+                                style={{ display: 'none' }}
+                                onChange={(e) => setCsvFile(e.target.files[0])}
+                            />
+                            <label htmlFor="csv-upload" style={{ 
+                                flex: 1, border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '10px', 
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                cursor: 'pointer', color: csvFile ? '#4f46e5' : '#64748b', fontWeight: 600, fontSize: '0.85rem' 
+                            }}>
+                                <FileText size={18} style={{ marginRight: '8px' }} />
+                                {csvFile ? csvFile.name : 'Seleccionar .csv'}
+                            </label>
+                            {csvFile && (
+                                <button className="btn-action-filled" onClick={handleCsvUpload} disabled={isUploadingCsv} style={{ whiteSpace: 'nowrap' }}>
+                                    <UploadCloud size={16} /> {isUploadingCsv ? 'Procesando...' : 'Cargar'}
                                 </button>
                             )}
                         </div>
-                    </form>
+                    </div>
+
+                    {/* Enrollment Methods Links */}
+                    <div className="admin-actions-card" style={{ margin: 0 }}>
+                        <h3>Comparte el Curso</h3>
+                        <p>Invita a estudiantes rápida y masivamente.</p>
+                        
+                        <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                <span style={{ flexShrink: 0, background: '#f1f5f9', padding: '6px', borderRadius: '8px', color: '#64748b' }}><LinkIcon size={16} /></span>
+                                <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>
+                                    {window.location.origin}/courses/join?code={course?.enrollment_code}
+                                </div>
+                                <button className="btn-add-student" onClick={() => copyToClipboard(`${window.location.origin}/courses/join?code=${course?.enrollment_code}`, 'enlace')} style={{ padding: '6px 12px', flexShrink: 0 }}>
+                                    <Copy size={14} /> Link
+                                </button>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                <span style={{ flexShrink: 0, background: '#f1f5f9', padding: '6px', borderRadius: '8px', color: '#64748b' }}><Key size={16} /></span>
+                                <div style={{ flex: 1, minWidth: 0, fontSize: '0.85rem', fontWeight: 600, color: '#334155', letterSpacing: '0.05em' }}>
+                                    {course?.enrollment_code}
+                                </div>
+                                <button className="btn-add-student" style={{ padding: '6px 12px', background: '#e2e8f0', color: '#475569', flexShrink: 0 }} onClick={() => copyToClipboard(course?.enrollment_code, 'código')}>
+                                    <Copy size={14} /> Código
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
             )}
 
@@ -167,7 +287,7 @@ const CourseStudents = () => {
                         Nadie se ha unido a este curso todavía.
                     </p>
                     <p className="empty-state-hint">
-                        Comparte el código de inscripción: <strong>{course?.enrollmentCode}</strong>
+                        Comparte el código de inscripción: <strong>{course?.enrollment_code}</strong>
                     </p>
                 </div>
             ) : (

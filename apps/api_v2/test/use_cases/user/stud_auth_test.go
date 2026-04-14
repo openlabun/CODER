@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 )
 
@@ -69,8 +69,8 @@ func TestStudentAuth(t *testing.T) {
 	if studentID != "" && studentData.ID != studentID {
 		process.Fail("student get data", fmt.Errorf("expected student ID %s, got %s", studentID, studentData.ID))
 	}
-	if access.UserData.Role != user_entities.UserRoleStudent {
-		process.Fail("student role", fmt.Errorf("expected role %s, got %s", user_entities.UserRoleStudent, access.UserData.Role))
+	if access.UserData.Role != user_constants.UserRoleStudent {
+		process.Fail("student role", fmt.Errorf("expected role %s, got %s", user_constants.UserRoleStudent, access.UserData.Role))
 	}
 	process.Log(fmt.Sprintf("Datos validados. email=%s role=%s", studentData.Email, studentData.Role))
 

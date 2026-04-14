@@ -6,11 +6,12 @@ import (
 	"time"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 )
 
-func validateCourseVisibility(visibility Entities.CourseVisibility) bool {
+func validateCourseVisibility(visibility consts.CourseVisibility) bool {
 	switch visibility {
-	case Entities.CourseVisibilityPublic, Entities.CourseVisibilityPrivate, Entities.CourseVisibilityBlocked:
+	case consts.CourseVisibilityPublic, consts.CourseVisibilityPrivate, consts.CourseVisibilityBlocked:
 		return true
 	default:
 		return false
@@ -22,9 +23,9 @@ func validateActualYear(year int) bool {
 	return year >= currentYear-1
 }
 
-func validateCoursePeriod(period Entities.AcademicPeriod) bool {
+func validateCoursePeriod(period consts.AcademicPeriod) bool {
 	switch period {
-	case Entities.AcademicFirstPeriod, Entities.AcademicIntersemestral, Entities.AcademicSecondPeriod:
+	case consts.AcademicFirstPeriod, consts.AcademicIntersemestral, consts.AcademicSecondPeriod:
 	default:
 		return false
 	}
@@ -36,11 +37,11 @@ func ValidateCourseEnrollmentCode(course *Entities.Course, enrollmentCode string
 		return false, fmt.Errorf("course is nil")
 	}
 
-	if course.Visibility == Entities.CourseVisibilityBlocked {
+	if course.Visibility == consts.CourseVisibilityBlocked {
 		return false, fmt.Errorf("blocked courses cannot be enrolled in")
 	}
 
-	if course.Visibility == Entities.CourseVisibilityPrivate {
+	if course.Visibility == consts.CourseVisibilityPrivate {
 		if strings.TrimSpace(enrollmentCode) == "" {
 			return false, fmt.Errorf("enrollment code is required for private courses")
 		}
@@ -84,7 +85,7 @@ func ValidateCourse(course *Entities.Course) error {
 		}
 	}
 
-	if course.Visibility == Entities.CourseVisibilityPrivate {
+	if course.Visibility == consts.CourseVisibilityPrivate {
 		hasCode := strings.TrimSpace(course.EnrollmentCode) != ""
 		hasURL := strings.TrimSpace(course.EnrollmentURL) != ""
 		if !hasCode && !hasURL {

@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"strings"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
-func validateSubmissionLanguage(language Entities.ProgrammingLanguage) bool {
+func validateSubmissionLanguage(language constants.ProgrammingLanguage) bool {
+
 	switch language {
-	case Entities.LanguageCPP, Entities.LanguagePython, Entities.LanguageJava:
+	case constants.LanguageCPP, constants.LanguagePython, constants.LanguageJava:
 		return true
 	default:
 		return false

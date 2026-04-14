@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	submission_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -67,7 +67,7 @@ func TestSubmissionCreateAndRead(t *testing.T) {
 		CourseID:             nil,
 		Title:                "Submission Create Exam",
 		Description:          "Examen para creación y consulta de revisiones",
-		Visibility:           string(exam_entities.VisibilityPublic),
+		Visibility:           string(exam_consts.VisibilityPublic),
 		StartTime:            now.Add(2 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: true,
@@ -87,14 +87,17 @@ func TestSubmissionCreateAndRead(t *testing.T) {
 		Title:             "Submission Create Challenge",
 		Description:       "Challenge para pruebas de submissions",
 		Tags:              []string{"submission", "create"},
-		Status:            string(exam_entities.ChallengeStatusPublished),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusPublished),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1200,
 		WorkerMemoryLimit: 256,
-		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		CodeTemplates: []exam_dtos.CodeTemplateDTO{
+			{Language: "python", Template: "def solve() { return; }"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		InputVariables: []exam_dtos.IOVariableDTO{
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "10"},
+		},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		Constraints:    "1 <= n <= 1000",
 	})
 	if err != nil {
@@ -108,9 +111,9 @@ func TestSubmissionCreateAndRead(t *testing.T) {
 	createdTestCase, err := process.Application.TestCaseModule.CreateTestCase.Execute(teacherCtx, exam_dtos.CreateTestCaseInput{
 		Name: "sample_submission_case",
 		Input: []exam_dtos.IOVariableDTO{
-			{Name: "n", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+			{Name: "n", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		},
-		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		ExpectedOutput: exam_dtos.IOVariableDTO{Name: "out", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		IsSample:       true,
 		Points:         10,
 		ChallengeID:    challengeID,
@@ -159,7 +162,6 @@ func TestSubmissionCreateAndRead(t *testing.T) {
 	createdSubmission, err := process.Application.SubmissionUseCases.CreateSubmission.Execute(studentCtx, submission_dtos.CreateSubmissionInput{
 		Code:        "def solve(n):\n    return n",
 		Language:    "python",
-		Score:       0,
 		ChallengeID: challengeID,
 		SessionID:   sessionID,
 	})

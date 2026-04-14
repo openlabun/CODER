@@ -15,7 +15,7 @@ func NewSubmission(
 	code string, 
 	language constants.ProgrammingLanguage,
 	scorable bool, 
-	challengeID, sessionID, userID string,
+	challengeID, sessionID, userID, examItemScoreID string,
 ) (*Entities.Submission, error) {
 	now := time.Now()
 	submission := &Entities.Submission{
@@ -30,6 +30,7 @@ func NewSubmission(
 		ChallengeID: strings.TrimSpace(challengeID),
 		SessionID:   strings.TrimSpace(sessionID),
 		UserID:      strings.TrimSpace(userID),
+		ExamItemScoreID: strings.TrimSpace(examItemScoreID),
 	}
 
 	if err := Validations.ValidateSubmission(submission); err != nil {
@@ -45,7 +46,7 @@ func ExistingSubmission(
 	score, timeMsTotal int,
 	scorable bool,
 	createdAt, updatedAt time.Time,
-	challengeID, sessionID, userID string,
+	challengeID, sessionID, userID, examItemScoreID string,
 ) (*Entities.Submission, error) {
 	submission := &Entities.Submission{
 		ID:          strings.TrimSpace(id),
@@ -59,6 +60,7 @@ func ExistingSubmission(
 		ChallengeID: strings.TrimSpace(challengeID),
 		SessionID:   strings.TrimSpace(sessionID),
 		UserID:      strings.TrimSpace(userID),
+		ExamItemScoreID: strings.TrimSpace(examItemScoreID),
 	}
 
 	if err := Validations.ValidateSubmission(submission); err != nil {

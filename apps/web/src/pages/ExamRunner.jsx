@@ -55,7 +55,7 @@ const ExamRunner = () => {
             const firstCase = Object.assign({}, cases[0]);
             const inputs = firstCase.input || firstCase.Input || [];
             const out = firstCase.expected_output || firstCase.expectedOutput || firstCase.ExpectedOutput || {};
-            
+
             // Set input shapes without values
             if (Array.isArray(inputs)) {
                 setCustomInputs(inputs.map(i => ({ name: i.name || i.Name, type: i.type || i.Type, value: '' })));
@@ -124,7 +124,7 @@ const ExamRunner = () => {
                 setAttemptMap({});
                 localStorage.setItem('session_id', sid);
             }
-            
+
             setSessionId(sid);
             setSessionStatus(sessionData?.status || sessionData?.Status || 'active');
             const tl = sessionData?.time_left ?? sessionData?.TimeLeft ?? sessionData?.timeLeft;
@@ -208,7 +208,7 @@ const ExamRunner = () => {
                     .map(item => {
                         const ch = item.challenge || item.Challenge || {};
                         let parsedTemplates = ch.code_templates || ch.CodeTemplates || ch.codeTemplates;
-                        
+
                         // Robustly parse templates — could be string, double-encoded, object, etc.
                         if (parsedTemplates == null) parsedTemplates = {};
                         if (typeof parsedTemplates === 'string') {
@@ -217,7 +217,7 @@ const ExamRunner = () => {
                                 try { parsedTemplates = JSON.parse(parsedTemplates); } catch { parsedTemplates = {}; break; }
                             }
                         }
-                        
+
                         // Ensure all template values are strings
                         const cleanTemplates = {};
                         if (Array.isArray(parsedTemplates)) {
@@ -268,7 +268,7 @@ const ExamRunner = () => {
 
                     tcPromises.push(client.get(`/test-cases/challenge/${ch.id}?exam_id=${id}`).then(res => ({
                         id: ch.id,
-                        cases: res.data.filter(tc => 
+                        cases: res.data.filter(tc =>
                             (tc.type === 'public' || tc.is_sample || tc.isSample) &&
                             tc.title !== 'Custom Test Case' && tc.Title !== 'Custom Test Case'
                         )
@@ -947,7 +947,7 @@ const ExamRunner = () => {
             {/* RUN TEST MODAL */}
             {showRunModal && (
                 <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                     background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
                 }}>
@@ -957,7 +957,7 @@ const ExamRunner = () => {
                     }}>
                         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Timer size={18} style={{ color: '#c8102e' }} /> Probar Ejecución 
+                                <Timer size={18} style={{ color: '#c8102e' }} /> Probar Ejecución
                                 <span style={{ fontSize: '0.7rem', padding: '2px 8px', background: '#fef2f2', color: '#b91c1c', borderRadius: '12px' }}>Modo Prueba</span>
                             </h3>
                             <button onClick={() => setShowRunModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>
@@ -968,19 +968,19 @@ const ExamRunner = () => {
                             <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#4b5563' }}>
                                 Ejecuta tu código localmente sin gastar intentos. Selecciona un caso de prueba existente o define uno nuevo.
                             </p>
-                            
+
                             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #f3f4f6' }}>
-                                <button 
+                                <button
                                     onClick={() => setRunTab('public')}
-                                    style={{ 
+                                    style={{
                                         padding: '0.5rem 0', background: 'none', border: 'none', borderBottom: runTab === 'public' ? '2px solid #c8102e' : '2px solid transparent',
                                         color: runTab === 'public' ? '#111827' : '#6b7280', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s'
                                     }}>
                                     Casos Públicos
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setRunTab('custom')}
-                                    style={{ 
+                                    style={{
                                         padding: '0.5rem 0', background: 'none', border: 'none', borderBottom: runTab === 'custom' ? '2px solid #c8102e' : '2px solid transparent',
                                         color: runTab === 'custom' ? '#111827' : '#6b7280', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s'
                                     }}>
@@ -991,8 +991,8 @@ const ExamRunner = () => {
                             {runTab === 'public' && (
                                 <div style={{ marginBottom: '1rem' }}>
                                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Seleccionar Caso de Prueba:</label>
-                                    <select 
-                                        value={selectedPublicCase} 
+                                    <select
+                                        value={selectedPublicCase}
                                         onChange={(e) => setSelectedPublicCase(e.target.value)}
                                         style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.9rem' }}
                                     >
@@ -1034,7 +1034,7 @@ const ExamRunner = () => {
                             <button onClick={async () => {
                                 setShowRunModal(false);
                                 setOutput('⏳ Ejecutando prueba local en el servidor...\n\n');
-                                
+
                                 try {
                                     let res;
                                     if (runTab === 'public') {
@@ -1051,7 +1051,7 @@ const ExamRunner = () => {
                                             value: String(v.value ?? v.Value ?? '')
                                         }));
                                         const expectedOut = selected.expected_output || selected.expectedOutput || selected.ExpectedOutput || {};
-                                        res = await client.post('/submissions/execute-custom', {
+                                        res = await client.post('/submissions/execute', {
                                             code: currentCode,
                                             language: language,
                                             challenge_id: currentChallenge?.id,
@@ -1089,7 +1089,7 @@ const ExamRunner = () => {
                                     }
 
                                     setOutput('Prueba encolada. Ejecutando...');
-                                    
+
                                     // Poll for results
                                     for (let attempt = 0; attempt < 40; attempt++) {
                                         const pollRes = await client.get(`/submissions/${submissionId}`);
@@ -1118,7 +1118,7 @@ const ExamRunner = () => {
                                         await sleep(1000);
                                         setOutput(`Ejecutando pruebas... (${attempt + 1}s)`);
                                     }
-                                    
+
                                     setOutput('Tiempo de espera agotado para la ejecución local.');
                                 } catch (err) {
                                     const errorMsg = err?.response?.data?.error || err.message;

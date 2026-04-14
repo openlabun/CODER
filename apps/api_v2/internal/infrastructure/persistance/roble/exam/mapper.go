@@ -41,6 +41,76 @@ func recordToExamItem(record map[string]any) (*Entities.ExamItem, error) {
 	)
 }
 
+func examScoreToRecord(examScore *Entities.ExamScore) map[string]any {
+	return map[string]any{
+		"ID":        strings.TrimSpace(examScore.ID),
+		"ExamID":    strings.TrimSpace(examScore.ExamID),
+		"SessionID": strings.TrimSpace(examScore.SessionID),
+		"Score":     examScore.Score,
+		"CreatedAt": strings.TrimSpace(examScore.CreatedAt),
+		"UpdatedAt": strings.TrimSpace(examScore.UpdatedAt),
+		"StudentID": strings.TrimSpace(examScore.StudentID),
+	}
+}
+
+func examScoreToUpdates(examScore *Entities.ExamScore) map[string]any {
+	return map[string]any{
+		"ExamID":    strings.TrimSpace(examScore.ExamID),
+		"SessionID": strings.TrimSpace(examScore.SessionID),
+		"Score":     examScore.Score,
+		"CreatedAt": strings.TrimSpace(examScore.CreatedAt),
+		"UpdatedAt": strings.TrimSpace(examScore.UpdatedAt),
+		"StudentID": strings.TrimSpace(examScore.StudentID),
+	}
+}
+
+func recordToExamScore(record map[string]any) (*Entities.ExamScore, error) {
+	return exam_factory.ExistingExamScore(
+		asString(record["ID"]),
+		asString(record["ExamID"]),
+		asString(record["SessionID"]),
+		asInt(record["Score"]),
+		asString(record["CreatedAt"]),
+		asString(record["UpdatedAt"]),
+		asString(record["StudentID"]),
+	)
+}
+
+func examItemScoreToRecord(examItemScore *Entities.ExamItemScore) map[string]any {
+	return map[string]any{
+		"ID":          strings.TrimSpace(examItemScore.ID),
+		"ExamItemID":  strings.TrimSpace(examItemScore.ExamItemID),
+		"ExamScoreID": strings.TrimSpace(examItemScore.ExamScoreID),
+		"Score":       examItemScore.Score,
+		"Tries":       examItemScore.Tries,
+		"CreatedAt":   strings.TrimSpace(examItemScore.CreatedAt),
+		"UpdatedAt":   strings.TrimSpace(examItemScore.UpdatedAt),
+	}
+}
+
+func examItemScoreToUpdates(examItemScore *Entities.ExamItemScore) map[string]any {
+	return map[string]any{
+		"ExamItemID":  strings.TrimSpace(examItemScore.ExamItemID),
+		"ExamScoreID": strings.TrimSpace(examItemScore.ExamScoreID),
+		"Score":       examItemScore.Score,
+		"Tries":       examItemScore.Tries,
+		"CreatedAt":   strings.TrimSpace(examItemScore.CreatedAt),
+		"UpdatedAt":   strings.TrimSpace(examItemScore.UpdatedAt),
+	}
+}
+
+func recordToExamItemScore(record map[string]any) (*Entities.ExamItemScore, error) {
+	return exam_factory.ExistingExamItemScore(
+		asString(record["ID"]),
+		asString(record["ExamItemID"]),
+		asString(record["ExamScoreID"]),
+		asInt(record["Score"]),
+		asInt(record["Tries"]),
+		asString(record["CreatedAt"]),
+		asString(record["UpdatedAt"]),
+	)
+}
+
 func examToRecord(exam *Entities.Exam) map[string]any {
 	record := map[string]any{
 		"ID":                   strings.TrimSpace(exam.ID),
@@ -140,9 +210,9 @@ func challengeToRecord(challenge *Entities.Challenge) map[string]any {
 		"Difficulty":        string(challenge.Difficulty),
 		"WorkerTimeLimit":   challenge.WorkerTimeLimit,
 		"WorkerMemoryLimit": challenge.WorkerMemoryLimit,
-		"CodeTemplates":      codeTemplateFieldValue(challenge.CodeTemplates),
-		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
-		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
+		"CodeTemplates":     codeTemplateFieldValue(challenge.CodeTemplates),
+		"InputVariables":    listFieldValue(ioVariableIDs(challenge.InputVariables)),
+		"OutputVariable":    strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
 		"CreatedAt":         challenge.CreatedAt.UTC().Format(time.RFC3339),
 		"UpdatedAt":         challenge.UpdatedAt.UTC().Format(time.RFC3339),
@@ -159,9 +229,9 @@ func challengeToUpdates(challenge *Entities.Challenge) map[string]any {
 		"Difficulty":        string(challenge.Difficulty),
 		"WorkerTimeLimit":   challenge.WorkerTimeLimit,
 		"WorkerMemoryLimit": challenge.WorkerMemoryLimit,
-		"CodeTemplates":      codeTemplateFieldValue(challenge.CodeTemplates),
-		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
-		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
+		"CodeTemplates":     codeTemplateFieldValue(challenge.CodeTemplates),
+		"InputVariables":    listFieldValue(ioVariableIDs(challenge.InputVariables)),
+		"OutputVariable":    strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
 		"UserID":            strings.TrimSpace(challenge.UserID),
 	}
@@ -216,27 +286,27 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 
 func testCaseToRecord(testCase *Entities.TestCase) map[string]any {
 	return map[string]any{
-		"ID":          strings.TrimSpace(testCase.ID),
-		"Name":        strings.TrimSpace(testCase.Name),
-		"Input":       listFieldValue(ioVariableIDs(testCase.Input)),
-		"ExpectedOutput":      strings.TrimSpace(testCase.ExpectedOutput.ID),
-		"IsSample":    testCase.IsSample,
-		"Points":      testCase.Points,
-		"Custom":      testCase.Custom,
-		"CreatedAt":   testCase.CreatedAt.UTC().Format(time.RFC3339),
-		"ChallengeID": strings.TrimSpace(testCase.ChallengeID),
+		"ID":             strings.TrimSpace(testCase.ID),
+		"Name":           strings.TrimSpace(testCase.Name),
+		"Input":          listFieldValue(ioVariableIDs(testCase.Input)),
+		"ExpectedOutput": strings.TrimSpace(testCase.ExpectedOutput.ID),
+		"IsSample":       testCase.IsSample,
+		"Points":         testCase.Points,
+		"Custom":         testCase.Custom,
+		"CreatedAt":      testCase.CreatedAt.UTC().Format(time.RFC3339),
+		"ChallengeID":    strings.TrimSpace(testCase.ChallengeID),
 	}
 }
 
 func testCaseToUpdates(testCase *Entities.TestCase) map[string]any {
 	return map[string]any{
-		"Name":        strings.TrimSpace(testCase.Name),
-		"Input":       listFieldValue(ioVariableIDs(testCase.Input)),
-		"ExpectedOutput":      strings.TrimSpace(testCase.ExpectedOutput.ID),
-		"IsSample":    testCase.IsSample,
-		"Points":      testCase.Points,
-		"Custom":      testCase.Custom,
-		"ChallengeID": strings.TrimSpace(testCase.ChallengeID),
+		"Name":           strings.TrimSpace(testCase.Name),
+		"Input":          listFieldValue(ioVariableIDs(testCase.Input)),
+		"ExpectedOutput": strings.TrimSpace(testCase.ExpectedOutput.ID),
+		"IsSample":       testCase.IsSample,
+		"Points":         testCase.Points,
+		"Custom":         testCase.Custom,
+		"ChallengeID":    strings.TrimSpace(testCase.ChallengeID),
 	}
 }
 

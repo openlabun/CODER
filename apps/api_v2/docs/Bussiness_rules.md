@@ -22,11 +22,11 @@
 
 - Los cursos estarán disponibles durante un periodo determinado, deberá ingresarse el año y el semestre, la API maneja los siguiente valores para el semestre:
   
-  - `01`: Primer Semestre
+  - `10`: Primer Semestre
   
-  - `02`: Intersemestral
+  - `20`: Intersemestral
   
-  - `03`: Segundo Semestre
+  - `30`: Segundo Semestre
 
 - Si no se ingresa un periodo el curso será accesible de manera indeterminada
 
@@ -120,6 +120,8 @@
 
 - Deberán siempre estar vinculadas a un examen (`Exam`), a una sesión (`Session`) y a un usuario (`User`).
 
+- Estará vinculada a un Puntaje de Punto de Examen (`ExamItemScore`) para calificar el puntaje generado, esto solo se hará si el atributo `Scorable` está activo.
+
 #### Resultado de Revisiones (`SubmissionResult`)
 
 - Cada uno estará vinculado a un caso de prueba (`TestCase`) que se ejecutará.
@@ -157,3 +159,27 @@
   - `expired`: se cierra la sesión cuando el tiempo se agota y no se permiten revisiones atrasadas (atributo `AllowLateSubmissions == False`). También se cierra si el examen termina antes que el usuario le de a finalizar.
   
   - `blocked`: diseñado para casos de plagio, el usuario profesor puede activarlo manualmente a un estudiante en tiempo real. Bloqueará la sesión del usuario y no le permitirá hacer ninguna revisión.
+
+#### Puntaje de Examen (`ExamScore`)
+
+- El puntaje de examen depende de la sesión del estudiante (relación 1 a 1).
+
+- La estructura de este modelo será desnormalizada por temas de rendimiento, el puntaje estará asociado al examen al que pertenece y al usuario (esta información también la tiene la sesión).
+
+- Este modelo también contará con un valor numérico del resultado del examen y el tiempo que se demoró en completar.
+
+- Se creará al iniciar la sesión pero no se calculará el resultado hasta completar o expirar una sesión, si la sesión finaliza por bloqueo no será procesado el resultado.
+
+#### Puntaje de Punto de Examen (`ExamItemScore`)
+
+- Este modelo dependerá del Puntaje de Examen (relación 1 a muchos).
+
+- También tendrá relación (1 a muchos) con el Punto de Examen (`ExamItem`) al que hace referencia.
+
+- Se crearán todos al crear un Puntaje de Examen (`ExamScore`).
+
+- Contará con la información del puntaje resultado de ese punto en específico, calculado sobre la base del atributo `Points` del modelo de Punto de Examen. Solo se modificará si alguna de las revisiones consigue un puntaje mayor.
+
+- Llevará el contador de intentos, si este supera el límite permitido en el examen, se bloquearán todas las revisiones siguientes (`Submission`).
+
+# 

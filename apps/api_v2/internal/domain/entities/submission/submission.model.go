@@ -22,5 +22,5 @@ type Submission struct {
 	ChallengeID 	 string				`json:"challenge_id"`
 	SessionID   	 string				`json:"session_id"`
 	UserID     		 string				`json:"user_id"`
-	ExamItemScoreID  string				`json:"exam_item_score_id"`
+	ExamItemScoreID  *string			`json:"exam_item_score_id"` // Optional
 }

@@ -44,6 +44,8 @@ const CreateChallenge = () => {
     const [fetching, setFetching] = useState(isEditing);
     const [courses, setCourses] = useState([]);
     const [exams, setExams] = useState([]);
+    const [fetchedDefaultTemplates, setFetchedDefaultTemplates] = useState({});
+    const [generatingTemplates, setGeneratingTemplates] = useState(false);
 
     const SUPPORTED_LANGUAGES = [
         { id: 'python', label: 'Python', defaultTemplate: 'def solve():\n    pass\n' },
@@ -538,9 +540,59 @@ const CreateChallenge = () => {
 
                         {activeTab === 'templates' && (
                             <div className="form-section templates-view">
-                                <div className="section-header-mini">
-                                    <h3>Plantillas de Código</h3>
-                                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Activa los lenguajes permitidos para este reto y edita su plantilla inicial.</p>
+                                <div className="section-header-mini" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                        <h3>Plantillas de Código</h3>
+                                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Activa los lenguajes permitidos para este reto y edita su plantilla inicial.</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        disabled={generatingTemplates}
+                                        onClick={async () => {
+                                            setGeneratingTemplates(true);
+                                            try {
+                                                const payload = {
+                                                    input_variables: formData.inputVariables.map(v => ({
+                                                        name: v.name?.trim() || 'stdin',
+                                                        type: v.type || 'string',
+                                                        value: ''
+                                                    })),
+                                                    output_variable: {
+                                                        name: formData.outputVariable.name?.trim() || 'stdout',
+                                                        type: formData.outputVariable.type || 'string',
+                                                        value: ''
+                                                    }
+                                                };
+                                                const { data } = await client.post('/challenges/default-code-templates', payload);
+                                                if (data && typeof data === 'object') {
+                                                    setFetchedDefaultTemplates(data);
+                                                    // Auto-enable all languages that returned a template
+                                                    const newTemplates = { ...formData.codeTemplates };
+                                                    for (const [lang, code] of Object.entries(data)) {
+                                                        if (typeof code === 'string' && code.trim()) {
+                                                            newTemplates[lang] = code;
+                                                        }
+                                                    }
+                                                    setFormData(prev => ({ ...prev, codeTemplates: newTemplates }));
+                                                    Swal.fire({ icon: 'success', title: 'Plantillas generadas', text: `Se generaron plantillas para ${Object.keys(data).length} lenguaje(s).`, timer: 2000, toast: true, position: 'top-end', showConfirmButton: false });
+                                                }
+                                            } catch (err) {
+                                                console.error('Error fetching default templates:', err);
+                                                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudieron generar las plantillas. Verifica las variables de entrada/salida.', timer: 2500, toast: true, position: 'top-end', showConfirmButton: false });
+                                            } finally {
+                                                setGeneratingTemplates(false);
+                                            }
+                                        }}
+                                        style={{
+                                            background: generatingTemplates ? '#e5e7eb' : '#c8102e',
+                                            color: generatingTemplates ? '#9ca3af' : 'white',
+                                            border: 'none', borderRadius: '8px', padding: '0.5rem 1rem',
+                                            fontWeight: 700, fontSize: '0.8rem', cursor: generatingTemplates ? 'not-allowed' : 'pointer',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        {generatingTemplates ? '⚙️ Generando...' : '⚡ Generar Plantillas'}
+                                    </button>
                                 </div>
                                 <div className="templates-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
                                     {SUPPORTED_LANGUAGES.map(lang => {
@@ -561,7 +613,8 @@ const CreateChallenge = () => {
                                                             onChange={(e) => {
                                                                 const newTemplates = { ...formData.codeTemplates };
                                                                 if (e.target.checked) {
-                                                                    newTemplates[lang.id] = lang.defaultTemplate;
+                                                                    // Use fetched template if available, otherwise use local default
+                                                                    newTemplates[lang.id] = fetchedDefaultTemplates[lang.id] || lang.defaultTemplate;
                                                                 } else {
                                                                     delete newTemplates[lang.id];
                                                                 }

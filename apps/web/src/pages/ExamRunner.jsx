@@ -11,6 +11,16 @@ import {
 } from 'lucide-react';
 import './ChallengeSolver.css';
 
+// Map our language IDs to Monaco's registered language identifiers
+const MONACO_LANG_MAP = {
+    python: 'python',
+    javascript: 'javascript',
+    java: 'java',
+    cpp: 'cpp',
+    go: 'go'
+};
+const VALID_LANGUAGES = Object.keys(MONACO_LANG_MAP);
+
 const ExamRunner = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -107,7 +117,14 @@ const ExamRunner = () => {
     const ensureSession = useCallback(async (examId) => {
         // Helper to apply session data to state
         const applySession = (sessionData, sid) => {
-            localStorage.setItem('session_id', sid);
+            const oldSid = localStorage.getItem('session_id');
+            if (oldSid !== sid) {
+                // New session explicitly requires fresh attempts map
+                localStorage.removeItem('exam_attempt_map');
+                setAttemptMap({});
+                localStorage.setItem('session_id', sid);
+            }
+            
             setSessionId(sid);
             setSessionStatus(sessionData?.status || sessionData?.Status || 'active');
             const tl = sessionData?.time_left ?? sessionData?.TimeLeft ?? sessionData?.timeLeft;
@@ -190,12 +207,33 @@ const ExamRunner = () => {
                 const challengeList = items
                     .map(item => {
                         const ch = item.challenge || item.Challenge || {};
-                        let parsedTemplates = ch.code_templates || ch.CodeTemplates || {};
-                        while (typeof parsedTemplates === 'string') {
-                            try { parsedTemplates = JSON.parse(parsedTemplates); } catch (e) { parsedTemplates = {}; break; }
+                        let parsedTemplates = ch.code_templates || ch.CodeTemplates || ch.codeTemplates;
+                        
+                        // Robustly parse templates — could be string, double-encoded, object, etc.
+                        if (parsedTemplates == null) parsedTemplates = {};
+                        if (typeof parsedTemplates === 'string') {
+                            // Handle double/triple encoded JSON strings
+                            for (let i = 0; i < 3 && typeof parsedTemplates === 'string'; i++) {
+                                try { parsedTemplates = JSON.parse(parsedTemplates); } catch { parsedTemplates = {}; break; }
+                            }
                         }
-                        if (typeof parsedTemplates !== 'object' || parsedTemplates === null || Array.isArray(parsedTemplates)) {
-                            parsedTemplates = {};
+                        
+                        // Ensure all template values are strings
+                        const cleanTemplates = {};
+                        if (Array.isArray(parsedTemplates)) {
+                            // Backend returns []CodeTemplate e.g. [{"language": "python", "template": "def solve():"}]
+                            for (const item of parsedTemplates) {
+                                if (item && typeof item === 'object' && VALID_LANGUAGES.includes(item.language) && typeof item.template === 'string') {
+                                    cleanTemplates[item.language] = item.template;
+                                }
+                            }
+                        } else if (typeof parsedTemplates === 'object' && parsedTemplates !== null) {
+                            // Alternatively, simple dictionary map {"python": "def solve():"}
+                            for (const [key, val] of Object.entries(parsedTemplates)) {
+                                if (VALID_LANGUAGES.includes(key) && typeof val === 'string') {
+                                    cleanTemplates[key] = val;
+                                }
+                            }
                         }
                         return {
                             ...ch,
@@ -206,7 +244,7 @@ const ExamRunner = () => {
                             constraints: ch.constraints || ch.Constraints || '',
                             points: item.points || item.Points || 0,
                             order: item.order || item.Order || 0,
-                            code_templates: parsedTemplates
+                            code_templates: cleanTemplates
                         };
                     })
                     .filter(ch => ch.id)
@@ -217,13 +255,15 @@ const ExamRunner = () => {
                 // Initialize code templates
                 const initialCode = {};
                 const tcPromises = [];
-                challengeList.forEach(ch => {
-                    const templates = ch.code_templates || ch.CodeTemplates || {};
-                    const langs = Object.keys(templates);
+                let firstLang = 'python';
+                challengeList.forEach((ch, idx) => {
+                    const templates = ch.code_templates || {};
+                    const langs = Object.keys(templates).filter(l => VALID_LANGUAGES.includes(l));
                     if (langs.length > 0) {
-                        initialCode[ch.id] = templates[langs[0]];
+                        initialCode[ch.id] = templates[langs[0]] || '';
+                        if (idx === 0) firstLang = langs[0];
                     } else {
-                        initialCode[ch.id] = '# Escribe tu solución aquí\ndef solve():\n    pass\n';
+                        initialCode[ch.id] = '# Escribe tu solución aquí\n';
                     }
 
                     tcPromises.push(client.get(`/test-cases/challenge/${ch.id}?exam_id=${id}`).then(res => ({
@@ -235,12 +275,7 @@ const ExamRunner = () => {
                     })).catch(() => ({ id: ch.id, cases: [] })));
                 });
                 setCodeMap(initialCode);
-
-                if (challengeList.length > 0) {
-                    const templates = challengeList[0].code_templates || challengeList[0].CodeTemplates || {};
-                    const langs = Object.keys(templates);
-                    if (langs.length > 0) setLanguage(langs[0]);
-                }
+                setLanguage(firstLang);
 
                 Promise.all(tcPromises).then(results => {
                     const tcMap = {};
@@ -347,10 +382,19 @@ const ExamRunner = () => {
         setOutput('');
         const ch = challenges[idx];
         if (ch) {
-            const templates = ch.code_templates || ch.CodeTemplates || {};
-            const langs = Object.keys(templates);
-            if (langs.length > 0 && !langs.includes(language)) {
-                setLanguage(langs[0]);
+            const templates = ch.code_templates || {};
+            const langs = Object.keys(templates).filter(l => VALID_LANGUAGES.includes(l));
+            if (langs.length > 0) {
+                // If current language is available in this challenge, keep it; otherwise switch
+                if (!langs.includes(language)) {
+                    setLanguage(langs[0]);
+                    // Also load the template for that language if user hasn't edited yet
+                    if (!codeMap[ch.id]) {
+                        setCodeMap(prev => ({ ...prev, [ch.id]: templates[langs[0]] || '' }));
+                    }
+                }
+            } else {
+                setLanguage('python');
             }
         }
     };
@@ -740,8 +784,8 @@ const ExamRunner = () => {
                                     <select value={language} onChange={(e) => setLanguage(e.target.value)}
                                         style={{ background: '#ffffff', color: '#1f2937', border: '1px solid #d1d5db', borderRadius: '6px', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}>
                                         {(() => {
-                                            const templates = currentChallenge?.code_templates || currentChallenge?.CodeTemplates || {};
-                                            const langs = Object.keys(templates).filter(l => ['python', 'javascript', 'java', 'cpp', 'go'].includes(l));
+                                            const templates = currentChallenge?.code_templates || {};
+                                            const langs = Object.keys(templates).filter(l => VALID_LANGUAGES.includes(l));
                                             return langs.length > 0
                                                 ? langs.map(l => <option key={l} value={l}>{l === 'cpp' ? 'C++' : l.charAt(0).toUpperCase() + l.slice(1)}</option>)
                                                 : <option value="python">Python</option>;
@@ -795,14 +839,17 @@ const ExamRunner = () => {
 
                                 {/* Monaco Editor */}
                                 <div style={{ flex: 1, minHeight: 0 }}>
-                                    <Editor
-                                        height="100%"
-                                        theme="vs-dark"
-                                        language={['python', 'javascript', 'java', 'cpp', 'go'].includes(language) ? language : 'python'}
-                                        value={currentCode}
-                                        onChange={handleCodeChange}
-                                        options={{ minimap: { enabled: false }, fontSize: 14, padding: { top: 12 } }}
-                                    />
+                                    {currentChallenge && (
+                                        <Editor
+                                            key={`${currentChallenge.id}-${language}`}
+                                            height="100%"
+                                            theme="vs-dark"
+                                            language={MONACO_LANG_MAP[language] || 'python'}
+                                            value={currentCode || ''}
+                                            onChange={handleCodeChange}
+                                            options={{ minimap: { enabled: false }, fontSize: 14, padding: { top: 12 } }}
+                                        />
+                                    )}
                                 </div>
                             </div>
 

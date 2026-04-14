@@ -115,9 +115,9 @@ const ExamRunner = () => {
      *   3. If the session is for THIS exam on a fresh mount → reuse it (page refresh).
      *   4. If the session is old/stale → wait for it to freeze and retry creation.
      */
-    const ensureSession = useCallback(async (examId) => {
+    const ensureSession = useCallback(async (examId, examData) => {
         // Helper to apply session data to state
-        const applySession = (sessionData, sid) => {
+        const applySession = (sessionData, sid, examData) => {
             const oldSid = localStorage.getItem('session_id');
             if (oldSid !== sid) {
                 // New session explicitly requires fresh attempts map
@@ -129,21 +129,23 @@ const ExamRunner = () => {
             setSessionId(sid);
             setSessionStatus(sessionData?.status || sessionData?.Status || 'active');
             
-            // Determine time left
-            const tl = sessionData?.time_left ?? sessionData?.TimeLeft ?? sessionData?.timeLeft ?? exam?.time_limit;
-            if (tl != null && tl > 0) {
+            // Usamos directamente el tiempo que provee el backend, para que el 
+            // timer inicie en este valor una vez se muestre la interfaz,
+            // y luego el useEffect del intervalo va a ir descontando visualmente.
+            const tl = sessionData?.time_left ?? sessionData?.TimeLeft ?? sessionData?.timeLeft ?? examData?.time_limit ?? examData?.TimeLimit;
+            
+            if (tl === -1 || tl == null) {
+                // Unlimited or no limit
+                setTimeLeft(null);
+                timeLeftRef.current = null;
+            } else if (tl <= 0) {
+                // Already expired
+                setExamFinished(true);
+                setTimeLeft(0);
+                timeLeftRef.current = 0;
+            } else {
                 setTimeLeft(tl);
                 timeLeftRef.current = tl;
-            } else if (tl === -1 || tl === 0) {
-                // -1 = unlimited, 0 = already expired
-                if (tl === 0) {
-                    setExamFinished(true);
-                    setTimeLeft(0);
-                    timeLeftRef.current = 0;
-                } else {
-                    setTimeLeft(null);
-                    timeLeftRef.current = null;
-                }
             }
         };
 
@@ -168,7 +170,7 @@ const ExamRunner = () => {
             if (sid) {
                 // Step 2: If session is for THIS exam, reuse it (e.g. student refreshed or navigated back)
                 if (sessionExamId === examId || String(sessionExamId) === String(examId)) {
-                    applySession(activeSession, sid);
+                    applySession(activeSession, sid, examData);
                     return { id: sid, status: 'active', ...activeSession };
                 } else {
                     // Step 3: Session is for a DIFFERENT exam -> close it and create a new one
@@ -190,7 +192,7 @@ const ExamRunner = () => {
             const newSession = await tryCreate();
             const sid = newSession?.id || newSession?.ID;
             if (sid) {
-                applySession(newSession, sid);
+                applySession(newSession, sid, examData);
                 return newSession;
             }
         } catch (err) {
@@ -296,7 +298,7 @@ const ExamRunner = () => {
                 });
 
                 // --- Create or retrieve the exam session ---
-                await ensureSession(id);
+                await ensureSession(id, data);
             } catch (err) {
                 console.error(err);
                 Swal.fire({ icon: 'error', title: 'Error', text: err?.response?.data?.error || 'No se pudo cargar el examen.' });
@@ -444,7 +446,7 @@ const ExamRunner = () => {
 
         if (!sessionId) {
             // Try to create/retrieve session one more time
-            const session = await ensureSession(id);
+            const session = await ensureSession(id, exam);
             if (!session) {
                 Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No se pudo obtener una sesión activa. Reintenta o vuelve a entrar al examen.', customClass: { container: 'swal-ultra-high-z' } });
                 return;

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
+	exam_mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam/mapper"
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission/mapper"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
@@ -20,12 +21,18 @@ type CreateSessionUseCase struct {
 	userRepository userRepository.UserRepository
 	sessionRepository submissionRepository.SessionRepository
 	examRepository examRepository.ExamRepository
+	examScoreRepository examRepository.ExamScoreRepository
+	examItemRepository examRepository.ExamItemRepository
+	examItemScoreRepository examRepository.ExamItemScoreRepository
 }
 
-func NewCreateSessionUseCase(userRepository userRepository.UserRepository, sessionRepository submissionRepository.SessionRepository, examRepository examRepository.ExamRepository) *CreateSessionUseCase {
+func NewCreateSessionUseCase(userRepository userRepository.UserRepository, sessionRepository submissionRepository.SessionRepository, examRepository examRepository.ExamRepository, examScoreRepository examRepository.ExamScoreRepository, examItemRepository examRepository.ExamItemRepository, examItemScoreRepository examRepository.ExamItemScoreRepository) *CreateSessionUseCase {
 	return &CreateSessionUseCase{
 		userRepository: userRepository,
 		sessionRepository: sessionRepository,
+		examScoreRepository: examScoreRepository,
+		examItemRepository: examItemRepository,
+		examItemScoreRepository: examItemScoreRepository,
 		examRepository: examRepository,
 	}
 }
@@ -94,6 +101,37 @@ func (uc *CreateSessionUseCase) Execute(ctx context.Context, input dtos.CreateSe
 	session, err = uc.sessionRepository.CreateSession(ctx, sessionEntity)
 	if err != nil {
 		return nil, err
+	}
+
+	// [STEP 8] Create ExamScore for exam evaluation
+	examScore, err := exam_mapper.MapExamScore(exam, session)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create exam score: %w", err)
+	}
+
+	examScore, err = uc.examScoreRepository.CreateExamScore(ctx, examScore)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create exam score: %w", err)
+	}
+
+	// [STEP 9] Create ExamItemScores for exam evaluation
+	examItems, err := uc.examItemRepository.GetExamItem(ctx, &exam.ID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get exam items: %w", err)
+	}
+
+	for _, examItem := range examItems {
+		// [STEP 9.1] Create ExamItemScore for each exam item
+		examItemScore, err := exam_mapper.MapExamItemScore(examItem, examScore)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create exam item score: %w", err)
+		}
+
+		// [STEP 9.2] Save ExamItemScore in database
+		examItemScore, err = uc.examItemScoreRepository.CreateExamItemScore(ctx, examItemScore)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create exam item score: %w", err)
+		}
 	}
 	
 	return session, nil

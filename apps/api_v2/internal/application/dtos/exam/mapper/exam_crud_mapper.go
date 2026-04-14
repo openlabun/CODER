@@ -6,6 +6,7 @@ import (
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 
+	sub_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
 	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
@@ -123,4 +124,20 @@ func MapExamItemDTO(examItem *Entities.ExamItem, challenge *Entities.Challenge) 
 	}
 
 	return &dto, nil
+}
+
+func MapExamScore (exam *Entities.Exam, session *sub_entities.Session) (*Entities.ExamScore, error) {
+	if exam == nil {
+		return nil, fmt.Errorf("exam is nil")
+	}
+
+	if session == nil {
+		return nil, fmt.Errorf("session is nil")
+	}
+	
+	return factory.NewExamScore(
+		exam.ID,
+		session.ID,
+		session.StudentID,
+	)
 }

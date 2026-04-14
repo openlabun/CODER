@@ -27,9 +27,11 @@ type ApplicationDependencies struct {
 	UserRepository             user_repositories.UserRepository
 	CourseRepository           course_repositories.CourseRepository
 	ExamRepository             exam_repositories.ExamRepository
+	ExamScoreRepository 	   exam_repositories.ExamScoreRepository
 	ChallengeRepository        exam_repositories.ChallengeRepository
 	IOVariableRepository 	   exam_repositories.IOVariableRepository
 	ExamItemRepository         exam_repositories.ExamItemRepository
+	ExamItemScoreRepository    exam_repositories.ExamItemScoreRepository
 	TestCaseRepository         exam_repositories.TestCaseRepository
 	SubmissionRepository       submission_repositories.SubmissionRepository
 	SessionRepository          submission_repositories.SessionRepository
@@ -49,6 +51,8 @@ func NewApplicationDependencies(
 	testCaseRepo exam_repositories.TestCaseRepository,
 	ioVariableRepo exam_repositories.IOVariableRepository,
 	examItemRepo exam_repositories.ExamItemRepository,
+	examScoreRepo exam_repositories.ExamScoreRepository,
+	examItemScoreRepo exam_repositories.ExamItemScoreRepository,
 	submissionRepo submission_repositories.SubmissionRepository,
 	sessionRepo submission_repositories.SessionRepository,
 	submissionResultRepo submission_repositories.SubmissionResultRepository,
@@ -70,6 +74,8 @@ func NewApplicationDependencies(
 		IOVariableRepository: 		ioVariableRepo,
 		TestCaseRepository:         testCaseRepo,
 		ExamItemRepository:         examItemRepo,
+		ExamScoreRepository:        examScoreRepo,
+		ExamItemScoreRepository:    examItemScoreRepo,
 		SubmissionRepository:       submissionRepo,
 		SessionRepository:          sessionRepo,
 		SubmissionResultRepository: submissionResultRepo,
@@ -109,6 +115,10 @@ func (deps ApplicationDependencies) CheckDependencies() error {
 		return fmt.Errorf("ExamRepository dependency is not provided")
 	}
 
+	if deps.ExamScoreRepository == nil {
+		return fmt.Errorf("ExamScoreRepository dependency is not provided")
+	}
+
 	if deps.SubmissionRepository == nil {
 		return fmt.Errorf("SubmissionRepository dependency is not provided")
 	}
@@ -127,6 +137,10 @@ func (deps ApplicationDependencies) CheckDependencies() error {
 
 	if deps.ExamItemRepository == nil {
 		return fmt.Errorf("ExamItemRepository dependency is not provided")
+	}
+
+	if deps.ExamScoreRepository == nil {
+		return fmt.Errorf("ExamScoreRepository dependency is not provided")
 	}
 
 	if deps.SessionRepository == nil {

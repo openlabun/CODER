@@ -15,7 +15,12 @@ import (
 	state_machine "github.com/openlabun/CODER/apps/api_v2/internal/domain/states/submission"
 )
 
-func MapCreateSubmissionInputToSubmissionEntity(userID string, input dtos.CreateSubmissionInput) (*Entities.Submission, error) {
+func MapCreateSubmissionInputToSubmissionEntity(userID string, ExamItemScore *examEntities.ExamItemScore, input dtos.CreateSubmissionInput) (*Entities.Submission, error) {
+	var examItemScoreID *string
+	if ExamItemScore != nil {
+		examItemScoreID = &ExamItemScore.ID
+	}
+	
 	submission, err := factory.NewSubmission(
 		input.Code,
 		constants.ProgrammingLanguage(input.Language),
@@ -23,6 +28,7 @@ func MapCreateSubmissionInputToSubmissionEntity(userID string, input dtos.Create
 		input.ChallengeID,
 		input.SessionID,
 		userID,
+		examItemScoreID,
 	)
 
 	if err != nil {
@@ -40,6 +46,7 @@ func MapCreateExecutionInputToSubmissionEntity(userID string, input dtos.CreateE
 		input.ChallengeID,
 		input.SessionID,
 		userID,
+		nil,
 	)
 
 	if err != nil {
@@ -57,6 +64,7 @@ func MapCreateCustomExecutionInputToEntities(userID string, input dtos.CreateCus
 		input.ChallengeID,
 		input.SessionID,
 		userID,
+		nil,
 	)
 
 	if err != nil {

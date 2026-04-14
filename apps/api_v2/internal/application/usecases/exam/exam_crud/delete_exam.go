@@ -17,15 +17,18 @@ import (
 type DeleteExamUseCase struct {
 	userRepository userRepository.UserRepository
 	examRepository examRepository.ExamRepository
+	examScoreRepository examRepository.ExamScoreRepository
 	examItemRepository examRepository.ExamItemRepository
+	examItemScoreRepository examRepository.ExamItemScoreRepository
 }
 
-func NewDeleteExamUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, examItemRepository examRepository.ExamItemRepository) *DeleteExamUseCase {
+func NewDeleteExamUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, examItemRepository examRepository.ExamItemRepository, examScoreRepository examRepository.ExamScoreRepository, examItemScoreRepository examRepository.ExamItemScoreRepository) *DeleteExamUseCase {
 	return &DeleteExamUseCase{
 		userRepository: userRepository,
 		examRepository: examRepository,
+		examScoreRepository: examScoreRepository,
 		examItemRepository: examItemRepository,
-
+		examItemScoreRepository: examItemScoreRepository,
 	}
 }
 
@@ -65,7 +68,7 @@ func (uc *DeleteExamUseCase) Execute(ctx context.Context, input dtos.DeleteExamI
 	}
 
 	// [STEP 4] Delete exam entity
-	err = domain_services.RemoveExam(ctx, exam.ID, uc.examRepository, uc.examItemRepository)
+	err = domain_services.RemoveExam(ctx, exam.ID, uc.examRepository, uc.examItemRepository, uc.examScoreRepository, uc.examItemScoreRepository)
 	if err != nil {
 		return nil, err
 	}

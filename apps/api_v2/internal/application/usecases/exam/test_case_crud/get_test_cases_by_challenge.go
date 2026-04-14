@@ -136,7 +136,7 @@ func (uc *GetTestCasesByChallengeUseCase) Execute(ctx context.Context, input dto
 func filterPublicTestCases(testCases []*Entities.TestCase) []*Entities.TestCase {
 	publicTestCases := []*Entities.TestCase{}
 	for _, testCase := range testCases {
-		if testCase.IsSample {
+		if testCase.IsSample && !testCase.Custom {
 			publicTestCases = append(publicTestCases, testCase)
 		}
 	}

@@ -24,7 +24,7 @@ type ExamScoreRepository interface {
 
 	GetExamScores (ctx context.Context, examID, studentID *string) ([]*Entities.ExamScore, error)
 	GetExamScoreByID(ctx context.Context, examScoreID string) (*Entities.ExamScore, error)
-	GetExamScoresBySessionID(ctx context.Context, sessionID string) ([]*Entities.ExamScore, error)
+	GetExamScoreBySessionID(ctx context.Context, sessionID string) (*Entities.ExamScore, error)
 }
 
 type ChallengeRepository interface {

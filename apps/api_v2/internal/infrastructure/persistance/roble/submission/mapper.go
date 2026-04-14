@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	submission_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
@@ -19,7 +18,7 @@ const (
 )
 
 func submissionToRecord(submission *Entities.Submission) map[string]any {
-	return map[string]any{
+	record := map[string]any{
 		"ID":          strings.TrimSpace(submission.ID),
 		"Code":        submission.Code,
 		"Language":    string(submission.Language),
@@ -32,10 +31,18 @@ func submissionToRecord(submission *Entities.Submission) map[string]any {
 		"SessionID":   strings.TrimSpace(submission.SessionID),
 		"UserID":      strings.TrimSpace(submission.UserID),
 	}
+
+	if submission.ExamItemScoreID != nil {
+		if examItemScoreID := strings.TrimSpace(*submission.ExamItemScoreID); examItemScoreID != "" {
+			record["ExamItemScoreID"] = examItemScoreID
+		}
+	}
+
+	return record
 }
 
 func submissionToUpdates(submission *Entities.Submission) map[string]any {
-	return map[string]any{
+	updates := map[string]any{
 		"Code":        submission.Code,
 		"Language":    string(submission.Language),
 		"Score":       submission.Score,
@@ -45,11 +52,28 @@ func submissionToUpdates(submission *Entities.Submission) map[string]any {
 		"SessionID":   strings.TrimSpace(submission.SessionID),
 		"UserID":      strings.TrimSpace(submission.UserID),
 	}
+
+	if submission.ExamItemScoreID != nil {
+		if examItemScoreID := strings.TrimSpace(*submission.ExamItemScoreID); examItemScoreID != "" {
+			updates["ExamItemScoreID"] = examItemScoreID
+		}
+	} else {
+		updates["ExamItemScoreID"] = nil
+	}
+
+	return updates
 }
 
 func recordToSubmission(record map[string]any) (*Entities.Submission, error) {
 	createdAt, _ := asTime(record["CreatedAt"])
 	updatedAt, _ := asTime(record["UpdatedAt"])
+
+	var examItemScoreID *string
+	if record["ExamItemScoreID"] != nil {
+		if trimmedID := strings.TrimSpace(asString(record["ExamItemScoreID"])); trimmedID != "" {
+			examItemScoreID = &trimmedID
+		}
+	}
 
 	return submission_factory.ExistingSubmission(
 		asString(record["ID"]),
@@ -63,6 +87,7 @@ func recordToSubmission(record map[string]any) (*Entities.Submission, error) {
 		asString(record["ChallengeID"]),
 		asString(record["SessionID"]),
 		asString(record["UserID"]),
+		examItemScoreID,
 	)
 }
 
@@ -184,15 +209,6 @@ func recordToResult(record map[string]any, actualOutput *ExamEntities.IOVariable
 		actualOutput,
 		errMsg,
 	)
-}
-
-func recordToIOVariable(record map[string]any) (*ExamEntities.IOVariable, error) {
-	return &ExamEntities.IOVariable{
-		ID:    asString(record["ID"]),
-		Name:  asString(record["Name"]),
-		Type:  constants.VariableFormat(asString(record["Type"])),
-		Value: asString(record["Value"]),
-	}, nil
 }
 
 func firstRecord(res map[string]any) (map[string]any, error) {

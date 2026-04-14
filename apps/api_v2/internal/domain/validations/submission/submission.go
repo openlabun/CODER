@@ -55,5 +55,9 @@ func ValidateSubmission(submission *Entities.Submission) error {
 		return fmt.Errorf("submission timeMsTotal cannot be negative")
 	}
 
+	if submission.Scorable && submission.ExamItemScoreID == nil {
+		return fmt.Errorf("scorable submission must have exam item score id")
+	}
+
 	return nil
 }

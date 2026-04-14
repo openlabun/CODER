@@ -17,6 +17,16 @@ type ExamRepository interface {
 	GetExamsByTeacherID(ctx context.Context, teacherID string) ([]*Entities.Exam, error)
 }
 
+type ExamScoreRepository interface {
+	CreateExamScore(ctx context.Context, examScore *Entities.ExamScore) (*Entities.ExamScore, error)
+	UpdateExamScore(ctx context.Context, examScore *Entities.ExamScore) (*Entities.ExamScore, error)
+	DeleteExamScore(ctx context.Context, examScoreID string) error
+
+	GetExamScores (ctx context.Context, examID, studentID *string) ([]*Entities.ExamScore, error)
+	GetExamScoreByID(ctx context.Context, examScoreID string) (*Entities.ExamScore, error)
+	GetExamScoresBySessionID(ctx context.Context, sessionID string) ([]*Entities.ExamScore, error)
+}
+
 type ChallengeRepository interface {
 	CreateChallenge(ctx context.Context, challenge *Entities.Challenge) (*Entities.Challenge, error)
 	UpdateChallenge(ctx context.Context, challenge *Entities.Challenge) (*Entities.Challenge, error)
@@ -38,6 +48,16 @@ type ExamItemRepository interface {
 
 	GetExamItemByID(ctx context.Context, examItemID string) (*Entities.ExamItem, error)
 	GetExamItem (ctx context.Context, examID *string, challengeID *string) ([]*Entities.ExamItem, error)
+}
+
+type ExamItemScoreRepository interface {
+	CreateExamItemScore(ctx context.Context, examItemScore *Entities.ExamItemScore) (*Entities.ExamItemScore, error)
+	UpdateExamItemScore(ctx context.Context, examItemScore *Entities.ExamItemScore) (*Entities.ExamItemScore, error)
+	DeleteExamItemScore(ctx context.Context, examItemScoreID string) error
+
+	GetExamItemScoreByID(ctx context.Context, examItemScoreID string) (*Entities.ExamItemScore, error)
+	GetExamItemScoresByExamScoreID(ctx context.Context, examScoreID string) ([]*Entities.ExamItemScore, error)
+	GetExamItemScore(ctx context.Context, examItemID, examScoreID string) (*Entities.ExamItemScore, error)
 }
 
 type TestCaseRepository interface {

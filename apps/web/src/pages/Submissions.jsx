@@ -3,7 +3,7 @@ import {
     CheckCircle, XCircle, Clock, Code,
     Calendar, ChevronRight, ChevronDown, AlertCircle,
     Trophy, RotateCcw, Target, Users,
-    Hash, User, Layers, BookOpen
+    Hash, User, Layers, BookOpen, Loader2
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import client from '../api/client';
@@ -580,9 +580,10 @@ const Submissions = () => {
     // ============ RENDER ============
     if (loading) return (
         <div className="submissions-page-mini">
-            <header className="page-header-mini">
-                <div className="skeleton title-skeleton"></div>
-            </header>
+            <div className="page-loader" style={{ paddingBottom: '2rem' }}>
+                <Loader2 className="page-loader-spinner" size={48} />
+                <p className="page-loader-text">Cargando envíos...</p>
+            </div>
             <div className="skeleton-table-mini">
                 {[...Array(4)].map((_, i) => (
                     <div key={i} className="skeleton-row-mini shimmer"></div>

@@ -243,8 +243,8 @@ const CreateExam = () => {
                             <h2>Visibilidad</h2>
                         </div>
 
-                        <div className="radio-group grid-2">
-                            <label className={`radio-card ${formData.visibility === 'course' ? 'active' : ''}`}>
+                        <div className="radio-group grid-2 visibility-radio-group">
+                            <label className={`radio-card visibility-radio-card ${formData.visibility === 'course' ? 'active' : ''}`}>
                                 <input
                                     type="radio"
                                     name="visibility"
@@ -252,13 +252,13 @@ const CreateExam = () => {
                                     checked={formData.visibility === 'course'}
                                     onChange={handleChange}
                                 />
-                                <div className="radio-content">
+                                <div className="radio-content visibility-radio-content">
                                     <span className="radio-title">Solo mi Curso</span>
                                     <small>Visible solo para estudiantes inscritos</small>
                                 </div>
                             </label>
 
-                            <label className={`radio-card ${formData.visibility === 'public' ? 'active' : ''}`}>
+                            <label className={`radio-card visibility-radio-card ${formData.visibility === 'public' ? 'active' : ''}`}>
                                 <input
                                     type="radio"
                                     name="visibility"
@@ -266,13 +266,13 @@ const CreateExam = () => {
                                     checked={formData.visibility === 'public'}
                                     onChange={handleChange}
                                 />
-                                <div className="radio-content">
+                                <div className="radio-content visibility-radio-content">
                                     <span className="radio-title">Público Global</span>
                                     <small>Visible para toda la comunidad RobleCode</small>
                                 </div>
                             </label>
 
-                            <label className={`radio-card ${formData.visibility === 'teachers' ? 'active' : ''}`}>
+                            <label className={`radio-card visibility-radio-card ${formData.visibility === 'teachers' ? 'active' : ''}`}>
                                 <input
                                     type="radio"
                                     name="visibility"
@@ -280,13 +280,13 @@ const CreateExam = () => {
                                     checked={formData.visibility === 'teachers'}
                                     onChange={handleChange}
                                 />
-                                <div className="radio-content">
+                                <div className="radio-content visibility-radio-content">
                                     <span className="radio-title">Solo Profesores</span>
                                     <small>Colabora con otros docentes</small>
                                 </div>
                             </label>
 
-                            <label className={`radio-card ${formData.visibility === 'private' ? 'active' : ''}`}>
+                            <label className={`radio-card visibility-radio-card ${formData.visibility === 'private' ? 'active' : ''}`}>
                                 <input
                                     type="radio"
                                     name="visibility"
@@ -294,7 +294,7 @@ const CreateExam = () => {
                                     checked={formData.visibility === 'private'}
                                     onChange={handleChange}
                                 />
-                                <div className="radio-content">
+                                <div className="radio-content visibility-radio-content">
                                     <span className="radio-title">Privado / Borrador</span>
                                     <small>Solo tú puedes verlo y editarlo</small>
                                 </div>

@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"fmt"
+	
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	
 	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
@@ -31,4 +33,19 @@ func MapUpdateExamItemInputToExamItemEntity(existingExamItem *Entities.ExamItem,
 	}
 
 	return existingExamItem, nil
+}
+
+func MapExamItemScore(examItem *Entities.ExamItem, examScore *Entities.ExamScore) (*Entities.ExamItemScore, error) {
+	if examItem == nil {
+		return nil, fmt.Errorf("exam item cannot be nil")
+	}
+
+	if examScore == nil {
+		return nil, fmt.Errorf("exam score cannot be nil")
+	}
+	
+	return factory.NewExamItemScore(
+		examItem.ID,
+		examScore.ID,
+	)
 }

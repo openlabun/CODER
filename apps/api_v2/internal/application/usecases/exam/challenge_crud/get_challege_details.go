@@ -7,7 +7,7 @@ import (
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 
@@ -37,7 +37,7 @@ func (uc *GetChallengeDetailsUseCase) Execute(ctx context.Context, input dtos.Ge
 		return nil, err
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
+	if user.Role != user_constants.UserRoleProfessor {
 		return nil, fmt.Errorf("user does not have permissions to get an exam")
 	}
 

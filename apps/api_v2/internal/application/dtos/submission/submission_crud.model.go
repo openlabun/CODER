@@ -1,15 +1,31 @@
 package dtos
 
 import (
+	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
 
 type CreateSubmissionInput struct {
 	Code        string		`json:"code"`
 	Language    string		`json:"language"`
-	Score       int			`json:"score"`
 	ChallengeID string		`json:"challenge_id"`
 	SessionID   string		`json:"session_id"`
+}
+
+type CreateExecutionInput struct {
+	Code        string		`json:"code"`
+	Language    string		`json:"language"`
+	ChallengeID string		`json:"challenge_id"`
+	SessionID   string		`json:"session_id"`
+}
+
+type CreateCustomExecutionInput struct {
+	Code        string				 `json:"code"`
+	Language    string				 `json:"language"`
+	ChallengeID string				 `json:"challenge_id"`
+	SessionID   string				 `json:"session_id"`
+	Inputs      []dtos.IOVariableDTO `json:"input_variables"`
+	Output 		dtos.IOVariableDTO	 `json:"output_variable"`
 }
 
 type UpdateResultInput struct {

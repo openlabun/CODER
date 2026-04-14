@@ -8,7 +8,7 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
@@ -18,11 +18,13 @@ type DeleteCourseUseCase struct {
 	courseRepository repositories.CourseRepository
 	userRepository   userRepository.UserRepository
 	examRepository   examRepository.ExamRepository
+	examScoreRepository examRepository.ExamScoreRepository
 	examItemRepository examRepository.ExamItemRepository
+	examItemScoreRepository examRepository.ExamItemScoreRepository
 }
 
-func NewDeleteCourseUseCase(courseRepository repositories.CourseRepository, userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, examItemRepository examRepository.ExamItemRepository) *DeleteCourseUseCase {
-	return &DeleteCourseUseCase{courseRepository: courseRepository, userRepository: userRepository, examRepository: examRepository, examItemRepository: examItemRepository}
+func NewDeleteCourseUseCase(courseRepository repositories.CourseRepository, userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, examItemRepository examRepository.ExamItemRepository, examScoreRepository examRepository.ExamScoreRepository, examItemScoreRepository examRepository.ExamItemScoreRepository) *DeleteCourseUseCase {
+	return &DeleteCourseUseCase{courseRepository: courseRepository, userRepository: userRepository, examRepository: examRepository, examScoreRepository: examScoreRepository, examItemRepository: examItemRepository, examItemScoreRepository: examItemScoreRepository}
 }
 
 func (uc *DeleteCourseUseCase) Execute(ctx context.Context, input dtos.DeleteCourseInput) error {
@@ -37,12 +39,12 @@ func (uc *DeleteCourseUseCase) Execute(ctx context.Context, input dtos.DeleteCou
 		return err
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
+	if user.Role != user_constants.UserRoleProfessor {
 		return fmt.Errorf("user does not have permissions to create a course")
 	}
 
 	// [STEP 2] Delete course with user provided values
-	err = domain_services.RemoveCourse(ctx, input.CourseID, uc.courseRepository, uc.examRepository, uc.examItemRepository)
+	err = domain_services.RemoveCourse(ctx, input.CourseID, uc.courseRepository, uc.examRepository, uc.examItemRepository, uc.examScoreRepository, uc.examItemScoreRepository)
 	if err != nil {
 		return err
 	}

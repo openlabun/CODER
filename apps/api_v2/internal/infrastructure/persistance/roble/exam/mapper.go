@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	exam_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
 )
@@ -37,6 +38,76 @@ func recordToExamItem(record map[string]any) (*Entities.ExamItem, error) {
 		asString(record["ExamID"]),
 		asInt(record["Order"]),
 		asInt(record["Points"]),
+	)
+}
+
+func examScoreToRecord(examScore *Entities.ExamScore) map[string]any {
+	return map[string]any{
+		"ID":        strings.TrimSpace(examScore.ID),
+		"ExamID":    strings.TrimSpace(examScore.ExamID),
+		"SessionID": strings.TrimSpace(examScore.SessionID),
+		"Score":     examScore.Score,
+		"CreatedAt": strings.TrimSpace(examScore.CreatedAt),
+		"UpdatedAt": strings.TrimSpace(examScore.UpdatedAt),
+		"StudentID": strings.TrimSpace(examScore.StudentID),
+	}
+}
+
+func examScoreToUpdates(examScore *Entities.ExamScore) map[string]any {
+	return map[string]any{
+		"ExamID":    strings.TrimSpace(examScore.ExamID),
+		"SessionID": strings.TrimSpace(examScore.SessionID),
+		"Score":     examScore.Score,
+		"CreatedAt": strings.TrimSpace(examScore.CreatedAt),
+		"UpdatedAt": strings.TrimSpace(examScore.UpdatedAt),
+		"StudentID": strings.TrimSpace(examScore.StudentID),
+	}
+}
+
+func recordToExamScore(record map[string]any) (*Entities.ExamScore, error) {
+	return exam_factory.ExistingExamScore(
+		asString(record["ID"]),
+		asString(record["ExamID"]),
+		asString(record["SessionID"]),
+		asInt(record["Score"]),
+		asString(record["CreatedAt"]),
+		asString(record["UpdatedAt"]),
+		asString(record["StudentID"]),
+	)
+}
+
+func examItemScoreToRecord(examItemScore *Entities.ExamItemScore) map[string]any {
+	return map[string]any{
+		"ID":          strings.TrimSpace(examItemScore.ID),
+		"ExamItemID":  strings.TrimSpace(examItemScore.ExamItemID),
+		"ExamScoreID": strings.TrimSpace(examItemScore.ExamScoreID),
+		"Score":       examItemScore.Score,
+		"Tries":       examItemScore.Tries,
+		"CreatedAt":   strings.TrimSpace(examItemScore.CreatedAt),
+		"UpdatedAt":   strings.TrimSpace(examItemScore.UpdatedAt),
+	}
+}
+
+func examItemScoreToUpdates(examItemScore *Entities.ExamItemScore) map[string]any {
+	return map[string]any{
+		"ExamItemID":  strings.TrimSpace(examItemScore.ExamItemID),
+		"ExamScoreID": strings.TrimSpace(examItemScore.ExamScoreID),
+		"Score":       examItemScore.Score,
+		"Tries":       examItemScore.Tries,
+		"CreatedAt":   strings.TrimSpace(examItemScore.CreatedAt),
+		"UpdatedAt":   strings.TrimSpace(examItemScore.UpdatedAt),
+	}
+}
+
+func recordToExamItemScore(record map[string]any) (*Entities.ExamItemScore, error) {
+	return exam_factory.ExistingExamItemScore(
+		asString(record["ID"]),
+		asString(record["ExamItemID"]),
+		asString(record["ExamScoreID"]),
+		asInt(record["Score"]),
+		asInt(record["Tries"]),
+		asString(record["CreatedAt"]),
+		asString(record["UpdatedAt"]),
 	)
 }
 
@@ -116,7 +187,7 @@ func recordToExam(record map[string]any) (*Entities.Exam, error) {
 		asString(record["ID"]),
 		asString(record["Title"]),
 		asString(record["Description"]),
-		Entities.Visibility(asString(record["Visibility"])),
+		constants.Visibility(asString(record["Visibility"])),
 		startTime,
 		endTime,
 		asBool(record["AllowLateSubmissions"]),
@@ -139,8 +210,9 @@ func challengeToRecord(challenge *Entities.Challenge) map[string]any {
 		"Difficulty":        string(challenge.Difficulty),
 		"WorkerTimeLimit":   challenge.WorkerTimeLimit,
 		"WorkerMemoryLimit": challenge.WorkerMemoryLimit,
-		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
-		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
+		"CodeTemplates":     codeTemplateFieldValue(challenge.CodeTemplates),
+		"InputVariables":    listFieldValue(ioVariableIDs(challenge.InputVariables)),
+		"OutputVariable":    strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
 		"CreatedAt":         challenge.CreatedAt.UTC().Format(time.RFC3339),
 		"UpdatedAt":         challenge.UpdatedAt.UTC().Format(time.RFC3339),
@@ -157,8 +229,9 @@ func challengeToUpdates(challenge *Entities.Challenge) map[string]any {
 		"Difficulty":        string(challenge.Difficulty),
 		"WorkerTimeLimit":   challenge.WorkerTimeLimit,
 		"WorkerMemoryLimit": challenge.WorkerMemoryLimit,
-		"InputVariables":             listFieldValue(ioVariableIDs(challenge.InputVariables)),
-		"OutputVariable":            strings.TrimSpace(challenge.OutputVariable.ID),
+		"CodeTemplates":     codeTemplateFieldValue(challenge.CodeTemplates),
+		"InputVariables":    listFieldValue(ioVariableIDs(challenge.InputVariables)),
+		"OutputVariable":    strings.TrimSpace(challenge.OutputVariable.ID),
 		"Constraints":       strings.TrimSpace(challenge.Constraints),
 		"UserID":            strings.TrimSpace(challenge.UserID),
 	}
@@ -169,14 +242,22 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 	updatedAt, _ := asTime(record["UpdatedAt"])
 
 	tags := asStringList(record["Tags"])
-	status := Entities.ChallengeStatus(asString(record["Status"]))
+	status := constants.ChallengeStatus(asString(record["Status"]))
 	if status == "" {
-		status = Entities.ChallengeStatusDraft
+		status = constants.ChallengeStatusDraft
 	}
 
-	difficulty := Entities.ChallengeDifficulty(asString(record["Difficulty"]))
+	difficulty := constants.ChallengeDifficulty(asString(record["Difficulty"]))
 	if difficulty == "" {
-		difficulty = Entities.ChallengeDifficultyEasy
+		difficulty = constants.ChallengeDifficultyEasy
+	}
+
+	codeTemplates := asCodeTemplateList(record["CodeTemplates"])
+	if len(codeTemplates) == 0 {
+		codeTemplates = asCodeTemplateList(record["CodeTemplates"])
+	}
+	if len(codeTemplates) == 0 {
+		codeTemplates = asCodeTemplateList(record["code_templates"])
 	}
 
 	output := Entities.IOVariable{}
@@ -193,6 +274,7 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 		difficulty,
 		asInt(record["WorkerTimeLimit"]),
 		asInt(record["WorkerMemoryLimit"]),
+		codeTemplates,
 		inputVariables,
 		output,
 		asString(record["Constraints"]),
@@ -204,25 +286,27 @@ func recordToChallenge(record map[string]any, inputVariables []Entities.IOVariab
 
 func testCaseToRecord(testCase *Entities.TestCase) map[string]any {
 	return map[string]any{
-		"ID":          strings.TrimSpace(testCase.ID),
-		"Name":        strings.TrimSpace(testCase.Name),
-		"Input":       listFieldValue(ioVariableIDs(testCase.Input)),
-		"ExpectedOutput":      strings.TrimSpace(testCase.ExpectedOutput.ID),
-		"IsSample":    testCase.IsSample,
-		"Points":      testCase.Points,
-		"CreatedAt":   testCase.CreatedAt.UTC().Format(time.RFC3339),
-		"ChallengeID": strings.TrimSpace(testCase.ChallengeID),
+		"ID":             strings.TrimSpace(testCase.ID),
+		"Name":           strings.TrimSpace(testCase.Name),
+		"Input":          listFieldValue(ioVariableIDs(testCase.Input)),
+		"ExpectedOutput": strings.TrimSpace(testCase.ExpectedOutput.ID),
+		"IsSample":       testCase.IsSample,
+		"Points":         testCase.Points,
+		"Custom":         testCase.Custom,
+		"CreatedAt":      testCase.CreatedAt.UTC().Format(time.RFC3339),
+		"ChallengeID":    strings.TrimSpace(testCase.ChallengeID),
 	}
 }
 
 func testCaseToUpdates(testCase *Entities.TestCase) map[string]any {
 	return map[string]any{
-		"Name":        strings.TrimSpace(testCase.Name),
-		"Input":       listFieldValue(ioVariableIDs(testCase.Input)),
-		"ExpectedOutput":      strings.TrimSpace(testCase.ExpectedOutput.ID),
-		"IsSample":    testCase.IsSample,
-		"Points":      testCase.Points,
-		"ChallengeID": strings.TrimSpace(testCase.ChallengeID),
+		"Name":           strings.TrimSpace(testCase.Name),
+		"Input":          listFieldValue(ioVariableIDs(testCase.Input)),
+		"ExpectedOutput": strings.TrimSpace(testCase.ExpectedOutput.ID),
+		"IsSample":       testCase.IsSample,
+		"Points":         testCase.Points,
+		"Custom":         testCase.Custom,
+		"ChallengeID":    strings.TrimSpace(testCase.ChallengeID),
 	}
 }
 
@@ -241,6 +325,7 @@ func recordToTestCase(record map[string]any, inputVariables []Entities.IOVariabl
 		output,
 		asBool(record["IsSample"]),
 		asInt(record["Points"]),
+		asBool(record["Custom"]),
 		asString(record["ChallengeID"]),
 		createdAt,
 	)
@@ -267,7 +352,7 @@ func recordToIOVariable(record map[string]any) (*Entities.IOVariable, error) {
 	return exam_factory.ExistingIOVariable(
 		asString(record["ID"]),
 		asString(record["Name"]),
-		Entities.VariableFormat(asString(record["Type"])),
+		constants.VariableFormat(asString(record["Type"])),
 		asString(record["Value"]),
 	)
 }
@@ -475,4 +560,89 @@ func asStringList(v any) []string {
 
 func listFieldValue(values []string) map[string]any {
 	return map[string]any{"values": values}
+}
+
+func codeTemplateFieldValue(templates []Entities.CodeTemplate) map[string]any {
+	values := make([]map[string]any, 0, len(templates))
+	for _, tpl := range templates {
+		language := strings.TrimSpace(string(tpl.Language))
+		template := strings.TrimSpace(tpl.Template)
+		if language == "" || template == "" {
+			continue
+		}
+
+		values = append(values, map[string]any{
+			"Language": language,
+			"Template": template,
+		})
+	}
+
+	return map[string]any{"values": values}
+}
+
+func asCodeTemplateList(v any) []Entities.CodeTemplate {
+	if v == nil {
+		return nil
+	}
+
+	switch value := v.(type) {
+	case map[string]any:
+		if wrapped, ok := value["values"]; ok {
+			return asCodeTemplateList(wrapped)
+		}
+
+		language := asString(value["Language"])
+		if language == "" {
+			language = asString(value["language"])
+		}
+		template := asString(value["Template"])
+		if template == "" {
+			template = asString(value["template"])
+		}
+		if language == "" || template == "" {
+			return nil
+		}
+
+		item, err := exam_factory.ExistingCodeTemplate(language, template)
+		if err != nil {
+			return nil
+		}
+
+		return []Entities.CodeTemplate{item}
+	case []any:
+		result := make([]Entities.CodeTemplate, 0, len(value))
+		for _, raw := range value {
+			parsed := asCodeTemplateList(raw)
+			if len(parsed) > 0 {
+				result = append(result, parsed...)
+			}
+		}
+		return result
+	case []map[string]any:
+		result := make([]Entities.CodeTemplate, 0, len(value))
+		for _, raw := range value {
+			parsed := asCodeTemplateList(raw)
+			if len(parsed) > 0 {
+				result = append(result, parsed...)
+			}
+		}
+		return result
+	case string:
+		raw := strings.TrimSpace(value)
+		if raw == "" {
+			return nil
+		}
+
+		var parsedAny []any
+		if err := json.Unmarshal([]byte(raw), &parsedAny); err == nil {
+			return asCodeTemplateList(parsedAny)
+		}
+
+		var parsedObj map[string]any
+		if err := json.Unmarshal([]byte(raw), &parsedObj); err == nil {
+			return asCodeTemplateList(parsedObj)
+		}
+	}
+
+	return nil
 }

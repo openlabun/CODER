@@ -67,6 +67,8 @@ type ExamItemUseCases struct {
 
 type SubmissionUseCases struct {
 	CreateSubmission        *submission_usecases.CreateSubmissionUseCase
+	CreateSubmissionWithoutScore *submission_usecases.CreateSubmissionWithoutScoreUseCase
+	CreateCustomSubmission  *submission_usecases.CreateCustomSubmissionUseCase
 	GetSubmissionStatus     *submission_usecases.GetSubmissionStatusUseCase
 	GetChallengeSubmissions *submission_usecases.GetChallengeSubmissionsUseCase
 	GetUserSubmissions      *submission_usecases.GetUserSubmissionsUseCase
@@ -83,14 +85,15 @@ type SessionUseCases struct {
 }
 
 type ExamUseCases struct {
-	CreateExam       *exam_crud_usecases.CreateExamUseCase
-	UpdateExam       *exam_crud_usecases.UpdateExamUseCase
-	CloseExam        *exam_crud_usecases.CloseExamUseCase
-	DeleteExam       *exam_crud_usecases.DeleteExamUseCase
-	GetExamDetails   *exam_crud_usecases.GetExamDetailsUseCase
-	GetExamsByCourse *exam_crud_usecases.GetExamsByCourseUseCase
-	GetExamItems     *exam_crud_usecases.GetExamItemsUseCase
-	GetPublicExams   *exam_usecases.GetPublicExamsUseCase
+	CreateExam              *exam_crud_usecases.CreateExamUseCase
+	UpdateExam              *exam_crud_usecases.UpdateExamUseCase
+	CloseExam               *exam_crud_usecases.CloseExamUseCase
+	DeleteExam              *exam_crud_usecases.DeleteExamUseCase
+	GetExamDetails          *exam_crud_usecases.GetExamDetailsUseCase
+	GetExamsByCourse        *exam_crud_usecases.GetExamsByCourseUseCase
+	GetExamItems            *exam_crud_usecases.GetExamItemsUseCase
+	GetPublicExams          *exam_usecases.GetPublicExamsUseCase
+	GetCodeDefaultTemplates *exam_usecases.GetCodeDefaultTemplates
 }
 
 type AIUseCases struct {
@@ -122,7 +125,7 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	app.CourseModule = CourseUseCases{
 		CreateCourse:            course_crud_usecases.NewCreateCourseUseCase(deps.CourseRepository, deps.UserRepository),
 		UpdateCourse:            course_crud_usecases.NewUpdateCourseUseCase(deps.CourseRepository, deps.UserRepository),
-		DeleteCourse:            course_crud_usecases.NewDeleteCourseUseCase(deps.CourseRepository, deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
+		DeleteCourse:            course_crud_usecases.NewDeleteCourseUseCase(deps.CourseRepository, deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository, deps.ExamScoreRepository, deps.ExamItemScoreRepository),
 		GetCourseDetails:        course_crud_usecases.NewGetCourseDetailsUseCase(deps.CourseRepository, deps.UserRepository),
 		GetEnrolledCourses:      course_crud_usecases.NewGetEnrolledCoursesUseCase(deps.CourseRepository, deps.UserRepository),
 		GetOwnedCourses:         course_crud_usecases.NewGetOwnedCoursesUseCase(deps.CourseRepository, deps.UserRepository),
@@ -157,15 +160,17 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	}
 
 	app.SessionModule = SessionUseCases{
-		CreateSession:    session_usecases.NewCreateSessionUseCase(deps.UserRepository, deps.SessionRepository, deps.ExamRepository),
+		CreateSession:    session_usecases.NewCreateSessionUseCase(deps.UserRepository, deps.SessionRepository, deps.ExamRepository, deps.ExamScoreRepository, deps.ExamItemRepository, deps.ExamItemScoreRepository),
 		GetActiveSession: session_usecases.NewGetActiveSessionUseCase(deps.SessionRepository, deps.UserRepository, deps.ExamRepository),
 		HeartBeatSession: session_usecases.NewHeartBeatSessionUseCase(deps.UserRepository, deps.ExamRepository, deps.SessionRepository),
 		BlockSession:     session_usecases.NewBlockSessionUseCase(deps.SessionRepository, deps.UserRepository),
-		CloseSession:     session_usecases.NewCloseSessionUseCase(deps.SessionRepository, deps.UserRepository),
+		CloseSession:     session_usecases.NewCloseSessionUseCase(deps.SessionRepository, deps.ExamScoreRepository, deps.ExamItemRepository, deps.ExamItemScoreRepository, deps.SubmissionRepository, deps.UserRepository),
 	}
 
 	app.SubmissionUseCases = SubmissionUseCases{
-		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
+		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ExamScoreRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.ExamItemRepository, deps.ExamItemScoreRepository, deps.PublisherPort),
+		CreateSubmissionWithoutScore: submission_usecases.NewCreateSubmissionWithoutScoreUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
+		CreateCustomSubmission:  submission_usecases.NewCreateCustomSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
 		GetSubmissionStatus:     submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
 		GetChallengeSubmissions: submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
 		GetSessionSubmissions:   submission_usecases.NewGetSessionSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository, deps.SessionRepository),
@@ -190,14 +195,15 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	}
 
 	app.ExamModule = ExamUseCases{
-		CreateExam:       exam_crud_usecases.NewCreateExamUseCase(deps.UserRepository, deps.CourseRepository, deps.ExamRepository),
-		UpdateExam:       exam_crud_usecases.NewUpdateExamUseCase(deps.UserRepository, deps.ExamRepository),
-		CloseExam:        exam_crud_usecases.NewCloseExamUseCase(deps.UserRepository, deps.ExamRepository),
-		DeleteExam:       exam_crud_usecases.NewDeleteExamUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
-		GetExamDetails:   exam_crud_usecases.NewGetExamDetailsUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
-		GetExamsByCourse: exam_crud_usecases.NewGetExamsByCourseUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
-		GetExamItems:     exam_crud_usecases.NewGetExamItemsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
-		GetPublicExams:   exam_usecases.NewGetPublicExamsUseCase(deps.UserRepository, deps.ExamRepository),
+		CreateExam:              exam_crud_usecases.NewCreateExamUseCase(deps.UserRepository, deps.CourseRepository, deps.ExamRepository),
+		UpdateExam:              exam_crud_usecases.NewUpdateExamUseCase(deps.UserRepository, deps.ExamRepository),
+		CloseExam:               exam_crud_usecases.NewCloseExamUseCase(deps.UserRepository, deps.ExamRepository),
+		DeleteExam:              exam_crud_usecases.NewDeleteExamUseCase(deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository, deps.ExamScoreRepository, deps.ExamItemScoreRepository),
+		GetExamDetails:          exam_crud_usecases.NewGetExamDetailsUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
+		GetExamsByCourse:        exam_crud_usecases.NewGetExamsByCourseUseCase(deps.UserRepository, deps.ExamRepository, deps.CourseRepository),
+		GetExamItems:            exam_crud_usecases.NewGetExamItemsUseCase(deps.ChallengeRepository, deps.UserRepository, deps.ExamRepository, deps.ExamItemRepository),
+		GetPublicExams:          exam_usecases.NewGetPublicExamsUseCase(deps.UserRepository, deps.ExamRepository),
+		GetCodeDefaultTemplates: exam_usecases.NewGetCodeDefaultTemplates(deps.UserRepository, deps.ExamRepository),
 	}
 
 	app.AIModule = AIUseCases{

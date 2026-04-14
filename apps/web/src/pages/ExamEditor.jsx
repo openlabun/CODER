@@ -154,15 +154,40 @@ const ExamEditor = () => {
     // --- Add Challenge to Exam ---
     const handleAddChallenge = async (challenge) => {
         const challengeId = challenge.id || challenge.ID;
+
+        const { value: formValues } = await Swal.fire({
+            title: 'Configurar Reto',
+            html:
+                `<label style="display:block;text-align:left;font-weight:700;margin-bottom:4px">Puntos (máx 100)</label>` +
+                `<input id="swal-points" type="number" min="0" max="100" value="100" class="swal2-input" style="margin:0 0 1rem 0">` +
+                `<label style="display:block;text-align:left;font-weight:700;margin-bottom:4px">Orden</label>` +
+                `<input id="swal-order" type="number" min="1" value="${examItems.length + 1}" class="swal2-input" style="margin:0">`,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Añadir',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#c8102e',
+            preConfirm: () => {
+                const pts = parseInt(document.getElementById('swal-points').value) || 0;
+                const ord = parseInt(document.getElementById('swal-order').value) || 1;
+                if (pts < 0 || pts > 100) { Swal.showValidationMessage('Los puntos deben estar entre 0 y 100'); return false; }
+                return { points: pts, order: ord };
+            }
+        });
+
+        if (!formValues) return;
+
         setAddingItem(challengeId);
         try {
             await client.post('/exam-items', {
                 exam_id: id,
                 challenge_id: challengeId,
-                order: examItems.length + 1,
-                points: 100
+                order: formValues.order,
+                points: formValues.points
             });
-            await refreshExamItems();
+            const itemsRes = await client.get(`/exams/${id}/items`);
+            const items = Array.isArray(itemsRes.data) ? itemsRes.data : (itemsRes.data?.items || []);
+            setExamItems(items);
             Swal.fire({ icon: 'success', title: 'Reto Añadido', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
         } catch (err) {
             console.error(err);
@@ -172,35 +197,17 @@ const ExamEditor = () => {
         }
     };
 
-    const handleSaveAllItems = async () => {
-        // Validate all edits before sending
-        for (const [, draft] of Object.entries(itemEdits)) {
-            const parsedOrder = Number.parseInt(draft?.order, 10);
-            const parsedPoints = Number.parseInt(draft?.points, 10);
-            if (!Number.isInteger(parsedOrder) || parsedOrder < 1) {
-                Swal.fire({ icon: 'warning', title: 'Orden inválido', text: 'El orden de cada reto debe ser un entero mayor o igual a 1.' });
-                return;
-            }
-            if (!Number.isInteger(parsedPoints) || parsedPoints < 0) {
-                Swal.fire({ icon: 'warning', title: 'Puntaje inválido', text: 'Los puntos de cada reto deben ser un entero mayor o igual a 0.' });
-                return;
-            }
-        }
-        setSavingAllItems(true);
+    // --- Update Exam Item (points / order) ---
+    const handleUpdateItem = async (itemId, updates) => {
         try {
-            await Promise.all(Object.entries(itemEdits).map(([itemId, draft]) =>
-                client.patch(`/exam-items/${itemId}`, {
-                    order: Number.parseInt(draft.order, 10),
-                    points: Number.parseInt(draft.points, 10),
-                })
-            ));
-            await refreshExamItems();
-            Swal.fire({ icon: 'success', title: 'Retos actualizados', timer: 1200, toast: true, position: 'top-end', showConfirmButton: false });
+            await client.patch(`/exam-items/${itemId}`, updates);
+            const itemsRes = await client.get(`/exams/${id}/items`);
+            const items = Array.isArray(itemsRes.data) ? itemsRes.data : (itemsRes.data?.items || []);
+            setExamItems(items);
+            Swal.fire({ icon: 'success', title: 'Actualizado', timer: 800, toast: true, position: 'top-end', showConfirmButton: false });
         } catch (err) {
             console.error(err);
-            Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.error || 'No se pudo actualizar el orden o puntaje de los retos.' });
-        } finally {
-            setSavingAllItems(false);
+            Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.error || 'No se pudo actualizar.' });
         }
     };
 
@@ -350,6 +357,11 @@ const ExamEditor = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Target size={20} />
                             <h2>Retos del Examen ({examItems.length})</h2>
+                            {examItems.length > 0 && (
+                                <span style={{ background: '#e0e7ff', color: '#4f46e5', padding: '3px 10px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 900, marginLeft: '0.5rem' }}>
+                                    Total: {examItems.reduce((sum, it) => sum + (it.points || it.Points || 0), 0)} pts
+                                </span>
+                            )}
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                             {examItems.length > 0 && (
@@ -389,8 +401,8 @@ const ExamEditor = () => {
                                 const ch = item.challenge || {};
                                 const title = ch.title || ch.Title || `Reto #${idx + 1}`;
                                 const diff = (ch.difficulty || ch.Difficulty || 'medium').toLowerCase();
-                                const points = itemEdits[itemId]?.points ?? String(getItemPoints(item));
-                                const order = itemEdits[itemId]?.order ?? String(getItemOrder(item, idx + 1));
+                                const points = item.points || item.Points || 0;
+                                const order = item.order || item.Order || idx + 1;
 
                                 return (
                                     <div key={itemId} className="challenge-card-mini exam-item-card">
@@ -401,15 +413,53 @@ const ExamEditor = () => {
                                                     <Code size={16} className="title-icon" />
                                                     <h3>{title}</h3>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    className="exam-item-delete-btn"
-                                                    onClick={() => setConfirmRemoveItemId(itemId)}
-                                                    aria-label="Quitar reto"
-                                                    data-tooltip="Quitar reto"
-                                                >
-                                                    <Trash2 size={13} />
-                                                </button>
+                                                <div className="badge-group">
+                                                    <span className={`diff-pill ${diff}`}>
+                                                        {diff === 'easy' ? 'Fácil' : diff === 'hard' ? 'Difícil' : 'Medio'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <p className="description-text" style={{ fontSize: '0.8rem', color: '#666', margin: '0.5rem 0' }}>
+                                                {(ch.description || ch.Description || 'Sin descripción.').slice(0, 100)}{(ch.description || '').length > 100 ? '…' : ''}
+                                            </p>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                    <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Pts:</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        defaultValue={points}
+                                                        onBlur={(e) => {
+                                                            const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                                            if (val !== points) handleUpdateItem(itemId, { points: val });
+                                                        }}
+                                                        style={{ width: '55px', padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, textAlign: 'center' }}
+                                                    />
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                    <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Orden:</label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        defaultValue={order}
+                                                        onBlur={(e) => {
+                                                            const val = Math.max(1, parseInt(e.target.value) || 1);
+                                                            if (val !== order) handleUpdateItem(itemId, { order: val });
+                                                        }}
+                                                        style={{ width: '50px', padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, textAlign: 'center' }}
+                                                    />
+                                                </div>
+                                                <div style={{ marginLeft: 'auto' }}>
+                                                    <button
+                                                        className="action-btn delete"
+                                                        onClick={() => handleRemoveItem(itemId)}
+                                                        title="Quitar del examen"
+                                                        style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#fee2e2', color: '#dc2626', cursor: 'pointer' }}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             <div className="meta-badges-row" style={{ marginTop: '0.5rem' }}>

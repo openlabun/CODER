@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	httputils "github.com/openlabun/CODER/apps/api_v2/test/http"
 )
 
@@ -59,8 +59,8 @@ func TestStudentAuthHTTP(t *testing.T) {
 	if studentID != "" && httputils.StringField(body, "id") != studentID {
 		process.Fail("student get data", fmt.Errorf("expected student ID %s, got %s", studentID, httputils.StringField(body, "id")))
 	}
-	if httputils.StringField(body, "role") != string(user_entities.UserRoleStudent) {
-		process.Fail("student role", fmt.Errorf("expected role %s, got %s", user_entities.UserRoleStudent, httputils.StringField(body, "role")))
+	if httputils.StringField(body, "role") != string(user_constants.UserRoleStudent) {
+		process.Fail("student role", fmt.Errorf("expected role %s, got %s", user_constants.UserRoleStudent, httputils.StringField(body, "role")))
 	}
 	process.Log(fmt.Sprintf("Datos validados. email=%s role=%s", httputils.StringField(body, "email"), httputils.StringField(body, "role")))
 	process.EndStep()

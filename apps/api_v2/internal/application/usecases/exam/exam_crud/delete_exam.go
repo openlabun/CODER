@@ -8,7 +8,7 @@ import (
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
@@ -17,15 +17,18 @@ import (
 type DeleteExamUseCase struct {
 	userRepository userRepository.UserRepository
 	examRepository examRepository.ExamRepository
+	examScoreRepository examRepository.ExamScoreRepository
 	examItemRepository examRepository.ExamItemRepository
+	examItemScoreRepository examRepository.ExamItemScoreRepository
 }
 
-func NewDeleteExamUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, examItemRepository examRepository.ExamItemRepository) *DeleteExamUseCase {
+func NewDeleteExamUseCase(userRepository userRepository.UserRepository, examRepository examRepository.ExamRepository, examItemRepository examRepository.ExamItemRepository, examScoreRepository examRepository.ExamScoreRepository, examItemScoreRepository examRepository.ExamItemScoreRepository) *DeleteExamUseCase {
 	return &DeleteExamUseCase{
 		userRepository: userRepository,
 		examRepository: examRepository,
+		examScoreRepository: examScoreRepository,
 		examItemRepository: examItemRepository,
-
+		examItemScoreRepository: examItemScoreRepository,
 	}
 }
 
@@ -45,7 +48,7 @@ func (uc *DeleteExamUseCase) Execute(ctx context.Context, input dtos.DeleteExamI
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 
-	if user.Role != user_entities.UserRoleProfessor {
+	if user.Role != user_constants.UserRoleProfessor {
 		return nil, fmt.Errorf("user does not have permissions to delete an exam")
 	}
 
@@ -65,7 +68,7 @@ func (uc *DeleteExamUseCase) Execute(ctx context.Context, input dtos.DeleteExamI
 	}
 
 	// [STEP 4] Delete exam entity
-	err = domain_services.RemoveExam(ctx, exam.ID, uc.examRepository, uc.examItemRepository)
+	err = domain_services.RemoveExam(ctx, exam.ID, uc.examRepository, uc.examItemRepository, uc.examScoreRepository, uc.examItemScoreRepository)
 	if err != nil {
 		return nil, err
 	}

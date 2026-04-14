@@ -6,6 +6,16 @@ type IOVariableDTO struct {
 	Value string `json:"value"`
 }
 
+type CodeTemplateDTO struct {
+	Language string `json:"language"`
+	Template string `json:"template"`
+}
+
+type DefaultCodeTemplatesInput struct {
+	Inputs []IOVariableDTO `json:"input_variables"`
+	Output IOVariableDTO   `json:"output_variable"`
+}
+
 type CreateChallengeInput struct {
 	Title             string            `json:"title"`
 	Description       string            `json:"description"`
@@ -14,6 +24,7 @@ type CreateChallengeInput struct {
 	Difficulty        string            `json:"difficulty"`
 	WorkerTimeLimit   int               `json:"worker_time_limit"`
 	WorkerMemoryLimit int               `json:"worker_memory_limit"`
+	CodeTemplates     []CodeTemplateDTO `json:"code_templates"`
 	InputVariables    []IOVariableDTO   `json:"input_variables"`
 	OutputVariable    IOVariableDTO     `json:"output_variable"`
 	Constraints       string            `json:"constraints"`
@@ -22,21 +33,22 @@ type CreateChallengeInput struct {
 
 type UpdateChallengeInput struct {
 	ChallengeID       string             `json:"challenge_id"`
-	Title             *string           `json:"title"`
-	Description       *string           `json:"description"`
+	Title             *string            `json:"title"`
+	Description       *string            `json:"description"`
 	Tags              *[]string          `json:"tags"`
-	Status            *string           `json:"status"`
-	Difficulty        *string           `json:"difficulty"`
-	WorkerTimeLimit   *int              `json:"worker_time_limit"`
-	WorkerMemoryLimit *int              `json:"worker_memory_limit"`
+	Status            *string            `json:"status"`
+	Difficulty        *string            `json:"difficulty"`
+	WorkerTimeLimit   *int               `json:"worker_time_limit"`
+	WorkerMemoryLimit *int               `json:"worker_memory_limit"`
+	CodeTemplates     *[]CodeTemplateDTO `json:"code_templates"`
 	InputVariables    *[]IOVariableDTO   `json:"input_variables"`
 	OutputVariable    *IOVariableDTO     `json:"output_variable"`
-	Constraints       *string           `json:"constraints"`
-	UserID            *string           `json:"user_id"`
+	Constraints       *string            `json:"constraints"`
+	UserID            *string            `json:"user_id"`
 }
 
 type DeleteChallengeInput struct {
-	ChallengeID string 	`json:"challenge_id"`
+	ChallengeID string `json:"challenge_id"`
 }
 
 type PublishChallengeInput struct {
@@ -56,8 +68,8 @@ type GetChallengesByUserInput struct {
 }
 
 type GetPublicChallengesInput struct {
-	Tag 		 *string `json:"tag"`
-	Difficulty   *string `json:"difficulty"`
+	Tag        *string `json:"tag"`
+	Difficulty *string `json:"difficulty"`
 }
 
 type ForkChallengeInput struct {

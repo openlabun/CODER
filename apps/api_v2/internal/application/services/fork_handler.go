@@ -45,6 +45,7 @@ func ForkChallenge(ctx context.Context,
 		challenge.Difficulty,
 		challenge.WorkerTimeLimit,
 		challenge.WorkerMemoryLimit,
+		challenge.CodeTemplates,
 		input,
 		*output,
 		challenge.Constraints,
@@ -85,6 +86,10 @@ func forkTestCase(testCase *Entities.TestCase,
 		return nil, fmt.Errorf("testCase is nil")
 	}
 
+	if testCase.Custom {
+		return nil, nil
+	}
+
 	input, err := forkIOVariables(testCase.Input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fork test case input: %w", err)
@@ -101,6 +106,7 @@ func forkTestCase(testCase *Entities.TestCase,
 		*output,
 		testCase.IsSample,
 		testCase.Points,
+		testCase.Custom,
 		newChallengeID,
 	)
 }
@@ -114,6 +120,11 @@ func forkTestCases(testCases []*Entities.TestCase,
 		if err != nil {
 			return nil, fmt.Errorf("failed to fork test case %s: %w", tc.ID, err)
 		}
+
+		if forked == nil {
+			continue
+		}
+		
 		forkedTestCases[i] = *forked
 	}
 

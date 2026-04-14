@@ -6,6 +6,7 @@ import (
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	course_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/course"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 )
 
 func courseToRecord(course *Entities.Course) map[string]any {
@@ -63,8 +64,8 @@ func recordToCourse(record map[string]any) (*Entities.Course, error) {
 		asString(record["ID"]),
 		asString(record["Name"]),
 		asString(record["Description"]),
-		Entities.CourseVisibility(asString(record["Visibility"])),
-		Entities.CourseColour(asString(record["VisualIdentity"])),
+		consts.CourseVisibility(asString(record["Visibility"])),
+		consts.CourseColour(asString(record["VisualIdentity"])),
 		asString(record["Code"]),
 		period,
 		asString(record["EnrollmentCode"]),
@@ -79,7 +80,7 @@ func extractPeriod(record map[string]any) *Entities.Period {
 	if rawPeriod, ok := record["Period"]; ok {
 		if m, ok := rawPeriod.(map[string]any); ok {
 			year := asInt(m["Year"])
-			semester := Entities.AcademicPeriod(asString(m["Semester"]))
+			semester := consts.AcademicPeriod(asString(m["Semester"]))
 			if year > 0 && semester != "" {
 				return &Entities.Period{Year: year, Semester: semester}
 			}
@@ -87,7 +88,7 @@ func extractPeriod(record map[string]any) *Entities.Period {
 	}
 
 	year := asInt(record["PeriodYear"])
-	semester := Entities.AcademicPeriod(asString(record["PeriodSemester"]))
+	semester := consts.AcademicPeriod(asString(record["PeriodSemester"]))
 	if year > 0 && semester != "" {
 		return &Entities.Period{Year: year, Semester: semester}
 	}

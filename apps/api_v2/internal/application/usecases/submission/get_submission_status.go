@@ -8,7 +8,7 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission/mapper"
 
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
 	resultsRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
@@ -56,7 +56,7 @@ func (uc *GetSubmissionStatusUseCase) Execute(ctx context.Context, input dtos.Ge
 	}
 
 	// [STEP 3] If user is a student, only query for his own submission status
-	if user.Role == user_entities.UserRoleStudent && submission.UserID != user.ID {
+	if user.Role == user_constants.UserRoleStudent && submission.UserID != user.ID {
 		return nil, fmt.Errorf("user does not have permissions to view submission status for this submission")
 	}
 

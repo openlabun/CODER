@@ -27,7 +27,10 @@ const CreateChallenge = () => {
         inputVariables: [{ name: 'stdin', type: 'string' }],
         outputVariable: { name: 'stdout', type: 'string' },
         constraints: '',
-        status: 'draft'
+        status: 'draft',
+        codeTemplates: {},
+        courseId: courseIdFromUrl || null,
+        examId: queryParams.get('examId') || null
     });
 
     const [publicTestCases, setPublicTestCases] = useState([]);
@@ -36,6 +39,14 @@ const CreateChallenge = () => {
     const [loading, setLoading] = useState(false);
     const [loadingAction, setLoadingAction] = useState('published');
     const [fetching, setFetching] = useState(isEditing);
+
+    const SUPPORTED_LANGUAGES = [
+        { id: 'python', label: 'Python', defaultTemplate: 'def solve():\n    pass\n' },
+        { id: 'javascript', label: 'JavaScript', defaultTemplate: 'function solve() {\n\n}\n' },
+        { id: 'java', label: 'Java', defaultTemplate: 'class Solution {\n    public static void solve() {\n\n    }\n}\n' },
+        { id: 'cpp', label: 'C++', defaultTemplate: '#include <iostream>\nusing namespace std;\n\nvoid solve() {\n\n}\n' },
+        { id: 'go', label: 'Go', defaultTemplate: 'package main\n\nfunc solve() {\n\n}\n' }
+    ];
 
     useEffect(() => {
         const fetchChallengeForEdit = async () => {
@@ -54,7 +65,10 @@ const CreateChallenge = () => {
                     inputVariables: challenge.inputVariables || challenge.InputVariables || [{ name: 'stdin', type: 'string' }],
                     outputVariable: challenge.outputVariable || challenge.OutputVariable || { name: 'stdout', type: 'string' },
                     constraints: challenge.constraints || challenge.Constraints || '',
-                    status: challenge.status || challenge.Status || 'draft'
+                    status: challenge.status || challenge.Status || 'draft',
+                    codeTemplates: challenge.code_templates || challenge.CodeTemplates || {},
+                    courseId: challenge.courseId || challenge.CourseID || null,
+                    examId: challenge.examId || challenge.ExamID || queryParams.get('examId') || null
                 });
 
                 try {
@@ -220,7 +234,8 @@ const CreateChallenge = () => {
                     value: '' 
                 },
                 constraints: formData.constraints,
-                status: requestedStatus,
+                status: status || formData.status,
+                code_templates: formData.codeTemplates,
                 user_id: user?.id || user?.ID || ''
             };
 
@@ -285,7 +300,15 @@ const CreateChallenge = () => {
                 customClass: { container: 'swal-ultra-high-z' }
             });
 
-            navigate('/challenges');
+            if (formData.courseId && challengeId) {
+                try {
+                    await client.post(`/courses/${formData.courseId}/challenges`, { challengeId });
+                } catch (assignErr) {
+                    console.warn('Silent failure assigning challenge to course:', assignErr);
+                }
+            }
+
+            setTimeout(() => navigate('/challenges'), 1000);
         } catch (err) {
             console.error('Error en handleSubmit:', err.response?.data || err);
             const serverMsg = err.response?.data?.error || err.response?.data?.message;
@@ -407,6 +430,7 @@ const CreateChallenge = () => {
                 <>
                     <div className="tabs">
                         <button className={activeTab === 'basic' ? 'tab active' : 'tab'} onClick={() => setActiveTab('basic')}>📝 Básicos</button>
+                        <button className={activeTab === 'templates' ? 'tab active' : 'tab'} onClick={() => setActiveTab('templates')}>💻 Plantillas</button>
                         <button className={activeTab === 'testcases' ? 'tab active' : 'tab'} onClick={() => setActiveTab('testcases')}>🧪 Pruebas</button>
                         <button className={activeTab === 'settings' ? 'tab active' : 'tab'} onClick={() => setActiveTab('settings')}>⚙️ Ajustes</button>
                     </div>
@@ -472,6 +496,7 @@ const CreateChallenge = () => {
                                         </select>
                                     </div>
                                     
+                                    
                                     <div className="form-group" style={{ marginTop: '1.5rem' }}>
                                         <label>Restricciones (Constraints)</label>
                                         <textarea 
@@ -483,6 +508,76 @@ const CreateChallenge = () => {
                                             style={{ height: 'auto' }}
                                         />
                                     </div>
+
+                                    <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                                        <label>Etiquetas (Tags)</label>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                            {formData.tags.map(tag => (
+                                                <span key={tag} style={{ background: 'rgba(200,16,46,0.1)', color: '#c8102e', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+                                                    {tag} <button type="button" onClick={() => removeTag(tag)} style={{ background: 'none', border: 'none', color: '#c8102e', cursor: 'pointer', fontSize: '1rem', padding: '0' }}>&times;</button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <input type="text" value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="Ej: math, arrays" onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); addTag(newTag); } }} style={{ flex: 1 }} />
+                                            <button type="button" className="btn-secondary" onClick={() => addTag(newTag)}>Agregar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'templates' && (
+                            <div className="form-section templates-view">
+                                <div className="section-header-mini">
+                                    <h3>Plantillas de Código</h3>
+                                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Activa los lenguajes permitidos para este reto y edita su plantilla inicial.</p>
+                                </div>
+                                <div className="templates-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                                    {SUPPORTED_LANGUAGES.map(lang => {
+                                        const isEnabled = formData.codeTemplates.hasOwnProperty(lang.id);
+                                        const templateCode = isEnabled ? formData.codeTemplates[lang.id] : lang.defaultTemplate;
+                                        
+                                        return (
+                                            <div key={lang.id} className="template-card" style={{ border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                                                <div className="template-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f9f9fa', borderBottom: isEnabled ? '1px solid #e0e0e0' : 'none' }}>
+                                                    <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span style={{ fontSize: '1.2rem' }}>{lang.id === 'python' ? '🐍' : lang.id === 'javascript' ? '🟨' : lang.id === 'java' ? '☕' : lang.id === 'cpp' ? '⚙️' : '🐹'}</span>
+                                                        {lang.label}
+                                                    </div>
+                                                    <label className="switch" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                        <input 
+                                                            type="checkbox" 
+                                                            checked={isEnabled} 
+                                                            onChange={(e) => {
+                                                                const newTemplates = { ...formData.codeTemplates };
+                                                                if (e.target.checked) {
+                                                                    newTemplates[lang.id] = lang.defaultTemplate;
+                                                                } else {
+                                                                    delete newTemplates[lang.id];
+                                                                }
+                                                                setFormData(prev => ({ ...prev, codeTemplates: newTemplates }));
+                                                            }} 
+                                                            style={{ marginRight: '8px' }}
+                                                        />
+                                                        <span style={{ fontSize: '0.85rem', color: isEnabled ? '#10b981' : '#888', fontWeight: 'bold' }}>{isEnabled ? 'Habilitado' : 'Deshabilitado'}</span>
+                                                    </label>
+                                                </div>
+                                                {isEnabled && (
+                                                    <div className="template-editor" style={{ padding: '0' }}>
+                                                        <textarea 
+                                                            value={templateCode}
+                                                            onChange={(e) => {
+                                                                setFormData(prev => ({ ...prev, codeTemplates: { ...prev.codeTemplates, [lang.id]: e.target.value } }));
+                                                            }}
+                                                            style={{ width: '100%', height: '120px', border: 'none', padding: '1rem', fontFamily: 'monospace', fontSize: '0.9rem', resize: 'vertical', background: '#fff', color: '#333' }}
+                                                            spellCheck="false"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -621,6 +716,22 @@ const CreateChallenge = () => {
 
                         {activeTab === 'settings' && (
                             <div className="form-section">
+                                <div style={{ display: 'none' }}>
+                                    <div className="form-group">
+                                        <label>Curso Destino</label>
+                                        <select name="courseId" value={formData.courseId || ''} onChange={handleChange}>
+                                            <option value="">Seleccionar curso...</option>
+                                            {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Examen Asociado</label>
+                                        <select name="examId" value={formData.examId || ''} onChange={handleChange}>
+                                            <option value="">Ninguno / Autónomo</option>
+                                            {exams.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
                                 <div className="form-group">
                                     <label>Estado Inicial</label>
                                     <select name="status" value={formData.status === 'draft' ? 'private' : formData.status} onChange={handleChange}>

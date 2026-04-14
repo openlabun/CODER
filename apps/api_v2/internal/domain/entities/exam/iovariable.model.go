@@ -1,15 +1,10 @@
 package challenge_entities
 
-type VariableFormat string
-const (
-	VariableFormatString VariableFormat = "string"
-	VariableFormatInt    VariableFormat = "int"
-	VariableFormatFloat  VariableFormat = "float"
-)
+import consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 
 type IOVariable struct {
-	ID 	   string			`json:"id"`
-	Name   string			`json:"name"`
-	Type   VariableFormat	`json:"type"`
-	Value  string			`json:"value"`
+	ID 	   string					`json:"id"`
+	Name   string					`json:"name"`
+	Type   consts.VariableFormat	`json:"type"`
+	Value  string					`json:"value"`
 }

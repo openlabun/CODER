@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
 	course_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/course"
-	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
@@ -53,11 +53,11 @@ func TestCourseEnrollment(t *testing.T) {
 	createdCourse, err := process.Application.CourseModule.CreateCourse.Execute(teacherCtx, course_dtos.CreateCourseInput{
 		Name:           "Course Enrollment Test",
 		Description:    "Course created for enrollment test",
-		Visibility:     string(course_entities.CourseVisibilityPublic),
-		VisualIdentity: string(course_entities.CourseColourBlue),
+		Visibility:     string(consts.CourseVisibilityPublic),
+		VisualIdentity: string(consts.CourseColourBlue),
 		Code:           fmt.Sprintf("CENR-%d", now.Unix()%100000),
 		Year:           now.Year(),
-		Semester:       string(course_entities.AcademicFirstPeriod),
+		Semester:       string(consts.AcademicFirstPeriod),
 		EnrollmentCode: enrollmentCode,
 		EnrollmentURL:  "https://example.test/enroll/" + enrollmentCode,
 		TeacherID:      teacherID,

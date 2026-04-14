@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 	mapper "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission/mapper"
+	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
-	examEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
@@ -63,15 +63,15 @@ func (uc *GetChallengeSubmissionsUseCase) Execute(ctx context.Context, input dto
 	}
 
 	// [STEP 3] If user is a student, check if the challenge is published
-	if role == user_entities.UserRoleStudent {
-		if challenge.Status != examEntities.ChallengeStatusPublished {
+	if role == user_constants.UserRoleStudent {
+		if challenge.Status != constants.ChallengeStatusPublished {
 			return nil, fmt.Errorf("challenge with id %q is not published yet or it was archived", input.ChallengeID)
 		}
 	}
 
 	// [STEP 4] If user is student only retrieve his own submissions
 	var submissions []*Entities.Submission
-	if role == user_entities.UserRoleStudent {
+	if role == user_constants.UserRoleStudent {
 		submissions, err = uc.submissionRepository.GetSubmissionsByUserID(ctx, user.ID, input.Status, input.TestID, &input.ChallengeID)
 		if err != nil {
 			return nil, fmt.Errorf("get submissions by user: %w", err)
@@ -81,7 +81,7 @@ func (uc *GetChallengeSubmissionsUseCase) Execute(ctx context.Context, input dto
 	}
 
 	// [STEP 5] If user is a teacher, query for all submissions for the challenge (only if he is owner)
-	if role == user_entities.UserRoleProfessor {
+	if role == user_constants.UserRoleProfessor {
 		if challenge.UserID != user.ID {
 			return nil, fmt.Errorf("user with email %q is not the owner of the challenge with id %q", userEmail, input.ChallengeID)
 		}

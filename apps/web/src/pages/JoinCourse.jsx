@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import client from '../api/client';
 import { 
     Key, 
@@ -21,19 +21,36 @@ const JoinCourse = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const handleJoinWithCode = async (e) => {
-        e.preventDefault();
+    const location = useLocation();
+    const hasAttemptedAutoEnroll = useRef(false);
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const codeFromUrl = queryParams.get('code');
+        
+        if (codeFromUrl && !hasAttemptedAutoEnroll.current) {
+            setEnrollmentCode(codeFromUrl.toUpperCase());
+            hasAttemptedAutoEnroll.current = true;
+            // Auto submit
+            handleJoinWithCode(null, codeFromUrl.toUpperCase());
+        }
+    }, [location]);
+
+    const handleJoinWithCode = async (e, forceCode = null) => {
+        if (e) e.preventDefault();
         setError('');
         setSuccess('');
 
-        if (!enrollmentCode.trim()) {
+        const codeToSubmit = forceCode || enrollmentCode;
+
+        if (!codeToSubmit || !codeToSubmit.trim()) {
             setError('Por favor, ingresa un código de inscripción');
             return;
         }
 
         setLoading(true);
         try {
-            await client.post('/courses/enroll', { enrollment_code: enrollmentCode });
+            await client.post('/courses/enroll', { enrollment_code: codeToSubmit });
             setSuccess('¡Te has inscrito correctamente en el curso!');
             setTimeout(() => {
                 navigate('/courses');

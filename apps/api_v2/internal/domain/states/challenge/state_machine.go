@@ -3,6 +3,7 @@ package challenge_states
 import (
 	"fmt"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 )
 
@@ -11,39 +12,39 @@ import (
 //   - Can make direct transition to published
 //   - Can return from archived to published, but not to draft
 
-var challengeAllowedTransitions = map[Entities.ChallengeStatus]map[Entities.ChallengeStatus]struct{}{
-	Entities.ChallengeStatusDraft: {
-		Entities.ChallengeStatusPublished: {},
+var challengeAllowedTransitions = map[constants.ChallengeStatus]map[constants.ChallengeStatus]struct{}{
+	constants.ChallengeStatusDraft: {
+		constants.ChallengeStatusPublished: {},
 	},
-	Entities.ChallengeStatusPublished: {
-		Entities.ChallengeStatusArchived: {},
-		Entities.ChallengeStatusPrivate:  {},
+	constants.ChallengeStatusPublished: {
+		constants.ChallengeStatusArchived: {},
+		constants.ChallengeStatusPrivate:  {},
 	},
-	Entities.ChallengeStatusPrivate: {
-		Entities.ChallengeStatusPublished: {},
-		Entities.ChallengeStatusArchived: {},
+	constants.ChallengeStatusPrivate: {
+		constants.ChallengeStatusPublished: {},
+		constants.ChallengeStatusArchived: {},
 	},
-	Entities.ChallengeStatusArchived: {
-		Entities.ChallengeStatusPublished: {},
+	constants.ChallengeStatusArchived: {
+		constants.ChallengeStatusPublished: {},
 	},
 }
 
-func IsValidState(state Entities.ChallengeStatus) bool {
+func IsValidState(state constants.ChallengeStatus) bool {
 	switch state {
-	case Entities.ChallengeStatusDraft:
+	case constants.ChallengeStatusDraft:
 		return true
-	case Entities.ChallengeStatusPublished:
+	case constants.ChallengeStatusPublished:
 		return true
-	case Entities.ChallengeStatusArchived:
+	case constants.ChallengeStatusArchived:
 		return true
-	case Entities.ChallengeStatusPrivate:
+	case constants.ChallengeStatusPrivate:
 		return true
 	default:
 		return false
 	}
 }
 
-func canTransitionState(from Entities.ChallengeStatus, to Entities.ChallengeStatus) bool {
+func canTransitionState(from constants.ChallengeStatus, to constants.ChallengeStatus) bool {
 	if !IsValidState(from) || !IsValidState(to) {
 		return false
 	}
@@ -57,7 +58,7 @@ func canTransitionState(from Entities.ChallengeStatus, to Entities.ChallengeStat
 	return allowed
 }
 
-func validateStateTransition(challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
+func validateStateTransition(challenge *Entities.Challenge, to constants.ChallengeStatus) error {
 	if !IsValidState(challenge.Status) {
 		return fmt.Errorf("invalid challenge state: %q", challenge.Status)
 	}
@@ -73,7 +74,7 @@ func validateStateTransition(challenge *Entities.Challenge, to Entities.Challeng
 	return nil
 }
 
-func ApplyTransition(challenge *Entities.Challenge, to Entities.ChallengeStatus) error {
+func ApplyTransition(challenge *Entities.Challenge, to constants.ChallengeStatus) error {
 	if err := validateStateTransition(challenge, to); err != nil {
 		return err
 	}

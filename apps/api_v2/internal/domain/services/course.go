@@ -12,6 +12,8 @@ func RemoveCourse (ctx context.Context,
 	courseRepository courseRepository.CourseRepository, 
 	examRepository examRepository.ExamRepository,
 	examItemRepository examRepository.ExamItemRepository,
+	examScoreRepository examRepository.ExamScoreRepository,
+	examItemScoreRepository examRepository.ExamItemScoreRepository,
 	) error {
 		// [STEP 1] Get all enrolled students for the course
 		enrolledStudents, err := courseRepository.GetStudentsByCourseID(ctx, courseID)
@@ -38,7 +40,7 @@ func RemoveCourse (ctx context.Context,
 		// [STEP 4] Delete all existing exams for the course
 		for _, exam := range exams {
 			if exam != nil {
-				err = RemoveExam(ctx, exam.ID, examRepository, examItemRepository)
+				err = RemoveExam(ctx, exam.ID, examRepository, examItemRepository, examScoreRepository, examItemScoreRepository)
 				if err != nil {
 					return err
 				}

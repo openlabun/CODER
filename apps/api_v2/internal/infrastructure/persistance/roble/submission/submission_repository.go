@@ -101,11 +101,96 @@ func (r *SubmissionRepository) GetSubmissionByID(ctx context.Context, submission
 	return recordToSubmission(record)
 }
 
+func (r *SubmissionRepository) GetSubmissionsByExamItemScoreID(ctx context.Context, examItemScoreID string) ([]*Entities.Submission, error) {
+	normalizedExamItemScoreID := strings.TrimSpace(examItemScoreID)
+	if normalizedExamItemScoreID == "" {
+		return nil, fmt.Errorf("examItemScoreID is required")
+	}
+
+	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
+		return nil, err
+	}
+
+	res, err := r.adapter.Read(submissionTableName, map[string]string{"ExamItemScoreID": normalizedExamItemScoreID})
+	if err != nil {
+		return nil, err
+	}
+
+	records := extractRecords(res)
+	if len(records) == 0 {
+		return nil, nil
+	}
+
+	submissions := make([]*Entities.Submission, 0, len(records))
+	for _, record := range records {
+		submission, mapErr := recordToSubmission(record)
+		if mapErr != nil {
+			return nil, mapErr
+		}
+		if submission != nil {
+			submissions = append(submissions, submission)
+		}
+	}
+
+	return submissions, nil
+}
+
+
+func (r *SubmissionRepository) GetLastSubmissionByExamItemScoreID(ctx context.Context, examItemScoreID string) (*Entities.Submission, error) {
+	submission, err := r.GetSubmissionsByExamItemScoreID(ctx, examItemScoreID)
+	if err != nil {
+		return nil, err
+	}
+
+	var lastestSubmission *Entities.Submission
+	for _, submission := range submission {
+		if submission == nil {
+			return nil, nil
+		}
+
+		if lastestSubmission == nil {
+			lastestSubmission = submission
+			continue
+		}
+		
+		if submission.UpdatedAt.After(lastestSubmission.UpdatedAt) {
+			lastestSubmission = submission
+		}
+	}
+
+	return lastestSubmission, nil
+}
+
+func (r *SubmissionRepository) GetBestSubmissionByExamItemScoreID(ctx context.Context, examItemScoreID string) (*Entities.Submission, error) {
+	submission, err := r.GetSubmissionsByExamItemScoreID(ctx, examItemScoreID)
+	if err != nil {
+		return nil, err
+	}
+
+	var bestSubmission *Entities.Submission
+	for _, submission := range submission {
+		if submission == nil {
+			return nil, nil
+		}
+
+		if bestSubmission == nil {
+			bestSubmission = submission
+			continue
+		}
+
+		if submission.Score > bestSubmission.Score {
+			bestSubmission = submission
+		}
+	}
+
+	return bestSubmission, nil
+}
+
 func (r *SubmissionRepository) GetSubmissionsBySessionID(ctx context.Context, sessionID string, status *string, testID *string, challengeID *string) ([]*Entities.Submission, error) {
 	if err := infrastructure.SetAdapterTokenFromContext(ctx, r.adapter); err != nil {
 		return nil, err
 	}
-	
+
 	conditions := r.buildConditions(nil, status, testID, challengeID, &sessionID)
 	return r.getSubmissionsByFields(conditions)
 }

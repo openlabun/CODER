@@ -7,7 +7,7 @@ import (
 	"time"
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -51,14 +51,17 @@ func TestExamItemChallengeFork(t *testing.T) {
 		Title:             "ExamItem Fork Original",
 		Description:       "Challenge original para prueba de fork en exam item",
 		Tags:              []string{"exam-item", "fork"},
-		Status:            string(exam_entities.ChallengeStatusPublished),
-		Difficulty:        string(exam_entities.ChallengeDifficultyEasy),
+		Status:            string(exam_consts.ChallengeStatusPublished),
+		Difficulty:        string(exam_consts.ChallengeDifficultyEasy),
 		WorkerTimeLimit:   1500,
 		WorkerMemoryLimit: 256,
-		InputVariables: []exam_dtos.IOVariableDTO{
-			{Name: "x", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		CodeTemplates: []exam_dtos.CodeTemplateDTO{
+			{Language: "python", Template: "def solve() { return; }"},
 		},
-		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_entities.VariableFormatInt), Value: "10"},
+		InputVariables: []exam_dtos.IOVariableDTO{
+			{Name: "x", Type: string(exam_consts.VariableFormatInt), Value: "10"},
+		},
+		OutputVariable: exam_dtos.IOVariableDTO{Name: "y", Type: string(exam_consts.VariableFormatInt), Value: "10"},
 		Constraints:    "1 <= x <= 1000",
 	})
 	if err != nil {
@@ -80,7 +83,7 @@ func TestExamItemChallengeFork(t *testing.T) {
 		CourseID:             nil,
 		Title:                "ExamItem Fork Exam",
 		Description:          "Exam para prueba de fork en exam item",
-		Visibility:           string(exam_entities.VisibilityPrivate),
+		Visibility:           string(exam_consts.VisibilityPrivate),
 		StartTime:            now.Add(2 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: false,

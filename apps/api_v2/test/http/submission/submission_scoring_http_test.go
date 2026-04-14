@@ -88,6 +88,9 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 		"difficulty":          "easy",
 		"worker_time_limit":   1200,
 		"worker_memory_limit": 256,
+		"code_templates": map[string]any{
+			"python": "def solve() { return; }",
+		},
 		"input_variables":     []map[string]any{{"name": "n", "type": "int", "value": "2"}},
 		"output_variable":     map[string]any{"name": "out", "type": "int", "value": "4"},
 		"constraints":         "1 <= n <= 1000",
@@ -164,7 +167,6 @@ func TestSubmissionScoringHTTP(t *testing.T) {
 	resp = httputils.PostSubmissionCreate(t, app, studentAccess, map[string]any{
 		"code":         "import sys\nprint(int(sys.stdin.read().strip()) * 2)",
 		"language":     "python",
-		"score":        0,
 		"challenge_id": challengeID,
 		"session_id":   sessionID,
 	})

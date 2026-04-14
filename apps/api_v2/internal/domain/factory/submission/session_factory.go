@@ -6,8 +6,9 @@ import (
 
 	"github.com/google/uuid"
 
-	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/submission"
 )
 
@@ -23,7 +24,7 @@ func NewSession(studentID string, exam *ExamEntities.Exam) (*Entities.Session, e
 		ID:            uuid.New().String(),
 		StudentID:     strings.TrimSpace(studentID),
 		ExamID:        strings.TrimSpace(exam.ID),
-		Status:        Entities.SessionStatusActive,
+		Status:        constants.SessionStatusActive,
 		Attempts:      0,
 		TimeLeft:      timeLeft,
 		StartedAt:     now,
@@ -40,7 +41,7 @@ func NewSession(studentID string, exam *ExamEntities.Exam) (*Entities.Session, e
 
 func ExistingSession(
 	id, studentID, examID string,
-	status Entities.SessionStatus,
+	status constants.SessionStatus,
 	attempts, timeLeft int,
 	startedAt time.Time,
 	finishedAt *time.Time,

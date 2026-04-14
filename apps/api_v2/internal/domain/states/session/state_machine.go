@@ -2,10 +2,11 @@ package session_states
 
 import (
 	"fmt"
-	"time"
 	"os"
 	"strconv"
+	"time"
 
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	ExamEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	SessionEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 )
@@ -18,39 +19,39 @@ import (
 //   - expired: when the session time limit is exceeded without completion
 //   - blocked: when the user is blocked from further attempts (e.g., due to cheating detection)
 
-var sessionAllowedTransitions = map[SessionEntities.SessionStatus]map[SessionEntities.SessionStatus]struct{}{
-	SessionEntities.SessionStatusActive: {
-		SessionEntities.SessionStatusFrozen:    {},
-		SessionEntities.SessionStatusCompleted: {},
-		SessionEntities.SessionStatusExpired:   {},
-		SessionEntities.SessionStatusBlocked:   {},
+var sessionAllowedTransitions = map[constants.SessionStatus]map[constants.SessionStatus]struct{}{
+	constants.SessionStatusActive: {
+		constants.SessionStatusFrozen:    {},
+		constants.SessionStatusCompleted: {},
+		constants.SessionStatusExpired:   {},
+		constants.SessionStatusBlocked:   {},
 	},
-	SessionEntities.SessionStatusFrozen: {
-		SessionEntities.SessionStatusActive:    {},
-		SessionEntities.SessionStatusCompleted: {},
-		SessionEntities.SessionStatusExpired:   {},
-		SessionEntities.SessionStatusBlocked:   {},
+	constants.SessionStatusFrozen: {
+		constants.SessionStatusActive:    {},
+		constants.SessionStatusCompleted: {},
+		constants.SessionStatusExpired:   {},
+		constants.SessionStatusBlocked:   {},
 	},
 }
 
-func IsValidState(state SessionEntities.SessionStatus) bool {
+func IsValidState(state constants.SessionStatus) bool {
 	switch state {
-	case SessionEntities.SessionStatusActive:
+	case constants.SessionStatusActive:
 		return true
-	case SessionEntities.SessionStatusFrozen:
+	case constants.SessionStatusFrozen:
 		return true
-	case SessionEntities.SessionStatusCompleted:
+	case constants.SessionStatusCompleted:
 		return true
-	case SessionEntities.SessionStatusExpired:
+	case constants.SessionStatusExpired:
 		return true
-	case SessionEntities.SessionStatusBlocked:
+	case constants.SessionStatusBlocked:
 		return true
 	default:
 		return false
 	}
 }
 
-func canTransitionState(from SessionEntities.SessionStatus, to SessionEntities.SessionStatus) bool {
+func canTransitionState(from constants.SessionStatus, to constants.SessionStatus) bool {
 	if !IsValidState(from) || !IsValidState(to) {
 		return false
 	}
@@ -64,7 +65,7 @@ func canTransitionState(from SessionEntities.SessionStatus, to SessionEntities.S
 	return allowed
 }
 
-func validateStateTransition(session *SessionEntities.Session, to SessionEntities.SessionStatus) error {
+func validateStateTransition(session *SessionEntities.Session, to constants.SessionStatus) error {
 	if !IsValidState(session.Status) {
 		return fmt.Errorf("invalid session state: %q", session.Status)
 	}
@@ -80,7 +81,7 @@ func validateStateTransition(session *SessionEntities.Session, to SessionEntitie
 	return nil
 }
 
-func ApplyTranstion(session *SessionEntities.Session, to SessionEntities.SessionStatus) error {
+func ApplyTranstion(session *SessionEntities.Session, to constants.SessionStatus) error {
 	if err := validateStateTransition(session, to); err != nil {
 		return err
 	}
@@ -106,7 +107,7 @@ func validateSessionExamBinding(session *SessionEntities.Session, exam *ExamEnti
 }
 
 func shouldExpireSession(session *SessionEntities.Session, exam *ExamEntities.Exam, now time.Time) bool {
-	if validateStateTransition(session, SessionEntities.SessionStatusExpired) != nil {
+	if validateStateTransition(session, constants.SessionStatusExpired) != nil {
 		return false
 	}
 
@@ -147,7 +148,7 @@ func shouldFreezeSession(session *SessionEntities.Session, now time.Time) bool {
 	}
 	freeze_time_duration := time.Duration(freeze_time) * time.Second
 	
-	if validateStateTransition(session, SessionEntities.SessionStatusFrozen) != nil {
+	if validateStateTransition(session, constants.SessionStatusFrozen) != nil {
 		return false
 	}
 
@@ -160,7 +161,7 @@ func shouldFreezeSession(session *SessionEntities.Session, now time.Time) bool {
 }
 
 func shouldBlockSession(session *SessionEntities.Session, exam *ExamEntities.Exam) bool {
-	if validateStateTransition(session, SessionEntities.SessionStatusBlocked) != nil {
+	if validateStateTransition(session, constants.SessionStatusBlocked) != nil {
 		return false
 	}
 
@@ -189,21 +190,21 @@ func UpdateSessionStatus(
 
 	// Check if session should expire before updating status
 	if shouldExpireSession(session, exam, now) {
-		if err := ApplyTranstion(session, SessionEntities.SessionStatusExpired); err != nil {
+		if err := ApplyTranstion(session, constants.SessionStatusExpired); err != nil {
 			return fmt.Errorf("failed to expire session: %w", err)
 		}
 	}
 
 	// Check if session heartbeat is overdue (e.g., no activity for 60 seconds)
 	if shouldFreezeSession(session, now) {
-		if err := ApplyTranstion(session, SessionEntities.SessionStatusFrozen); err != nil {
+		if err := ApplyTranstion(session, constants.SessionStatusFrozen); err != nil {
 			return fmt.Errorf("failed to freeze session due to inactivity: %w", err)
 		}
 	}
 
 	// Check if session should be blocked due to attempt limit exceeded
 	if shouldBlockSession(session, exam) {
-		if err := ApplyTranstion(session, SessionEntities.SessionStatusBlocked); err != nil {
+		if err := ApplyTranstion(session, constants.SessionStatusBlocked); err != nil {
 			return fmt.Errorf("failed to block session due to attempt limit: %w", err)
 		}
 	}
@@ -211,8 +212,8 @@ func UpdateSessionStatus(
 	if heartbeat {
 		session.LastHeartbeat = now
 
-		if session.Status == SessionEntities.SessionStatusFrozen {
-			if err := ApplyTranstion(session, SessionEntities.SessionStatusActive); err != nil {
+		if session.Status == constants.SessionStatusFrozen {
+			if err := ApplyTranstion(session, constants.SessionStatusActive); err != nil {
 				return fmt.Errorf("failed to reactivate session on heartbeat: %w", err)
 			}
 		}
@@ -222,5 +223,5 @@ func UpdateSessionStatus(
 }
 
 func BlockSession(session *SessionEntities.Session) {
-	session.Status = SessionEntities.SessionStatusBlocked
+	session.Status = constants.SessionStatusBlocked
 }

@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	submission_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -54,7 +54,7 @@ func TestSessionCRUD(t *testing.T) {
 		CourseID:             nil,
 		Title:                "Session CRUD Exam One",
 		Description:          "Primer examen para CRUD de sesión",
-		Visibility:           string(exam_entities.VisibilityPublic),
+		Visibility:           string(exam_consts.VisibilityPublic),
 		StartTime:            now.Add(2 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: true,
@@ -74,7 +74,7 @@ func TestSessionCRUD(t *testing.T) {
 		CourseID:             nil,
 		Title:                "Session CRUD Exam Two",
 		Description:          "Segundo examen para CRUD de sesión",
-		Visibility:           string(exam_entities.VisibilityPublic),
+		Visibility:           string(exam_consts.VisibilityPublic),
 		StartTime:            now.Add(3 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: true,

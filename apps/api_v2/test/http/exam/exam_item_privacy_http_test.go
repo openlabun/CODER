@@ -64,6 +64,9 @@ func TestExamItemPrivacyHTTP(t *testing.T) {
 		"difficulty":          "easy",
 		"worker_time_limit":   1200,
 		"worker_memory_limit": 256,
+		"code_templates": map[string]any{
+			"python": "def solve() { return; }",
+		},
 		"input_variables":     []map[string]any{{"name": "x", "type": "int", "value": "7"}},
 		"output_variable":     map[string]any{"name": "y", "type": "int", "value": "7"},
 		"constraints":         "x >= 0",

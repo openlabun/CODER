@@ -39,21 +39,24 @@ func BuildDependencies() (*ApplicationDependencies, error) {
 	}
 
 	// Start adapters and repositories
-	robleAdapter := roble_infrastructure.NewRobleDatabaseAdapter(robleClient)
-	userRepository := roble_user_infrastructure.NewUserRepository(robleAdapter)
-	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
-	passwordHasher := security_infrastructure.NewSecurityAdapter()
-	ai_adapter := gemini_infrastructure.NewGeminiAdapter()
+	robleAdapter 	:= roble_infrastructure.NewRobleDatabaseAdapter(robleClient)
+	userRepository 	:= roble_user_infrastructure.NewUserRepository(robleAdapter)
+	authAdapter 	:= roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
+	passwordHasher 	:= security_infrastructure.NewSecurityAdapter()
+	ai_adapter 		:= gemini_infrastructure.NewGeminiAdapter()
 
-	courseRepository := course_repository.NewCourseRepository(robleAdapter)
-	examRepository := exam_repository.NewExamRepository(robleAdapter)
-	ioVariableRepository := exam_repository.NewIOVariableRepository(robleAdapter)
-	challengeRepository := exam_repository.NewChallengeRepository(robleAdapter, ioVariableRepository)
-	examItemRepository := exam_repository.NewExamItemRepository(robleAdapter)
-	testCaseRepository := exam_repository.NewTestCaseRepository(robleAdapter, ioVariableRepository)
+	courseRepository 		:= course_repository.NewCourseRepository(robleAdapter)
+	
+	examRepository 			:= exam_repository.NewExamRepository(robleAdapter)
+	examScoreRepository 	:= exam_repository.NewExamScoreRepository(robleAdapter)
+	ioVariableRepository 	:= exam_repository.NewIOVariableRepository(robleAdapter)
+	challengeRepository 	:= exam_repository.NewChallengeRepository(robleAdapter, ioVariableRepository)
+	examItemRepository 		:= exam_repository.NewExamItemRepository(robleAdapter)
+	examItemScoreRepository := exam_repository.NewExamItemScoreRepository(robleAdapter)
+	testCaseRepository 		:= exam_repository.NewTestCaseRepository(robleAdapter, ioVariableRepository)
 
-	submissionRepository := submission_repository.NewSubmissionRepository(robleAdapter)
-	sessionRepository := submission_repository.NewSessionRepository(robleAdapter)
+	submissionRepository 	:= submission_repository.NewSubmissionRepository(robleAdapter)
+	sessionRepository 		:= submission_repository.NewSessionRepository(robleAdapter)
 	submissionResRepository := submission_repository.NewSubmissionResultRepository(robleAdapter, ioVariableRepository)
 
 	publisherAdapter, err := rabbitmq_infrastructure.NewRabbitMQAdapter()
@@ -77,6 +80,8 @@ func BuildDependencies() (*ApplicationDependencies, error) {
 		testCaseRepository,
 		ioVariableRepository,
 		examItemRepository,
+		examScoreRepository,
+		examItemScoreRepository,
 
 		submissionRepository,
 		sessionRepository,

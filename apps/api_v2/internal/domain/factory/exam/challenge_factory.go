@@ -3,9 +3,10 @@ package exam_factory
 import (
 	"strings"
 	"time"
-	
+
 	"github.com/google/uuid"
 
+	exam_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Validations "github.com/openlabun/CODER/apps/api_v2/internal/domain/validations/exam"
 )
@@ -14,19 +15,20 @@ import (
 func NewChallenge(
 	title, description string,
 	tags []string,
-	status Entities.ChallengeStatus,
-	difficulty Entities.ChallengeDifficulty,
+	status exam_constants.ChallengeStatus,
+	difficulty exam_constants.ChallengeDifficulty,
 	workerTimeLimit, workerMemoryLimit int,
+	codeTemplates []Entities.CodeTemplate,
 	inputVariables []Entities.IOVariable,
 	outputVariable Entities.IOVariable,
 	constraints, UserID string,
 ) (*Entities.Challenge, error) {
 	now := time.Now()
 	if status == "" {
-		status = Entities.ChallengeStatusDraft
+		status = exam_constants.ChallengeStatusDraft
 	}
 	if difficulty == "" {
-		difficulty = Entities.ChallengeDifficultyEasy
+		difficulty = exam_constants.ChallengeDifficultyEasy
 	}
 
 	challenge := &Entities.Challenge{
@@ -38,6 +40,7 @@ func NewChallenge(
 		Difficulty:        difficulty,
 		WorkerTimeLimit:   workerTimeLimit,
 		WorkerMemoryLimit: workerMemoryLimit,
+		CodeTemplates:     codeTemplates,
 		InputVariables:    inputVariables,
 		OutputVariable:    outputVariable,
 		Constraints:       strings.TrimSpace(constraints),
@@ -56,9 +59,10 @@ func NewChallenge(
 func ExistingChallenge(
 	id, title, description string,
 	tags []string,
-	status Entities.ChallengeStatus,
-	difficulty Entities.ChallengeDifficulty,
+	status exam_constants.ChallengeStatus,
+	difficulty exam_constants.ChallengeDifficulty,
 	workerTimeLimit, workerMemoryLimit int,
+	codeTemplates []Entities.CodeTemplate,
 	inputVariables []Entities.IOVariable,
 	outputVariable Entities.IOVariable,
 	constraints, UserID string,
@@ -73,6 +77,7 @@ func ExistingChallenge(
 		Difficulty:        difficulty,
 		WorkerTimeLimit:   workerTimeLimit,
 		WorkerMemoryLimit: workerMemoryLimit,
+		CodeTemplates:     codeTemplates,
 		InputVariables:    inputVariables,
 		OutputVariable:    outputVariable,
 		Constraints:       strings.TrimSpace(constraints),

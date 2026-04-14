@@ -6,9 +6,10 @@ import (
 
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	userRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/user"
-	
-	user_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
+
+	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
 
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
@@ -39,12 +40,12 @@ func (uc *GetPublicChallengesUseCase) Execute(ctx context.Context, input dtos.Ge
 		return nil, fmt.Errorf("user not found")
 	}
 
-	if user.Role == user_entities.UserRoleStudent {
+	if user.Role == user_constants.UserRoleStudent {
 		return nil, fmt.Errorf("students are not allowed to access challenges repositories")
 	}
 
 	// [STEP 2] Get all published exams
-	status := string(Entities.ChallengeStatusPublished)
+	status := string(constants.ChallengeStatusPublished)
 	public_exams, err := uc.challengeRepository.GetChallenges(ctx, &status, input.Tag, input.Difficulty)
 	if err != nil {
 		return nil, err

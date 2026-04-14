@@ -14,7 +14,6 @@ const CreateCourse = () => {
         groupNumber: 1,
         description: '',
         color: '#00f0ff',
-        enrollmentMethod: 'code',
         enrollmentCode: '',
         startDate: '',
         endDate: '',
@@ -23,6 +22,7 @@ const CreateCourse = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
+    const [csvFile, setCsvFile] = useState(null);
 
     const courseColors = [
         '#00f0ff', '#7000ff', '#ff0055', '#00ff9d',
@@ -82,8 +82,8 @@ const CreateCourse = () => {
             return;
         }
 
-        // Generate enrollment code if using code method and not set
-        if (formData.enrollmentMethod === 'code' && !formData.enrollmentCode) {
+        // Always generate enrollment code if not set
+        if (!formData.enrollmentCode) {
             generateEnrollmentCode();
         }
 
@@ -91,10 +91,9 @@ const CreateCourse = () => {
         try {
             const [year, semesterCode] = formData.period.split('-');
             
-            // Map semesters to backend constants (01: first, 02: intersemestral/summer, 03: second)
-            // 1 -> 01, 2 -> 03, 3 -> 02
-            const semesterMap = { '1': '01', '2': '03', '3': '02' };
-            const semester = semesterMap[semesterCode] || '01';
+            // Map semesters to backend constants: 10 (first), 20 (intersemestral), 30 (second)
+            const semesterMap = { '1': '10', '2': '30', '3': '20' };
+            const semester = semesterMap[semesterCode] || '10';
 
             // Map frontend fields to backend DTO
             const payload = {
@@ -108,7 +107,26 @@ const CreateCourse = () => {
                 enrollment_code: formData.enrollmentCode
             };
 
-            await client.post('/courses', payload);
+            const res = await client.post('/courses', payload);
+            const newCourseId = res.data?.id || res.data?.ID;
+
+            // If CSV file provided, upload students after creation
+            if (csvFile && newCourseId) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const text = e.target.result;
+                    const words = text.split(/[\n\r,;]+/);
+                    const emails = words.map(w => w.trim()).filter(w => w.includes('@'));
+                    for (const email of emails) {
+                        try {
+                            await client.post(`/courses/${newCourseId}/students`, { studentID: email });
+                        } catch (err) {
+                            // Silently ignore individual fails in creation flow
+                        }
+                    }
+                };
+                reader.readAsText(csvFile);
+            }
             
             Swal.fire({
                 icon: 'success',
@@ -275,73 +293,53 @@ const CreateCourse = () => {
                 </div>
 
                 <div className="form-section">
-                    <h2>Configuración de Inscripción</h2>
+                    <h2>Inscripción de Estudiantes</h2>
+                    <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>Todos los métodos de inscripción estarán disponibles para este curso.</p>
 
+                    {/* Código de Inscripción — always shown */}
                     <div className="form-group">
-                        <label>Método de Inscripción *</label>
-                        <div className="radio-group">
-                            <label className="radio-option">
-                                <input
-                                    type="radio"
-                                    name="enrollmentMethod"
-                                    value="code"
-                                    checked={formData.enrollmentMethod === 'code'}
-                                    onChange={handleChange}
-                                />
-                                <div>
-                                    <span>🔑 Código de Inscripción</span>
-                                    <small>Los estudiantes se unen usando un código único</small>
-                                </div>
-                            </label>
-                            <label className="radio-option">
-                                <input
-                                    type="radio"
-                                    name="enrollmentMethod"
-                                    value="link"
-                                    checked={formData.enrollmentMethod === 'link'}
-                                    onChange={handleChange}
-                                />
-                                <div>
-                                    <span>🔗 Enlace Privado</span>
-                                    <small>Los estudiantes se unen a través de un enlace de invitación</small>
-                                </div>
-                            </label>
-                            <label className="radio-option">
-                                <input
-                                    type="radio"
-                                    name="enrollmentMethod"
-                                    value="automatic"
-                                    checked={formData.enrollmentMethod === 'automatic'}
-                                    onChange={handleChange}
-                                />
-                                <div>
-                                    <span>⚙️ Automático</span>
-                                    <small>Inscripción gestionada por la institución</small>
-                                </div>
-                            </label>
+                        <label htmlFor="enrollmentCode">🔑 Código de Inscripción</label>
+                        <div className="code-input-group">
+                            <input
+                                type="text"
+                                id="enrollmentCode"
+                                name="enrollmentCode"
+                                value={formData.enrollmentCode}
+                                onChange={handleChange}
+                                placeholder="Se generará automáticamente"
+                                readOnly
+                            />
+                            <button type="button" onClick={generateEnrollmentCode} className="btn-generate">
+                                Generar Código
+                            </button>
                         </div>
+                        <small>Los estudiantes podrán unirse usando este código o el enlace privado generado a partir de él.</small>
                     </div>
 
-                    {formData.enrollmentMethod === 'code' && (
-                        <div className="form-group">
-                            <label htmlFor="enrollmentCode">Código de Inscripción</label>
-                            <div className="code-input-group">
-                                <input
-                                    type="text"
-                                    id="enrollmentCode"
-                                    name="enrollmentCode"
-                                    value={formData.enrollmentCode}
-                                    onChange={handleChange}
-                                    placeholder="Se generará automáticamente"
-                                    readOnly
-                                />
-                                <button type="button" onClick={generateEnrollmentCode} className="btn-generate">
-                                    Generar Código
-                                </button>
+                    {/* Enlace Privado — shown when code exists */}
+                    {formData.enrollmentCode && (
+                        <div className="form-group" style={{ marginTop: '1rem', background: '#f0f9ff', padding: '1rem', borderRadius: '8px', border: '1px solid #bae6fd' }}>
+                            <label>🔗 Enlace Privado</label>
+                            <div style={{ fontSize: '0.85rem', color: '#0369a1', wordBreak: 'break-all', fontWeight: 600 }}>
+                                {window.location.origin}/courses/join?code={formData.enrollmentCode}
                             </div>
-                            <small>Los estudiantes usarán este código para unirse al curso</small>
+                            <small>Comparte este enlace para que los estudiantes se inscriban con un solo clic.</small>
                         </div>
                     )}
+
+                    {/* CSV Upload — always shown */}
+                    <div className="form-group" style={{ marginTop: '1rem', background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                        <label>⚙️ Carga Automática (.csv)</label>
+                        <input 
+                            type="file" 
+                            accept=".csv" 
+                            onChange={(e) => setCsvFile(e.target.files[0])}
+                            style={{ marginTop: '0.5rem' }}
+                        />
+                        <small style={{ display: 'block', marginTop: '0.5rem', color: '#64748b' }}>
+                            (Opcional) Sube un archivo con los correos de los estudiantes. Serán añadidos automáticamente tras crear el curso.
+                        </small>
+                    </div>
                 </div>
 
                 <div className="form-section">

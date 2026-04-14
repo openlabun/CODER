@@ -7,11 +7,12 @@ import (
 	"testing"
 	"time"
 
-	hasher "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
+	consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/course"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+	submission_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	course_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
 	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
-	submission_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	course_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/course"
 	exam_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
 	submission_factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/submission"
@@ -20,6 +21,7 @@ import (
 	roble_exam_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 	roble_submission_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
+	hasher "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 )
 
@@ -47,6 +49,8 @@ func TestSubmissionCRUD(t *testing.T) {
 	sessionRepository := roble_submission_infrastructure.NewSessionRepository(robleAdapter)
 	submissionRepository := roble_submission_infrastructure.NewSubmissionRepository(robleAdapter)
 	resultRepository := roble_submission_infrastructure.NewSubmissionResultRepository(robleAdapter, ioVariableRepository)
+	examScoreRepository := roble_exam_infrastructure.NewExamScoreRepository(robleAdapter)
+	examItemScoreRepository := roble_exam_infrastructure.NewExamItemScoreRepository(robleAdapter)
 	process.Log("Repositories inicializados")
 	process.EndStep()
 
@@ -86,10 +90,10 @@ func TestSubmissionCRUD(t *testing.T) {
 	course, err := course_factory.NewCourse(
 		"Submission Integration Course",
 		"Course for submission/session/result integration",
-		course_entities.CourseVisibilityPublic,
-		course_entities.CourseColourBlue,
+		consts.CourseVisibilityPublic,
+		consts.CourseColourBlue,
 		courseCode,
-		&course_entities.Period{Year: now.Year(), Semester: course_entities.AcademicFirstPeriod},
+		&course_entities.Period{Year: now.Year(), Semester: consts.AcademicFirstPeriod},
 		enrollmentCode,
 		"https://example.test/enroll/"+enrollmentCode,
 		teacherID,
@@ -121,7 +125,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	exam, err := exam_factory.NewExam(
 		"Submission Integration Exam",
 		"Exam for submission/session/result integration",
-		exam_entities.VisibilityCourse,
+		exam_consts.VisibilityCourse,
 		startTime,
 		&endTime,
 		false,
@@ -151,11 +155,11 @@ func TestSubmissionCRUD(t *testing.T) {
 
 	// [STEP 6] Create auxiliary challenge, examitem and test case
 	process.StartStep("Crear challenge y test case auxiliares")
-	inputA, err := exam_factory.NewIOVariable("a", exam_entities.VariableFormatInt, "2")
+	inputA, err := exam_factory.NewIOVariable("a", exam_consts.VariableFormatInt, "2")
 	if err != nil {
 		process.Fail("create challenge input variable", err)
 	}
-	output, err := exam_factory.NewIOVariable("sum", exam_entities.VariableFormatInt, "5")
+	output, err := exam_factory.NewIOVariable("sum", exam_consts.VariableFormatInt, "5")
 	if err != nil {
 		process.Fail("create challenge output variable", err)
 	}
@@ -173,10 +177,16 @@ func TestSubmissionCRUD(t *testing.T) {
 		"Sum Challenge Submission",
 		"Challenge for submission integration",
 		[]string{"submission", "integration"},
-		exam_entities.ChallengeStatusDraft,
-		exam_entities.ChallengeDifficultyEasy,
+		exam_consts.ChallengeStatusDraft,
+		exam_consts.ChallengeDifficultyEasy,
 		1500,
 		256,
+		[]exam_entities.CodeTemplate{
+			{
+				Language: "python",
+				Template: "def solve(a):\n    return a + 3\n",
+			},
+		},
 		[]exam_entities.IOVariable{*inputA},
 		*output,
 		"1 <= a <= 1000",
@@ -219,11 +229,11 @@ func TestSubmissionCRUD(t *testing.T) {
 	}()
 
 
-	tcInput, err := exam_factory.NewIOVariable("a", exam_entities.VariableFormatInt, "10")
+	tcInput, err := exam_factory.NewIOVariable("a", exam_consts.VariableFormatInt, "10")
 	if err != nil {
 		process.Fail("create test case input variable", err)
 	}
-	tcOutput, err := exam_factory.NewIOVariable("sum", exam_entities.VariableFormatInt, "10")
+	tcOutput, err := exam_factory.NewIOVariable("sum", exam_consts.VariableFormatInt, "10")
 	if err != nil {
 		process.Fail("create test case output variable", err)
 	}
@@ -243,6 +253,7 @@ func TestSubmissionCRUD(t *testing.T) {
 		*tcOutput,
 		true,
 		10,
+		false,
 		challengeID,
 	)
 	if err != nil {
@@ -327,14 +338,49 @@ func TestSubmissionCRUD(t *testing.T) {
 	process.Log(fmt.Sprintf("Queries de session validadas. byExam=%d byStudent=%d", len(sessionsByExam), len(sessionsByStudent)))
 	process.EndStep()
 
-	// [STEP 9] Create submission
+	// [STEP 9] Create ExamScore for the session
+	process.StartStep("Crear ExamScore para la sesión")
+	examScore, err := exam_factory.NewExamScore(examID, sessionID, teacherID)
+	if err != nil {
+		process.Fail("build exam score with factory", err)
+	}
+
+	examScore, err = examScoreRepository.CreateExamScore(ctx, examScore)
+	if err != nil {
+		process.Fail("create exam score", err)
+	}
+
+	defer func() {
+		t.Logf("[CLEANUP] Eliminando exam score %s", examScore.ID)
+		_ = examScoreRepository.DeleteExamScore(ctx, examScore.ID)
+	}()
+
+	// [STEP 10] Create ExamItemScore for the ExamScore
+	examItemScore, err := exam_factory.NewExamItemScore(createdExamItem.ID, examScore.ID)
+	if err != nil {
+		process.Fail("build exam item score with factory", err)
+	}
+
+	examItemScore, err = examItemScoreRepository.CreateExamItemScore(ctx, examItemScore)
+	if err != nil {
+		process.Fail("create exam item score", err)
+	}
+
+	defer func() {
+		t.Logf("[CLEANUP] Eliminando exam item score %s", examItemScore.ID)
+		_ = examItemScoreRepository.DeleteExamItemScore(ctx, examItemScore.ID)
+	}()
+
+	// [STEP 11] Create submission
 	process.StartStep("Crear Submission")
 	submission, err := submission_factory.NewSubmission(
 		"print(1+2)",
-		submission_entities.LanguagePython,
+		submission_consts.LanguagePython,
+		true,
 		challengeID,
 		sessionID,
 		teacherID,
+		&examItemScore.ID,
 	)
 	if err != nil {
 		process.Fail("build submission with factory", err)
@@ -356,7 +402,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	}()
 	
 
-	// [STEP 10] Get submission by ID, update it and confirm changes
+	// [STEP 12] Get submission by ID, update it and confirm changes
 	process.StartStep("Cargar y Actualizar Submission")
 	reloadedSubmission, err := submissionRepository.GetSubmissionByID(ctx, submissionID)
 	if err != nil {
@@ -380,7 +426,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	process.Log(fmt.Sprintf("Submission actualizada. score=%d timeMsTotal=%d", updatedSubmission.Score, updatedSubmission.TimeMsTotal))
 	process.EndStep()
 
-	// [STEP 11] Get submissions by session
+	// [STEP 13] Get submissions by session
 	process.StartStep("Obtener Submission por sesión")
 	bySession, err := submissionRepository.GetSubmissionsBySessionID(ctx, sessionID, nil, nil, nil)
 	if err != nil {
@@ -388,7 +434,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	}
 	process.EndStep()
 
-	// [STEP 12] Get submissions by user
+	// [STEP 14] Get submissions by user
 	process.StartStep("Obtener Submission por usuario")
 	byUser, err := submissionRepository.GetSubmissionsByUserID(ctx, teacherID, nil, nil, nil)
 	if err != nil {
@@ -396,7 +442,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	}
 	process.EndStep()
 
-	// [STEP 13] Get submission by challenge
+	// [STEP 15] Get submission by challenge
 	process.StartStep("Obtener Submission por challenge")
 	byChallenge, err := submissionRepository.GetSubmissionsByChallengeID(ctx, challengeID, nil, nil)
 	if err != nil {
@@ -404,7 +450,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	}
 	process.EndStep()
 
-	// [STEP 14] Validate submission queries
+	// [STEP 16] Validate submission queries
 	process.StartStep("Validar queries de Submission")
 	if len(bySession) == 0 || len(byUser) == 0 || len(byChallenge) == 0 {
 		process.Fail("submission queries", fmt.Errorf("expected submissions in query results"))
@@ -412,14 +458,14 @@ func TestSubmissionCRUD(t *testing.T) {
 	process.Log(fmt.Sprintf("Queries de submission validadas. bySession=%d byUser=%d byChallenge=%d", len(bySession), len(byUser), len(byChallenge)))
 	process.EndStep()
 
-	// [STEP 15] CRUD submission result
+	// [STEP 17] CRUD submission result
 	process.StartStep("CRUD de SubmissionResult")
 	result, err := submission_factory.NewSubmissionResult(submissionID, testCaseID)
 	if err != nil {
 		process.Fail("build submission result with factory", err)
 	}
 
-	actualOutput, err := exam_factory.NewIOVariable("sum", exam_entities.VariableFormatInt, "5")
+	actualOutput, err := exam_factory.NewIOVariable("sum", exam_consts.VariableFormatInt, "5")
 	if err != nil {
 		process.Fail("build actual output io variable", err)
 	}
@@ -430,7 +476,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	process.Log("Actual output IOVariable creada y persistida")
 
 	result.ActualOutput = actualOutput
-	result.Status = submission_entities.SubmissionStatusAccepted
+	result.Status = submission_consts.SubmissionStatusAccepted
 	
 	createdResult, err := resultRepository.CreateResult(ctx, result)
 	if err != nil {
@@ -456,7 +502,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	}
 	process.Log(fmt.Sprintf("Result recargado. status=%s ActualOutput=%s", reloadedResult.Status, reloadedResult.ActualOutput.ID))
 
-	updatedActualOutput, err := exam_factory.NewIOVariable("sum", exam_entities.VariableFormatInt, "4")
+	updatedActualOutput, err := exam_factory.NewIOVariable("sum", exam_consts.VariableFormatInt, "4")
 	if err != nil {
 		process.Fail("build updated actual output", err)
 	}
@@ -471,7 +517,7 @@ func TestSubmissionCRUD(t *testing.T) {
 		_ = ioVariableRepository.DeleteIOVariable(ctx, updatedActualOutput.ID)
 	} ()
 
-	createdResult.Status = submission_entities.SubmissionStatusWrongAnswer
+	createdResult.Status = submission_consts.SubmissionStatusWrongAnswer
 	createdResult.ActualOutput = updatedActualOutput
 	createdResult.ErrorMessage = nil
 
@@ -479,7 +525,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	if err != nil {
 		process.Fail("update result", err)
 	}
-	if updatedResult == nil || updatedResult.Status != submission_entities.SubmissionStatusWrongAnswer {
+	if updatedResult == nil || updatedResult.Status != submission_consts.SubmissionStatusWrongAnswer {
 		process.Fail("update result", fmt.Errorf("expected updated result status"))
 	}
 	process.Log(fmt.Sprintf("Result actualizado. status=%s", updatedResult.Status))
@@ -498,7 +544,7 @@ func TestSubmissionCRUD(t *testing.T) {
 	process.Log(fmt.Sprintf("Queries de result validadas. bySubmission=%d byTestCase=%d", len(resultsBySubmission), len(resultsByTestCase)))
 	process.EndStep()
 
-
+	// [STEP 18] Delete result, submission and session and confirm deletion
 	process.StartStep("Eliminar Result, Submission y Session y validar borrado")
 	if err := resultRepository.DeleteResult(ctx, resultID); err != nil {
 		process.Fail("delete result", err)

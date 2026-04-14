@@ -3,15 +3,15 @@ package usecases_test
 import (
 	"context"
 	"fmt"
-	"testing"
-	"time"
 	"os"
 	"strconv"
+	"testing"
+	"time"
 
 	exam_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
 	submission_dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/submission"
-	exam_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
-	submission_entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	exam_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
+	submission_consts "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
 	test "github.com/openlabun/CODER/apps/api_v2/test"
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
@@ -57,7 +57,7 @@ func TestSessionFreezeAndBlock(t *testing.T) {
 		CourseID:             nil,
 		Title:                "Session Freeze Block Exam",
 		Description:          "Examen para pruebas de bloqueo y congelamiento",
-		Visibility:           string(exam_entities.VisibilityPublic),
+		Visibility:           string(exam_consts.VisibilityPublic),
 		StartTime:            now.Add(2 * time.Hour).Format(time.RFC3339),
 		EndTime:              nil,
 		AllowLateSubmissions: true,
@@ -96,7 +96,7 @@ func TestSessionFreezeAndBlock(t *testing.T) {
 	if err != nil {
 		process.Fail("block session", err)
 	}
-	if blockedSession == nil || blockedSession.Status != submission_entities.SessionStatusBlocked {
+	if blockedSession == nil || blockedSession.Status != submission_consts.SessionStatusBlocked {
 		process.Fail("block session", fmt.Errorf("expected blocked session status"))
 	}
 	firstSessionID = ""
@@ -125,7 +125,7 @@ func TestSessionFreezeAndBlock(t *testing.T) {
 
 	// [STEP 8] Wait for time to trigger freeze
 	process.StartStep("Esperar tiempo para congelamiento de examen")
-	freeze_time, err :=  strconv.Atoi(os.Getenv("SESSION_FREEZE_TIME"))
+	freeze_time, err := strconv.Atoi(os.Getenv("SESSION_FREEZE_TIME"))
 	if err != nil {
 		freeze_time = 60 // default freeze time if env variable is not set or invalid
 	}
@@ -140,7 +140,7 @@ func TestSessionFreezeAndBlock(t *testing.T) {
 	if err != nil {
 		process.Fail("get active session", err)
 	}
-	if frozenSession == nil || frozenSession.Status != submission_entities.SessionStatusFrozen {
+	if frozenSession == nil || frozenSession.Status != submission_consts.SessionStatusFrozen {
 		process.Fail("verify frozen session", fmt.Errorf("expected frozen session status"))
 	}
 	process.EndStep()
@@ -158,7 +158,7 @@ func TestSessionFreezeAndBlock(t *testing.T) {
 
 	// [STEP 11] Verify that the session is active again after heartbeat
 	process.StartStep("Comprobar que se volvió a activar")
-	if reheartbeatedSession.Status != submission_entities.SessionStatusActive {
+	if reheartbeatedSession.Status != submission_consts.SessionStatusActive {
 		process.Log(fmt.Sprintf("Estado actual tras segundo heartbeat: %s", reheartbeatedSession.Status))
 		process.Fail("verify reactivation", fmt.Errorf("expected session to be active after heartbeat"))
 	}
@@ -170,7 +170,7 @@ func TestSessionFreezeAndBlock(t *testing.T) {
 	if err != nil {
 		process.Fail("block reactivated session", err)
 	}
-	if blockedAgainSession == nil || blockedAgainSession.Status != submission_entities.SessionStatusBlocked {
+	if blockedAgainSession == nil || blockedAgainSession.Status != submission_consts.SessionStatusBlocked {
 		process.Fail("block reactivated session", fmt.Errorf("expected blocked status after teacher block"))
 	}
 	process.EndStep()

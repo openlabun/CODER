@@ -76,7 +76,7 @@ const BrowseCourses = () => {
 
         setEnrolling(true);
         try {
-            await client.post('/courses/enroll', { enrollmentCode });
+            await client.post('/courses/enroll', { enrollment_code: enrollmentCode });
             setShowModal(false);
             navigate('/courses');
         } catch (err) {

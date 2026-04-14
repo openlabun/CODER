@@ -71,6 +71,7 @@ const ExamRunner = () => {
     const [sessionId, setSessionId] = useState(null);
     const [sessionStatus, setSessionStatus] = useState(null);
     const [timeLeft, setTimeLeft] = useState(null); // in seconds, null = unlimited
+    const timeLeftRef = useRef(null); // mirrors timeLeft for use in interval callbacks
     const [examFinished, setExamFinished] = useState(false);
     const [attemptMap, setAttemptMap] = useState(() => {
         // Restore attempt map from localStorage for persistence across refreshes
@@ -124,14 +125,25 @@ const ExamRunner = () => {
                 setAttemptMap({});
                 localStorage.setItem('session_id', sid);
             }
-
+            
             setSessionId(sid);
             setSessionStatus(sessionData?.status || sessionData?.Status || 'active');
-            const tl = sessionData?.time_left ?? sessionData?.TimeLeft ?? sessionData?.timeLeft;
+            
+            // Determine time left
+            const tl = sessionData?.time_left ?? sessionData?.TimeLeft ?? sessionData?.timeLeft ?? exam?.time_limit;
             if (tl != null && tl > 0) {
                 setTimeLeft(tl);
-            } else if (tl === -1) {
-                setTimeLeft(null); // unlimited
+                timeLeftRef.current = tl;
+            } else if (tl === -1 || tl === 0) {
+                // -1 = unlimited, 0 = already expired
+                if (tl === 0) {
+                    setExamFinished(true);
+                    setTimeLeft(0);
+                    timeLeftRef.current = 0;
+                } else {
+                    setTimeLeft(null);
+                    timeLeftRef.current = null;
+                }
             }
         };
 
@@ -331,15 +343,24 @@ const ExamRunner = () => {
 
     // We no longer close session on browser close/refresh. Let it stay active.
 
-    // Countdown timer
+    // Countdown timer — runs once when timeLeft is first set to a positive value
     useEffect(() => {
-        if (timeLeft == null || timeLeft <= 0) return;
+        if (timeLeft == null || timeLeft <= 0 || examFinished) return;
+
+        if (timerRef.current) clearInterval(timerRef.current);
 
         timerRef.current = setInterval(() => {
             setTimeLeft(prev => {
-                if (prev == null) return null;
-                if (prev <= 1) {
+                if (prev == null || prev <= 0) {
                     clearInterval(timerRef.current);
+                    timerRef.current = null;
+                    return prev;
+                }
+                const next = prev - 1;
+                timeLeftRef.current = next;
+                if (next <= 0) {
+                    clearInterval(timerRef.current);
+                    timerRef.current = null;
                     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
 
                     // Close session on the backend
@@ -348,6 +369,7 @@ const ExamRunner = () => {
                         client.post(`/submissions/sessions/${sid}/close`).catch(() => { });
                     }
                     localStorage.removeItem('session_id');
+                    localStorage.removeItem('exam_attempt_map');
                     setSessionId(null);
 
                     setExamFinished(true);
@@ -359,14 +381,15 @@ const ExamRunner = () => {
                     });
                     return 0;
                 }
-                return prev - 1;
+                return next;
             });
         }, 1000);
 
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [timeLeft != null && timeLeft > 0]); // re-run only when timer starts
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sessionId]); // Only re-run when session changes, not on every timeLeft tick
 
     const currentChallenge = challenges[currentIndex] || null;
     const currentCode = currentChallenge ? (codeMap[currentChallenge.id] || '') : '';
@@ -557,10 +580,14 @@ const ExamRunner = () => {
             if (heartbeatRef.current) clearInterval(heartbeatRef.current);
             if (timerRef.current) clearInterval(timerRef.current);
             localStorage.removeItem('session_id');
+            localStorage.removeItem('exam_attempt_map');
             setSessionId(null);
+            setTimeLeft(0);
+            timeLeftRef.current = 0;
 
             setExamFinished(true);
-            Swal.fire({ icon: 'success', title: 'Examen Finalizado', text: `Puntuación: ${solved}/${challenges.length} retos correctos.` });
+            await Swal.fire({ icon: 'success', title: 'Examen Finalizado', text: `Puntuación: ${solved}/${challenges.length} retos correctos.` });
+            navigate('/public-exams');
         }
     };
 

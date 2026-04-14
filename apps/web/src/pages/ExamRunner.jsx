@@ -31,16 +31,44 @@ const ExamRunner = () => {
     const [showRunModal, setShowRunModal] = useState(false);
     const [runTab, setRunTab] = useState('public');
     const [selectedPublicCase, setSelectedPublicCase] = useState('');
-    const [customInputs, setCustomInputs] = useState([{ name: 'a', type: 'int', value: '' }]);
+    const [customInputs, setCustomInputs] = useState([]);
     const [customOutput, setCustomOutput] = useState('');
+    const [customOutputVarName, setCustomOutputVarName] = useState('out');
+    const [customOutputVarType, setCustomOutputVarType] = useState('string');
     const [customSampleName, setCustomSampleName] = useState('custom_sample');
+
+    // Pre-fill custom inputs based on the first public testcase
+    useEffect(() => {
+        if (!currentChallenge) return;
+        const cases = publicTestCasesMap[currentChallenge.id];
+        if (cases && cases.length > 0) {
+            const firstCase = Object.assign({}, cases[0]);
+            const inputs = firstCase.input || firstCase.Input || [];
+            const out = firstCase.expected_output || firstCase.expectedOutput || firstCase.ExpectedOutput || {};
+            
+            // Set input shapes without values
+            if (Array.isArray(inputs)) {
+                setCustomInputs(inputs.map(i => ({ name: i.name || i.Name, type: i.type || i.Type, value: '' })));
+            }
+            if (out.name || out.Name) {
+                setCustomOutputVarName(out.name || out.Name);
+                setCustomOutputVarType(out.type || out.Type);
+            }
+        }
+    }, [currentIndex, challenges, publicTestCasesMap]);
 
     // Session state
     const [sessionId, setSessionId] = useState(null);
     const [sessionStatus, setSessionStatus] = useState(null);
     const [timeLeft, setTimeLeft] = useState(null); // in seconds, null = unlimited
     const [examFinished, setExamFinished] = useState(false);
-    const [attemptMap, setAttemptMap] = useState({}); // { challengeId: count }
+    const [attemptMap, setAttemptMap] = useState(() => {
+        // Restore attempt map from localStorage for persistence across refreshes
+        try {
+            const stored = localStorage.getItem('exam_attempt_map');
+            return stored ? JSON.parse(stored) : {};
+        } catch { return {}; }
+    }); // { challengeId: count }
     const heartbeatRef = useRef(null);
     const timerRef = useRef(null);
 
@@ -198,7 +226,13 @@ const ExamRunner = () => {
                         initialCode[ch.id] = '# Escribe tu solución aquí\ndef solve():\n    pass\n';
                     }
 
-                    tcPromises.push(client.get(`/test-cases/challenge/${ch.id}?exam_id=${id}`).then(res => ({ id: ch.id, cases: res.data.filter(tc => tc.type === 'public' || tc.is_sample || tc.isSample) })).catch(() => ({ id: ch.id, cases: [] })));
+                    tcPromises.push(client.get(`/test-cases/challenge/${ch.id}?exam_id=${id}`).then(res => ({
+                        id: ch.id,
+                        cases: res.data.filter(tc => 
+                            (tc.type === 'public' || tc.is_sample || tc.isSample) &&
+                            tc.title !== 'Custom Test Case' && tc.Title !== 'Custom Test Case'
+                        )
+                    })).catch(() => ({ id: ch.id, cases: [] })));
                 });
                 setCodeMap(initialCode);
 
@@ -328,12 +362,11 @@ const ExamRunner = () => {
             return;
         }
 
-        // Check try limit per challenge
-        const tryLimit = exam?.tryLimit || exam?.TryLimit || exam?.try_limit || -1;
+        // Enforce 1 attempt per challenge (persisted across refreshes)
         const challengeId = currentChallenge?.id;
         const currentAttempts = attemptMap[challengeId] || 0;
-        if (tryLimit > 0 && currentAttempts >= tryLimit) {
-            setOutput(`Has alcanzado el límite de ${tryLimit} intento(s) para este reto.`);
+        if (currentAttempts >= 1) {
+            setOutput('Ya has utilizado tu único intento para este reto.');
             return;
         }
 
@@ -405,14 +438,15 @@ const ExamRunner = () => {
 
                         setResultMap(prev => ({ ...prev, [challengeId]: { status, score, results } }));
 
-                        // Track attempt count for this challenge
-                        setAttemptMap(prev => ({ ...prev, [challengeId]: (prev[challengeId] || 0) + 1 }));
+                        // Track attempt count for this challenge and persist
+                        setAttemptMap(prev => {
+                            const updated = { ...prev, [challengeId]: (prev[challengeId] || 0) + 1 };
+                            localStorage.setItem('exam_attempt_map', JSON.stringify(updated));
+                            return updated;
+                        });
 
                         // Build output
-                        const attemptsUsed = (attemptMap[challengeId] || 0) + 1;
-                        const tryLimitVal = exam?.tryLimit || exam?.TryLimit || exam?.try_limit || -1;
-                        const attemptsInfo = tryLimitVal > 0 ? ` | Intentos: ${attemptsUsed}/${tryLimitVal}` : '';
-                        const lines = [`Resultado: ${score}% (${accepted}/${results.length} casos correctos)${attemptsInfo}\n`];
+                        const lines = [`Resultado: ${score}% (${accepted}/${results.length} casos correctos) | Intento: 1/1\n`];
                         results.forEach((r, i) => {
                             const st = (r.Status || r.status || 'unknown').toLowerCase();
                             const err = r.ErrorMessage || r.errorMessage || '';
@@ -507,10 +541,11 @@ const ExamRunner = () => {
             {/* TOP BAR */}
             <div className="solver-header" style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '0.75rem 1.5rem', background: '#1e1e2e', color: 'white', flexShrink: 0
+                padding: '0.75rem 1.5rem', background: '#c8102e', color: 'white', flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(200,16,46,0.3)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Target size={20} style={{ color: '#c8102e' }} />
+                    <Target size={20} style={{ color: '#fff' }} />
                     <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{exam.title || exam.Title}</h2>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -570,11 +605,12 @@ const ExamRunner = () => {
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                 {/* LEFT SIDEBAR: Challenge List */}
                 <div style={{
-                    width: '260px', background: '#252536', color: 'white',
-                    display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0
+                    width: '260px', background: '#ffffff', color: '#1f2937',
+                    display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0,
+                    borderRight: '1px solid #e5e7eb'
                 }}>
-                    <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                        <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, opacity: 0.7 }}>RETOS DEL EXAMEN</h3>
+                    <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>
+                        <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: '#c8102e', letterSpacing: '0.5px' }}>RETOS DEL EXAMEN</h3>
                     </div>
                     {challenges.map((ch, idx) => {
                         const chResult = resultMap[ch.id];
@@ -588,8 +624,8 @@ const ExamRunner = () => {
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: '0.75rem',
                                     padding: '0.85rem 1rem', border: 'none', textAlign: 'left',
-                                    background: isActive ? 'rgba(200,16,46,0.2)' : 'transparent',
-                                    color: 'white', cursor: 'pointer', width: '100%',
+                                    background: isActive ? 'rgba(200,16,46,0.08)' : 'transparent',
+                                    color: '#1f2937', cursor: 'pointer', width: '100%',
                                     borderLeft: isActive ? '3px solid #c8102e' : '3px solid transparent',
                                     transition: 'all 0.2s'
                                 }}
@@ -597,7 +633,8 @@ const ExamRunner = () => {
                                 <div style={{
                                     width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700,
-                                    background: isSolved ? '#10b981' : isFailed ? '#ef4444' : isActive ? '#c8102e' : 'rgba(255,255,255,0.1)',
+                                    background: isSolved ? '#10b981' : isFailed ? '#ef4444' : isActive ? '#c8102e' : '#f3f4f6',
+                                    color: isSolved || isFailed || isActive ? 'white' : '#6b7280'
                                 }}>
                                     {isSolved ? <CheckCircle2 size={14} /> : isFailed ? <XCircle size={14} /> : idx + 1}
                                 </div>
@@ -605,7 +642,7 @@ const ExamRunner = () => {
                                     <div style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {ch.title}
                                     </div>
-                                    <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>{ch.points} pts • {ch.difficulty === 'easy' ? 'Fácil' : ch.difficulty === 'hard' ? 'Difícil' : 'Medio'}</div>
+                                    <div style={{ fontSize: '0.7rem', color: '#9ca3af' }}>{ch.points} pts • {ch.difficulty === 'easy' ? 'Fácil' : ch.difficulty === 'hard' ? 'Difícil' : 'Medio'}</div>
                                 </div>
                             </button>
                         );
@@ -621,8 +658,8 @@ const ExamRunner = () => {
 
                             {/* CENTER: Problem Description */}
                             <div className="problem-description" style={{
-                                width: '40%', overflowY: 'auto', padding: '1.5rem', background: '#fafafa',
-                                borderRight: '1px solid #3d3d50'
+                                width: '40%', overflowY: 'auto', padding: '1.5rem', background: '#ffffff',
+                                borderRight: '1px solid #e5e7eb'
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                                     <Code size={18} style={{ color: '#c8102e' }} />
@@ -698,10 +735,10 @@ const ExamRunner = () => {
                                 {/* Editor toolbar */}
                                 <div style={{
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                    padding: '0.5rem 1rem', background: '#2d2d3d', borderBottom: '1px solid #3d3d50'
+                                    padding: '0.5rem 1rem', background: '#f9fafb', borderBottom: '1px solid #e5e7eb'
                                 }}>
                                     <select value={language} onChange={(e) => setLanguage(e.target.value)}
-                                        style={{ background: '#1e1e2e', color: 'white', border: '1px solid #555', borderRadius: '6px', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}>
+                                        style={{ background: '#ffffff', color: '#1f2937', border: '1px solid #d1d5db', borderRadius: '6px', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}>
                                         {(() => {
                                             const templates = currentChallenge?.code_templates || currentChallenge?.CodeTemplates || {};
                                             const langs = Object.keys(templates).filter(l => ['python', 'javascript', 'java', 'cpp', 'go'].includes(l));
@@ -711,45 +748,43 @@ const ExamRunner = () => {
                                         })()}
                                     </select>
                                     {(() => {
-                                        const tryLimitVal = exam?.tryLimit || exam?.TryLimit || exam?.try_limit || -1;
                                         const chAttempts = currentChallenge ? (attemptMap[currentChallenge.id] || 0) : 0;
-                                        const limitReached = tryLimitVal > 0 && chAttempts >= tryLimitVal;
-                                        const isDisabled = submitting || examFinished || limitReached;
+                                        const limitReached = chAttempts >= 1;
+                                        const isSubmitDisabled = submitting || examFinished || limitReached;
+                                        const isTestDisabled = submitting || examFinished;
 
                                         let btnText = 'Enviar Solución';
                                         if (examFinished) btnText = 'Examen Finalizado';
-                                        else if (limitReached) btnText = 'Límite alcanzado';
+                                        else if (limitReached) btnText = 'Ya enviado';
                                         else if (submitting) btnText = 'Evaluando...';
 
                                         return (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                {tryLimitVal > 0 && (
-                                                    <span style={{
-                                                        fontSize: '0.75rem', fontWeight: 700, color: limitReached ? '#ef4444' : '#9ca3af',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
-                                                        {chAttempts}/{tryLimitVal} intentos
-                                                    </span>
-                                                )}
-                                                <button onClick={() => setShowRunModal(true)} disabled={isDisabled}
+                                                <span style={{
+                                                    fontSize: '0.75rem', fontWeight: 700, color: limitReached ? '#ef4444' : '#6b7280',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    {chAttempts}/1 intentos
+                                                </span>
+                                                <button onClick={() => setShowRunModal(true)} disabled={isTestDisabled}
                                                     style={{
-                                                        background: isDisabled ? '#555' : 'rgba(255, 255, 255, 0.1)',
-                                                        color: 'white', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '10px',
+                                                        background: isTestDisabled ? '#e5e7eb' : '#ffffff',
+                                                        color: isTestDisabled ? '#9ca3af' : '#c8102e', border: '1px solid #c8102e', borderRadius: '10px',
                                                         padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.85rem',
-                                                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                                        cursor: isTestDisabled ? 'not-allowed' : 'pointer',
                                                         display: 'flex', alignItems: 'center', gap: '6px',
-                                                        opacity: isDisabled ? 0.6 : 1, transition: 'background 0.2s'
+                                                        opacity: isTestDisabled ? 0.6 : 1, transition: 'background 0.2s'
                                                     }}>
                                                     <Timer size={14} /> Probar Código
                                                 </button>
-                                                <button onClick={handleSubmit} disabled={isDisabled}
+                                                <button onClick={handleSubmit} disabled={isSubmitDisabled}
                                                     style={{
-                                                        background: isDisabled ? '#555' : 'linear-gradient(135deg, #c8102e, #a00d25)',
-                                                        color: 'white', border: 'none', borderRadius: '10px',
+                                                        background: isSubmitDisabled ? '#e5e7eb' : '#c8102e',
+                                                        color: isSubmitDisabled ? '#9ca3af' : 'white', border: 'none', borderRadius: '10px',
                                                         padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.85rem',
-                                                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                                        cursor: isSubmitDisabled ? 'not-allowed' : 'pointer',
                                                         display: 'flex', alignItems: 'center', gap: '6px',
-                                                        opacity: isDisabled ? 0.6 : 1
+                                                        opacity: isSubmitDisabled ? 0.6 : 1
                                                     }}>
                                                     <Send size={14} /> {btnText}
                                                 </button>
@@ -777,8 +812,8 @@ const ExamRunner = () => {
                         <div style={{
                             height: output ? '300px' : '50px',
                             flexShrink: 0,
-                            background: '#0d1117',
-                            borderTop: '2px solid #30363d',
+                            background: '#1a1a2e',
+                            borderTop: '2px solid #c8102e',
                             transition: 'height 0.3s ease-in-out',
                             overflow: 'hidden',
                             display: 'flex',
@@ -789,8 +824,8 @@ const ExamRunner = () => {
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 padding: '0.75rem 1.5rem',
-                                background: '#161b22',
-                                borderBottom: output ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                                background: '#111827',
+                                borderBottom: output ? '1px solid rgba(200,16,46,0.3)' : 'none',
                                 cursor: 'pointer'
                             }} onClick={() => setOutput(output ? '' : ' Esperando envío...')}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -852,9 +887,9 @@ const ExamRunner = () => {
 
                     </div>
                 ) : (
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa' }}>
-                        <div style={{ textAlign: 'center', color: '#999' }}>
-                            <Target size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
+                        <div style={{ textAlign: 'center', color: '#9ca3af' }}>
+                            <Target size={48} style={{ marginBottom: '1rem', opacity: 0.3, color: '#c8102e' }} />
                             <h3>Este examen no tiene retos asignados</h3>
                             <p>Contacta a tu profesor para más información.</p>
                         </div>
@@ -931,16 +966,15 @@ const ExamRunner = () => {
                                     <div style={{ marginBottom: '0.75rem' }}>
                                         <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Inputs (Variables)</label>
                                         {customInputs.map((inp, i) => (
-                                            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                                <input placeholder="Nombre" value={inp.name} onChange={e => { const n = [...customInputs]; n[i].name = e.target.value; setCustomInputs(n); }} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
-                                                <input placeholder="Valor" value={inp.value} onChange={e => { const n = [...customInputs]; n[i].value = e.target.value; setCustomInputs(n); }} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563', width: '80px' }}>{inp.name} ({inp.type}):</span>
+                                                <input placeholder="Valor..." value={inp.value} onChange={e => { const n = [...customInputs]; n[i].value = e.target.value; setCustomInputs(n); }} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
                                             </div>
                                         ))}
-                                        <button onClick={() => setCustomInputs([...customInputs, {name: '', type: 'string', value: ''}])} style={{ background: 'none', border: 'none', color: '#c8102e', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>+ Agregar Variable</button>
                                     </div>
                                     <div style={{ marginBottom: '0.5rem' }}>
-                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Salida Esperada</label>
-                                        <input type="text" value={customOutput} onChange={e => setCustomOutput(e.target.value)} placeholder="Ej. 100" style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Salida Esperada ({customOutputVarName})</label>
+                                        <input type="text" value={customOutput} onChange={e => setCustomOutput(e.target.value)} placeholder="Valor de salida esperado" style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
                                     </div>
                                 </div>
                             )}
@@ -950,9 +984,99 @@ const ExamRunner = () => {
                             <button onClick={() => setShowRunModal(false)} style={{ background: 'transparent', border: '1px solid #d1d5db', borderRadius: '8px', padding: '0.5rem 1rem', fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
                                 Cancelar
                             </button>
-                            <button onClick={() => {
+                            <button onClick={async () => {
                                 setShowRunModal(false);
-                                setOutput('⏳ Ejecutando prueba local en el servidor...\n\n(Funcionalidad en construcción por el equipo de backend. Los resultados de los casos de prueba se mostrarán aquí sin descontar los intentos del estudiante.)');
+                                setOutput('⏳ Ejecutando prueba local en el servidor...\n\n');
+                                
+                                try {
+                                    let res;
+                                    if (runTab === 'public') {
+                                        // Find the selected public case and run it via execute-custom
+                                        const allCases = publicTestCasesMap[currentChallenge?.id] || [];
+                                        const selected = allCases.find(tc => (tc.id || '') === selectedPublicCase) || allCases[parseInt(selectedPublicCase)] || allCases[0];
+                                        if (!selected) {
+                                            setOutput('No hay caso de prueba público seleccionado.');
+                                            return;
+                                        }
+                                        const inputs = (selected.input || selected.Input || []).map(v => ({
+                                            name: v.name || v.Name,
+                                            type: v.type || v.Type,
+                                            value: String(v.value ?? v.Value ?? '')
+                                        }));
+                                        const expectedOut = selected.expected_output || selected.expectedOutput || selected.ExpectedOutput || {};
+                                        res = await client.post('/submissions/execute-custom', {
+                                            code: currentCode,
+                                            language: language,
+                                            challenge_id: currentChallenge?.id,
+                                            session_id: sessionId,
+                                            input_variables: inputs,
+                                            output_variable: {
+                                                name: expectedOut.name || expectedOut.Name || 'out',
+                                                type: expectedOut.type || expectedOut.Type || 'string',
+                                                value: String(expectedOut.value ?? expectedOut.Value ?? '')
+                                            }
+                                        });
+                                    } else {
+                                        res = await client.post('/submissions/execute-custom', {
+                                            code: currentCode,
+                                            language: language,
+                                            challenge_id: currentChallenge?.id,
+                                            session_id: sessionId,
+                                            input_variables: customInputs,
+                                            output_variable: {
+                                                name: customOutputVarName,
+                                                type: customOutputVarType,
+                                                value: customOutput
+                                            }
+                                        });
+                                    }
+
+                                    let submissionId = res.data?.id || res.data?.ID;
+                                    if (!submissionId && res.data?.Submission) {
+                                        submissionId = res.data.Submission.id || res.data.Submission.ID;
+                                    }
+
+                                    if (!submissionId) {
+                                        setOutput('La API no retornó un ID de ejecución válido.\n\nResultados crudos:\n' + JSON.stringify(res.data, null, 2));
+                                        return;
+                                    }
+
+                                    setOutput('Prueba encolada. Ejecutando...');
+                                    
+                                    // Poll for results
+                                    for (let attempt = 0; attempt < 40; attempt++) {
+                                        const pollRes = await client.get(`/submissions/${submissionId}`);
+                                        const results = pollRes?.data?.Results || pollRes?.data?.results || [];
+
+                                        if (Array.isArray(results) && results.length > 0) {
+                                            const hasPending = results.some(r => {
+                                                const s = String(r?.Status || r?.status || '').toLowerCase();
+                                                return s === 'queued' || s === 'running';
+                                            });
+
+                                            if (!hasPending) {
+                                                const accepted = results.filter(r => String(r?.Status || r?.status || '').toLowerCase() === 'accepted').length;
+                                                const score = Math.round((accepted / results.length) * 100);
+                                                const lines = [`Resultado de Prueba: ${score}% (${accepted}/${results.length} casos correctos)\n`];
+                                                results.forEach((r, i) => {
+                                                    const st = (r.Status || r.status || 'unknown').toLowerCase();
+                                                    const err = r.ErrorMessage || r.errorMessage || '';
+                                                    lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}${err ? ' - ' + err : ''}`);
+                                                });
+                                                lines.push(`\n(Resultados no afectan tus puntajes)`);
+                                                setOutput(lines.join('\n'));
+                                                return;
+                                            }
+                                        }
+                                        await sleep(1000);
+                                        setOutput(`Ejecutando pruebas... (${attempt + 1}s)`);
+                                    }
+                                    
+                                    setOutput('Tiempo de espera agotado para la ejecución local.');
+                                } catch (err) {
+                                    const errorMsg = err?.response?.data?.error || err.message;
+                                    setOutput((prev) => prev + `Status: ❌ Error en la ejecución.\nMotivo: ${errorMsg}`);
+                                }
                             }} style={{ background: '#c8102e', color: 'white', border: 'none', borderRadius: '8px', padding: '0.5rem 1.25rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <Timer size={16} /> Ejecutar Prueba
                             </button>

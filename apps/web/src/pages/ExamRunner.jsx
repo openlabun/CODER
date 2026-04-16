@@ -519,7 +519,9 @@ const ExamRunner = () => {
                         results.forEach((r, i) => {
                             const st = (r.Status || r.status || 'unknown').toLowerCase();
                             const err = r.ErrorMessage || r.errorMessage || '';
+                            const progOut = r.ActualOutput?.value || r.actual_output?.value || r.ActualOutput?.Value || r.actual_output?.Value;
                             lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}${err ? ' - ' + err : ''}`);
+                            if (progOut) lines.push(`    Salida: ${progOut}`);
                         });
                         setOutput(lines.join('\n'));
 
@@ -1019,17 +1021,9 @@ const ExamRunner = () => {
 
                             {runTab === 'public' && (
                                 <div style={{ marginBottom: '1rem' }}>
-                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Seleccionar Caso de Prueba:</label>
-                                    <select
-                                        value={selectedPublicCase}
-                                        onChange={(e) => setSelectedPublicCase(e.target.value)}
-                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.9rem' }}
-                                    >
-                                        <option value="">Selecciona un caso...</option>
-                                        {(publicTestCasesMap[currentChallenge?.id] || []).map((tc, idx) => (
-                                            <option key={idx} value={tc.id || idx}>Caso #{idx + 1} ({tc.expected_output?.value || tc.expectedOutput?.value || 'n/a'})</option>
-                                        ))}
-                                    </select>
+                                    <p style={{ fontSize: '0.85rem', color: '#4b5563', margin: 0, padding: '1rem', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                        Se ejecutarán todos los casos de prueba públicos configurados para este reto.
+                                    </p>
                                 </div>
                             )}
 
@@ -1067,30 +1061,11 @@ const ExamRunner = () => {
                                 try {
                                     let res;
                                     if (runTab === 'public') {
-                                        // Find the selected public case and run it via execute-custom
-                                        const allCases = publicTestCasesMap[currentChallenge?.id] || [];
-                                        const selected = allCases.find(tc => (tc.id || '') === selectedPublicCase) || allCases[parseInt(selectedPublicCase)] || allCases[0];
-                                        if (!selected) {
-                                            setOutput('No hay caso de prueba público seleccionado.');
-                                            return;
-                                        }
-                                        const inputs = (selected.input || selected.Input || []).map(v => ({
-                                            name: v.name || v.Name,
-                                            type: v.type || v.Type,
-                                            value: String(v.value ?? v.Value ?? '')
-                                        }));
-                                        const expectedOut = selected.expected_output || selected.expectedOutput || selected.ExpectedOutput || {};
                                         res = await client.post('/submissions/execute', {
                                             code: currentCode,
                                             language: language,
                                             challenge_id: currentChallenge?.id,
-                                            session_id: sessionId,
-                                            input_variables: inputs,
-                                            output_variable: {
-                                                name: expectedOut.name || expectedOut.Name || 'out',
-                                                type: expectedOut.type || expectedOut.Type || 'string',
-                                                value: String(expectedOut.value ?? expectedOut.Value ?? '')
-                                            }
+                                            session_id: sessionId
                                         });
                                     } else {
                                         res = await client.post('/submissions/execute-custom', {
@@ -1137,7 +1112,9 @@ const ExamRunner = () => {
                                                 results.forEach((r, i) => {
                                                     const st = (r.Status || r.status || 'unknown').toLowerCase();
                                                     const err = r.ErrorMessage || r.errorMessage || '';
+                                                    const progOut = r.ActualOutput?.value || r.actual_output?.value || r.ActualOutput?.Value || r.actual_output?.Value;
                                                     lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}${err ? ' - ' + err : ''}`);
+                                                    if (progOut) lines.push(`    Salida: ${progOut}`);
                                                 });
                                                 lines.push(`\n(Resultados no afectan tus puntajes)`);
                                                 setOutput(lines.join('\n'));

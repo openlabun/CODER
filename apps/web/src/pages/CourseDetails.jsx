@@ -8,7 +8,7 @@ import {
     deleteExam
 } from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
-import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, ChevronRight, Edit, ArrowRight, Users, PlusCircle, BookOpen, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, ChevronRight, Edit, ArrowRight, Users, PlusCircle, BookOpen, Sparkles, Target } from 'lucide-react';
 import Swal from 'sweetalert2';
 import './Challenges.css';
 
@@ -183,12 +183,19 @@ const CourseDetails = () => {
                         const title = exam.title || exam.Title;
                         const desc = exam.description || exam.Description || 'Sin descripción disponible.';
                         const visibility = String(exam.visibility || exam.Visibility || 'private').toLowerCase();
-                        const endTime = exam.endTime || exam.EndTime;
+                        const timeLimit = exam.timeLimit || exam.TimeLimit || 3600;
+                        const startTime = exam.start_time || exam.startTime || exam.StartTime;
+                        const endTime = exam.end_time || exam.endTime || exam.EndTime;
                         const isClosed = Boolean(endTime && new Date(endTime) <= new Date());
                         const isVisible = visibility !== 'private';
                         const isStudentVisible = visibility === 'public' || visibility === 'course';
-                        const timeLimit = exam.timeLimit || exam.TimeLimit || 3600;
-                        const startTime = exam.startTime || exam.StartTime;
+                        const tryLimit = exam.try_limit ?? exam.tryLimit ?? exam.TryLimit ?? 1;
+
+                        const limitText = tryLimit === -1 ? 'Ilimitados' : tryLimit;
+
+                        const formattedAvailability = (!startTime && !endTime) ? 'Siempre' :
+                            (startTime && endTime) ? `${new Date(startTime).toLocaleDateString()} al ${new Date(endTime).toLocaleDateString()}` :
+                            (startTime ? `Desde ${new Date(startTime).toLocaleDateString()}` : `Hasta ${new Date(endTime).toLocaleDateString()}`);
 
                         return (
                             <div key={examId} className={`challenge-card-mini public-exam-card ${isClosed ? 'closed' : ''}`}>
@@ -215,8 +222,14 @@ const CourseDetails = () => {
                                             </div>
                                             <div className="stat">
                                                 <Calendar size={14} />
-                                                <span>{startTime ? new Date(startTime).toLocaleDateString() : 'Siempre'}</span>
+                                                <span>{formattedAvailability}</span>
                                             </div>
+                                            {!isProfessor && (
+                                                <div className="stat" style={{ color: '#4b5563' }}>
+                                                    <Target size={14} />
+                                                    <span>Límite: {limitText}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         
                                         <div className="actions-wrapper">

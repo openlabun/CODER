@@ -12,7 +12,8 @@ import {
     ArrowRight,
     Sparkles,
     Layout,
-    PlusCircle
+    PlusCircle,
+    Target
 } from 'lucide-react';
 import './Challenges.css';
 
@@ -108,7 +109,15 @@ const PublicExams = () => {
                         const title = exam.title || exam.Title;
                         const desc = exam.description || exam.Description || 'Sin descripción disponible.';
                         const timeLimit = exam.timeLimit || exam.TimeLimit || 3600;
-                        const startTime = exam.startTime || exam.StartTime;
+                        const startTime = exam.start_time || exam.startTime || exam.StartTime;
+                        const endTime = exam.end_time || exam.endTime || exam.EndTime;
+                        const tryLimit = exam.try_limit ?? exam.tryLimit ?? exam.TryLimit ?? 1;
+
+                        const limitText = tryLimit === -1 ? 'Ilimitados' : tryLimit;
+
+                        const formattedAvailability = (!startTime && !endTime) ? 'Siempre' :
+                            (startTime && endTime) ? `${new Date(startTime).toLocaleDateString()} al ${new Date(endTime).toLocaleDateString()}` :
+                            (startTime ? `Desde ${new Date(startTime).toLocaleDateString()}` : `Hasta ${new Date(endTime).toLocaleDateString()}`);
 
                         return (
                             <div key={examId} className="challenge-card-mini public-exam-card">
@@ -133,8 +142,14 @@ const PublicExams = () => {
                                             </div>
                                             <div className="stat">
                                                 <Calendar size={14} />
-                                                <span>{startTime ? new Date(startTime).toLocaleDateString() : 'Siempre'}</span>
+                                                <span>{formattedAvailability}</span>
                                             </div>
+                                            {!isProfessor && (
+                                                <div className="stat" style={{ color: '#4b5563' }}>
+                                                    <Target size={14} />
+                                                    <span>Límite: {limitText}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         
                                         <div className="actions-wrapper">

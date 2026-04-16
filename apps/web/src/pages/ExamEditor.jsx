@@ -132,6 +132,8 @@ const ExamEditor = () => {
                 const pts = parseInt(document.getElementById('swal-points').value) || 0;
                 const ord = parseInt(document.getElementById('swal-order').value) || 1;
                 if (pts < 0 || pts > 100) { Swal.showValidationMessage('Los puntos deben estar entre 0 y 100'); return false; }
+                const currentTotalPoints = examItems.reduce((acc, item) => acc + (item.points || item.Points || 0), 0);
+                if (currentTotalPoints + pts > 100) { Swal.showValidationMessage(`Excedes los 100 puntos totales. Podrías dar hasta ${100 - currentTotalPoints} pts.`); return false; }
                 return { points: pts, order: ord };
             }
         });
@@ -360,6 +362,12 @@ const ExamEditor = () => {
                                                         defaultValue={points}
                                                         onBlur={(e) => {
                                                             const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                                            const currentOthers = examItems.reduce((acc, it) => acc + ((it.id || it.ID) === itemId ? 0 : (it.points || it.Points || 0)), 0);
+                                                            if (currentOthers + val > 100) {
+                                                                Swal.fire({ icon: 'error', title: 'Error', text: `La suma no puede exceder 100. Restan ${100 - currentOthers} pts.`});
+                                                                e.target.value = points;
+                                                                return;
+                                                            }
                                                             if (val !== points) handleUpdateItem(itemId, { points: val });
                                                         }}
                                                         style={{ width: '55px', padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, textAlign: 'center' }}

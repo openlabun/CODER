@@ -51,8 +51,12 @@ func languageIsSupported(language constants.ProgrammingLanguage) bool {
 }
 
 func buildTemplatePython (inputs []entities.IOVariable, output *entities.IOVariable) string {
-	template := createInputsCallPython(inputs)
-	template += createOutputDeclarationPython(output)
+	template := "import sys\n\n"
+	if len(inputs) > 0 {
+		template += "Variables = sys.stdin.read().split()\n\n"
+	}
+	template += createOutputDeclarationPython(output) + "\n"
+	template += createInputsCallPython(inputs)
 	template += "\n# Write your code here\n\n"
 	template += createOutputPrintPython(output)
 	return template
@@ -60,19 +64,15 @@ func buildTemplatePython (inputs []entities.IOVariable, output *entities.IOVaria
 
 func createInputsCallPython (inputs []entities.IOVariable) string {
 	inputsCall := ""
-	for _, input := range inputs {
-		if inputsCall != "" {
-			continue
-		}
-		
-		// Append a line of (var_name) = input() for each input variable depending of type
+	for i, input := range inputs {
+		// Append a line of (var_name) = VarType(Variables[i]) for each input
 		switch input.Type {
 			case exam_consts.VariableFormatInt:
-				inputsCall += fmt.Sprintf("%s = int(input())\n", input.Name)
+				inputsCall += fmt.Sprintf("%s = int(Variables[%d])\n", input.Name, i)
 			case exam_consts.VariableFormatFloat:
-				inputsCall += fmt.Sprintf("%s = float(input())\n", input.Name)
+				inputsCall += fmt.Sprintf("%s = float(Variables[%d])\n", input.Name, i)
 			case exam_consts.VariableFormatString:
-				inputsCall += fmt.Sprintf("%s = input()\n", input.Name)
+				inputsCall += fmt.Sprintf("%s = str(Variables[%d])\n", input.Name, i)
 		}
 	}
 

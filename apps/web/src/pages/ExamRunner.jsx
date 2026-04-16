@@ -318,6 +318,7 @@ const ExamRunner = () => {
         const sendHeartbeat = async () => {
             try {
                 await client.post(`/submissions/sessions/${sessionId}/heartbeat`);
+                console.log('Heartbeat successful');
             } catch (err) {
                 console.warn('Heartbeat failed:', err);
                 const status = err?.response?.status;

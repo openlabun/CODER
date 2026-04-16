@@ -70,8 +70,11 @@ client.interceptors.request.use((config) => {
     async (error) => {
       const originalRequest = error?.config;
       const status = error?.response?.status;
+      const msg = error?.response?.data?.error || '';
 
-      if (!originalRequest || status !== 401 || originalRequest._retry) {
+      const isUnauthorized = status === 401 || (status === 400 && msg.toLowerCase().includes('unauthorized'));
+
+      if (!originalRequest || !isUnauthorized || originalRequest._retry) {
         return Promise.reject(error);
       }
 

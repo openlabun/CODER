@@ -770,9 +770,12 @@ const ExamRunner = () => {
                                         {publicTestCasesMap[currentChallenge.id].map((tc, idx) => (
                                             <div key={idx} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
                                                 <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Entrada:</div>
-                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: '0 0 1rem 0' }}>{Array.isArray(tc.input) ? tc.input.map(i => i ? `${i.name} = ${i.value}` : 'nil').join(', ') : JSON.stringify(tc.input)}</pre>
+                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: '0 0 1rem 0' }}>{Array.isArray(tc.input) ? tc.input.map(i => i ? `${i.name} (${i.type || i.Type || 'unknown'}) = ${i.value}` : 'nil').join(', ') : JSON.stringify(tc.input)}</pre>
                                                 <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Salida Esperada:</div>
-                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: 0 }}>{tc.expected_output?.value || tc.ExpectedOutput?.value || tc.expectedOutput?.value || ''}</pre>
+                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: 0 }}>{(() => {
+                                                    const out = tc.expected_output || tc.ExpectedOutput || tc.expectedOutput || {};
+                                                    return `${out.value || ''} (${out.type || out.Type || 'unknown'})`;
+                                                })()}</pre>
                                             </div>
                                         ))}
                                     </div>

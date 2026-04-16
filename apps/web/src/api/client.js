@@ -91,7 +91,11 @@ client.interceptors.request.use((config) => {
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return client(originalRequest);
       } catch (refreshError) {
-        clearAuthStorage();
+        const refreshStatus = refreshError?.response?.status;
+        // Only wipe credentials if the server explicitly rejected the refresh token (400 or 401)
+        if (refreshStatus === 401 || refreshStatus === 400) {
+          clearAuthStorage();
+        }
         return Promise.reject(refreshError);
       }
     }

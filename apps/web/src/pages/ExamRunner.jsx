@@ -518,9 +518,11 @@ const ExamRunner = () => {
                         const lines = [`Resultado: ${score}% (${accepted}/${results.length} casos correctos) | Intento: 1/1\n`];
                         results.forEach((r, i) => {
                             const st = (r.Status || r.status || 'unknown').toLowerCase();
-                            const err = r.ErrorMessage || r.errorMessage || '';
+                            const errMsg = r.error_message || r.ErrorMessage || r.errorMessage || '';
                             const progOut = r.ActualOutput?.value || r.actual_output?.value || r.ActualOutput?.Value || r.actual_output?.Value;
-                            lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}${err ? ' - ' + err : ''}`);
+                            
+                            lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}`);
+                            if (errMsg) lines.push(`    Error: ${errMsg}`);
                             if (progOut) lines.push(`    Salida: ${progOut}`);
                         });
                         setOutput(lines.join('\n'));
@@ -1111,9 +1113,11 @@ const ExamRunner = () => {
                                                 const lines = [`Resultado de Prueba: ${score}% (${accepted}/${results.length} casos correctos)\n`];
                                                 results.forEach((r, i) => {
                                                     const st = (r.Status || r.status || 'unknown').toLowerCase();
-                                                    const err = r.ErrorMessage || r.errorMessage || '';
+                                                    const errMsg = r.error_message || r.ErrorMessage || r.errorMessage || '';
                                                     const progOut = r.ActualOutput?.value || r.actual_output?.value || r.ActualOutput?.Value || r.actual_output?.Value;
-                                                    lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}${err ? ' - ' + err : ''}`);
+                                                    
+                                                    lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}`);
+                                                    if (errMsg) lines.push(`    Error: ${errMsg}`);
                                                     if (progOut) lines.push(`    Salida: ${progOut}`);
                                                 });
                                                 lines.push(`\n(Resultados no afectan tus puntajes)`);

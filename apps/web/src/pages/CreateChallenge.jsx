@@ -8,6 +8,8 @@ import './CreateChallenge.css';
 import './Challenges.css';
 
 const CreateChallenge = () => {
+    const GLOBAL_INPUT_NAME = 'entrada';
+    const GLOBAL_OUTPUT_NAME = 'salida';
     const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -28,8 +30,8 @@ const CreateChallenge = () => {
         timeLimit: 1000,
         memoryLimit: 256,
         tags: [],
-        inputVariables: [{ name: 'stdin', type: 'string' }],
-        outputVariable: { name: 'stdout', type: 'string' },
+        inputVariables: [{ name: GLOBAL_INPUT_NAME, type: 'string' }],
+        outputVariable: { name: GLOBAL_OUTPUT_NAME, type: 'string' },
         constraints: '',
         status: 'draft',
         codeTemplates: {},
@@ -61,21 +63,26 @@ const CreateChallenge = () => {
             setFetching(true);
             try {
                 const { data: challenge } = await client.get(`/challenges/${id}`);
+                const mappedInputVariables = challenge.input_variables || challenge.inputVariables || challenge.InputVariables || [{ name: GLOBAL_INPUT_NAME, type: 'string' }];
+                const mappedOutputVariable = challenge.output_variable || challenge.outputVariable || challenge.OutputVariable || { name: GLOBAL_OUTPUT_NAME, type: 'string' };
+                const normalizedSingleInput = (mappedInputVariables.length > 0 ? [mappedInputVariables[0]] : [{ name: GLOBAL_INPUT_NAME, type: 'string' }])
+                    .map(() => ({ name: GLOBAL_INPUT_NAME, type: 'string' }));
+                const normalizedOutput = { ...mappedOutputVariable, name: GLOBAL_OUTPUT_NAME, type: 'string' };
 
                 setFormData({
                     title: challenge.title || challenge.Title || '',
                     description: challenge.description || challenge.Description || '',
                     difficulty: (challenge.difficulty || challenge.Difficulty || 'medium').toLowerCase(),
-                    timeLimit: challenge.timeLimit || challenge.WorkerTimeLimit || 1000,
-                    memoryLimit: challenge.memoryLimit || challenge.WorkerMemoryLimit || 256,
+                    timeLimit: challenge.worker_time_limit || challenge.timeLimit || challenge.WorkerTimeLimit || 1000,
+                    memoryLimit: challenge.worker_memory_limit || challenge.memoryLimit || challenge.WorkerMemoryLimit || 256,
                     tags: challenge.tags || challenge.Tags || [],
-                    inputVariables: challenge.inputVariables || challenge.InputVariables || [{ name: 'stdin', type: 'string' }],
-                    outputVariable: challenge.outputVariable || challenge.OutputVariable || { name: 'stdout', type: 'string' },
+                    inputVariables: normalizedSingleInput,
+                    outputVariable: normalizedOutput,
                     constraints: challenge.constraints || challenge.Constraints || '',
                     status: challenge.status || challenge.Status || 'draft',
                     codeTemplates: challenge.code_templates || challenge.CodeTemplates || {},
-                    courseId: challenge.courseId || challenge.CourseID || null,
-                    examId: challenge.examId || challenge.ExamID || queryParams.get('examId') || null
+                    courseId: challenge.course_id || challenge.courseId || challenge.CourseID || null,
+                    examId: challenge.exam_id || challenge.examId || challenge.ExamID || queryParams.get('examId') || null
                 });
 
                 try {
@@ -83,9 +90,17 @@ const CreateChallenge = () => {
                     const mappedCases = testCases.map(tc => {
                         const inputs = tc.input || tc.Input || [];
                         const inputValues = {};
-                        inputs.forEach(i => inputValues[i.name] = i.value);
+                        inputs.forEach(i => {
+                            const inputName = i.name || i.Name || '';
+                            if (!inputName) return;
+                            inputValues[inputName] = {
+                                name: inputName,
+                                type: i.type || i.Type || 'string',
+                                value: i.value || i.Value || ''
+                            };
+                        });
                         
-                        const expectedOut = tc.expectedOutput || tc.ExpectedOutput || {};
+                        const expectedOut = tc.expected_output || tc.expectedOutput || tc.ExpectedOutput || {};
                         const outputValue = expectedOut.value || expectedOut.Value || '';
                         
                         return {
@@ -173,12 +188,15 @@ const CreateChallenge = () => {
 
     const handleInputVarChange = (index, field, value) => {
         const vars = [...formData.inputVariables];
-        vars[index][field] = value;
+        if (field === 'type') return;
+        vars[index][field] = field === 'name' ? GLOBAL_INPUT_NAME : value;
+        vars[index].type = 'string';
         setFormData(prev => ({ ...prev, inputVariables: vars }));
     };
 
     const handleOutputVarChange = (field, value) => {
-        setFormData(prev => ({ ...prev, outputVariable: { ...prev.outputVariable, [field]: value } }));
+        if (field === 'type') return;
+        setFormData(prev => ({ ...prev, outputVariable: { ...prev.outputVariable, [field]: field === 'name' ? GLOBAL_OUTPUT_NAME : value, type: 'string' } }));
     };
 
     const updateTestCaseInput = (index, varName, field, value, isPublic) => {
@@ -197,7 +215,10 @@ const CreateChallenge = () => {
         isPublic ? setPublicTestCases(cases) : setHiddenTestCases(cases);
     };
 
-    const addInputVar = () => setFormData(prev => ({ ...prev, inputVariables: [...prev.inputVariables, { name: '', type: 'string' }] }));
+    const addInputVar = () => setFormData(prev => ({
+        ...prev,
+        inputVariables: [{ name: GLOBAL_INPUT_NAME, type: 'string' }]
+    }));
     const removeInputVar = (index) => {
         const vars = [...formData.inputVariables];
         vars.splice(index, 1);
@@ -258,14 +279,14 @@ const CreateChallenge = () => {
                 worker_time_limit: parseInt(formData.timeLimit),
                 worker_memory_limit: parseInt(formData.memoryLimit),
                 tags: formData.tags,
-                input_variables: formData.inputVariables.map(v => ({ 
-                    name: v.name.trim(), 
-                    type: v.type || 'string', 
+                input_variables: formData.inputVariables.slice(0, 1).map(v => ({ 
+                    name: GLOBAL_INPUT_NAME,
+                    type: 'string',
                     value: '' 
                 })),
                 output_variable: { 
-                    name: formData.outputVariable.name.trim(), 
-                    type: formData.outputVariable.type || 'string', 
+                    name: GLOBAL_OUTPUT_NAME,
+                    type: 'string',
                     value: '' 
                 },
                 constraints: formData.constraints,
@@ -292,11 +313,11 @@ const CreateChallenge = () => {
                 ];
 
                 const tcRequests = allCasesToSave.map(tc => {
-                    const inputsDto = formData.inputVariables.map(v => {
+                    const inputsDto = formData.inputVariables.slice(0, 1).map(v => {
                         const tcVal = tc.inputValues?.[v.name] || {};
                         return {
-                            name: v.name.trim(),
-                            type: tcVal.type || v.type || 'string',
+                            name: GLOBAL_INPUT_NAME,
+                            type: 'string',
                             value: tcVal.value?.toString() || ''
                         };
                     });
@@ -305,8 +326,8 @@ const CreateChallenge = () => {
                         name: tc.name || `Case ${allCasesToSave.indexOf(tc) + 1}`,
                         input: inputsDto,
                         expected_output: { 
-                            name: formData.outputVariable.name.trim(), 
-                            type: formData.outputVariable.type || 'string', 
+                            name: GLOBAL_OUTPUT_NAME,
+                            type: 'string',
                             value: tc.outputValue?.toString() || ''
                         },
                         is_sample: tc.isSample || false,
@@ -366,8 +387,8 @@ const CreateChallenge = () => {
             description: idea.description,
             difficulty: diff,
             tags: idea.tags || [],
-            inputVariables: idea.inputVariables || idea.input_variables || [{ name: 'stdin', type: 'string' }],
-            outputVariable: idea.outputVariable || idea.output_variable || { name: 'stdout', type: 'string' },
+            inputVariables: [{ name: GLOBAL_INPUT_NAME, type: 'string' }],
+            outputVariable: { name: GLOBAL_OUTPUT_NAME, type: 'string' },
             timeLimit: idea.workerTimeLimit || idea.worker_time_limit || 1000,
             memoryLimit: idea.workerMemoryLimit || idea.worker_memory_limit || 256,
             constraints: idea.constraints || '',
@@ -473,24 +494,16 @@ const CreateChallenge = () => {
                                 </div>
 
                                 <div className="io-variables-section">
-                                    <div className="section-header-mini">
+                                    {/* <div className="section-header-mini">
                                         <h3>Variables Globales</h3>
-                                        <button className="btn-add-mini" onClick={addInputVar}>+ Variable</button>
                                     </div>
                                     <div className="vars-grid">
                                         {formData.inputVariables.map((iv, idx) => (
                                             <div key={idx} className="var-item-card">
                                                 <div className="var-main-info">
                                                     <input type="text" placeholder="Nombre" value={iv.name} onChange={(e) => handleInputVarChange(idx, 'name', e.target.value)} />
-                                                    <select value={iv.type} onChange={(e) => handleInputVarChange(idx, 'type', e.target.value)}>
-                                                        <option value="string">String</option>
-                                                        <option value="int">Integer</option>
-                                                        <option value="float">Float</option>
-                                                        <option value="boolean">Boolean</option>
-                                                        <option value="array">Array</option>
-                                                    </select>
+                                                    <input type="text" value="String" disabled />
                                                 </div>
-                                                <button className="btn-remove-var" onClick={() => removeInputVar(idx)}>×</button>
                                             </div>
                                         ))}
                                     </div>
@@ -498,18 +511,12 @@ const CreateChallenge = () => {
                                     <h3 style={{ marginTop: '1.5rem', fontSize: '1rem', color: 'var(--text-muted)' }}>Variable de Salida</h3>
                                     <div className="var-item-card output-var">
                                         <input type="text" placeholder="Nombre" value={formData.outputVariable.name} onChange={(e) => handleOutputVarChange('name', e.target.value)} />
-                                        <select value={formData.outputVariable.type} onChange={(e) => handleOutputVarChange('type', e.target.value)}>
-                                            <option value="string">String</option>
-                                            <option value="int">Integer</option>
-                                            <option value="float">Float</option>
-                                            <option value="boolean">Boolean</option>
-                                            <option value="array">Array</option>
-                                        </select>
-                                    </div>
+                                        <input type="text" value="String" disabled />
+                                    </div> */}
                                     
                                     
                                     <div className="form-group" style={{ marginTop: '1.5rem' }}>
-                                        <label>Restricciones (Constraints)</label>
+                                        <label>Restricciones/Explicación</label>
                                         <textarea 
                                             name="constraints" 
                                             value={formData.constraints} 
@@ -553,13 +560,13 @@ const CreateChallenge = () => {
                                             try {
                                                 const payload = {
                                                     input_variables: formData.inputVariables.map(v => ({
-                                                        name: v.name?.trim() || 'stdin',
-                                                        type: v.type || 'string',
+                                                        name: GLOBAL_INPUT_NAME,
+                                                        type: 'string',
                                                         value: ''
                                                     })),
                                                     output_variable: {
-                                                        name: formData.outputVariable.name?.trim() || 'stdout',
-                                                        type: formData.outputVariable.type || 'string',
+                                                        name: GLOBAL_OUTPUT_NAME,
+                                                        type: 'string',
                                                         value: ''
                                                     }
                                                 };
@@ -671,26 +678,19 @@ const CreateChallenge = () => {
                                             
                                             <div className="tc-variables-grid">
                                                 {formData.inputVariables.map(iv => {
-                                                    const tcVar = tc.inputValues?.[iv.name] || { type: iv.type, value: '' };
+                                                    const tcVar = tc.inputValues?.[iv.name] || { type: 'string', value: '' };
                                                     return (
                                                         <div key={iv.name} className="tc-var-row">
                                                             <div className="var-label">
                                                                 <span className="var-name">{iv.name}</span>
-                                                                <select 
-                                                                    className="var-type-select"
-                                                                    value={tcVar.type || iv.type} 
-                                                                    onChange={(e) => updateTestCaseInput(idx, iv.name, 'type', e.target.value, true)}
-                                                                >
-                                                                    <option value="string">str</option>
-                                                                    <option value="int">int</option>
-                                                                    <option value="array">arr</option>
-                                                                    <option value="boolean">bool</option>
-                                                                </select>
+                                                                <span className="var-type-select">str</span>
                                                             </div>
-                                                            <input 
+                                                            <textarea
                                                                 value={tcVar.value || ''} 
                                                                 onChange={(e) => updateTestCaseInput(idx, iv.name, 'value', e.target.value, true)} 
                                                                 placeholder={`Valor para ${iv.name}`} 
+                                                                rows="6"
+                                                                style={{ minHeight: '140px' }}
                                                             />
                                                         </div>
                                                     );
@@ -699,10 +699,12 @@ const CreateChallenge = () => {
                                                     <div className="var-label">
                                                         <span className="var-name">Salida ({formData.outputVariable.name})</span>
                                                     </div>
-                                                    <input 
+                                                    <textarea
                                                         value={tc.outputValue} 
                                                         onChange={(e) => updateTestCase(idx, 'outputValue', e.target.value, true)} 
                                                         placeholder="Resultado esperado" 
+                                                        rows="6"
+                                                        style={{ minHeight: '140px' }}
                                                     />
                                                 </div>
                                             </div>
@@ -735,26 +737,19 @@ const CreateChallenge = () => {
                                             
                                             <div className="tc-variables-grid">
                                                 {formData.inputVariables.map(iv => {
-                                                    const tcVar = tc.inputValues?.[iv.name] || { type: iv.type, value: '' };
+                                                    const tcVar = tc.inputValues?.[iv.name] || { type: 'string', value: '' };
                                                     return (
                                                         <div key={iv.name} className="tc-var-row">
                                                             <div className="var-label">
                                                                 <span className="var-name">{iv.name}</span>
-                                                                <select 
-                                                                    className="var-type-select"
-                                                                    value={tcVar.type || iv.type} 
-                                                                    onChange={(e) => updateTestCaseInput(idx, iv.name, 'type', e.target.value, false)}
-                                                                >
-                                                                    <option value="string">str</option>
-                                                                    <option value="int">int</option>
-                                                                    <option value="array">arr</option>
-                                                                    <option value="boolean">bool</option>
-                                                                </select>
+                                                                <span className="var-type-select">str</span>
                                                             </div>
-                                                            <input 
+                                                            <textarea
                                                                 value={tcVar.value || ''} 
                                                                 onChange={(e) => updateTestCaseInput(idx, iv.name, 'value', e.target.value, false)} 
                                                                 placeholder={`Valor para ${iv.name}`} 
+                                                                rows="6"
+                                                                style={{ minHeight: '140px' }}
                                                             />
                                                         </div>
                                                     );
@@ -763,10 +758,12 @@ const CreateChallenge = () => {
                                                     <div className="var-label">
                                                         <span className="var-name">Salida ({formData.outputVariable.name})</span>
                                                     </div>
-                                                    <input 
+                                                    <textarea
                                                         value={tc.outputValue} 
                                                         onChange={(e) => updateTestCase(idx, 'outputValue', e.target.value, false)} 
                                                         placeholder="Resultado esperado" 
+                                                        rows="6"
+                                                        style={{ minHeight: '140px' }}
                                                     />
                                                 </div>
                                             </div>

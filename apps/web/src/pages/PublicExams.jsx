@@ -25,6 +25,7 @@ const PublicExams = () => {
     const [loading, setLoading] = useState(true);
 
     const isProfessor = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
+    const currentUserId = String(user?.id || user?.ID || '');
 
     const fetchPublicExams = async () => {
         setLoading(true);
@@ -69,10 +70,10 @@ const PublicExams = () => {
                         <ShieldCheck size={14} />
                         <span>Comunidad</span>
                         <ChevronRight size={12} />
-                        <span>Exámenes Públicos</span>
+                        <span>Actividades Públicas</span>
                     </div>
-                    <h1>Evaluaciones Públicas</h1>
-                    <p>Encuentra retos y exámenes creados por la comunidad RobleCode</p>
+                    <h1>Actividades Públicas</h1>
+                    <p>Encuentra retos y evaluaciones creadas por la comunidad RobleCode</p>
                 </div>
                 
                 <div className="header-actions-mini">
@@ -80,7 +81,7 @@ const PublicExams = () => {
                         <Search size={18} />
                         <input 
                             type="text" 
-                            placeholder="Buscar examen..." 
+                            placeholder="Buscar actividad..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -99,13 +100,32 @@ const PublicExams = () => {
                     <div className="icon-circle">
                         <Layout size={32} />
                     </div>
-                    <h3>No hay exámenes públicos disponibles</h3>
+                    <h3>No hay actividades públicas disponibles</h3>
                     <p>{searchTerm ? 'Prueba con otros términos de búsqueda.' : 'Vuelve más tarde para ver nuevas evaluaciones.'}</p>
                 </div>
             ) : (
                 <div className="challenges-grid-compact">
                     {filteredExams.map((exam) => {
                         const examId = exam.id || exam.ID;
+                        const examOwnerId = String(
+                            exam.user_id ||
+                            exam.UserID ||
+                            exam.userId ||
+                            exam.created_by ||
+                            exam.createdBy ||
+                            exam.CreatedBy ||
+                            exam.owner_id ||
+                            exam.ownerId ||
+                            exam.OwnerID ||
+                            exam.professor_id ||
+                            exam.professorId ||
+                            exam.ProfessorID ||
+                            exam.teacher_id ||
+                            exam.teacherId ||
+                            exam.TeacherID ||
+                            ''
+                        );
+                        const canEditExam = isProfessor && (!examOwnerId || examOwnerId === currentUserId);
                         const title = exam.title || exam.Title;
                         const desc = exam.description || exam.Description || 'Sin descripción disponible.';
                         const timeLimit = exam.timeLimit || exam.TimeLimit || 3600;
@@ -153,13 +173,13 @@ const PublicExams = () => {
                                         </div>
                                         
                                         <div className="actions-wrapper">
-                                            {isProfessor ? (
+                                            {canEditExam ? (
                                                 <Link to={`/exam/${examId}/edit`} className="btn-action-mini primary">
-                                                    Editar Examen <ChevronRight size={16} />
+                                                    Editar Actividad <ChevronRight size={16} />
                                                 </Link>
                                             ) : (
                                                 <Link to={`/exam/${examId}`} className="btn-action-mini primary">
-                                                    Iniciar Examen <ArrowRight size={16} />
+                                                    Iniciar Actividad <ArrowRight size={16} />
                                                 </Link>
                                             )}
                                         </div>
@@ -173,7 +193,7 @@ const PublicExams = () => {
 
             <div className="info-footer-compact">
                 <Sparkles size={16} className="icon-sparkle" />
-                <p>¿Eres profesor? Crea exámenes públicos para que toda la comunidad pueda resolver tus retos.</p>
+                <p>¿Eres profesor? Crea actividades públicas para que toda la comunidad pueda resolver tus retos.</p>
             </div>
         </div>
     );

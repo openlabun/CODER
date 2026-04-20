@@ -43,7 +43,7 @@ const ExamRunner = () => {
     const [selectedPublicCase, setSelectedPublicCase] = useState('');
     const [customInputs, setCustomInputs] = useState([]);
     const [customOutput, setCustomOutput] = useState('');
-    const [customOutputVarName, setCustomOutputVarName] = useState('out');
+    const [customOutputVarName, setCustomOutputVarName] = useState('salida');
     const [customOutputVarType, setCustomOutputVarType] = useState('string');
     const [customSampleName, setCustomSampleName] = useState('custom_sample');
 
@@ -58,12 +58,11 @@ const ExamRunner = () => {
 
             // Set input shapes without values
             if (Array.isArray(inputs)) {
-                setCustomInputs(inputs.map(i => ({ name: i.name || i.Name, type: i.type || i.Type, value: '' })));
+                const firstInput = inputs[0] || {};
+                setCustomInputs([{ name: firstInput.name || firstInput.Name || 'entrada', type: 'string', value: '' }]);
             }
-            if (out.name || out.Name) {
-                setCustomOutputVarName(out.name || out.Name);
-                setCustomOutputVarType(out.type || out.Type);
-            }
+            setCustomOutputVarName('salida');
+            setCustomOutputVarType('string');
         }
     }, [currentIndex, challenges, publicTestCasesMap]);
 
@@ -201,7 +200,7 @@ const ExamRunner = () => {
 
             Swal.fire({
                 icon: 'error',
-                title: 'Error al iniciar sesión de examen',
+                title: 'Error al iniciar sesión de actividad',
                 text: apiMsg || 'No se pudo crear la sesión. Inténtalo de nuevo.',
             });
         }
@@ -301,7 +300,7 @@ const ExamRunner = () => {
                 await ensureSession(id, data);
             } catch (err) {
                 console.error(err);
-                Swal.fire({ icon: 'error', title: 'Error', text: err?.response?.data?.error || 'No se pudo cargar el examen.' });
+                Swal.fire({ icon: 'error', title: 'Error', text: err?.response?.data?.error || 'No se pudo cargar la actividad.' });
                 navigate('/public-exams');
             } finally {
                 setLoading(false);
@@ -328,7 +327,7 @@ const ExamRunner = () => {
                     Swal.fire({
                         icon: 'warning',
                         title: 'Sesión finalizada',
-                        text: 'Tu sesión de examen ha terminado.',
+                        text: 'Tu sesión de actividad ha terminado.',
                         confirmButtonText: 'Aceptar'
                     }).then(() => navigate('/public-exams'));
                 }
@@ -379,7 +378,7 @@ const ExamRunner = () => {
                     Swal.fire({
                         icon: 'warning',
                         title: '⏰ Tiempo agotado',
-                        html: 'El tiempo del examen ha finalizado.',
+                        html: 'El tiempo de la actividad ha finalizado.',
                         confirmButtonText: 'Ver resultados'
                     });
                     return 0;
@@ -428,7 +427,7 @@ const ExamRunner = () => {
     // Submit solution
     const handleSubmit = async () => {
         if (examFinished) {
-            setOutput('El examen ha finalizado. No se pueden realizar más envíos.');
+            setOutput('La actividad ha finalizado. No se pueden realizar más envíos.');
             return;
         }
 
@@ -449,14 +448,14 @@ const ExamRunner = () => {
             // Try to create/retrieve session one more time
             const session = await ensureSession(id, exam);
             if (!session) {
-                Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No se pudo obtener una sesión activa. Reintenta o vuelve a entrar al examen.', customClass: { container: 'swal-ultra-high-z' } });
+                Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No se pudo obtener una sesión activa. Reintenta o vuelve a entrar a la actividad.', customClass: { container: 'swal-ultra-high-z' } });
                 return;
             }
         }
 
         const activeSessionId = sessionId || localStorage.getItem('session_id');
         if (!activeSessionId) {
-            Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No hay una sesión de examen activa. Vuelve a entrar al examen.', customClass: { container: 'swal-ultra-high-z' } });
+            Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No hay una sesión de actividad activa. Vuelve a entrar a la actividad.', customClass: { container: 'swal-ultra-high-z' } });
             return;
         }
 
@@ -565,7 +564,7 @@ const ExamRunner = () => {
     const handleFinishExam = async () => {
         const solved = Object.values(resultMap).filter(r => r.status === 'accepted').length;
         const { isConfirmed } = await Swal.fire({
-            title: '¿Terminar Examen?',
+            title: '¿Terminar Actividad?',
             html: `Has resuelto correctamente <strong>${solved} de ${challenges.length}</strong> retos.<br/>Esta acción es definitiva.`,
             icon: 'question',
             showCancelButton: true,
@@ -593,7 +592,7 @@ const ExamRunner = () => {
             timeLeftRef.current = 0;
 
             setExamFinished(true);
-            await Swal.fire({ icon: 'success', title: 'Examen Finalizado', text: `Puntuación: ${solved}/${challenges.length} retos correctos.` });
+            await Swal.fire({ icon: 'success', title: 'Actividad Finalizada', text: `Puntuación: ${solved}/${challenges.length} retos correctos.` });
             navigate('/public-exams');
         }
     };
@@ -602,14 +601,14 @@ const ExamRunner = () => {
     if (loading) return (
         <div className="dashboard-loading">
             <div className="loader-orbit"><div className="orbit-dot"></div></div>
-            <p>Cargando examen...</p>
+            <p>Cargando actividad...</p>
         </div>
     );
 
     if (!exam) return (
         <div className="dashboard-loading error">
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📝</div>
-            <h2>Examen no encontrado</h2>
+            <h2>Actividad no encontrada</h2>
             <button onClick={() => navigate('/public-exams')} className="btn-retry" style={{ marginTop: '2rem' }}>Volver</button>
         </div>
     );
@@ -665,7 +664,7 @@ const ExamRunner = () => {
                             padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', gap: '6px'
                         }}>
-                            <LogOut size={16} /> Terminar Examen
+                            <LogOut size={16} /> Terminar Actividad
                         </button>
                     ) : (
                         <button onClick={() => navigate('/public-exams')} style={{
@@ -673,7 +672,7 @@ const ExamRunner = () => {
                             padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', gap: '6px'
                         }}>
-                            <LogOut size={16} /> Volver a Exámenes
+                            <LogOut size={16} /> Volver a Actividades
                         </button>
                     )}
                 </div>
@@ -760,7 +759,7 @@ const ExamRunner = () => {
                                 </p>
                                 {currentChallenge.constraints && (
                                     <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff7ed', borderRadius: '10px', border: '1px solid #fed7aa' }}>
-                                        <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#9a3412' }}>⚡ Restricciones</h4>
+                                        <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#9a3412' }}>⚡ Restricciones/Explicación</h4>
                                         <p style={{ margin: 0, fontSize: '0.85rem', color: '#78350f' }}>{currentChallenge.constraints}</p>
                                     </div>
                                 )}
@@ -770,13 +769,48 @@ const ExamRunner = () => {
                                         <h4 style={{ margin: '0 0 1rem', fontSize: '0.95rem', color: '#1f2937', fontWeight: 800 }}> Casos de Prueba </h4>
                                         {publicTestCasesMap[currentChallenge.id].map((tc, idx) => (
                                             <div key={idx} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
-                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Entrada:</div>
-                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: '0 0 1rem 0' }}>{Array.isArray(tc.input) ? tc.input.map(i => i ? `${i.name} (${i.type || i.Type || 'unknown'}) = ${i.value}` : 'nil').join(', ') : JSON.stringify(tc.input)}</pre>
-                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Salida Esperada:</div>
-                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: 0 }}>{(() => {
-                                                    const out = tc.expected_output || tc.ExpectedOutput || tc.expectedOutput || {};
-                                                    return `${out.value || ''} (${out.type || out.Type || 'unknown'})`;
+                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>
+                                                    {(() => {
+                                                        const inputArr = Array.isArray(tc.input) ? tc.input : [];
+                                                        const firstInput = inputArr[0] || {};
+                                                        return `Entrada (${firstInput.name || firstInput.Name || 'entrada'}):`;
+                                                    })()}
+                                                </div>
+                                                <pre style={{
+                                                    background: '#f3f4f6',
+                                                    padding: '0.75rem',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.85rem',
+                                                    color: '#1f2937',
+                                                    margin: '0 0 1rem 0',
+                                                    minHeight: '100px',
+                                                    whiteSpace: 'pre-wrap'
+                                                }}>{(() => {
+                                                    const inputArr = Array.isArray(tc.input) ? tc.input : [];
+                                                    const firstInput = inputArr[0] || {};
+                                                    return firstInput.value || '';
                                                 })()}</pre>
+                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Salida Esperada (salida):</div>
+                                                <textarea
+                                                    readOnly
+                                                    value={(() => {
+                                                        const out = tc.expected_output || tc.ExpectedOutput || tc.expectedOutput || {};
+                                                        return `${out.value || ''}`;
+                                                    })()}
+                                                    rows="6"
+                                                    style={{
+                                                        width: '100%',
+                                                        minHeight: '140px',
+                                                        background: '#f3f4f6',
+                                                        padding: '0.75rem',
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.85rem',
+                                                        color: '#1f2937',
+                                                        margin: 0,
+                                                        border: '1px solid #e5e7eb',
+                                                        resize: 'vertical'
+                                                    }}
+                                                />
                                             </div>
                                         ))}
                                     </div>
@@ -835,7 +869,7 @@ const ExamRunner = () => {
                                         const isTestDisabled = submitting || examFinished;
 
                                         let btnText = 'Enviar Solución';
-                                        if (examFinished) btnText = 'Examen Finalizado';
+                                        if (examFinished) btnText = 'Actividad Finalizada';
                                         else if (limitReached) btnText = 'Ya enviado';
                                         else if (submitting) btnText = 'Evaluando...';
 
@@ -974,7 +1008,7 @@ const ExamRunner = () => {
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
                         <div style={{ textAlign: 'center', color: '#9ca3af' }}>
                             <Target size={48} style={{ marginBottom: '1rem', opacity: 0.3, color: '#c8102e' }} />
-                            <h3>Este examen no tiene retos asignados</h3>
+                            <h3>Esta actividad no tiene retos asignados</h3>
                             <p>Contacta a tu profesor para más información.</p>
                         </div>
                     </div>
@@ -1040,17 +1074,31 @@ const ExamRunner = () => {
                                         <input type="text" value={customSampleName} onChange={e => setCustomSampleName(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
                                     </div>
                                     <div style={{ marginBottom: '0.75rem' }}>
-                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Inputs (Variables)</label>
-                                        {customInputs.map((inp, i) => (
-                                            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563', width: '80px' }}>{inp.name} ({inp.type}):</span>
-                                                <input placeholder="Valor..." value={inp.value} onChange={e => { const n = [...customInputs]; n[i].value = e.target.value; setCustomInputs(n); }} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
-                                            </div>
-                                        ))}
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                                            Entrada ({customInputs[0]?.name || 'entrada'})
+                                        </label>
+                                        <textarea
+                                            placeholder="Valor..."
+                                            value={customInputs[0]?.value || ''}
+                                            onChange={e => {
+                                                const n = [...customInputs];
+                                                if (!n[0]) n[0] = { name: 'entrada', type: 'string', value: '' };
+                                                n[0].value = e.target.value;
+                                                setCustomInputs(n.slice(0, 1));
+                                            }}
+                                            rows="6"
+                                            style={{ width: '100%', minHeight: '140px', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }}
+                                        />
                                     </div>
                                     <div style={{ marginBottom: '0.5rem' }}>
                                         <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Salida Esperada ({customOutputVarName})</label>
-                                        <input type="text" value={customOutput} onChange={e => setCustomOutput(e.target.value)} placeholder="Valor de salida esperado" style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                        <textarea
+                                            value={customOutput}
+                                            onChange={e => setCustomOutput(e.target.value)}
+                                            placeholder="Valor de salida esperado"
+                                            rows="6"
+                                            style={{ width: '100%', minHeight: '140px', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }}
+                                        />
                                     </div>
                                 </div>
                             )}
@@ -1079,10 +1127,14 @@ const ExamRunner = () => {
                                             language: language,
                                             challenge_id: currentChallenge?.id,
                                             session_id: sessionId,
-                                            input_variables: customInputs,
+                                            input_variables: customInputs.slice(0, 1).map(inp => ({
+                                                name: inp?.name || 'entrada',
+                                                type: 'string',
+                                                value: inp?.value || ''
+                                            })),
                                             output_variable: {
                                                 name: customOutputVarName,
-                                                type: customOutputVarType,
+                                                type: 'string',
                                                 value: customOutput
                                             }
                                         });

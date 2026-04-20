@@ -51,9 +51,9 @@ func languageIsSupported(language constants.ProgrammingLanguage) bool {
 }
 
 func buildTemplatePython (inputs []entities.IOVariable, output *entities.IOVariable) string {
-	template := "import sys\n\n"
-	if len(inputs) > 0 {
-		template += "Variables = sys.stdin.read().split()\n\n"
+	template := ""
+	if hasArrayInput(inputs) {
+		template += "import ast\n\n"
 	}
 	template += createOutputDeclarationPython(output) + "\n"
 	template += createInputsCallPython(inputs)
@@ -62,17 +62,34 @@ func buildTemplatePython (inputs []entities.IOVariable, output *entities.IOVaria
 	return template
 }
 
+func hasArrayInput(inputs []entities.IOVariable) bool {
+	for _, input := range inputs {
+		if input.Type == exam_consts.VariableFormatArray {
+			return true
+		}
+	}
+	return false
+}
+
 func createInputsCallPython (inputs []entities.IOVariable) string {
 	inputsCall := ""
-	for i, input := range inputs {
-		// Append a line of (var_name) = VarType(Variables[i]) for each input
+	for _, input := range inputs {
+		// Append one parsing line per input variable.
 		switch input.Type {
 			case exam_consts.VariableFormatInt:
-				inputsCall += fmt.Sprintf("%s = int(Variables[%d])\n", input.Name, i)
+				inputsCall += fmt.Sprintf("%s = int(input().strip())\n", input.Name)
 			case exam_consts.VariableFormatFloat:
-				inputsCall += fmt.Sprintf("%s = float(Variables[%d])\n", input.Name, i)
+				inputsCall += fmt.Sprintf("%s = float(input().strip())\n", input.Name)
 			case exam_consts.VariableFormatString:
-				inputsCall += fmt.Sprintf("%s = str(Variables[%d])\n", input.Name, i)
+				inputsCall += fmt.Sprintf("%s = input().strip()\n", input.Name)
+			case exam_consts.VariableFormatBoolean:
+				inputsCall += fmt.Sprintf("%s = input().strip().lower() in ('true', '1', 'yes')\n", input.Name)
+			case exam_consts.VariableFormatArray:
+				inputsCall += fmt.Sprintf("_raw_%s = input().strip()\n", input.Name)
+				inputsCall += fmt.Sprintf("if _raw_%s.startswith('['):\n", input.Name)
+				inputsCall += fmt.Sprintf("    %s = ast.literal_eval(_raw_%s)\n", input.Name, input.Name)
+				inputsCall += "else:\n"
+				inputsCall += fmt.Sprintf("    %s = list(map(int, _raw_%s.split()))\n", input.Name, input.Name)
 		}
 	}
 
@@ -85,10 +102,7 @@ func createOutputPrintPython (output *entities.IOVariable) string {
 		return outputPrint
 	}
 
-	switch output.Type {
-		case exam_consts.VariableFormatInt, exam_consts.VariableFormatFloat, exam_consts.VariableFormatString:
-			outputPrint = fmt.Sprintf("print(%s)\n", output.Name)
-	}
+	outputPrint = fmt.Sprintf("print(%s)\n", output.Name)
 	return outputPrint
 }
 
@@ -105,6 +119,10 @@ func createOutputDeclarationPython (output *entities.IOVariable) string {
 			outputDeclaration = fmt.Sprintf("%s = 0.0\n", output.Name)
 		case exam_consts.VariableFormatString:
 			outputDeclaration = fmt.Sprintf("%s = \"\"\n", output.Name)
+		case exam_consts.VariableFormatBoolean:
+			outputDeclaration = fmt.Sprintf("%s = False\n", output.Name)
+		case exam_consts.VariableFormatArray:
+			outputDeclaration = fmt.Sprintf("%s = []\n", output.Name)
 	}
 	return outputDeclaration
 }

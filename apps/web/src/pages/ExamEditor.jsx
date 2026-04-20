@@ -6,8 +6,9 @@ import { AuthContext } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 import {
     Save, X, Clock, Calendar, FileText, Layout, Trash2,
-    PlusCircle, ChevronRight, Code, Target, Search, Info
+    PlusCircle, ChevronRight, Code, Target, Search, Info, Eye
 } from 'lucide-react';
+import ExamPreview, { buildPreviewChallenges } from '../components/ExamPreview';
 import './CreateCourse.css';
 import './Challenges.css';
 
@@ -30,6 +31,12 @@ const ExamEditor = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [addingItem, setAddingItem] = useState(null);
+    const [isPreviewMode, setIsPreviewMode] = useState(false);
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [previewCodeMap, setPreviewCodeMap] = useState({});
+    const [previewCurrentIndex, setPreviewCurrentIndex] = useState(0);
+    const [previewLanguage, setPreviewLanguage] = useState('python');
+    const [publicTestCasesMap, setPublicTestCasesMap] = useState({});
 
     const isProfessor = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
 
@@ -81,11 +88,104 @@ const ExamEditor = () => {
             }
         };
         fetchAll();
-    }, [id]);
+    }, [id, isProfessor, navigate, userId]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    };
+
+    const previewChallenges = buildPreviewChallenges(examItems);
+
+    const loadPreviewTestCases = async () => {
+        if (!previewChallenges.length) {
+            setPublicTestCasesMap({});
+            return true;
+        }
+
+        setPreviewLoading(true);
+        try {
+            const results = await Promise.all(
+                previewChallenges.map(async (challenge) => {
+                    const response = await client.get(`/test-cases/challenge/${challenge.id}?exam_id=${id}`);
+                    const visibleCases = Array.isArray(response.data)
+                        ? response.data.filter((testCase) => testCase.type === 'public' || testCase.is_sample || testCase.isSample)
+                        : [];
+
+                    return [challenge.id, visibleCases];
+                })
+            );
+
+            setPublicTestCasesMap(Object.fromEntries(results));
+            return true;
+        } catch (error) {
+            console.error('Error loading preview test cases:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo preparar el preview',
+                text: 'Hubo un problema cargando los casos de prueba visibles del examen.'
+            });
+            return false;
+        } finally {
+            setPreviewLoading(false);
+        }
+    };
+
+    const handleEnterPreview = async () => {
+        if (!previewChallenges.length) {
+            await Swal.fire({
+                icon: 'info',
+                title: 'Preview limitado',
+                text: 'Este examen aun no tiene retos asignados. Primero agrega al menos un reto para ver la experiencia del estudiante.'
+            });
+            return;
+        }
+
+        const { isConfirmed } = await Swal.fire({
+            icon: 'question',
+            title: 'Entrar al modo preview',
+            text: 'Vas a abrir una vista previa del examen. Podras navegar y escribir codigo, pero nada se guardará ni se enviará.',
+            showCancelButton: true,
+            confirmButtonText: 'Entrar al preview',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#c8102e'
+        });
+
+        if (!isConfirmed) {
+            return;
+        }
+
+        setPreviewCurrentIndex(0);
+        setPreviewLanguage('python');
+        setPreviewCodeMap({});
+        setIsPreviewMode(true);
+        const prepared = await loadPreviewTestCases();
+        if (!prepared) {
+            setIsPreviewMode(false);
+            return;
+        }
+    };
+
+    const handleExitPreview = async () => {
+        const hasWrittenCode = Object.values(previewCodeMap).some((snippet) => String(snippet || '').trim().length > 0);
+
+        if (hasWrittenCode) {
+            const { isConfirmed } = await Swal.fire({
+                icon: 'warning',
+                title: 'Salir del modo preview',
+                text: 'El codigo escrito en esta vista previa se descartara. La configuracion del examen seguira intacta.',
+                showCancelButton: true,
+                confirmButtonText: 'Salir del preview',
+                cancelButtonText: 'Seguir revisando',
+                confirmButtonColor: '#c8102e'
+            });
+
+            if (!isConfirmed) {
+                return;
+            }
+        }
+
+        setIsPreviewMode(false);
     };
 
     // --- Save Exam (PATCH) ---
@@ -185,7 +285,7 @@ const ExamEditor = () => {
             await client.delete(`/exam-items/${itemId}`);
             setExamItems(prev => prev.filter(i => (i.id || i.ID) !== itemId));
             Swal.fire({ icon: 'success', title: 'Reto Eliminado', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
-        } catch (err) {
+        } catch {
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo quitar el reto.' });
         }
     };
@@ -208,6 +308,29 @@ const ExamEditor = () => {
         </div>
     );
 
+    if (isPreviewMode) {
+        return (
+            <div className="create-course-page" style={{ maxWidth: 'none' }}>
+                <ExamPreview
+                    examTitle={formData.title || exam?.title || exam?.Title}
+                    examDescription={formData.description || exam?.description || exam?.Description}
+                    timeLimitMinutes={Number(formData.timeLimit) || 0}
+                    tryLimit={Number(formData.tryLimit) || 0}
+                    challenges={previewChallenges}
+                    publicTestCasesMap={publicTestCasesMap}
+                    previewCodeMap={previewCodeMap}
+                    setPreviewCodeMap={setPreviewCodeMap}
+                    previewLanguage={previewLanguage}
+                    setPreviewLanguage={setPreviewLanguage}
+                    previewCurrentIndex={previewCurrentIndex}
+                    setPreviewCurrentIndex={setPreviewCurrentIndex}
+                    onExit={handleExitPreview}
+                    isLoading={previewLoading}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="create-course-page">
             <div className="page-header">
@@ -216,6 +339,9 @@ const ExamEditor = () => {
                     <p className="subtitle">Configura y añade retos a tu evaluación</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button className="btn-secondary" onClick={handleEnterPreview}>
+                        <Eye size={18} /> Preview
+                    </button>
                     <button className="btn-secondary" onClick={() => navigate(-1)}><X size={18} /> Cancelar</button>
                     <button className="btn-primary" onClick={handleSave} disabled={saving}>
                         {saving ? 'Guardando...' : <><Save size={18} /> Guardar Cambios</>}

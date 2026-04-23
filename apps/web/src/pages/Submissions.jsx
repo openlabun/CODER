@@ -34,9 +34,32 @@ const Submissions = () => {
         const fetchExams = async () => {
             if (!user) return;
             try {
-                const { data } = await client.get('/exams/public');
-                const examList = Array.isArray(data) ? data : (data?.items || data?.exams || []);
-                setExams(examList);
+                // Fetch public exams
+                const pubRes = await client.get('/exams/public');
+                const pubExams = Array.isArray(pubRes.data) ? pubRes.data : (pubRes.data?.items || pubRes.data?.exams || []);
+                
+                // Fetch course exams
+                const courseScope = isProfessor ? '?scope=owned' : '?scope=enrolled';
+                const courseRes = await client.get(`/courses${courseScope}`);
+                const courses = Array.isArray(courseRes.data) ? courseRes.data : (courseRes.data?.items || courseRes.data?.courses || []);
+                
+                const courseExamPromises = courses.map(c => client.get(`/exams/course/${c.id || c.ID}`));
+                const courseExamResults = await Promise.allSettled(courseExamPromises);
+                
+                let courseExams = [];
+                courseExamResults.forEach(res => {
+                    if (res.status === 'fulfilled') {
+                        const exams = Array.isArray(res.value.data) ? res.value.data : (res.value.data?.items || res.value.data?.exams || []);
+                        courseExams = [...courseExams, ...exams];
+                    }
+                });
+
+                // Merge and deduplicate
+                const allExamsMap = new Map();
+                pubExams.forEach(e => allExamsMap.set(e.id || e.ID, e));
+                courseExams.forEach(e => allExamsMap.set(e.id || e.ID, e));
+                
+                setExams(Array.from(allExamsMap.values()));
             } catch (err) {
                 console.error('Error loading exams:', err);
                 setError('No se pudieron cargar los exámenes.');
@@ -45,7 +68,7 @@ const Submissions = () => {
             }
         };
         if (user) fetchExams();
-    }, [user]);
+    }, [user, isProfessor]);
 
     // Load exam details (items + submissions) lazily
     const loadExamDetails = useCallback(async (examId) => {

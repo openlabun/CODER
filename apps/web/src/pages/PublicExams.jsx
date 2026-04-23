@@ -21,7 +21,9 @@ import {
     Sparkles,
     Layout,
     PlusCircle,
-    Loader2
+    Loader2,
+    Target,
+    ArrowRight
 } from 'lucide-react';
 import './Challenges.css';
 
@@ -34,6 +36,7 @@ const PublicExams = () => {
     const [loading, setLoading] = useState(true);
 
     const isProfessor = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
+    const currentUserId = String(user?.id || user?.ID || '');
 
     const fetchPublicExams = async () => {
         setLoading(true);
@@ -92,18 +95,6 @@ const PublicExams = () => {
         return Number.isNaN(parsed.getTime()) ? null : parsed;
     };
 
-    const formatDateTime = (value, fallback) => {
-        const parsed = parseDateSafe(value);
-        if (!parsed) return fallback;
-        return parsed.toLocaleString('es-CO', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
     const getFilterLabel = (filterValue) => {
         const labels = {
             'all': 'Todos',
@@ -132,10 +123,10 @@ const PublicExams = () => {
                         <ShieldCheck size={14} />
                         <span>Comunidad</span>
                         <ChevronRight size={12} />
-                        <span>Exámenes Públicos</span>
+                        <span>Actividades Públicas</span>
                     </div>
-                    <h1>Evaluaciones Públicas</h1>
-                    <p>Encuentra retos y exámenes creados por la comunidad RobleCode</p>
+                    <h1>Actividades Públicas</h1>
+                    <p>Encuentra retos y evaluaciones creadas por la comunidad RobleCode</p>
                 </div>
                 
                 <div className="header-actions-mini">
@@ -143,7 +134,7 @@ const PublicExams = () => {
                         <Search size={18} />
                         <input 
                             type="text" 
-                            placeholder="Buscar examen..." 
+                            placeholder="Buscar actividad..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -220,11 +211,35 @@ const PublicExams = () => {
                 <div className="challenges-grid-compact">
                     {filteredExams.map((exam) => {
                         const examId = exam.id || exam.ID;
+                        const examOwnerId = String(
+                            exam.user_id ||
+                            exam.UserID ||
+                            exam.userId ||
+                            exam.created_by ||
+                            exam.createdBy ||
+                            exam.CreatedBy ||
+                            exam.owner_id ||
+                            exam.ownerId ||
+                            exam.OwnerID ||
+                            exam.professor_id ||
+                            exam.professorId ||
+                            exam.ProfessorID ||
+                            exam.teacher_id ||
+                            exam.teacherId ||
+                            exam.TeacherID ||
+                            ''
+                        );
+                        const canEditExam = isProfessor && (!examOwnerId || examOwnerId === currentUserId);
                         const title = exam.title || exam.Title;
                         const desc = exam.description || exam.Description || 'Sin descripción disponible.';
                         const timeLimit = exam.timeLimit || exam.TimeLimit || 3600;
                         const startTime = exam.startTime || exam.StartTime || exam.start_time;
                         const endTime = exam.endTime || exam.EndTime || exam.end_time;
+                        const tryLimit = exam.try_limit ?? exam.tryLimit ?? exam.TryLimit ?? 1;
+                        const limitText = tryLimit === -1 ? 'Ilimitados' : tryLimit;
+                        const formattedAvailability = (!startTime && !endTime) ? 'Siempre' :
+                            (startTime && endTime) ? `${new Date(startTime).toLocaleDateString()} al ${new Date(endTime).toLocaleDateString()}` :
+                            (startTime ? `Desde ${new Date(startTime).toLocaleDateString()}` : `Hasta ${new Date(endTime).toLocaleDateString()}`);
                         const allowLateValue = exam.allowLateSubmissions ?? exam.AllowLateSubmissions ?? exam.allow_late_submissions;
                         const allowLateSubmissions =
                             allowLateValue === true ||
@@ -261,12 +276,14 @@ const PublicExams = () => {
                                             </div>
                                             <div className="stat">
                                                 <Calendar size={14} />
-                                                <span>Inicio: {formatDateTime(startTime, 'No definida')}</span>
+                                                <span>{formattedAvailability}</span>
                                             </div>
-                                            <div className="stat">
-                                                <Calendar size={14} />
-                                                <span>Cierre: {formatDateTime(endTime, 'Sin cierre')}</span>
-                                            </div>
+                                            {!isProfessor && (
+                                                <div className="stat" style={{ color: '#4b5563' }}>
+                                                    <Target size={14} />
+                                                    <span>Límite: {limitText}</span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="meta-badges-row exam-timing-flags">
@@ -292,19 +309,23 @@ const PublicExams = () => {
                                         
                                         <div className="actions-wrapper">
                                             {isProfessor ? (
-                                                <Link to={`/exam/${examId}/edit`} className="exam-primary-btn professor">
-                                                    <Edit2 size={16} />
-                                                    <span>Editar Examen</span>
-                                                </Link>
-                                            ) : (
-                                                studentCanStart ? (
-                                                    <Link to={`/exam/${examId}`} className="exam-primary-btn student">
-                                                        <Play size={16} />
-                                                        <span>Iniciar Examen</span>
+                                                canEditExam ? (
+                                                    <Link to={`/exam/${examId}/edit`} className="btn-action-mini primary">
+                                                        Editar Actividad <ChevronRight size={16} />
                                                     </Link>
                                                 ) : (
-                                                    <button type="button" className="exam-primary-btn student disabled" disabled>
-                                                        <Lock size={16} />
+                                                    <Link to={`/exam/${examId}`} className="btn-action-mini">
+                                                        Abrir Actividad <ArrowRight size={16} />
+                                                    </Link>
+                                                )
+                                            ) : (
+                                                studentCanStart ? (
+                                                    <Link to={`/exam/${examId}`} className="btn-action-mini primary">
+                                                        Iniciar Actividad <ArrowRight size={16} />
+                                                    </Link>
+                                                ) : (
+                                                    <button type="button" className="btn-action-mini" disabled>
+                                                        <Lock size={14} />
                                                         <span>Examen Cerrado</span>
                                                     </button>
                                                 )
@@ -320,7 +341,7 @@ const PublicExams = () => {
 
             <div className="info-footer-compact">
                 <Sparkles size={16} className="icon-sparkle" />
-                <p>¿Eres profesor? Crea exámenes públicos para que toda la comunidad pueda resolver tus retos.</p>
+                <p>¿Eres profesor? Crea actividades públicas para que toda la comunidad pueda resolver tus retos.</p>
             </div>
         </div>
     );

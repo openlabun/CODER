@@ -11,6 +11,16 @@ import {
 } from 'lucide-react';
 import './ChallengeSolver.css';
 
+// Map our language IDs to Monaco's registered language identifiers
+const MONACO_LANG_MAP = {
+    python: 'python',
+    javascript: 'javascript',
+    java: 'java',
+    cpp: 'cpp',
+    go: 'go'
+};
+const VALID_LANGUAGES = Object.keys(MONACO_LANG_MAP);
+
 const ExamRunner = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -33,7 +43,7 @@ const ExamRunner = () => {
     const [selectedPublicCase, setSelectedPublicCase] = useState('');
     const [customInputs, setCustomInputs] = useState([]);
     const [customOutput, setCustomOutput] = useState('');
-    const [customOutputVarName, setCustomOutputVarName] = useState('out');
+    const [customOutputVarName, setCustomOutputVarName] = useState('salida');
     const [customOutputVarType, setCustomOutputVarType] = useState('string');
     const [customSampleName, setCustomSampleName] = useState('custom_sample');
 
@@ -45,15 +55,14 @@ const ExamRunner = () => {
             const firstCase = Object.assign({}, cases[0]);
             const inputs = firstCase.input || firstCase.Input || [];
             const out = firstCase.expected_output || firstCase.expectedOutput || firstCase.ExpectedOutput || {};
-            
+
             // Set input shapes without values
             if (Array.isArray(inputs)) {
-                setCustomInputs(inputs.map(i => ({ name: i.name || i.Name, type: i.type || i.Type, value: '' })));
+                const firstInput = inputs[0] || {};
+                setCustomInputs([{ name: firstInput.name || firstInput.Name || 'entrada', type: 'string', value: '' }]);
             }
-            if (out.name || out.Name) {
-                setCustomOutputVarName(out.name || out.Name);
-                setCustomOutputVarType(out.type || out.Type);
-            }
+            setCustomOutputVarName('salida');
+            setCustomOutputVarType('string');
         }
     }, [currentIndex, challenges, publicTestCasesMap]);
 
@@ -61,6 +70,7 @@ const ExamRunner = () => {
     const [sessionId, setSessionId] = useState(null);
     const [sessionStatus, setSessionStatus] = useState(null);
     const [timeLeft, setTimeLeft] = useState(null); // in seconds, null = unlimited
+    const timeLeftRef = useRef(null); // mirrors timeLeft for use in interval callbacks
     const [examFinished, setExamFinished] = useState(false);
     const [attemptMap, setAttemptMap] = useState(() => {
         // Restore attempt map from localStorage for persistence across refreshes
@@ -104,17 +114,37 @@ const ExamRunner = () => {
      *   3. If the session is for THIS exam on a fresh mount → reuse it (page refresh).
      *   4. If the session is old/stale → wait for it to freeze and retry creation.
      */
-    const ensureSession = useCallback(async (examId) => {
+    const ensureSession = useCallback(async (examId, examData) => {
         // Helper to apply session data to state
-        const applySession = (sessionData, sid) => {
-            localStorage.setItem('session_id', sid);
+        const applySession = (sessionData, sid, examData) => {
+            const oldSid = localStorage.getItem('session_id');
+            if (oldSid !== sid) {
+                // New session explicitly requires fresh attempts map
+                localStorage.removeItem('exam_attempt_map');
+                setAttemptMap({});
+                localStorage.setItem('session_id', sid);
+            }
+            
             setSessionId(sid);
             setSessionStatus(sessionData?.status || sessionData?.Status || 'active');
-            const tl = sessionData?.time_left ?? sessionData?.TimeLeft ?? sessionData?.timeLeft;
-            if (tl != null && tl > 0) {
+            
+            // Usamos directamente el tiempo que provee el backend, para que el 
+            // timer inicie en este valor una vez se muestre la interfaz,
+            // y luego el useEffect del intervalo va a ir descontando visualmente.
+            const tl = sessionData?.time_left ?? sessionData?.TimeLeft ?? sessionData?.timeLeft ?? examData?.time_limit ?? examData?.TimeLimit;
+            
+            if (tl === -1 || tl == null) {
+                // Unlimited or no limit
+                setTimeLeft(null);
+                timeLeftRef.current = null;
+            } else if (tl <= 0) {
+                // Already expired
+                setExamFinished(true);
+                setTimeLeft(0);
+                timeLeftRef.current = 0;
+            } else {
                 setTimeLeft(tl);
-            } else if (tl === -1) {
-                setTimeLeft(null); // unlimited
+                timeLeftRef.current = tl;
             }
         };
 
@@ -139,7 +169,7 @@ const ExamRunner = () => {
             if (sid) {
                 // Step 2: If session is for THIS exam, reuse it (e.g. student refreshed or navigated back)
                 if (sessionExamId === examId || String(sessionExamId) === String(examId)) {
-                    applySession(activeSession, sid);
+                    applySession(activeSession, sid, examData);
                     return { id: sid, status: 'active', ...activeSession };
                 } else {
                     // Step 3: Session is for a DIFFERENT exam -> close it and create a new one
@@ -161,7 +191,7 @@ const ExamRunner = () => {
             const newSession = await tryCreate();
             const sid = newSession?.id || newSession?.ID;
             if (sid) {
-                applySession(newSession, sid);
+                applySession(newSession, sid, examData);
                 return newSession;
             }
         } catch (err) {
@@ -170,7 +200,7 @@ const ExamRunner = () => {
 
             Swal.fire({
                 icon: 'error',
-                title: 'Error al iniciar sesión de examen',
+                title: 'Error al iniciar sesión de actividad',
                 text: apiMsg || 'No se pudo crear la sesión. Inténtalo de nuevo.',
             });
         }
@@ -190,12 +220,33 @@ const ExamRunner = () => {
                 const challengeList = items
                     .map(item => {
                         const ch = item.challenge || item.Challenge || {};
-                        let parsedTemplates = ch.code_templates || ch.CodeTemplates || {};
-                        while (typeof parsedTemplates === 'string') {
-                            try { parsedTemplates = JSON.parse(parsedTemplates); } catch (e) { parsedTemplates = {}; break; }
+                        let parsedTemplates = ch.code_templates || ch.CodeTemplates || ch.codeTemplates;
+
+                        // Robustly parse templates — could be string, double-encoded, object, etc.
+                        if (parsedTemplates == null) parsedTemplates = {};
+                        if (typeof parsedTemplates === 'string') {
+                            // Handle double/triple encoded JSON strings
+                            for (let i = 0; i < 3 && typeof parsedTemplates === 'string'; i++) {
+                                try { parsedTemplates = JSON.parse(parsedTemplates); } catch { parsedTemplates = {}; break; }
+                            }
                         }
-                        if (typeof parsedTemplates !== 'object' || parsedTemplates === null || Array.isArray(parsedTemplates)) {
-                            parsedTemplates = {};
+
+                        // Ensure all template values are strings
+                        const cleanTemplates = {};
+                        if (Array.isArray(parsedTemplates)) {
+                            // Backend returns []CodeTemplate e.g. [{"language": "python", "template": "def solve():"}]
+                            for (const item of parsedTemplates) {
+                                if (item && typeof item === 'object' && VALID_LANGUAGES.includes(item.language) && typeof item.template === 'string') {
+                                    cleanTemplates[item.language] = item.template;
+                                }
+                            }
+                        } else if (typeof parsedTemplates === 'object' && parsedTemplates !== null) {
+                            // Alternatively, simple dictionary map {"python": "def solve():"}
+                            for (const [key, val] of Object.entries(parsedTemplates)) {
+                                if (VALID_LANGUAGES.includes(key) && typeof val === 'string') {
+                                    cleanTemplates[key] = val;
+                                }
+                            }
                         }
                         return {
                             ...ch,
@@ -206,7 +257,7 @@ const ExamRunner = () => {
                             constraints: ch.constraints || ch.Constraints || '',
                             points: item.points || item.Points || 0,
                             order: item.order || item.Order || 0,
-                            code_templates: parsedTemplates
+                            code_templates: cleanTemplates
                         };
                     })
                     .filter(ch => ch.id)
@@ -217,30 +268,27 @@ const ExamRunner = () => {
                 // Initialize code templates
                 const initialCode = {};
                 const tcPromises = [];
-                challengeList.forEach(ch => {
-                    const templates = ch.code_templates || ch.CodeTemplates || {};
-                    const langs = Object.keys(templates);
+                let firstLang = 'python';
+                challengeList.forEach((ch, idx) => {
+                    const templates = ch.code_templates || {};
+                    const langs = Object.keys(templates).filter(l => VALID_LANGUAGES.includes(l));
                     if (langs.length > 0) {
-                        initialCode[ch.id] = templates[langs[0]];
+                        initialCode[ch.id] = templates[langs[0]] || '';
+                        if (idx === 0) firstLang = langs[0];
                     } else {
-                        initialCode[ch.id] = '# Escribe tu solución aquí\ndef solve():\n    pass\n';
+                        initialCode[ch.id] = '# Escribe tu solución aquí\n';
                     }
 
                     tcPromises.push(client.get(`/test-cases/challenge/${ch.id}?exam_id=${id}`).then(res => ({
                         id: ch.id,
-                        cases: res.data.filter(tc => 
+                        cases: res.data.filter(tc =>
                             (tc.type === 'public' || tc.is_sample || tc.isSample) &&
                             tc.title !== 'Custom Test Case' && tc.Title !== 'Custom Test Case'
                         )
                     })).catch(() => ({ id: ch.id, cases: [] })));
                 });
                 setCodeMap(initialCode);
-
-                if (challengeList.length > 0) {
-                    const templates = challengeList[0].code_templates || challengeList[0].CodeTemplates || {};
-                    const langs = Object.keys(templates);
-                    if (langs.length > 0) setLanguage(langs[0]);
-                }
+                setLanguage(firstLang);
 
                 Promise.all(tcPromises).then(results => {
                     const tcMap = {};
@@ -249,10 +297,10 @@ const ExamRunner = () => {
                 });
 
                 // --- Create or retrieve the exam session ---
-                await ensureSession(id);
+                await ensureSession(id, data);
             } catch (err) {
                 console.error(err);
-                Swal.fire({ icon: 'error', title: 'Error', text: err?.response?.data?.error || 'No se pudo cargar el examen.' });
+                Swal.fire({ icon: 'error', title: 'Error', text: err?.response?.data?.error || 'No se pudo cargar la actividad.' });
                 navigate('/public-exams');
             } finally {
                 setLoading(false);
@@ -269,6 +317,7 @@ const ExamRunner = () => {
         const sendHeartbeat = async () => {
             try {
                 await client.post(`/submissions/sessions/${sessionId}/heartbeat`);
+                console.log('Heartbeat successful');
             } catch (err) {
                 console.warn('Heartbeat failed:', err);
                 const status = err?.response?.status;
@@ -278,7 +327,7 @@ const ExamRunner = () => {
                     Swal.fire({
                         icon: 'warning',
                         title: 'Sesión finalizada',
-                        text: 'Tu sesión de examen ha terminado.',
+                        text: 'Tu sesión de actividad ha terminado.',
                         confirmButtonText: 'Aceptar'
                     }).then(() => navigate('/public-exams'));
                 }
@@ -296,15 +345,24 @@ const ExamRunner = () => {
 
     // We no longer close session on browser close/refresh. Let it stay active.
 
-    // Countdown timer
+    // Countdown timer — runs once when timeLeft is first set to a positive value
     useEffect(() => {
-        if (timeLeft == null || timeLeft <= 0) return;
+        if (timeLeft == null || timeLeft <= 0 || examFinished) return;
+
+        if (timerRef.current) clearInterval(timerRef.current);
 
         timerRef.current = setInterval(() => {
             setTimeLeft(prev => {
-                if (prev == null) return null;
-                if (prev <= 1) {
+                if (prev == null || prev <= 0) {
                     clearInterval(timerRef.current);
+                    timerRef.current = null;
+                    return prev;
+                }
+                const next = prev - 1;
+                timeLeftRef.current = next;
+                if (next <= 0) {
+                    clearInterval(timerRef.current);
+                    timerRef.current = null;
                     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
 
                     // Close session on the backend
@@ -313,25 +371,27 @@ const ExamRunner = () => {
                         client.post(`/submissions/sessions/${sid}/close`).catch(() => { });
                     }
                     localStorage.removeItem('session_id');
+                    localStorage.removeItem('exam_attempt_map');
                     setSessionId(null);
 
                     setExamFinished(true);
                     Swal.fire({
                         icon: 'warning',
                         title: '⏰ Tiempo agotado',
-                        html: 'El tiempo del examen ha finalizado.',
+                        html: 'El tiempo de la actividad ha finalizado.',
                         confirmButtonText: 'Ver resultados'
                     });
                     return 0;
                 }
-                return prev - 1;
+                return next;
             });
         }, 1000);
 
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [timeLeft != null && timeLeft > 0]); // re-run only when timer starts
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sessionId]); // Only re-run when session changes, not on every timeLeft tick
 
     const currentChallenge = challenges[currentIndex] || null;
     const currentCode = currentChallenge ? (codeMap[currentChallenge.id] || '') : '';
@@ -347,10 +407,19 @@ const ExamRunner = () => {
         setOutput('');
         const ch = challenges[idx];
         if (ch) {
-            const templates = ch.code_templates || ch.CodeTemplates || {};
-            const langs = Object.keys(templates);
-            if (langs.length > 0 && !langs.includes(language)) {
-                setLanguage(langs[0]);
+            const templates = ch.code_templates || {};
+            const langs = Object.keys(templates).filter(l => VALID_LANGUAGES.includes(l));
+            if (langs.length > 0) {
+                // If current language is available in this challenge, keep it; otherwise switch
+                if (!langs.includes(language)) {
+                    setLanguage(langs[0]);
+                    // Also load the template for that language if user hasn't edited yet
+                    if (!codeMap[ch.id]) {
+                        setCodeMap(prev => ({ ...prev, [ch.id]: templates[langs[0]] || '' }));
+                    }
+                }
+            } else {
+                setLanguage('python');
             }
         }
     };
@@ -358,7 +427,7 @@ const ExamRunner = () => {
     // Submit solution
     const handleSubmit = async () => {
         if (examFinished) {
-            setOutput('El examen ha finalizado. No se pueden realizar más envíos.');
+            setOutput('La actividad ha finalizado. No se pueden realizar más envíos.');
             return;
         }
 
@@ -377,16 +446,16 @@ const ExamRunner = () => {
 
         if (!sessionId) {
             // Try to create/retrieve session one more time
-            const session = await ensureSession(id);
+            const session = await ensureSession(id, exam);
             if (!session) {
-                Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No se pudo obtener una sesión activa. Reintenta o vuelve a entrar al examen.', customClass: { container: 'swal-ultra-high-z' } });
+                Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No se pudo obtener una sesión activa. Reintenta o vuelve a entrar a la actividad.', customClass: { container: 'swal-ultra-high-z' } });
                 return;
             }
         }
 
         const activeSessionId = sessionId || localStorage.getItem('session_id');
         if (!activeSessionId) {
-            Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No hay una sesión de examen activa. Vuelve a entrar al examen.', customClass: { container: 'swal-ultra-high-z' } });
+            Swal.fire({ icon: 'warning', title: 'Sesión no activa', text: 'No hay una sesión de actividad activa. Vuelve a entrar a la actividad.', customClass: { container: 'swal-ultra-high-z' } });
             return;
         }
 
@@ -449,8 +518,12 @@ const ExamRunner = () => {
                         const lines = [`Resultado: ${score}% (${accepted}/${results.length} casos correctos) | Intento: 1/1\n`];
                         results.forEach((r, i) => {
                             const st = (r.Status || r.status || 'unknown').toLowerCase();
-                            const err = r.ErrorMessage || r.errorMessage || '';
-                            lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}${err ? ' - ' + err : ''}`);
+                            const errMsg = r.error_message || r.ErrorMessage || r.errorMessage || '';
+                            const progOut = r.ActualOutput?.value || r.actual_output?.value || r.ActualOutput?.Value || r.actual_output?.Value;
+                            
+                            lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}`);
+                            if (errMsg) lines.push(`    Error: ${errMsg}`);
+                            if (progOut) lines.push(`    Salida: ${progOut}`);
                         });
                         setOutput(lines.join('\n'));
 
@@ -491,7 +564,7 @@ const ExamRunner = () => {
     const handleFinishExam = async () => {
         const solved = Object.values(resultMap).filter(r => r.status === 'accepted').length;
         const { isConfirmed } = await Swal.fire({
-            title: '¿Terminar Examen?',
+            title: '¿Terminar Actividad?',
             html: `Has resuelto correctamente <strong>${solved} de ${challenges.length}</strong> retos.<br/>Esta acción es definitiva.`,
             icon: 'question',
             showCancelButton: true,
@@ -513,10 +586,14 @@ const ExamRunner = () => {
             if (heartbeatRef.current) clearInterval(heartbeatRef.current);
             if (timerRef.current) clearInterval(timerRef.current);
             localStorage.removeItem('session_id');
+            localStorage.removeItem('exam_attempt_map');
             setSessionId(null);
+            setTimeLeft(0);
+            timeLeftRef.current = 0;
 
             setExamFinished(true);
-            Swal.fire({ icon: 'success', title: 'Examen Finalizado', text: `Puntuación: ${solved}/${challenges.length} retos correctos.` });
+            await Swal.fire({ icon: 'success', title: 'Actividad Finalizada', text: `Puntuación: ${solved}/${challenges.length} retos correctos.` });
+            navigate('/public-exams');
         }
     };
 
@@ -524,14 +601,14 @@ const ExamRunner = () => {
     if (loading) return (
         <div className="dashboard-loading">
             <div className="loader-orbit"><div className="orbit-dot"></div></div>
-            <p>Cargando examen...</p>
+            <p>Cargando actividad...</p>
         </div>
     );
 
     if (!exam) return (
         <div className="dashboard-loading error">
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📝</div>
-            <h2>Examen no encontrado</h2>
+            <h2>Actividad no encontrada</h2>
             <button onClick={() => navigate('/public-exams')} className="btn-retry" style={{ marginTop: '2rem' }}>Volver</button>
         </div>
     );
@@ -587,7 +664,7 @@ const ExamRunner = () => {
                             padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', gap: '6px'
                         }}>
-                            <LogOut size={16} /> Terminar Examen
+                            <LogOut size={16} /> Terminar Actividad
                         </button>
                     ) : (
                         <button onClick={() => navigate('/public-exams')} style={{
@@ -595,7 +672,7 @@ const ExamRunner = () => {
                             padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', gap: '6px'
                         }}>
-                            <LogOut size={16} /> Volver a Exámenes
+                            <LogOut size={16} /> Volver a Actividades
                         </button>
                     )}
                 </div>
@@ -682,7 +759,7 @@ const ExamRunner = () => {
                                 </p>
                                 {currentChallenge.constraints && (
                                     <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff7ed', borderRadius: '10px', border: '1px solid #fed7aa' }}>
-                                        <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#9a3412' }}>⚡ Restricciones</h4>
+                                        <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#9a3412' }}>⚡ Restricciones/Explicación</h4>
                                         <p style={{ margin: 0, fontSize: '0.85rem', color: '#78350f' }}>{currentChallenge.constraints}</p>
                                     </div>
                                 )}
@@ -692,10 +769,48 @@ const ExamRunner = () => {
                                         <h4 style={{ margin: '0 0 1rem', fontSize: '0.95rem', color: '#1f2937', fontWeight: 800 }}> Casos de Prueba </h4>
                                         {publicTestCasesMap[currentChallenge.id].map((tc, idx) => (
                                             <div key={idx} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
-                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Entrada:</div>
-                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: '0 0 1rem 0' }}>{Array.isArray(tc.input) ? tc.input.map(i => i ? `${i.name} = ${i.value}` : 'nil').join(', ') : JSON.stringify(tc.input)}</pre>
-                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Salida Esperada:</div>
-                                                <pre style={{ background: '#f3f4f6', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem', color: '#1f2937', margin: 0 }}>{tc.expected_output?.value || tc.ExpectedOutput?.value || tc.expectedOutput?.value || ''}</pre>
+                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>
+                                                    {(() => {
+                                                        const inputArr = Array.isArray(tc.input) ? tc.input : [];
+                                                        const firstInput = inputArr[0] || {};
+                                                        return `Entrada (${firstInput.name || firstInput.Name || 'entrada'}):`;
+                                                    })()}
+                                                </div>
+                                                <pre style={{
+                                                    background: '#f3f4f6',
+                                                    padding: '0.75rem',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.85rem',
+                                                    color: '#1f2937',
+                                                    margin: '0 0 1rem 0',
+                                                    minHeight: '100px',
+                                                    whiteSpace: 'pre-wrap'
+                                                }}>{(() => {
+                                                    const inputArr = Array.isArray(tc.input) ? tc.input : [];
+                                                    const firstInput = inputArr[0] || {};
+                                                    return firstInput.value || '';
+                                                })()}</pre>
+                                                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#4b5563', marginBottom: '0.5rem' }}>Salida Esperada (salida):</div>
+                                                <textarea
+                                                    readOnly
+                                                    value={(() => {
+                                                        const out = tc.expected_output || tc.ExpectedOutput || tc.expectedOutput || {};
+                                                        return `${out.value || ''}`;
+                                                    })()}
+                                                    rows="6"
+                                                    style={{
+                                                        width: '100%',
+                                                        minHeight: '140px',
+                                                        background: '#f3f4f6',
+                                                        padding: '0.75rem',
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.85rem',
+                                                        color: '#1f2937',
+                                                        margin: 0,
+                                                        border: '1px solid #e5e7eb',
+                                                        resize: 'vertical'
+                                                    }}
+                                                />
                                             </div>
                                         ))}
                                     </div>
@@ -740,8 +855,8 @@ const ExamRunner = () => {
                                     <select value={language} onChange={(e) => setLanguage(e.target.value)}
                                         style={{ background: '#ffffff', color: '#1f2937', border: '1px solid #d1d5db', borderRadius: '6px', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}>
                                         {(() => {
-                                            const templates = currentChallenge?.code_templates || currentChallenge?.CodeTemplates || {};
-                                            const langs = Object.keys(templates).filter(l => ['python', 'javascript', 'java', 'cpp', 'go'].includes(l));
+                                            const templates = currentChallenge?.code_templates || {};
+                                            const langs = Object.keys(templates).filter(l => VALID_LANGUAGES.includes(l));
                                             return langs.length > 0
                                                 ? langs.map(l => <option key={l} value={l}>{l === 'cpp' ? 'C++' : l.charAt(0).toUpperCase() + l.slice(1)}</option>)
                                                 : <option value="python">Python</option>;
@@ -754,7 +869,7 @@ const ExamRunner = () => {
                                         const isTestDisabled = submitting || examFinished;
 
                                         let btnText = 'Enviar Solución';
-                                        if (examFinished) btnText = 'Examen Finalizado';
+                                        if (examFinished) btnText = 'Actividad Finalizada';
                                         else if (limitReached) btnText = 'Ya enviado';
                                         else if (submitting) btnText = 'Evaluando...';
 
@@ -795,14 +910,17 @@ const ExamRunner = () => {
 
                                 {/* Monaco Editor */}
                                 <div style={{ flex: 1, minHeight: 0 }}>
-                                    <Editor
-                                        height="100%"
-                                        theme="vs-dark"
-                                        language={['python', 'javascript', 'java', 'cpp', 'go'].includes(language) ? language : 'python'}
-                                        value={currentCode}
-                                        onChange={handleCodeChange}
-                                        options={{ minimap: { enabled: false }, fontSize: 14, padding: { top: 12 } }}
-                                    />
+                                    {currentChallenge && (
+                                        <Editor
+                                            key={`${currentChallenge.id}-${language}`}
+                                            height="100%"
+                                            theme="vs-dark"
+                                            language={MONACO_LANG_MAP[language] || 'python'}
+                                            value={currentCode || ''}
+                                            onChange={handleCodeChange}
+                                            options={{ minimap: { enabled: false }, fontSize: 14, padding: { top: 12 } }}
+                                        />
+                                    )}
                                 </div>
                             </div>
 
@@ -890,7 +1008,7 @@ const ExamRunner = () => {
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
                         <div style={{ textAlign: 'center', color: '#9ca3af' }}>
                             <Target size={48} style={{ marginBottom: '1rem', opacity: 0.3, color: '#c8102e' }} />
-                            <h3>Este examen no tiene retos asignados</h3>
+                            <h3>Esta actividad no tiene retos asignados</h3>
                             <p>Contacta a tu profesor para más información.</p>
                         </div>
                     </div>
@@ -900,7 +1018,7 @@ const ExamRunner = () => {
             {/* RUN TEST MODAL */}
             {showRunModal && (
                 <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                     background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
                 }}>
@@ -910,7 +1028,7 @@ const ExamRunner = () => {
                     }}>
                         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Timer size={18} style={{ color: '#c8102e' }} /> Probar Ejecución 
+                                <Timer size={18} style={{ color: '#c8102e' }} /> Probar Ejecución
                                 <span style={{ fontSize: '0.7rem', padding: '2px 8px', background: '#fef2f2', color: '#b91c1c', borderRadius: '12px' }}>Modo Prueba</span>
                             </h3>
                             <button onClick={() => setShowRunModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>
@@ -921,19 +1039,19 @@ const ExamRunner = () => {
                             <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#4b5563' }}>
                                 Ejecuta tu código localmente sin gastar intentos. Selecciona un caso de prueba existente o define uno nuevo.
                             </p>
-                            
+
                             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #f3f4f6' }}>
-                                <button 
+                                <button
                                     onClick={() => setRunTab('public')}
-                                    style={{ 
+                                    style={{
                                         padding: '0.5rem 0', background: 'none', border: 'none', borderBottom: runTab === 'public' ? '2px solid #c8102e' : '2px solid transparent',
                                         color: runTab === 'public' ? '#111827' : '#6b7280', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s'
                                     }}>
                                     Casos Públicos
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setRunTab('custom')}
-                                    style={{ 
+                                    style={{
                                         padding: '0.5rem 0', background: 'none', border: 'none', borderBottom: runTab === 'custom' ? '2px solid #c8102e' : '2px solid transparent',
                                         color: runTab === 'custom' ? '#111827' : '#6b7280', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s'
                                     }}>
@@ -943,17 +1061,9 @@ const ExamRunner = () => {
 
                             {runTab === 'public' && (
                                 <div style={{ marginBottom: '1rem' }}>
-                                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Seleccionar Caso de Prueba:</label>
-                                    <select 
-                                        value={selectedPublicCase} 
-                                        onChange={(e) => setSelectedPublicCase(e.target.value)}
-                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.9rem' }}
-                                    >
-                                        <option value="">Selecciona un caso...</option>
-                                        {(publicTestCasesMap[currentChallenge?.id] || []).map((tc, idx) => (
-                                            <option key={idx} value={tc.id || idx}>Caso #{idx + 1} ({tc.expected_output?.value || tc.expectedOutput?.value || 'n/a'})</option>
-                                        ))}
-                                    </select>
+                                    <p style={{ fontSize: '0.85rem', color: '#4b5563', margin: 0, padding: '1rem', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                        Se ejecutarán todos los casos de prueba públicos configurados para este reto.
+                                    </p>
                                 </div>
                             )}
 
@@ -964,17 +1074,31 @@ const ExamRunner = () => {
                                         <input type="text" value={customSampleName} onChange={e => setCustomSampleName(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
                                     </div>
                                     <div style={{ marginBottom: '0.75rem' }}>
-                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Inputs (Variables)</label>
-                                        {customInputs.map((inp, i) => (
-                                            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#4b5563', width: '80px' }}>{inp.name} ({inp.type}):</span>
-                                                <input placeholder="Valor..." value={inp.value} onChange={e => { const n = [...customInputs]; n[i].value = e.target.value; setCustomInputs(n); }} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
-                                            </div>
-                                        ))}
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>
+                                            Entrada ({customInputs[0]?.name || 'entrada'})
+                                        </label>
+                                        <textarea
+                                            placeholder="Valor..."
+                                            value={customInputs[0]?.value || ''}
+                                            onChange={e => {
+                                                const n = [...customInputs];
+                                                if (!n[0]) n[0] = { name: 'entrada', type: 'string', value: '' };
+                                                n[0].value = e.target.value;
+                                                setCustomInputs(n.slice(0, 1));
+                                            }}
+                                            rows="6"
+                                            style={{ width: '100%', minHeight: '140px', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }}
+                                        />
                                     </div>
                                     <div style={{ marginBottom: '0.5rem' }}>
                                         <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.25rem' }}>Salida Esperada ({customOutputVarName})</label>
-                                        <input type="text" value={customOutput} onChange={e => setCustomOutput(e.target.value)} placeholder="Valor de salida esperado" style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }} />
+                                        <textarea
+                                            value={customOutput}
+                                            onChange={e => setCustomOutput(e.target.value)}
+                                            placeholder="Valor de salida esperado"
+                                            rows="6"
+                                            style={{ width: '100%', minHeight: '140px', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem' }}
+                                        />
                                     </div>
                                 </div>
                             )}
@@ -987,34 +1111,15 @@ const ExamRunner = () => {
                             <button onClick={async () => {
                                 setShowRunModal(false);
                                 setOutput('⏳ Ejecutando prueba local en el servidor...\n\n');
-                                
+
                                 try {
                                     let res;
                                     if (runTab === 'public') {
-                                        // Find the selected public case and run it via execute-custom
-                                        const allCases = publicTestCasesMap[currentChallenge?.id] || [];
-                                        const selected = allCases.find(tc => (tc.id || '') === selectedPublicCase) || allCases[parseInt(selectedPublicCase)] || allCases[0];
-                                        if (!selected) {
-                                            setOutput('No hay caso de prueba público seleccionado.');
-                                            return;
-                                        }
-                                        const inputs = (selected.input || selected.Input || []).map(v => ({
-                                            name: v.name || v.Name,
-                                            type: v.type || v.Type,
-                                            value: String(v.value ?? v.Value ?? '')
-                                        }));
-                                        const expectedOut = selected.expected_output || selected.expectedOutput || selected.ExpectedOutput || {};
-                                        res = await client.post('/submissions/execute-custom', {
+                                        res = await client.post('/submissions/execute', {
                                             code: currentCode,
                                             language: language,
                                             challenge_id: currentChallenge?.id,
-                                            session_id: sessionId,
-                                            input_variables: inputs,
-                                            output_variable: {
-                                                name: expectedOut.name || expectedOut.Name || 'out',
-                                                type: expectedOut.type || expectedOut.Type || 'string',
-                                                value: String(expectedOut.value ?? expectedOut.Value ?? '')
-                                            }
+                                            session_id: sessionId
                                         });
                                     } else {
                                         res = await client.post('/submissions/execute-custom', {
@@ -1022,10 +1127,14 @@ const ExamRunner = () => {
                                             language: language,
                                             challenge_id: currentChallenge?.id,
                                             session_id: sessionId,
-                                            input_variables: customInputs,
+                                            input_variables: customInputs.slice(0, 1).map(inp => ({
+                                                name: inp?.name || 'entrada',
+                                                type: 'string',
+                                                value: inp?.value || ''
+                                            })),
                                             output_variable: {
                                                 name: customOutputVarName,
-                                                type: customOutputVarType,
+                                                type: 'string',
                                                 value: customOutput
                                             }
                                         });
@@ -1042,7 +1151,7 @@ const ExamRunner = () => {
                                     }
 
                                     setOutput('Prueba encolada. Ejecutando...');
-                                    
+
                                     // Poll for results
                                     for (let attempt = 0; attempt < 40; attempt++) {
                                         const pollRes = await client.get(`/submissions/${submissionId}`);
@@ -1060,8 +1169,12 @@ const ExamRunner = () => {
                                                 const lines = [`Resultado de Prueba: ${score}% (${accepted}/${results.length} casos correctos)\n`];
                                                 results.forEach((r, i) => {
                                                     const st = (r.Status || r.status || 'unknown').toLowerCase();
-                                                    const err = r.ErrorMessage || r.errorMessage || '';
-                                                    lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}${err ? ' - ' + err : ''}`);
+                                                    const errMsg = r.error_message || r.ErrorMessage || r.errorMessage || '';
+                                                    const progOut = r.ActualOutput?.value || r.actual_output?.value || r.ActualOutput?.Value || r.actual_output?.Value;
+                                                    
+                                                    lines.push(`  Caso ${i + 1}: ${st === 'accepted' ? '✅' : '❌'} ${st}`);
+                                                    if (errMsg) lines.push(`    Error: ${errMsg}`);
+                                                    if (progOut) lines.push(`    Salida: ${progOut}`);
                                                 });
                                                 lines.push(`\n(Resultados no afectan tus puntajes)`);
                                                 setOutput(lines.join('\n'));
@@ -1071,7 +1184,7 @@ const ExamRunner = () => {
                                         await sleep(1000);
                                         setOutput(`Ejecutando pruebas... (${attempt + 1}s)`);
                                     }
-                                    
+
                                     setOutput('Tiempo de espera agotado para la ejecución local.');
                                 } catch (err) {
                                     const errorMsg = err?.response?.data?.error || err.message;

@@ -20,7 +20,7 @@ func validateChallengeDifficulty(difficulty constants.ChallengeDifficulty) error
 
 func validateIOFormat(format constants.VariableFormat) error {
 	switch format {
-	case constants.VariableFormatString, constants.VariableFormatInt, constants.VariableFormatFloat:
+	case constants.VariableFormatString, constants.VariableFormatInt, constants.VariableFormatFloat, constants.VariableFormatBoolean, constants.VariableFormatArray:
 		return nil
 	default:
 		return fmt.Errorf("invalid io variable format: %q", format)

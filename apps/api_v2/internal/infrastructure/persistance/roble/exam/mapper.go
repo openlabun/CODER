@@ -19,10 +19,7 @@ func examItemToRecord(item *Entities.ExamItem) map[string]any {
 		"ExamID":      strings.TrimSpace(item.ExamID),
 		"Order":       item.Order,
 		"Points":      item.Points,
-	}
-
-	if item.TryLimit >= 0 {
-		record["TryLimit"] = item.TryLimit
+		"TryLimit":    item.TryLimit,
 	}
 
 	return record
@@ -34,32 +31,20 @@ func examItemToUpdates(item *Entities.ExamItem) map[string]any {
 		"ExamID":      strings.TrimSpace(item.ExamID),
 		"Order":       item.Order,
 		"Points":      item.Points,
-	}
-
-	if item.TryLimit >= 0 {
-		updates["TryLimit"] = item.TryLimit
-	} else {
-		updates["TryLimit"] = nil
+		"TryLimit":    item.TryLimit,
 	}
 
 	return updates
 }
 
 func recordToExamItem(record map[string]any) (*Entities.ExamItem, error) {
-	tryLimit := -1
-	if rawTryLimit, ok := record["TryLimit"]; ok {
-		if asString(rawTryLimit) != "" {
-			tryLimit = asInt(rawTryLimit)
-		}
-	}
-
 	return exam_factory.ExistingExamItem(
 		asString(record["ID"]),
 		asString(record["ChallengeID"]),
 		asString(record["ExamID"]),
 		asInt(record["Order"]),
 		asInt(record["Points"]),
-		tryLimit,
+		asInt(record["TryLimit"]),
 	)
 }
 

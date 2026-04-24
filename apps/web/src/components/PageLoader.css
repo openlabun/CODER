@@ -1,0 +1,92 @@
+.rc-page-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.rc-page-loader--full-screen {
+    min-height: 100vh !important;
+    padding: 0 1rem;
+}
+
+.rc-page-loader--compact {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 0 !important;
+}
+
+.rc-page-loader__ring {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 35% 35%, rgba(200, 16, 46, 0.14), rgba(200, 16, 46, 0.05));
+    border: 1px solid rgba(200, 16, 46, 0.2);
+    box-shadow: 0 10px 22px rgba(200, 16, 46, 0.12);
+}
+
+.rc-page-loader__spinner {
+    color: var(--primary-color, #c8102e);
+    animation: rc-page-loader-spin 0.85s linear infinite;
+}
+
+.rc-page-loader__text {
+    margin: 0;
+    color: var(--text-muted, #64748b);
+    font-weight: 600;
+    font-size: 1.02rem;
+    text-align: center;
+}
+
+.rc-page-loader--compact .rc-page-loader__ring {
+    width: 36px;
+    height: 36px;
+    background: rgba(200, 16, 46, 0.08);
+    border-color: rgba(200, 16, 46, 0.18);
+    box-shadow: none;
+}
+
+.rc-page-loader--compact .rc-page-loader__text {
+    text-align: left;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+@keyframes rc-page-loader-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.rc-results-loading-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    width: 100%;
+}
+
+.rc-results-skeleton {
+    display: grid;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.rc-results-skeleton-row {
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+    background-size: 200% 100%;
+    animation: rc-results-shimmer 1.35s linear infinite;
+    border: 1px solid #e5e7eb;
+}
+
+@keyframes rc-results-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}

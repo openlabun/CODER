@@ -455,6 +455,10 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 4: Obtener plantillas por defecto para el reto
   
   - Paso 5: Validar que se reciban todas las variables esperadas y el print con el output
+  
+  ```
+  go test -v ./test/use_cases/submission -run TestChallengeDefaultCodeTemplates
+  ```
 
 ##### Módulo de Revisiones
 
@@ -581,6 +585,10 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 7: Cerrar la sesión
   
   - Paso 8: Crear una sesión en el examen (espera `error`)
+  
+  ```
+  go test -v ./test/use_cases/submission -run TestExamTryLimit
+  ```
 
 - **Límite de intentos para revisiones:**
   
@@ -603,6 +611,10 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 10: Crear una revisión
   
   - Paso 11: Crear una revisión (espera `error`)
+  
+  ```
+  go test -v ./test/use_cases/submission -run TestSubmissionTryLimit
+  ```
 
 - **Revisiones Inválidas:**
   
@@ -689,6 +701,10 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 8: Obtener el `status` de la revisión hasta que su estado sea `accepted` o `wrong_answer`
   
   - Paso 9: Confirmar valor del atributo `Score` de la revisión corresponde a 0
+  
+  ```
+  go test -v ./test/use_cases/submission -run TestSubmissionWithoutScore
+  ```
 
 - **Ejecución de Código con caso personalizado:**
   
@@ -709,6 +725,10 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   - Paso 8: Obtener el `status` de la revisión hasta que su estado sea `accepted` o `wrong_answer`
   
   - Paso 9: Confirmar valor del atributo `Score` de la revisión corresponde a 0
+  
+  ```
+  go test -v ./test/use_cases/submission -run 
+  ```
 
 - **Puntaje de Revisiones:**
   

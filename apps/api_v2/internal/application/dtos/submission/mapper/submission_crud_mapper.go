@@ -122,6 +122,10 @@ func MapResultInputToSubmissionResultEntity(input dtos.UpdateResultInput, submis
 	if submissionResult == nil {
 		return nil, fmt.Errorf("submission result cannot be nil")
 	}
+
+	if testCase == nil {
+		return nil, fmt.Errorf("test case cannot be nil")
+	}
 	
 	if input.Output != nil {
 		output_name := testCase.ExpectedOutput.Name

@@ -3,6 +3,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
 import AIAssistantModal from '../components/AIAssistantModal';
+import PageLoader from '../components/PageLoader';
 import Swal from 'sweetalert2';
 import './CreateChallenge.css';
 import './Challenges.css';
@@ -417,7 +418,11 @@ const CreateChallenge = () => {
         setActiveTab('basic');
     };
 
-    if (fetching) return <div className="loading">Cargando datos...</div>;
+    if (fetching) {
+        return (
+            <PageLoader message="Cargando datos del reto..." />
+        );
+    }
 
     return (
         <div className="create-challenge-page">

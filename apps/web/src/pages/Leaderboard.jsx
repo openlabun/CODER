@@ -10,10 +10,10 @@ import {
     Target,
     Zap,
     Search,
-    Award,
-    Loader2
+    Award
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import PageLoader from '../components/PageLoader';
 import './Leaderboard.css';
 
 const Leaderboard = ({ challengeId, courseId }) => {
@@ -69,10 +69,7 @@ const Leaderboard = ({ challengeId, courseId }) => {
 
     if (loading) return (
         <div className="leaderboard-page-new">
-            <div className="page-loader">
-                <Loader2 className="page-loader-spinner" size={48} />
-                <p className="page-loader-text">Cargando clasificación...</p>
-            </div>
+            <PageLoader message="Cargando clasificación..." />
         </div>
     );
 

@@ -21,10 +21,10 @@ import {
     Sparkles,
     Layout,
     PlusCircle,
-    Loader2,
     Target,
     ArrowRight
 } from 'lucide-react';
+import PageLoader from '../components/PageLoader';
 import './Challenges.css';
 
 const PublicExams = () => {
@@ -108,10 +108,7 @@ const PublicExams = () => {
 
     if (loading) return (
         <div className="challenges-page">
-            <div className="page-loader">
-                <Loader2 className="page-loader-spinner" size={48} />
-                <p className="page-loader-text">Cargando exámenes...</p>
-            </div>
+            <PageLoader message="Cargando exámenes..." />
         </div>
     );
 

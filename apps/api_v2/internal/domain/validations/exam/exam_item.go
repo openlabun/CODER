@@ -31,7 +31,10 @@ func ValidateExamItem(examItem *Entities.ExamItem) error {
 	if examItem.Points < 0 {
 		return fmt.Errorf("exam item points must be non-negative")
 	}
-	
+
+	if examItem.TryLimit < -1 {
+		return fmt.Errorf("exam item try limit must be -1 (for unlimited) or non-negative")
+	}
 
 	return nil
 }

@@ -13,7 +13,7 @@ import (
 	utils "github.com/openlabun/CODER/apps/api_v2/test/use_cases"
 )
 
-func TestTryLimit(t *testing.T) {
+func TestExamTryLimit(t *testing.T) {
 	process := test.StartTestWithApp(t, "Try Limit")
 	teacherEmail := "test@test.com"
 	studentEmail := "stud@test.com"

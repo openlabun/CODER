@@ -4,7 +4,7 @@ name: Deploy
 on:
     # Triggers the workflow on push or pull request events but only for the master branch
     push:
-        branches: [release]
+        branches: [ release ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -26,5 +26,6 @@ jobs:
                       cd /home/proyecto/CODER/
                       git pull origin release
                       git status
+                      COMPOSE_BAKE=true docker compose --env-file .env.production build
                       docker compose down
-                      docker compose -f docker-compose.yml --env-file .env.production up -d --build
+                      docker compose -f docker-compose.yml --env-file .env.production up -d

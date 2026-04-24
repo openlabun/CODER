@@ -1,6 +1,5 @@
 # PRODUCTION ENVIRONMENT
 # Use: docker-compose -f docker-compose.prod.yml up -d
-version: "3.9"
 
 services:
     api:
@@ -30,7 +29,13 @@ services:
         networks:
             - judge_net
         healthcheck:
-            test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) process.exit(1)})\""]
+            test:
+                [
+                    "CMD-SHELL",
+                    "node -e
+                      \"require('http').get('http://localhost:3000/health', (r)
+                      => {if (r.statusCode !== 200) process.exit(1)})\"",
+                ]
             interval: 30s
             timeout: 10s
             retries: 3
@@ -38,9 +43,9 @@ services:
         deploy:
             resources:
                 limits:
-                    cpus: '1'
+                    cpus: "1"
                     memory: 1G
-    
+
     web:
         build:
             context: ./apps/web
@@ -53,7 +58,15 @@ services:
         networks:
             - judge_net
         healthcheck:
-            test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:5173/health"]
+            test:
+                [
+                    "CMD",
+                    "wget",
+                    "--quiet",
+                    "--tries=1",
+                    "--spider",
+                    "http://127.0.0.1:5173/health",
+                ]
             interval: 30s
             timeout: 10s
             retries: 5
@@ -61,7 +74,7 @@ services:
         deploy:
             resources:
                 limits:
-                    cpus: '0.5'
+                    cpus: "0.5"
                     memory: 512M
 
     postgres:
@@ -77,7 +90,7 @@ services:
         networks:
             - judge_net
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+            test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1" ]
             interval: 10s
             timeout: 5s
             retries: 15
@@ -85,7 +98,7 @@ services:
         deploy:
             resources:
                 limits:
-                    cpus: '1'
+                    cpus: "1"
                     memory: 1G
 
     redis:
@@ -97,42 +110,42 @@ services:
         networks:
             - judge_net
         healthcheck:
-            test: ["CMD", "redis-cli", "ping"]
+            test: [ "CMD", "redis-cli", "ping" ]
             interval: 10s
             timeout: 5s
             retries: 15
             start_period: 30s
-    
+
     runner-python:
-        profiles: ["judge"]
+        profiles: [ "judge" ]
         build:
             context: ./apps/api/src/runners/python
         image: juez_runner_python:prod
         restart: "no"
 
     runner-node:
-        profiles: ["judge"]
+        profiles: [ "judge" ]
         build:
             context: ./apps/api/src/runners/node
         image: juez_runner_node:prod
         restart: "no"
 
     runner-cpp:
-        profiles: ["judge"]
+        profiles: [ "judge" ]
         build:
             context: ./apps/api/src/runners/cpp
         image: juez_runner_cpp:prod
         restart: "no"
 
     runner-java:
-        profiles: ["judge"]
+        profiles: [ "judge" ]
         build:
             context: ./apps/api/src/runners/java
         image: juez_runner_java:prod
         restart: "no"
-    
+
     worker:
-        profiles: ["judge"]
+        profiles: [ "judge" ]
         build:
             context: ./apps/api
             dockerfile: Dockerfile.worker
@@ -166,7 +179,7 @@ services:
         deploy:
             resources:
                 limits:
-                    cpus: '2'
+                    cpus: "2"
                     memory: 2G
 
 volumes:

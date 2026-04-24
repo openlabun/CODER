@@ -213,7 +213,7 @@ func TestSubmissionCRUD(t *testing.T) {
 		_ = ioVariableRepository.DeleteIOVariable(ctx, output.ID)
 	}()
 
-	examItem, err := exam_factory.NewExamItem(examID, challengeID, 1, 100)
+	examItem, err := exam_factory.NewExamItem(examID, challengeID, 1, 100, nil)
 	if err != nil {
 		process.Fail("create exam item", err)
 	}

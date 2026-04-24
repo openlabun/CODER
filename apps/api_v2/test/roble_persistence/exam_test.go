@@ -294,6 +294,7 @@ func TestExamCRUD(t *testing.T) {
 		examID,
 		1,
 		100,
+		nil,
 	)
 	if err != nil {
 		process.Fail("build exam item with factory", err)

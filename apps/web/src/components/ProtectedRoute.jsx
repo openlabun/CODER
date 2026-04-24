@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
+import PageLoader from './PageLoader';
 
 /**
  * ProtectedRoute ensures that the wrapped component is only rendered for
@@ -10,8 +11,7 @@ const ProtectedRoute = ({ children }) => {
     const location = useLocation();
 
     if (loading) {
-        // You could render a spinner here; keep it simple for now.
-        return null;
+        return <PageLoader message="Validando sesión..." fullScreen />;
     }
 
     if (!user) {

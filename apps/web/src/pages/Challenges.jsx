@@ -17,9 +17,9 @@ import {
     Clock3,
     Eye,
     EyeOff,
-    Filter,
-    Loader2
+    Filter
 } from 'lucide-react';
+import PageLoader from '../components/PageLoader';
 import './Challenges.css';
 
 const Challenges = () => {
@@ -168,10 +168,7 @@ const Challenges = () => {
 
     if (loading) return (
         <div className="challenges-page">
-            <div className="page-loader">
-                <Loader2 className="page-loader-spinner" size={48} />
-                <p className="page-loader-text">Cargando retos...</p>
-            </div>
+            <PageLoader message="Cargando retos..." />
         </div>
     );
 

@@ -4,8 +4,9 @@ import client from '../api/client';
 import { createExam } from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
 import Swal from 'sweetalert2';
-import { Calendar, Clock, FileText, Layout, Save, X, Info, Sparkles } from 'lucide-react';
+import { Calendar, Clock, FileText, Layout, Save, X, Info, Sparkles, Globe, Users, BookOpen, Lock } from 'lucide-react';
 import AIAssistantModal from '../components/AIAssistantModal';
+import PageLoader from '../components/PageLoader';
 import './CreateCourse.css'; // Reutilizamos estilos por consistencia
 
 const CreateExam = () => {
@@ -36,12 +37,26 @@ const CreateExam = () => {
 
     const [loading, setLoading] = useState(false);
     const [showAIModal, setShowAIModal] = useState(false);
+    const [checkingAccess, setCheckingAccess] = useState(true);
+
+    const isTeacher = user?.role === 'professor' || user?.role === 'teacher' || user?.role === 'admin';
 
     useEffect(() => {
-        if (!user || (user.role !== 'professor' && user.role !== 'teacher' && user.role !== 'admin')) {
+        if (!user || !isTeacher) {
             navigate('/dashboard');
+            return;
         }
-    }, [user, navigate]);
+
+        setCheckingAccess(false);
+    }, [user, isTeacher, navigate]);
+
+    if (checkingAccess) {
+        return (
+            <div className="create-course-page">
+                <PageLoader message="Preparando formulario del examen..." />
+            </div>
+        );
+    }
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -253,7 +268,10 @@ const CreateExam = () => {
                                     onChange={handleChange}
                                 />
                                 <div className="radio-content visibility-radio-content">
-                                    <span className="radio-title">Solo mi Curso</span>
+                                    <div className="visibility-title-row">
+                                        <BookOpen size={16} className="visibility-icon" />
+                                        <span className="radio-title">Solo mi Curso</span>
+                                    </div>
                                     <small>Visible solo para estudiantes inscritos</small>
                                 </div>
                             </label>
@@ -267,7 +285,10 @@ const CreateExam = () => {
                                     onChange={handleChange}
                                 />
                                 <div className="radio-content visibility-radio-content">
-                                    <span className="radio-title">Público Global</span>
+                                    <div className="visibility-title-row">
+                                        <Globe size={16} className="visibility-icon" />
+                                        <span className="radio-title">Público Global</span>
+                                    </div>
                                     <small>Visible para toda la comunidad RobleCode</small>
                                 </div>
                             </label>
@@ -281,7 +302,10 @@ const CreateExam = () => {
                                     onChange={handleChange}
                                 />
                                 <div className="radio-content visibility-radio-content">
-                                    <span className="radio-title">Solo Profesores</span>
+                                    <div className="visibility-title-row">
+                                        <Users size={16} className="visibility-icon" />
+                                        <span className="radio-title">Solo Profesores</span>
+                                    </div>
                                     <small>Colabora con otros docentes</small>
                                 </div>
                             </label>
@@ -295,7 +319,10 @@ const CreateExam = () => {
                                     onChange={handleChange}
                                 />
                                 <div className="radio-content visibility-radio-content">
-                                    <span className="radio-title">Privado / Borrador</span>
+                                    <div className="visibility-title-row">
+                                        <Lock size={16} className="visibility-icon" />
+                                        <span className="radio-title">Privado / Borrador</span>
+                                    </div>
                                     <small>Solo tú puedes verlo y editarlo</small>
                                 </div>
                             </label>

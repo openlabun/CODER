@@ -9,6 +9,7 @@ import {
 } from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
 import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, ChevronRight, Edit, ArrowRight, Users, PlusCircle, BookOpen, Sparkles, Target, BarChart3 } from 'lucide-react';
+import PageLoader from '../components/PageLoader';
 import Swal from 'sweetalert2';
 import './Challenges.css';
 
@@ -224,6 +225,7 @@ const CourseDetails = () => {
 
     if (loading) return (
         <div className="challenges-page">
+            <PageLoader message="Cargando curso y evaluaciones..." minHeight="170px" />
             <header className="page-header-compact">
                 <div className="skeleton title-skeleton"></div>
             </header>
@@ -405,7 +407,19 @@ const CourseDetails = () => {
                                 {isProfessor && expandedResultsExamId === examId && (
                                     <div style={{ marginTop: '0.5rem', borderTop: '1px solid #e5e7eb', paddingTop: '0.75rem' }}>
                                         {examResultsMap[examId]?.loading && (
-                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>Cargando resultados...</p>
+                                            <div className="rc-results-loading-shell">
+                                                <PageLoader
+                                                    message="Cargando resultados del examen..."
+                                                    compact
+                                                    minHeight="0"
+                                                    size={16}
+                                                />
+                                                <div className="rc-results-skeleton" aria-hidden="true">
+                                                    <div className="rc-results-skeleton-row"></div>
+                                                    <div className="rc-results-skeleton-row"></div>
+                                                    <div className="rc-results-skeleton-row"></div>
+                                                </div>
+                                            </div>
                                         )}
                                         {examResultsMap[examId]?.error && (
                                             <p style={{ margin: 0, fontSize: '0.85rem', color: '#b91c1c' }}>{examResultsMap[examId].error}</p>

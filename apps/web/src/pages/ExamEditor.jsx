@@ -6,9 +6,10 @@ import { AuthContext } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 import {
     Save, X, Clock, Calendar, FileText, Layout, Trash2,
-    PlusCircle, ChevronRight, Code, Target, Search, Info, Eye
+    PlusCircle, ChevronRight, Code, Target, Search, Info, Eye, Globe, Users, BookOpen, Lock
 } from 'lucide-react';
 import ExamPreview, { buildPreviewChallenges } from '../components/ExamPreview';
+import PageLoader from '../components/PageLoader';
 import './CreateCourse.css';
 import './Challenges.css';
 
@@ -215,14 +216,31 @@ const ExamEditor = () => {
     // --- Add Challenge to Exam ---
     const handleAddChallenge = async (challenge) => {
         const challengeId = challenge.id || challenge.ID;
+        const currentTotalPoints = examItems.reduce((acc, item) => acc + (item.points || item.Points || 0), 0);
+        const remainingPoints = Math.max(0, 100 - currentTotalPoints);
 
         const { value: formValues } = await Swal.fire({
             title: 'Configurar Reto',
-            html:
-                `<label style="display:block;text-align:left;font-weight:700;margin-bottom:4px">Puntos (máx 100)</label>` +
-                `<input id="swal-points" type="number" min="0" max="100" value="100" class="swal2-input" style="margin:0 0 1rem 0">` +
-                `<label style="display:block;text-align:left;font-weight:700;margin-bottom:4px">Orden</label>` +
-                `<input id="swal-order" type="number" min="1" value="${examItems.length + 1}" class="swal2-input" style="margin:0">`,
+            html: `
+                <div class="exam-config-swal-body">
+                    <p class="exam-config-swal-note">Define los valores iniciales del reto dentro del examen.</p>
+                    <div class="exam-config-grid">
+                        <label class="exam-config-field" for="swal-points">
+                            <span>Puntos (máx 100)</span>
+                            <input id="swal-points" type="number" min="0" max="100" value="${Math.min(100, Math.max(0, remainingPoints || 100))}" class="swal2-input exam-config-input">
+                            <small>Disponibles para asignar: <strong>${remainingPoints}</strong></small>
+                        </label>
+                        <label class="exam-config-field" for="swal-order">
+                            <span>Orden</span>
+                            <input id="swal-order" type="number" min="1" value="${examItems.length + 1}" class="swal2-input exam-config-input">
+                            <small>Posición sugerida según el listado actual.</small>
+                        </label>
+                    </div>
+                </div>
+            `,
+            customClass: {
+                popup: 'exam-config-swal'
+            },
             focusConfirm: false,
             showCancelButton: true,
             confirmButtonText: 'Añadir',
@@ -232,7 +250,6 @@ const ExamEditor = () => {
                 const pts = parseInt(document.getElementById('swal-points').value) || 0;
                 const ord = parseInt(document.getElementById('swal-order').value) || 1;
                 if (pts < 0 || pts > 100) { Swal.showValidationMessage('Los puntos deben estar entre 0 y 100'); return false; }
-                const currentTotalPoints = examItems.reduce((acc, item) => acc + (item.points || item.Points || 0), 0);
                 if (currentTotalPoints + pts > 100) { Swal.showValidationMessage(`Excedes los 100 puntos totales. Podrías dar hasta ${100 - currentTotalPoints} pts.`); return false; }
                 return { points: pts, order: ord };
             }
@@ -304,7 +321,7 @@ const ExamEditor = () => {
 
     if (loading) return (
         <div className="create-course-page">
-            <div className="page-header"><div className="header-content"><h1>Cargando examen...</h1></div></div>
+            <PageLoader message="Cargando examen..." />
         </div>
     );
 
@@ -402,17 +419,20 @@ const ExamEditor = () => {
                 {/* --- Visibilidad --- */}
                 <div className="form-section">
                     <div className="section-header"><Layout size={20} /><h2>Visibilidad</h2></div>
-                    <div className="radio-group grid-2">
+                    <div className="radio-group grid-2 visibility-radio-group">
                         {[
-                            { value: 'course', title: 'Solo mi Curso', desc: 'Visible solo para estudiantes inscritos' },
-                            { value: 'public', title: 'Público Global', desc: 'Visible para toda la comunidad' },
-                            { value: 'teachers', title: 'Solo Profesores', desc: 'Colabora con otros docentes' },
-                            { value: 'private', title: 'Privado / Borrador', desc: 'Solo tú puedes verlo' },
+                            { value: 'course', title: 'Solo mi Curso', desc: 'Visible solo para estudiantes inscritos', icon: BookOpen },
+                            { value: 'public', title: 'Público Global', desc: 'Visible para toda la comunidad', icon: Globe },
+                            { value: 'teachers', title: 'Solo Profesores', desc: 'Colabora con otros docentes', icon: Users },
+                            { value: 'private', title: 'Privado / Borrador', desc: 'Solo tú puedes verlo', icon: Lock },
                         ].map(opt => (
-                            <label key={opt.value} className={`radio-card ${formData.visibility === opt.value ? 'active' : ''}`}>
+                            <label key={opt.value} className={`radio-card visibility-radio-card ${formData.visibility === opt.value ? 'active' : ''}`}>
                                 <input type="radio" name="visibility" value={opt.value} checked={formData.visibility === opt.value} onChange={handleChange} />
-                                <div className="radio-content">
-                                    <span className="radio-title">{opt.title}</span>
+                                <div className="radio-content visibility-radio-content">
+                                    <div className="visibility-title-row">
+                                        <opt.icon size={16} className="visibility-icon" />
+                                        <span className="radio-title">{opt.title}</span>
+                                    </div>
                                     <small>{opt.desc}</small>
                                 </div>
                             </label>
@@ -422,21 +442,20 @@ const ExamEditor = () => {
 
                 {/* =============  RETOS DEL EXAMEN  ============= */}
                 <div className="form-section">
-                    <div className="section-header" style={{ justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="section-header exam-items-header">
+                        <div className="exam-items-title-wrap">
                             <Target size={20} />
                             <h2>Retos del Examen ({examItems.length})</h2>
                             {examItems.length > 0 && (
-                                <span style={{ background: '#e0e7ff', color: '#4f46e5', padding: '3px 10px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 900, marginLeft: '0.5rem' }}>
+                                <span className="exam-total-badge">
                                     Total: {examItems.reduce((sum, it) => sum + (it.points || it.Points || 0), 0)} pts
                                 </span>
                             )}
                         </div>
                         <button
                             type="button"
-                            className="btn-create-mini"
+                            className="btn-create-mini exam-add-toggle-btn"
                             onClick={() => setShowAddPanel(!showAddPanel)}
-                            style={{ height: '40px', fontSize: '0.85rem' }}
                         >
                             <PlusCircle size={16} />
                             <span>{showAddPanel ? 'Cerrar Panel' : 'Añadir Reto'}</span>
@@ -445,13 +464,13 @@ const ExamEditor = () => {
 
                     {/* LIST OF LINKED EXAM ITEMS */}
                     {examItems.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#999' }}>
-                            <Target size={40} style={{ marginBottom: '1rem', opacity: 0.3 }} />
-                            <h3 style={{ fontWeight: 700, color: '#888' }}>Sin retos asignados</h3>
-                            <p style={{ fontSize: '0.9rem' }}>Usa el botón "Añadir Reto" para vincular desafíos a este examen.</p>
+                        <div className="exam-items-empty">
+                            <Target size={40} className="exam-items-empty-icon" />
+                            <h3>Sin retos asignados</h3>
+                            <p>Usa el botón "Añadir Reto" para vincular desafíos a este examen.</p>
                         </div>
                     ) : (
-                        <div className="challenges-grid-compact" style={{ marginTop: '1rem' }}>
+                        <div className="exam-items-grid">
                             {examItems.map((item, idx) => {
                                 const itemId = item.id || item.ID;
                                 const ch = item.challenge || {};
@@ -461,67 +480,67 @@ const ExamEditor = () => {
                                 const order = item.order || item.Order || idx + 1;
 
                                 return (
-                                    <div key={itemId} className="challenge-card-mini">
-                                        <div className={`card-accent ${diff}`}></div>
-                                        <div className="card-main">
-                                            <div className="card-top">
-                                                <div className="title-area">
-                                                    <Code size={16} className="title-icon" />
+                                    <div key={itemId} className="exam-item-card">
+                                        <div className={`exam-item-accent ${diff}`}></div>
+                                        <div className="exam-item-card-main">
+                                            <div className="exam-item-top-row">
+                                                <div className="exam-item-title">
+                                                    <Code size={16} />
                                                     <h3>{title}</h3>
                                                 </div>
-                                                <div className="badge-group">
-                                                    <span className={`diff-pill ${diff}`}>
-                                                        {diff === 'easy' ? 'Fácil' : diff === 'hard' ? 'Difícil' : 'Medio'}
-                                                    </span>
-                                                </div>
+                                                <span className={`exam-item-diff-badge ${diff}`}>
+                                                    {diff === 'easy' ? 'Fácil' : diff === 'hard' ? 'Difícil' : 'Medio'}
+                                                </span>
                                             </div>
-                                            <p className="description-text" style={{ fontSize: '0.8rem', color: '#666', margin: '0.5rem 0' }}>
+                                            <p className="exam-item-description">
                                                 {(ch.description || ch.Description || 'Sin descripción.').slice(0, 100)}{(ch.description || '').length > 100 ? '…' : ''}
                                             </p>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                                    <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Pts:</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="100"
-                                                        defaultValue={points}
-                                                        onBlur={(e) => {
-                                                            const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                                                            const currentOthers = examItems.reduce((acc, it) => acc + ((it.id || it.ID) === itemId ? 0 : (it.points || it.Points || 0)), 0);
-                                                            if (currentOthers + val > 100) {
-                                                                Swal.fire({ icon: 'error', title: 'Error', text: `La suma no puede exceder 100. Restan ${100 - currentOthers} pts.`});
-                                                                e.target.value = points;
-                                                                return;
-                                                            }
-                                                            if (val !== points) handleUpdateItem(itemId, { points: val });
-                                                        }}
-                                                        style={{ width: '55px', padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, textAlign: 'center' }}
-                                                    />
+
+                                            <div className="exam-item-controls">
+                                                <div className="exam-item-fields">
+                                                    <div className="exam-item-field">
+                                                        <label className="exam-item-field-label">PTS:</label>
+                                                        <input
+                                                            className="exam-item-field-input"
+                                                            type="number"
+                                                            min="0"
+                                                            max="100"
+                                                            defaultValue={points}
+                                                            onBlur={(e) => {
+                                                                const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                                                const currentOthers = examItems.reduce((acc, it) => acc + ((it.id || it.ID) === itemId ? 0 : (it.points || it.Points || 0)), 0);
+                                                                if (currentOthers + val > 100) {
+                                                                    Swal.fire({ icon: 'error', title: 'Error', text: `La suma no puede exceder 100. Restan ${100 - currentOthers} pts.`});
+                                                                    e.target.value = points;
+                                                                    return;
+                                                                }
+                                                                if (val !== points) handleUpdateItem(itemId, { points: val });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="exam-item-field">
+                                                        <label className="exam-item-field-label">ORDEN:</label>
+                                                        <input
+                                                            className="exam-item-field-input"
+                                                            type="number"
+                                                            min="1"
+                                                            defaultValue={order}
+                                                            onBlur={(e) => {
+                                                                const val = Math.max(1, parseInt(e.target.value) || 1);
+                                                                if (val !== order) handleUpdateItem(itemId, { order: val });
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                                    <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Orden:</label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        defaultValue={order}
-                                                        onBlur={(e) => {
-                                                            const val = Math.max(1, parseInt(e.target.value) || 1);
-                                                            if (val !== order) handleUpdateItem(itemId, { order: val });
-                                                        }}
-                                                        style={{ width: '50px', padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, textAlign: 'center' }}
-                                                    />
-                                                </div>
-                                                <div style={{ marginLeft: 'auto' }}>
-                                                    <button
-                                                        className="action-btn delete"
-                                                        onClick={() => handleRemoveItem(itemId)}
-                                                        title="Quitar del examen"
-                                                        style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#fee2e2', color: '#dc2626', cursor: 'pointer' }}
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </div>
+
+                                                <button
+                                                    className="exam-item-delete-btn"
+                                                    onClick={() => handleRemoveItem(itemId)}
+                                                    title="Quitar del examen"
+                                                    data-tooltip="Quitar reto"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -532,51 +551,42 @@ const ExamEditor = () => {
 
                     {/* --- ADD CHALLENGE PANEL --- */}
                     {showAddPanel && (
-                        <div style={{ marginTop: '1.5rem', background: '#f9fafb', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e5e7eb' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                        <div className="exam-add-panel">
+                            <div className="exam-add-panel-search">
                                 <Search size={18} />
                                 <input
                                     type="text"
                                     placeholder="Buscar reto por título..."
                                     value={searchChallenge}
                                     onChange={(e) => setSearchChallenge(e.target.value)}
-                                    style={{ flex: 1, border: '1px solid #ddd', borderRadius: '10px', padding: '0.6rem 1rem', fontSize: '0.9rem' }}
                                 />
                             </div>
                             {availableChallenges.length === 0 ? (
-                                <p style={{ textAlign: 'center', color: '#999', padding: '1rem' }}>No hay retos disponibles para añadir.</p>
+                                <p className="exam-add-panel-empty">No hay retos disponibles para añadir.</p>
                             ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
+                                <div className="exam-add-panel-list">
                                     {availableChallenges.map(ch => {
                                         const cid = ch.id || ch.ID;
                                         const diff = (ch.difficulty || 'medium').toLowerCase();
                                         return (
-                                            <div key={cid} style={{
-                                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                                background: 'white', borderRadius: '12px', padding: '0.75rem 1rem',
-                                                border: '1px solid #e5e7eb', transition: 'all 0.2s'
-                                            }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                    <Code size={16} style={{ color: '#c8102e' }} />
+                                            <div key={cid} className="exam-add-panel-item">
+                                                <div className="exam-add-panel-item-main">
+                                                    <Code size={16} className="exam-add-panel-item-icon" />
                                                     <div>
-                                                        <strong style={{ fontSize: '0.9rem' }}>{ch.title}</strong>
-                                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '2px' }}>
-                                                            <span className={`diff-pill ${diff}`} style={{ fontSize: '0.6rem', padding: '2px 8px' }}>
+                                                        <strong className="exam-add-panel-item-title">{ch.title}</strong>
+                                                        <div className="exam-add-panel-meta">
+                                                            <span className={`diff-pill ${diff} exam-add-panel-diff`}>
                                                                 {diff === 'easy' ? 'Fácil' : diff === 'hard' ? 'Difícil' : 'Medio'}
                                                             </span>
-                                                            <span style={{ fontSize: '0.7rem', color: '#999' }}>{ch.status}</span>
+                                                            <span className="exam-add-panel-status">{ch.status}</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <button
+                                                    type="button"
+                                                    className="exam-add-panel-add-btn"
                                                     onClick={() => handleAddChallenge(ch)}
                                                     disabled={addingItem === cid}
-                                                    style={{
-                                                        background: 'linear-gradient(135deg, #c8102e, #a00d25)', color: 'white',
-                                                        border: 'none', borderRadius: '10px', padding: '0.5rem 1rem',
-                                                        fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
-                                                        opacity: addingItem === cid ? 0.6 : 1
-                                                    }}
                                                 >
                                                     {addingItem === cid ? 'Añadiendo...' : <><PlusCircle size={14} /> Añadir</>}
                                                 </button>

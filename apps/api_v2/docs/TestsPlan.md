@@ -564,6 +564,46 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   go test -v ./test/use_cases/submission -run TestSubmissionCreateAndRead
   ```
 
+- **Límite de intentos para examen:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (con solo 2 intentos `try_limit`)
+  
+  - Paso 3: Iniciar sesión con usuario de estudiante
+  
+  - Paso 4: Crear una sesión en el examen
+  
+  - Paso 5: Cerrar la sesión
+  
+  - Paso 6: Crear una sesión en el examen
+  
+  - Paso 7: Cerrar la sesión
+  
+  - Paso 8: Crear una sesión en el examen (espera `error`)
+
+- **Límite de intentos para revisiones:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público
+  
+  - Paso 3: Crear un reto
+  
+  - Paso 4: Crear casos de prueba
+  
+  - Paso 5: Crear un punto de examen (con `TryLimit == 2`)
+  
+  - Paso 6: Iniciar sesión con usuario de estudiante
+  
+  - Paso 8: Crear una sesión en el examen
+  
+  - Paso 9: Crear una revisión
+  
+  - Paso 10: Crear una revisión
+  
+  - Paso 11: Crear una revisión (espera `error`)
+
 - **Revisiones Inválidas:**
   
   - Paso 1: Iniciar sesión con usuario de docente

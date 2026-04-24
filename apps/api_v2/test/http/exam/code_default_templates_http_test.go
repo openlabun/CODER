@@ -84,6 +84,8 @@ func TestChallengeDefaultCodeTemplatesHTTP(t *testing.T) {
 	resp = httputils.PostExamDefaultCodeTemplates(t, app, teacherAccess, map[string]any{
 		"input_variables": []map[string]any{
 			{"name": "n", "type": "int", "value": "5"},
+			{"name": "nums", "type": "array", "value": "1 2 3"},
+			{"name": "enabled", "type": "boolean", "value": "true"},
 		},
 		"output_variable": map[string]any{"name": "result", "type": "int", "value": "25"},
 	})
@@ -112,8 +114,17 @@ func TestChallengeDefaultCodeTemplatesHTTP(t *testing.T) {
 	if !ok {
 		process.Fail("validate default templates", fmt.Errorf("expected python template"))
 	}
-	if !strings.Contains(pythonTemplate, "n = int(input())") {
+	if !strings.Contains(pythonTemplate, "n = int(input().strip())") {
 		process.Fail("validate default templates", fmt.Errorf("expected input variable assignment in python template"))
+	}
+	if !strings.Contains(pythonTemplate, "if _raw_nums.startswith('['):") || !strings.Contains(pythonTemplate, "nums = ast.literal_eval(_raw_nums)") {
+		process.Fail("validate default templates", fmt.Errorf("expected bracket-style array parsing in python template"))
+	}
+	if !strings.Contains(pythonTemplate, "nums = list(map(int, _raw_nums.split()))") {
+		process.Fail("validate default templates", fmt.Errorf("expected space-separated array parsing fallback in python template"))
+	}
+	if !strings.Contains(pythonTemplate, "enabled = input().strip().lower() in ('true', '1', 'yes')") {
+		process.Fail("validate default templates", fmt.Errorf("expected boolean input parsing in python template"))
 	}
 	if !strings.Contains(pythonTemplate, "result = 0") {
 		process.Fail("validate default templates", fmt.Errorf("expected output declaration in python template"))

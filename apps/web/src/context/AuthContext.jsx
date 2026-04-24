@@ -136,7 +136,10 @@ export const AuthProvider = ({ children }) => {
                 setUser(prev => prev ? { ...prev, token: newToken } : prev);
             } catch (error) {
                 console.error('Proactive token refresh failed:', error);
-                logout();
+                const status = error?.response?.status;
+                if (status === 401 || status === 400) {
+                    logout();
+                }
             }
         }, intervalTime);
 

@@ -70,8 +70,11 @@ client.interceptors.request.use((config) => {
     async (error) => {
       const originalRequest = error?.config;
       const status = error?.response?.status;
+      const msg = error?.response?.data?.error || '';
 
-      if (!originalRequest || status !== 401 || originalRequest._retry) {
+      const isUnauthorized = status === 401 || (status === 400 && msg.toLowerCase().includes('unauthorized'));
+
+      if (!originalRequest || !isUnauthorized || originalRequest._retry) {
         return Promise.reject(error);
       }
 
@@ -91,7 +94,11 @@ client.interceptors.request.use((config) => {
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return client(originalRequest);
       } catch (refreshError) {
-        clearAuthStorage();
+        const refreshStatus = refreshError?.response?.status;
+        // Only wipe credentials if the server explicitly rejected the refresh token (400 or 401)
+        if (refreshStatus === 401 || refreshStatus === 400) {
+          clearAuthStorage();
+        }
         return Promise.reject(refreshError);
       }
     }

@@ -5,7 +5,6 @@ import {
     LayoutDashboard, 
     Trophy, 
     BookOpen, 
-    FileText, 
     BarChart3, 
     PlusCircle, 
     LogOut,
@@ -24,16 +23,14 @@ const Sidebar = () => {
 
     const navItems = user?.role === 'student' ? [
         { path: '/dashboard', label: 'PANEL PRINCIPAL', icon: <LayoutDashboard size={20} /> },
-        { path: '/public-exams', label: 'Exámenes Públicos', icon: <ShieldCheck size={20} /> },
+        { path: '/public-exams', label: 'Actividades Públicas', icon: <ShieldCheck size={20} /> },
         { path: '/courses', label: 'Mis Cursos', icon: <BookOpen size={20} /> },
-        { path: '/submissions', label: 'Mis Envíos', icon: <FileText size={20} /> },
         { path: '/leaderboard', label: 'Clasificación', icon: <BarChart3 size={20} /> },
     ] : [
         { path: '/dashboard', label: 'PANEL PRINCIPAL', icon: <LayoutDashboard size={20} /> },
         { path: '/challenges', label: 'Repositorio de Retos', icon: <Trophy size={20} /> },
-        { path: '/public-exams', label: 'Exámenes Públicos', icon: <ShieldCheck size={20} /> },
+        { path: '/public-exams', label: 'Actividades Públicas', icon: <ShieldCheck size={20} /> },
         { path: '/courses', label: 'Cursos', icon: <BookOpen size={20} /> },
-        { path: '/submissions', label: 'Todos los Envíos', icon: <FileText size={20} /> },
         { path: '/leaderboard', label: 'Clasificación', icon: <BarChart3 size={20} /> },
     ];
 

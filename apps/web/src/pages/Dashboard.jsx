@@ -136,8 +136,8 @@ const Dashboard = () => {
                             <Clock size={16} />
                             <h2>Envíos Recientes</h2>
                         </div>
-                        <Link to="/submissions" className="link-more">
-                            Ver historial <ArrowRight size={12} />
+                        <Link to="/courses" className="link-more">
+                            Ver cursos <ArrowRight size={12} />
                         </Link>
                     </div>
 
@@ -182,9 +182,9 @@ const Dashboard = () => {
                                 <Trophy size={18} />
                                 <span>Ranking</span>
                             </Link>
-                            <Link to="/submissions" className="l-box blue">
+                            <Link to="/courses" className="l-box blue">
                                 <History size={18} />
-                                <span>Envíos</span>
+                                <span>Cursos</span>
                             </Link>
                         </div>
                     </section>

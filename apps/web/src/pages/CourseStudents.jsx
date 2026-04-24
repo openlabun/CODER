@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { Trash2, Copy, Link as LinkIcon, UploadCloud, FileText, CheckCircle2, Key } from 'lucide-react';
+import PageLoader from '../components/PageLoader';
 import Swal from 'sweetalert2';
 import './Courses.css';
 import './CourseActions.css';
@@ -172,7 +173,13 @@ const CourseStudents = () => {
         reader.readAsText(csvFile);
     };
 
-    if (loading) return <div className="loading">Cargando...</div>;
+    if (loading) {
+        return (
+            <div className="course-students-page">
+                <PageLoader message="Cargando estudiantes del curso..." minHeight="260px" />
+            </div>
+        );
+    }
 
     return (
         <div className="course-students-page">

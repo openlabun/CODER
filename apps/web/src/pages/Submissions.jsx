@@ -3,10 +3,11 @@ import {
     CheckCircle, XCircle, Clock, Code,
     Calendar, ChevronRight, ChevronDown, AlertCircle,
     Trophy, RotateCcw, Target, Users,
-    Hash, User, Layers, BookOpen, Loader2
+    Hash, User, Layers, BookOpen
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import client from '../api/client';
+import PageLoader from '../components/PageLoader';
 import './Submissions.css';
 
 const Submissions = () => {
@@ -34,9 +35,32 @@ const Submissions = () => {
         const fetchExams = async () => {
             if (!user) return;
             try {
-                const { data } = await client.get('/exams/public');
-                const examList = Array.isArray(data) ? data : (data?.items || data?.exams || []);
-                setExams(examList);
+                // Fetch public exams
+                const pubRes = await client.get('/exams/public');
+                const pubExams = Array.isArray(pubRes.data) ? pubRes.data : (pubRes.data?.items || pubRes.data?.exams || []);
+                
+                // Fetch course exams
+                const courseScope = isProfessor ? '?scope=owned' : '?scope=enrolled';
+                const courseRes = await client.get(`/courses${courseScope}`);
+                const courses = Array.isArray(courseRes.data) ? courseRes.data : (courseRes.data?.items || courseRes.data?.courses || []);
+                
+                const courseExamPromises = courses.map(c => client.get(`/exams/course/${c.id || c.ID}`));
+                const courseExamResults = await Promise.allSettled(courseExamPromises);
+                
+                let courseExams = [];
+                courseExamResults.forEach(res => {
+                    if (res.status === 'fulfilled') {
+                        const exams = Array.isArray(res.value.data) ? res.value.data : (res.value.data?.items || res.value.data?.exams || []);
+                        courseExams = [...courseExams, ...exams];
+                    }
+                });
+
+                // Merge and deduplicate
+                const allExamsMap = new Map();
+                pubExams.forEach(e => allExamsMap.set(e.id || e.ID, e));
+                courseExams.forEach(e => allExamsMap.set(e.id || e.ID, e));
+                
+                setExams(Array.from(allExamsMap.values()));
             } catch (err) {
                 console.error('Error loading exams:', err);
                 setError('No se pudieron cargar los exámenes.');
@@ -45,7 +69,7 @@ const Submissions = () => {
             }
         };
         if (user) fetchExams();
-    }, [user]);
+    }, [user, isProfessor]);
 
     // Load exam details (items + submissions) lazily
     const loadExamDetails = useCallback(async (examId) => {
@@ -207,8 +231,19 @@ const Submissions = () => {
                         <div className="exam-detail-panel">
                             {details?.loading && (
                                 <div className="detail-loading">
-                                    <div className="spinner-small"></div>
-                                    <span>Cargando resultados...</span>
+                                    <div className="rc-results-loading-shell">
+                                        <PageLoader
+                                            message="Cargando resultados del examen..."
+                                            compact
+                                            minHeight="0"
+                                            size={16}
+                                        />
+                                        <div className="rc-results-skeleton" aria-hidden="true">
+                                            <div className="rc-results-skeleton-row"></div>
+                                            <div className="rc-results-skeleton-row"></div>
+                                            <div className="rc-results-skeleton-row"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                             {details?.error && (
@@ -395,8 +430,20 @@ const Submissions = () => {
                         <div className="exam-detail-panel">
                             {details?.loading && (
                                 <div className="detail-loading">
-                                    <div className="spinner-small"></div>
-                                    <span>Cargando resultados...</span>
+                                    <div className="rc-results-loading-shell">
+                                        <PageLoader
+                                            message="Cargando resultados del examen..."
+                                            compact
+                                            minHeight="0"
+                                            size={16}
+                                        />
+                                        <div className="rc-results-skeleton" aria-hidden="true">
+                                            <div className="rc-results-skeleton-row"></div>
+                                            <div className="rc-results-skeleton-row"></div>
+                                            <div className="rc-results-skeleton-row"></div>
+                                            <div className="rc-results-skeleton-row"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                             {details?.error && (
@@ -580,10 +627,7 @@ const Submissions = () => {
     // ============ RENDER ============
     if (loading) return (
         <div className="submissions-page-mini">
-            <div className="page-loader" style={{ paddingBottom: '2rem' }}>
-                <Loader2 className="page-loader-spinner" size={48} />
-                <p className="page-loader-text">Cargando envíos...</p>
-            </div>
+            <PageLoader message="Cargando envíos..." minHeight="240px" />
             <div className="skeleton-table-mini">
                 {[...Array(4)].map((_, i) => (
                     <div key={i} className="skeleton-row-mini shimmer"></div>

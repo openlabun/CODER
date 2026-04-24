@@ -10,13 +10,20 @@ import (
 func NewExamItem(
 	challengeID, examID string,
 	order, points int,
+	try_limit *int,
 ) (*Entities.ExamItem, error) {
+	if try_limit == nil {
+		defaultTryLimit := -1
+		try_limit = &defaultTryLimit
+	}
+
 	examItem := &Entities.ExamItem{
 		ID:          uuid.New().String(),
 		ChallengeID: challengeID,
 		ExamID:      examID,
 		Order:       order,
 		Points:      points,
+		TryLimit:    *try_limit,
 	}
 
 	if err := Validations.ValidateExamItem(examItem); err != nil {
@@ -28,7 +35,7 @@ func NewExamItem(
 
 func ExistingExamItem(
 	id, challengeID, examID string,
-	order, points int,
+	order, points, try_limit int,
 ) (*Entities.ExamItem, error) {
 	examItem := &Entities.ExamItem{
 		ID:          id,
@@ -36,6 +43,7 @@ func ExistingExamItem(
 		ExamID:      examID,
 		Order:       order,
 		Points:      points,
+		TryLimit:    try_limit,
 	}
 
 	if err := Validations.ValidateExamItem(examItem); err != nil {

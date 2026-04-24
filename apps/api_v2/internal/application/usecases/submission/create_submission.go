@@ -143,19 +143,26 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		return nil, fmt.Errorf("no exam item score found for exam item %q and student %q", examItem.ID, user.Username)
 	}
 
-	// [STEP 8] Create submission with user provided values
+	// [STEP 8] If exam item has try limit, get number of tries
+	if examItem.TryLimit > 0 {
+		if examItemScore.Tries >= examItem.TryLimit {
+			return nil, fmt.Errorf("exam item %q has reached its try limit", examItem.ID)
+		}
+	}
+
+	// [STEP 9] Create submission with user provided values
 	submission, err := mapper.MapCreateSubmissionInputToSubmissionEntity(user.ID, examItemScore, input)
 	if err != nil {
 		return nil, err
 	}
 
-	// [STEP 9] Save submission in database
+	// [STEP 10] Save submission in database
 	createdSubmission, err := uc.submissionRepository.CreateSubmission(ctx, submission)
 	if err != nil {
 		return nil, err
 	}
 
-	// [STEP 10] Get challenge and validate language is allowed
+	// [STEP 11] Get challenge and validate language is allowed
 	challenge, err := uc.challengeRepository.GetChallengeByID(ctx, input.ChallengeID)
 	if err != nil {
 		return nil, err
@@ -169,7 +176,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		return nil, fmt.Errorf("language %q is not allowed for challenge with id %q", submission.Language, input.ChallengeID)
 	}
 
-	// [STEP 11] Get test cases of the challenge
+	// [STEP 12] Get test cases of the challenge
 	testCases, err := uc.testCaseRepository.GetTestCasesByChallengeID(ctx, input.ChallengeID)
 	if err != nil {
 		return nil, err
@@ -179,7 +186,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		return nil, fmt.Errorf("no test cases found for challenge with id %q", input.ChallengeID)
 	}
 
-	// [STEP 12] Create submission results for each test case of the challenge
+	// [STEP 13] Create submission results for each test case of the challenge
 	var publishedResults []dtos.SubmissionResultPublishedDTO
 	for _, testCase := range testCases {
 		result, err := uc.createSubmissionResultsForTestCases(ctx, createdSubmission.ID, *testCase)
@@ -188,7 +195,7 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		}
 
 		if result != nil {
-			// [STEP 13] Create DTO for publishing
+			// [STEP 14] Create DTO for publishing
 			publishedResult := mapper.MapSubmissionResultToPublishedDTO(*createdSubmission, *result, *testCase, *challenge)
 			if publishedResult != nil {
 				publishedResults = append(publishedResults, *publishedResult)
@@ -196,12 +203,19 @@ func (uc *CreateSubmissionUseCase) Execute(ctx context.Context, input dtos.Creat
 		}
 	}
 
-	// [STEP 14] Publish submission created event to message broker for asynchronous processing of submission results
+	// [STEP 15] Publish submission created event to message broker for asynchronous processing of submission results
 	for _, publishedResult := range publishedResults {
 		err = uc.publisherPort.PublishSubmission(publishedResult)
 		if err != nil {
 			return nil, fmt.Errorf("failed to publish submission result: %w", err)
 		}
+	}
+
+	// [STEP 16] Increment tries in ExamItemScore and persist change in database
+	examItemScore.Tries += 1
+	_, err = uc.examItemScoreRepository.UpdateExamItemScore(ctx, examItemScore)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update exam item score: %w", err)
 	}
 
 	return createdSubmission, nil

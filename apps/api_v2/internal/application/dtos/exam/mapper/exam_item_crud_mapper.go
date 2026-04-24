@@ -2,11 +2,11 @@ package mapper
 
 import (
 	"fmt"
-	
+
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/exam"
-	
-	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
+
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	factory "github.com/openlabun/CODER/apps/api_v2/internal/domain/factory/exam"
 )
 
 func MapCreateExamItemInputToExamItemEntity(input dtos.CreateExamItemInput) (*Entities.ExamItem, error) {
@@ -15,6 +15,7 @@ func MapCreateExamItemInputToExamItemEntity(input dtos.CreateExamItemInput) (*En
 		input.ExamID,
 		input.Order,
 		input.Points,
+		input.TryLimit,
 	)
 	if err != nil {
 		return nil, err
@@ -32,6 +33,10 @@ func MapUpdateExamItemInputToExamItemEntity(existingExamItem *Entities.ExamItem,
 		existingExamItem.Points = *input.Points
 	}
 
+	if input.TryLimit != nil {
+		existingExamItem.TryLimit = *input.TryLimit
+	}
+
 	return existingExamItem, nil
 }
 
@@ -43,7 +48,7 @@ func MapExamItemScore(examItem *Entities.ExamItem, examScore *Entities.ExamScore
 	if examScore == nil {
 		return nil, fmt.Errorf("exam score cannot be nil")
 	}
-	
+
 	return factory.NewExamItemScore(
 		examItem.ID,
 		examScore.ID,

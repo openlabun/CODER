@@ -13,22 +13,28 @@ import (
 
 // ExamItem mappers
 func examItemToRecord(item *Entities.ExamItem) map[string]any {
-	return map[string]any{
+	record := map[string]any{
 		"ID":          strings.TrimSpace(item.ID),
 		"ChallengeID": strings.TrimSpace(item.ChallengeID),
 		"ExamID":      strings.TrimSpace(item.ExamID),
 		"Order":       item.Order,
 		"Points":      item.Points,
+		"TryLimit":    item.TryLimit,
 	}
+
+	return record
 }
 
 func examItemToUpdates(item *Entities.ExamItem) map[string]any {
-	return map[string]any{
+	updates := map[string]any{
 		"ChallengeID": strings.TrimSpace(item.ChallengeID),
 		"ExamID":      strings.TrimSpace(item.ExamID),
 		"Order":       item.Order,
 		"Points":      item.Points,
+		"TryLimit":    item.TryLimit,
 	}
+
+	return updates
 }
 
 func recordToExamItem(record map[string]any) (*Entities.ExamItem, error) {
@@ -38,6 +44,7 @@ func recordToExamItem(record map[string]any) (*Entities.ExamItem, error) {
 		asString(record["ExamID"]),
 		asInt(record["Order"]),
 		asInt(record["Points"]),
+		asInt(record["TryLimit"]),
 	)
 }
 

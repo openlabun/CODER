@@ -1804,6 +1804,7 @@ paths:
                   challenge_id: chg-123
                   order: 1
                   points: 100
+                  try_limit: 2
       responses:
         '201':
           description: Exam item created.
@@ -1819,6 +1820,7 @@ paths:
                     exam_id: exm-123
                     order: 1
                     points: 100
+                    try_limit: 2
         '400':
           description: Invalid payload or domain error.
           content:
@@ -1847,6 +1849,7 @@ paths:
                 value:
                   order: 3
                   points: 150
+                  try_limit: 1
       responses:
         '200':
           description: Exam item updated.
@@ -1862,6 +1865,7 @@ paths:
                     exam_id: exm-123
                     order: 3
                     points: 150
+                    try_limit: 1
         '400':
           description: Invalid payload/path or domain error.
           content:
@@ -3278,7 +3282,7 @@ components:
 
     ExamItemResponse:
       type: object
-      required: [id, order, points, exam_id]
+      required: [id, order, points, try_limit, exam_id]
       properties:
         id:
           type: string
@@ -3286,6 +3290,9 @@ components:
           type: integer
         points:
           type: integer
+        try_limit:
+          type: integer
+          description: Try limit for this exam item. Use -1 for unlimited.
         exam_id:
           type: string
         challenge:
@@ -3303,6 +3310,9 @@ components:
           type: integer
         points:
           type: integer
+        try_limit:
+          type: integer
+          description: Optional try limit for this exam item. Use -1 for unlimited.
 
     ExamItemUpdateRequest:
       type: object
@@ -3311,10 +3321,13 @@ components:
           type: integer
         points:
           type: integer
+        try_limit:
+          type: integer
+          description: Try limit for this exam item. Use -1 for unlimited.
 
     ExamItemEntityResponse:
       type: object
-      required: [id, challenge_id, exam_id, order, points]
+      required: [id, challenge_id, exam_id, order, points, try_limit]
       properties:
         id:
           type: string
@@ -3326,6 +3339,9 @@ components:
           type: integer
         points:
           type: integer
+        try_limit:
+          type: integer
+          description: Try limit for this exam item. Use -1 for unlimited.
 
     SessionCreateRequest:
       type: object

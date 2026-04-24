@@ -10,6 +10,7 @@ import (
 	services "github.com/openlabun/CODER/apps/api_v2/internal/application/services"
 
 	constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/submission"
+	examEntity "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	Entity "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
 	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	submissionRepository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
@@ -91,19 +92,32 @@ func (uc *CreateSessionUseCase) Execute(ctx context.Context, input dtos.CreateSe
 		return nil, fmt.Errorf("exam with id %q does not exist", input.ExamID)
 	}
 
-	// [STEP 6] If no existing session, create new session for the student and return it
+	// [STEP 6] If exam has trylimit, get number of tries (ExamScore)
+	var examScores []*examEntity.ExamScore
+	if exam.TryLimit > 0 {
+		examScores, err = uc.examScoreRepository.GetExamScores(ctx, &exam.ID, &user.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get exam scores: %w", err)
+		}
+
+		if len(examScores) >= exam.TryLimit {
+			return nil, fmt.Errorf("student has reached the maximum number of tries for this exam")
+		}
+	}
+
+	// [STEP 7] If no existing session, create new session for the student and return it
 	sessionEntity, err := mapper.MapCreateSessionInputToSessionRecord(input, exam)
 	if err != nil {
 		return nil, err
 	}
 
-	// [STEP 7] Save in database and return session entity
+	// [STEP 8] Save in database and return session entity
 	session, err = uc.sessionRepository.CreateSession(ctx, sessionEntity)
 	if err != nil {
 		return nil, err
 	}
 
-	// [STEP 8] Create ExamScore for exam evaluation
+	// [STEP 9] Create ExamScore for exam evaluation
 	examScore, err := exam_mapper.MapExamScore(exam, session)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create exam score: %w", err)
@@ -114,20 +128,20 @@ func (uc *CreateSessionUseCase) Execute(ctx context.Context, input dtos.CreateSe
 		return nil, fmt.Errorf("failed to create exam score: %w", err)
 	}
 
-	// [STEP 9] Create ExamItemScores for exam evaluation
+	// [STEP 10] Create ExamItemScores for exam evaluation
 	examItems, err := uc.examItemRepository.GetExamItem(ctx, &exam.ID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get exam items: %w", err)
 	}
 
 	for _, examItem := range examItems {
-		// [STEP 9.1] Create ExamItemScore for each exam item
+		// [STEP 10.1] Create ExamItemScore for each exam item
 		examItemScore, err := exam_mapper.MapExamItemScore(examItem, examScore)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create exam item score: %w", err)
 		}
 
-		// [STEP 9.2] Save ExamItemScore in database
+		// [STEP 10.2] Save ExamItemScore in database
 		examItemScore, err = uc.examItemScoreRepository.CreateExamItemScore(ctx, examItemScore)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create exam item score: %w", err)

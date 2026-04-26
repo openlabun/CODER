@@ -29,8 +29,8 @@ services:
             - "15672"
         healthcheck:
             test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-            interval: 5s
-            timeout: 5s
+            interval: 60s
+            timeout: 60s
             retries: 20
         networks:
             - judge_net

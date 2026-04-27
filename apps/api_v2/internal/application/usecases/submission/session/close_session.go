@@ -59,6 +59,10 @@ func (uc *CloseSessionUseCase) Execute(ctx context.Context, input dtos.CloseSess
 		return nil, err
 	}
 
+	if session == nil {
+		return nil, fmt.Errorf("session with id %q does not exist", input.SessionID)
+	}
+
 	// [STEP 3] Verify if student is owner of the session
 	if user.Role == user_constants.UserRoleStudent && session.StudentID != user.ID {
 		return nil, fmt.Errorf("user is not the owner of the session")

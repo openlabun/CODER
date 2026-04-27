@@ -107,7 +107,7 @@ func (r *TestCaseRepository) GetTestCasesByChallengeID(ctx context.Context, chal
 		return nil, err
 	}
 
-	res, err := r.adapter.Read(testCaseTableName, map[string]string{"ChallengeID": normalizedID})
+	res, err := r.adapter.Read(testCaseTableName, map[string]string{"ChallengeID": normalizedID, "Custom": "false"})
 	if err != nil {
 		return nil, err
 	}

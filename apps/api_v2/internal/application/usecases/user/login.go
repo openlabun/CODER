@@ -1,6 +1,8 @@
 package user_usecases
 
 import (
+	"strings"
+
 	dtos "github.com/openlabun/CODER/apps/api_v2/internal/application/dtos/user"
 	ports "github.com/openlabun/CODER/apps/api_v2/internal/application/ports/user"
 )
@@ -21,13 +23,16 @@ func NewLoginUseCase(
 }
 
 func (uc *LoginUseCase) Execute(email, password string) (*dtos.UserAccess, error) {
-	// Hash the provided password
+	// [STEP 1] Trim password
+	password = strings.TrimSpace(password)
+	
+	// [STEP 2] Hash the provided password
 	hashedPassword, err := uc.passwordHasher.Hash(password)
 	if err != nil {
 		return nil, err
 	}
 
-	// Repository: validate user credentials
+	// [STEP 3] Validate user credentials
 	user, err := uc.userService.LoginUser(email, hashedPassword)
 	if err != nil {
 		return nil, err

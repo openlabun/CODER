@@ -130,35 +130,25 @@ func (uc *CreateCustomSubmissionUseCase) Execute(ctx context.Context, input dtos
 		return nil, fmt.Errorf("language %q is not allowed for challenge with id %q", submission.Language, input.ChallengeID)
 	}
 
-	// [STEP 10] Get test cases of the challenge
-	testCases, err := uc.testCaseRepository.GetTestCasesByChallengeID(ctx, input.ChallengeID)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(testCases) == 0 {
-		return nil, fmt.Errorf("no test cases found for challenge with id %q", input.ChallengeID)
-	}
-
-	// [STEP 11] Save custom test Case
+	// [STEP 10] Save custom test Case
 	testCase, err = domain_services.CreateTestCase(ctx, testCase, uc.testCaseRepository, uc.ioVariableRepository)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save custom test case: %w", err)
 	}
 
-	// [STEP 12] Create submission results for each test case of the challenge
+	// [STEP 11] Create submission results for each test case of the challenge
 	submissionResult, err := mapper.MapSubmissionResultEntity(submission.ID, testCase.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map submission result entity: %w", err)
 	}
 
-	// [STEP 13] Save submission result in database
+	// [STEP 12] Save submission result in database
 	result, err := domain_services.CreateSubmissionResult(ctx, submissionResult, uc.resultRepository, uc.ioVariableRepository)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create submission result: %w", err)
 	}
 
-	// [STEP 14] Create DTO for publishing
+	// [STEP 13] Create DTO for publishing
 	var publishedResults []dtos.SubmissionResultPublishedDTO
 	if result != nil {
 		publishedResult := mapper.MapSubmissionResultToPublishedDTO(*createdSubmission, *result, *testCase, *challenge)
@@ -167,7 +157,7 @@ func (uc *CreateCustomSubmissionUseCase) Execute(ctx context.Context, input dtos
 		}
 	}
 
-	// [STEP 15] Publish submission created event to message broker for asynchronous processing of submission results
+	// [STEP 14] Publish submission created event to message broker for asynchronous processing of submission results
 	for _, publishedResult := range publishedResults {
 		err = uc.publisherPort.PublishSubmission(publishedResult)
 		if err != nil {

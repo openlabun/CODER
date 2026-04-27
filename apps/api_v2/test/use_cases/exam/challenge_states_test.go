@@ -88,14 +88,13 @@ func TestChallengeStates(t *testing.T) {
 	}
 	process.EndStep()
 
-	// [STEP 6] Get challenge details and validate published state
-	process.StartStep("Actualiza el reto (espera error)")
-	invalidDraft := string(exam_consts.ChallengeStatusDraft)
-	_, err = process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{ChallengeID: challengeID, Status: &invalidDraft})
-	if err == nil {
-		process.Fail("invalid transition published->draft", fmt.Errorf("expected error on invalid transition"))
+	// [STEP 6] Updates challenge
+	process.StartStep("Actualiza el reto")
+	description := "Update 1"
+	_, err = process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{ChallengeID: challengeID, Description: &description})
+	if err != nil {
+		process.Fail("error updating challenge", fmt.Errorf("unexpected error when updating published challenge: %v", err))
 	}
-	process.Log("Recibió ERROR, como se esperaba")
 	process.EndStep()
 
 	// [STEP 7] Update the challenge to archived
@@ -107,13 +106,13 @@ func TestChallengeStates(t *testing.T) {
 	}
 	process.EndStep()
 
-	// [STEP 8] Get challenge details and validate private state
-	process.StartStep("Actualiza el reto (espera error)")
-	_, err = process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{ChallengeID: challengeID, Status: &invalidDraft})
-	if err == nil {
-		process.Fail("invalid transition private->draft", fmt.Errorf("expected error on invalid transition"))
+	// [STEP 8] Updates Challenge
+	process.StartStep("Actualiza el reto")
+	description = "Update 2"
+	_, err = process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{ChallengeID: challengeID, Description: &description})
+	if err != nil {
+		process.Fail("error updating challenge", fmt.Errorf("unexpected error when updating private challenge: %v", err))
 	}
-	process.Log("Recibió ERROR, como se esperaba")
 	process.EndStep()
 
 	// [STEP 9] Update the challenge to archived
@@ -126,8 +125,8 @@ func TestChallengeStates(t *testing.T) {
 
 	// [STEP 10] Get challenge details and validate archived state
 	process.StartStep("Actualiza el reto (espera error)")
-	invalidPrivate := string(exam_consts.ChallengeStatusPrivate)
-	_, err = process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{ChallengeID: challengeID, Status: &invalidPrivate})
+	description = "Update 3"
+	_, err = process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{ChallengeID: challengeID, Description: &description})
 	if err == nil {
 		process.Fail("invalid transition archived->private", fmt.Errorf("expected error on invalid transition"))
 	}
@@ -165,6 +164,7 @@ func TestChallengeStates(t *testing.T) {
 
 	// [STEP 14] Get challenge details and validate private state
 	process.StartStep("Actualiza el reto a estado draft (espera error)")
+	invalidDraft := string(exam_consts.ChallengeStatusDraft)
 	_, err = process.Application.ChallengeModule.UpdateChallenge.Execute(teacherCtx, exam_dtos.UpdateChallengeInput{ChallengeID: challengeID, Status: &invalidDraft})
 	if err == nil {
 		process.Fail("invalid transition private->draft", fmt.Errorf("expected error on invalid transition"))

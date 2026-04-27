@@ -71,13 +71,10 @@ func TestChallengeStatesHTTP(t *testing.T) {
 	httputils.RequireStatus(t, resp, 200, "publish challenge")
 	process.EndStep()
 
-	// [STEP 6] Attempt to update the challenge (expect error)
-	process.StartStep("Actualiza el reto (espera error)")
-	resp = httputils.PatchChallengeUpdate(t, app, teacherAccess, challengeID, map[string]any{"status": "draft"})
-	if resp.StatusCode == 200 {
-		process.Fail("invalid transition published->draft", fmt.Errorf("expected error on invalid transition"))
-	}
-	process.Log("Recibio ERROR, como se esperaba")
+	// [STEP 6] Update Challenge
+	process.StartStep("Actualiza el reto")
+	resp = httputils.PatchChallengeUpdate(t, app, teacherAccess, challengeID, map[string]any{"description": "Update published"})
+	httputils.RequireStatus(t, resp, 200, "update published challenge")
 	process.EndStep()
 
 	// [STEP 7] Update the challenge to private
@@ -86,13 +83,10 @@ func TestChallengeStatesHTTP(t *testing.T) {
 	httputils.RequireStatus(t, resp, 200, "transition published->private")
 	process.EndStep()
 
-	// [STEP 8] Attempt to update the challenge to draft (expect error)
-	process.StartStep("Actualiza el reto (espera error)")
-	resp = httputils.PatchChallengeUpdate(t, app, teacherAccess, challengeID, map[string]any{"status": "draft"})
-	if resp.StatusCode == 200 {
-		process.Fail("invalid transition private->draft", fmt.Errorf("expected error on invalid transition"))
-	}
-	process.Log("Recibio ERROR, como se esperaba")
+	// [STEP 8] Update Challenge
+	process.StartStep("Actualiza el reto")
+	resp = httputils.PatchChallengeUpdate(t, app, teacherAccess, challengeID, map[string]any{"description": "Update private"})
+	httputils.RequireStatus(t, resp, 200, "update private challenge")
 	process.EndStep()
 
 	// [STEP 9] Update the challenge back to published

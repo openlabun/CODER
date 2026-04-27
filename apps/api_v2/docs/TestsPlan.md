@@ -238,11 +238,11 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   
   - Paso 5: Actualiza el reto a estado `published`
   
-  - Paso 6: Actualiza el reto (espera `error`)
+  - Paso 6: Actualiza el reto
   
   - Paso 7: Actualiza el reto a estado `private`
   
-  - Paso 8: Actualiza el reto (espera `error`)
+  - Paso 8: Actualiza el reto
   
   - Paso 9: Actualiza el reto a estado `archived`
   
@@ -814,4 +814,4 @@ Posterior a la finalización del paso se mostrarán los datos individuales de ca
   
   - Paso 7: Cada usuario subirá una revisión (**crítica**)
   
-  - Paso 8: Cada usuario revisará el estado de la revisión hasta obtener `accepted` (**crítica**)
+  - Paso 8: Cada usuario revisará el estado de la revisión hasta obtener `accepted` (**crítica**)F

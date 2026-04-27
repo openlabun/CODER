@@ -136,10 +136,13 @@ func MapUpdateChallengeInputToChallengeEntity(existingChallenge *Entities.Challe
 	}
 
 	if input.Status != nil {
-		err := state_machine.ApplyTransition(existingChallenge, constants.ChallengeStatus(*input.Status))
-        if err != nil {
-            return nil, err
-        }
+		new_status := constants.ChallengeStatus(*input.Status)
+		if new_status != existingChallenge.Status {
+			err := state_machine.ApplyTransition(existingChallenge, new_status)
+			if err != nil {
+				return nil, err
+			}
+		}
     }
 
 	if input.Difficulty != nil {

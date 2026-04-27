@@ -379,7 +379,7 @@ const ExamEditor = () => {
                         <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="ej. Parcial 1: Algoritmos" required />
                     </div>
                     <div className="form-group">
-                        <label>Descripción / Instrucciones</label>
+                        <label>Descripción / Instrucciones *</label>
                         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Instrucciones para los estudiantes..." rows="4" />
                     </div>
                 </div>
@@ -424,12 +424,12 @@ const ExamEditor = () => {
                             <input type="number" name="tryLimit" value={formData.tryLimit} onChange={handleChange} min="1" disabled={formData.isTryUnlimited} required={!formData.isTryUnlimited} style={{ opacity: formData.isTryUnlimited ? 0.5 : 1 }} />
                         </div>
                     </div>
-                    
+
                     <div className="form-group" style={{ marginTop: '1rem' }}>
                         <label>Visibilidad de Resultados para el Estudiante</label>
-                        <select 
-                            name="resultsVisibility" 
-                            value={formData.resultsVisibility} 
+                        <select
+                            name="resultsVisibility"
+                            value={formData.resultsVisibility}
                             onChange={handleChange}
                         >
                             <option value="none">No mostrar resultados nunca</option>
@@ -540,7 +540,7 @@ const ExamEditor = () => {
                                                                 const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
                                                                 const currentOthers = examItems.reduce((acc, it) => acc + ((it.id || it.ID) === itemId ? 0 : (it.points || it.Points || 0)), 0);
                                                                 if (currentOthers + val > 100) {
-                                                                    Swal.fire({ icon: 'error', title: 'Error', text: `La suma no puede exceder 100. Restan ${100 - currentOthers} pts.`});
+                                                                    Swal.fire({ icon: 'error', title: 'Error', text: `La suma no puede exceder 100. Restan ${100 - currentOthers} pts.` });
                                                                     e.target.value = points;
                                                                     return;
                                                                 }
@@ -635,7 +635,7 @@ const ExamEditor = () => {
                 <div className="info-text">
                     <h3>💡 Gestión de Retos</h3>
                     <p>
-                        Añade retos existentes de tu repositorio a este examen. Cada reto se presenta como un ejercicio 
+                        Añade retos existentes de tu repositorio a este examen. Cada reto se presenta como un ejercicio
                         dentro de la evaluación con su propio sistema de puntuación.
                     </p>
                 </div>

@@ -77,7 +77,7 @@ const CreateExam = () => {
             timeLimit: examIdea.time_limit,
             tryLimit: examIdea.try_limit
         }));
-        
+
         Swal.fire({
             icon: 'success',
             title: 'Propuesta de IA Aplicada',
@@ -141,8 +141,8 @@ const CreateExam = () => {
                     <h1>Crear Nuevo Examen</h1>
                     <p className="subtitle">Configura una evaluación para tus estudiantes</p>
                 </div>
-                <button 
-                    className="ai-gen-header-btn" 
+                <button
+                    className="ai-gen-header-btn"
                     onClick={() => setShowAIModal(true)}
                 >
                     <Sparkles size={16} /> Diseñar con IA
@@ -156,7 +156,7 @@ const CreateExam = () => {
                             <FileText size={20} />
                             <h2>Información General</h2>
                         </div>
-                        
+
                         <div className="form-group">
                             <label>Título del Examen <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                             <input
@@ -170,7 +170,7 @@ const CreateExam = () => {
                         </div>
 
                         <div className="form-group">
-                            <label>Descripción / Instrucciones</label>
+                            <label>Descripción / Instrucciones *</label>
                             <textarea
                                 name="description"
                                 value={formData.description}
@@ -262,9 +262,9 @@ const CreateExam = () => {
 
                         <div className="form-group" style={{ marginTop: '1rem' }}>
                             <label>Visibilidad de Resultados para el Estudiante</label>
-                            <select 
-                                name="resultsVisibility" 
-                                value={formData.resultsVisibility} 
+                            <select
+                                name="resultsVisibility"
+                                value={formData.resultsVisibility}
                                 onChange={handleChange}
                             >
                                 <option value="none">No mostrar resultados nunca</option>
@@ -358,23 +358,23 @@ const CreateExam = () => {
                                         <Lock size={16} className="visibility-icon" />
                                         <span className="radio-title">Privado / Borrador</span>
                                     </div>
-                                    <small>Solo tú puedes verlo. {courseId && <span style={{color: 'var(--primary)'}}>(Se desvinculará del curso)</span>}</small>
+                                    <small>Solo tú puedes verlo. {courseId && <span style={{ color: 'var(--primary)' }}>(Se desvinculará del curso)</span>}</small>
                                 </div>
                             </label>
                         </div>
                     </div>
 
                     <div className="form-actions">
-                        <button 
-                            type="button" 
-                            onClick={() => navigate(-1)} 
+                        <button
+                            type="button"
+                            onClick={() => navigate(-1)}
                             className="btn-secondary"
                         >
                             <X size={18} /> Cancelar
                         </button>
-                        <button 
-                            type="submit" 
-                            className="btn-primary" 
+                        <button
+                            type="submit"
+                            className="btn-primary"
                             disabled={loading}
                         >
                             {loading ? (
@@ -394,14 +394,14 @@ const CreateExam = () => {
                 <div className="info-text">
                     <h3>💡 ¿Cómo añadir retos?</h3>
                     <p>
-                        Una vez creado el examen, puedes añadir retos desde la sección de "Retos" 
+                        Una vez creado el examen, puedes añadir retos desde la sección de "Retos"
                         editando cada reto y asociándolo a este examen.
                     </p>
                 </div>
             </div>
 
             {showAIModal && (
-                <AIAssistantModal 
+                <AIAssistantModal
                     onClose={() => setShowAIModal(false)}
                     onApplyExam={handleApplyAIExam}
                     initialTab="exam"

@@ -58,7 +58,15 @@ const PublicExams = () => {
 
     const visibleExams = isProfessor
         ? exams
-        : exams.filter((exam) => getExamVisibility(exam) === 'public');
+        : exams.filter((exam) => {
+            if (getExamVisibility(exam) !== 'public') return false;
+            const startTimeStr = exam.startTime || exam.StartTime || exam.start_time;
+            if (startTimeStr) {
+                const st = new Date(startTimeStr);
+                if (!Number.isNaN(st.getTime()) && st > new Date()) return false;
+            }
+            return true;
+        });
 
     const filteredExams = visibleExams.filter((e) => {
         const title = (e.title || e.Title || '').toLowerCase();
@@ -93,6 +101,14 @@ const PublicExams = () => {
         if (!value) return null;
         const parsed = new Date(value);
         return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const formatDateTimeExact = (value) => {
+        const d = parseDateSafe(value);
+        if (!d) return '';
+        const dateStr = d.toLocaleDateString();
+        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `${dateStr} ${timeStr}`;
     };
 
     const getFilterLabel = (filterValue) => {
@@ -235,8 +251,8 @@ const PublicExams = () => {
                         const tryLimit = exam.try_limit ?? exam.tryLimit ?? exam.TryLimit ?? 1;
                         const limitText = tryLimit === -1 ? 'Ilimitados' : tryLimit;
                         const formattedAvailability = (!startTime && !endTime) ? 'Siempre' :
-                            (startTime && endTime) ? `${new Date(startTime).toLocaleDateString()} al ${new Date(endTime).toLocaleDateString()}` :
-                            (startTime ? `Desde ${new Date(startTime).toLocaleDateString()}` : `Hasta ${new Date(endTime).toLocaleDateString()}`);
+                            (startTime && endTime) ? `${formatDateTimeExact(startTime)} al ${formatDateTimeExact(endTime)}` :
+                            (startTime ? `Desde ${formatDateTimeExact(startTime)}` : `Hasta ${formatDateTimeExact(endTime)}`);
                         const allowLateValue = exam.allowLateSubmissions ?? exam.AllowLateSubmissions ?? exam.allow_late_submissions;
                         const allowLateSubmissions =
                             allowLateValue === true ||

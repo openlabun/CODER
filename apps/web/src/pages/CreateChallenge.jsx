@@ -51,7 +51,7 @@ const CreateChallenge = () => {
     const [generatingTemplates, setGeneratingTemplates] = useState(false);
 
     const SUPPORTED_LANGUAGES = [
-        { id: 'python', label: 'Python', defaultTemplate: 'def solve():\n    pass\n' },
+        { id: 'python', label: 'Python', defaultTemplate: '' },
         { id: 'javascript', label: 'JavaScript', defaultTemplate: 'function solve() {\n\n}\n' },
         { id: 'java', label: 'Java', defaultTemplate: 'class Solution {\n    public static void solve() {\n\n    }\n}\n' },
         { id: 'cpp', label: 'C++', defaultTemplate: '#include <iostream>\nusing namespace std;\n\nvoid solve() {\n\n}\n' },
@@ -242,8 +242,8 @@ const CreateChallenge = () => {
             Swal.fire({ icon: 'warning', title: 'Campos incompletos', text: 'El título y la descripción son requeridos.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
             return false;
         }
-        if (hiddenTestCases.length < 3) {
-            Swal.fire({ icon: 'warning', title: 'Faltan casos ocultos', text: 'Se requieren al menos 3 casos ocultos.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
+        if (hiddenTestCases.length < 1) {
+            Swal.fire({ icon: 'warning', title: 'Faltan casos ocultos', text: 'Se requiere al menos 1 caso oculto.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
             return false;
         }
         if (!formData.outputVariable.name?.trim()) {
@@ -476,16 +476,16 @@ const CreateChallenge = () => {
                         {activeTab === 'basic' && (
                             <div className="form-section">
                                 <div className="form-group">
-                                    <label>Título *</label>
+                                    <label>Título <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                                     <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Ej: Suma A+B" required />
                                 </div>
                                 <div className="form-group">
-                                    <label>Descripción *</label>
+                                    <label>Descripción <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                                     <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Enunciado..." rows="8" required />
                                 </div>
                                 <div className="form-row">
                                     <div className="form-group">
-                                        <label>Dificultad</label>
+                                        <label>Dificultad <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                                         <select name="difficulty" value={formData.difficulty} onChange={handleChange}>
                                             <option value="easy">Fácil</option>
                                             <option value="medium">Medio</option>

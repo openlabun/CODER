@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Mail, Lock, User, Code, AlertCircle, UserPlus, Zap, Trophy, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, Code, AlertCircle, UserPlus, Zap, Trophy, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import './Auth.css';
 
 const Register = () => {
@@ -12,13 +12,15 @@ const Register = () => {
     const navigate = useNavigate();
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
+        const trimmedPassword = password.trim();
         try {
-            await register(name, email, password);
+            await register(name, email, trimmedPassword);
             navigate('/dashboard');
         } catch (err) {
             setError(err.message || 'Error al crear la cuenta. Por favor intenta de nuevo.');
@@ -77,12 +79,20 @@ const Register = () => {
                                 <div className="input-wrapper">
                                     <Lock className="input-icon" size={20} />
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Mínimo 8 caracteres"
                                         required
                                     />
+                                    <button 
+                                        type="button"
+                                        className="password-toggle-btn"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
                             </div>
                             

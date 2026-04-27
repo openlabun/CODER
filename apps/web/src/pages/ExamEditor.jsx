@@ -23,7 +23,8 @@ const ExamEditor = () => {
     const [formData, setFormData] = useState({
         title: '', description: '', visibility: 'private',
         startTime: '', endTime: '', timeLimit: 60,
-        tryLimit: 1, allowLateSubmissions: false
+        tryLimit: 1, allowLateSubmissions: false,
+        isTimeUnlimited: false, isTryUnlimited: false, resultsVisibility: 'after_mine'
     });
     const [examItems, setExamItems] = useState([]);
     const [challenges, setChallenges] = useState([]);
@@ -66,9 +67,12 @@ const ExamEditor = () => {
                     visibility: e.visibility || e.Visibility || 'private',
                     startTime: st ? new Date(st).toISOString().slice(0, 16) : '',
                     endTime: et ? new Date(et).toISOString().slice(0, 16) : '',
-                    timeLimit: Math.floor(tl / 60),
-                    tryLimit: e.tryLimit || e.TryLimit || e.try_limit || 1,
+                    timeLimit: tl === -1 ? 60 : Math.floor(tl / 60),
+                    tryLimit: (e.tryLimit === -1 || e.TryLimit === -1 || e.try_limit === -1) ? 1 : (e.tryLimit || e.TryLimit || e.try_limit || 1),
                     allowLateSubmissions: e.allowLateSubmissions || e.AllowLateSubmissions || false,
+                    isTimeUnlimited: tl === -1,
+                    isTryUnlimited: e.tryLimit === -1 || e.TryLimit === -1 || e.try_limit === -1,
+                    resultsVisibility: 'after_mine'
                 });
 
                 // Fetch exam items
@@ -199,8 +203,8 @@ const ExamEditor = () => {
             if (formData.visibility) payload.visibility = formData.visibility;
             if (formData.startTime) payload.start_time = new Date(formData.startTime).toISOString();
             if (formData.endTime) payload.end_time = new Date(formData.endTime).toISOString();
-            payload.time_limit = parseInt(formData.timeLimit) * 60;
-            payload.try_limit = parseInt(formData.tryLimit);
+            payload.time_limit = formData.isTimeUnlimited ? -1 : parseInt(formData.timeLimit) * 60;
+            payload.try_limit = formData.isTryUnlimited ? -1 : parseInt(formData.tryLimit);
             payload.allow_late_submissions = formData.allowLateSubmissions;
 
             await client.patch(`/exams/${id}`, payload);
@@ -371,7 +375,7 @@ const ExamEditor = () => {
                 <div className="form-section">
                     <div className="section-header"><FileText size={20} /><h2>Información General</h2></div>
                     <div className="form-group">
-                        <label>Título del Examen *</label>
+                        <label>Título del Examen <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                         <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="ej. Parcial 1: Algoritmos" required />
                     </div>
                     <div className="form-group">
@@ -385,7 +389,7 @@ const ExamEditor = () => {
                     <div className="section-header"><Calendar size={20} /><h2>Programación</h2></div>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Fecha y Hora de Inicio *</label>
+                            <label>Fecha y Hora de Inicio <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                             <input type="datetime-local" name="startTime" value={formData.startTime} onChange={handleChange} required />
                         </div>
                         <div className="form-group">
@@ -400,13 +404,39 @@ const ExamEditor = () => {
                     <div className="section-header"><Clock size={20} /><h2>Restricciones y Límites</h2></div>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Duración (minutos) *</label>
-                            <input type="number" name="timeLimit" value={formData.timeLimit} onChange={handleChange} min="1" required />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label>Duración (minutos) <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
+                                <label className="checkbox-label" style={{ margin: 0, fontSize: '0.85rem' }}>
+                                    <input type="checkbox" name="isTimeUnlimited" checked={formData.isTimeUnlimited} onChange={handleChange} />
+                                    <span>Sin límite</span>
+                                </label>
+                            </div>
+                            <input type="number" name="timeLimit" value={formData.timeLimit} onChange={handleChange} min="1" disabled={formData.isTimeUnlimited} required={!formData.isTimeUnlimited} style={{ opacity: formData.isTimeUnlimited ? 0.5 : 1 }} />
                         </div>
                         <div className="form-group">
-                            <label>Límite de Intentos *</label>
-                            <input type="number" name="tryLimit" value={formData.tryLimit} onChange={handleChange} min="1" required />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label>Límite de Intentos <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
+                                <label className="checkbox-label" style={{ margin: 0, fontSize: '0.85rem' }}>
+                                    <input type="checkbox" name="isTryUnlimited" checked={formData.isTryUnlimited} onChange={handleChange} />
+                                    <span>Ilimitado</span>
+                                </label>
+                            </div>
+                            <input type="number" name="tryLimit" value={formData.tryLimit} onChange={handleChange} min="1" disabled={formData.isTryUnlimited} required={!formData.isTryUnlimited} style={{ opacity: formData.isTryUnlimited ? 0.5 : 1 }} />
                         </div>
+                    </div>
+                    
+                    <div className="form-group" style={{ marginTop: '1rem' }}>
+                        <label>Visibilidad de Resultados para el Estudiante</label>
+                        <select 
+                            name="resultsVisibility" 
+                            value={formData.resultsVisibility} 
+                            onChange={handleChange}
+                        >
+                            <option value="none">No mostrar resultados nunca</option>
+                            <option value="after_mine">Mostrar mis resultados al finalizar mi envío</option>
+                            <option value="after_all">Mostrar resultados cuando finalice la actividad para todos</option>
+                        </select>
+                        <small>Nota: La funcionalidad de esta opción está sujeta a la conexión con el servidor.</small>
                     </div>
                     <div className="checkbox-group">
                         <label className="checkbox-label">

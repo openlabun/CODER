@@ -26,6 +26,15 @@ const CourseDetails = () => {
     const currentUserId = String(user?.id || user?.ID || '');
     const [studentNameById, setStudentNameById] = useState({});
 
+    const formatDateTimeExact = (value) => {
+        if (!value) return '';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return '';
+        const dateStr = d.toLocaleDateString();
+        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `${dateStr} ${timeStr}`;
+    };
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -318,8 +327,8 @@ const CourseDetails = () => {
                         const limitText = tryLimit === -1 ? 'Ilimitados' : tryLimit;
 
                         const formattedAvailability = (!startTime && !endTime) ? 'Siempre' :
-                            (startTime && endTime) ? `${new Date(startTime).toLocaleDateString()} al ${new Date(endTime).toLocaleDateString()}` :
-                            (startTime ? `Desde ${new Date(startTime).toLocaleDateString()}` : `Hasta ${new Date(endTime).toLocaleDateString()}`);
+                            (startTime && endTime) ? `${formatDateTimeExact(startTime)} al ${formatDateTimeExact(endTime)}` :
+                            (startTime ? `Desde ${formatDateTimeExact(startTime)}` : `Hasta ${formatDateTimeExact(endTime)}`);
 
                         return (
                             <div

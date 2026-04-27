@@ -81,6 +81,7 @@ const ExamRunner = () => {
     }); // { challengeId: count }
     const heartbeatRef = useRef(null);
     const timerRef = useRef(null);
+    const consoleRef = useRef(null);
 
     // Professors should use the editor, not the runner
     useEffect(() => {
@@ -462,6 +463,7 @@ const ExamRunner = () => {
 
         setSubmitting(true);
         setOutput('Enviando solución...');
+        setTimeout(() => consoleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
 
         try {
             // Send heartbeat right before submission to keep session active
@@ -578,6 +580,7 @@ const ExamRunner = () => {
             const activeSessionId = sessionId || localStorage.getItem('session_id');
             if (activeSessionId) {
                 try {
+                    await client.post(`/submissions/sessions/${activeSessionId}/heartbeat`);
                     await client.post(`/submissions/sessions/${activeSessionId}/close`);
                 } catch (err) {
                     console.warn('Failed to close session:', err);
@@ -927,7 +930,8 @@ const ExamRunner = () => {
                         </div>
 
                         {/* BOTTOM SECTION: Output panel */}
-                        <div style={{
+                        {/* RESULTS PANEL */}
+                        <div ref={consoleRef} style={{
                             height: output ? '300px' : '50px',
                             flexShrink: 0,
                             background: '#1a1a2e',
@@ -1111,6 +1115,7 @@ const ExamRunner = () => {
                             <button onClick={async () => {
                                 setShowRunModal(false);
                                 setOutput('⏳ Ejecutando prueba local en el servidor...\n\n');
+                                setTimeout(() => consoleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
 
                                 try {
                                     let res;

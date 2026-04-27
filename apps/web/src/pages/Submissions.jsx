@@ -29,6 +29,7 @@ const Submissions = () => {
     const [expandedChallengeId, setExpandedChallengeId] = useState(null);
     // Professor: expanded attempt (submission) within a student drill-down
     const [expandedAttemptId, setExpandedAttemptId] = useState(null);
+    const [selectedAttempt, setSelectedAttempt] = useState(null);
 
     // Fetch exams on mount
     useEffect(() => {
@@ -586,8 +587,13 @@ const Submissions = () => {
                                                                                     <div key={sub.id || sub.ID || si} style={{
                                                                                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                                                                         padding: '0.35rem 0.6rem', borderRadius: '8px', marginBottom: '2px',
-                                                                                        background: sc === 100 ? '#f0fdf4' : '#f8fafc', fontSize: '0.73rem', fontWeight: 700
-                                                                                    }}>
+                                                                                        background: sc === 100 ? '#f0fdf4' : '#f8fafc', fontSize: '0.73rem', fontWeight: 700,
+                                                                                        cursor: 'pointer', border: '1px solid transparent'
+                                                                                    }}
+                                                                                    onClick={() => setSelectedAttempt({ ...sub, attemptNumber: si + 1 })}
+                                                                                    onMouseEnter={(e) => e.currentTarget.style.borderColor = '#cbd5e1'}
+                                                                                    onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
+                                                                                    >
                                                                                         <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#475569' }}>
                                                                                             {sc === 100 ? <CheckCircle size={11} style={{ color: '#16a34a' }} /> : <XCircle size={11} style={{ color: '#ef4444' }} />}
                                                                                             Intento #{si + 1} — {sub.language || sub.Language || '—'}
@@ -669,6 +675,93 @@ const Submissions = () => {
             ) : (
                 <div className="exams-list">
                     {isProfessor ? renderProfessorView() : renderStudentView()}
+                </div>
+            )}
+
+            {/* ATTEMPT MODAL (CODE & RESULTS) */}
+            {selectedAttempt && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+                    padding: '2rem'
+                }}>
+                    <div style={{
+                        background: '#ffffff', borderRadius: '12px', width: '800px', maxWidth: '100%',
+                        maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', overflow: 'hidden'
+                    }}>
+                        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Code size={18} style={{ color: '#c8102e' }} /> Detalles del Envío
+                                </h3>
+                                <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px', display: 'flex', gap: '1rem' }}>
+                                    <span>Intento #{selectedAttempt.attemptNumber}</span>
+                                    <span>•</span>
+                                    <span>{selectedAttempt.language || selectedAttempt.Language || '—'}</span>
+                                    <span>•</span>
+                                    <span style={{ color: (selectedAttempt.score || selectedAttempt.Score) === 100 ? '#16a34a' : '#ef4444', fontWeight: 'bold' }}>
+                                        {selectedAttempt.score || selectedAttempt.Score}%
+                                    </span>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedAttempt(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+                        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid #e5e7eb' }}>
+                                <div style={{ padding: '0.5rem 1rem', background: '#f1f5f9', borderBottom: '1px solid #e5e7eb', fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
+                                    CÓDIGO ENVIADO
+                                </div>
+                                <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', background: '#1e1e1e' }}>
+                                    <pre style={{ margin: 0, color: '#d4d4d4', fontFamily: 'monospace', fontSize: '0.85rem', whiteSpace: 'pre-wrap' }}>
+                                        {selectedAttempt.code || selectedAttempt.Code || 'Sin código'}
+                                    </pre>
+                                </div>
+                            </div>
+                            <div style={{ width: '350px', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
+                                <div style={{ padding: '0.5rem 1rem', background: '#f1f5f9', borderBottom: '1px solid #e5e7eb', fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
+                                    CASOS DE PRUEBA
+                                </div>
+                                <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+                                    {(!selectedAttempt.results || selectedAttempt.results.length === 0) ? (
+                                        <div style={{ color: '#64748b', fontSize: '0.85rem', textAlign: 'center', marginTop: '2rem' }}>
+                                            No hay detalles de resultados.
+                                        </div>
+                                    ) : (
+                                        selectedAttempt.results.map((r, i) => {
+                                            const st = (r.Status || r.status || 'unknown').toLowerCase();
+                                            const isAcc = st === 'accepted';
+                                            return (
+                                                <div key={i} style={{
+                                                    marginBottom: '0.75rem', padding: '0.75rem', borderRadius: '8px',
+                                                    background: '#fff', border: `1px solid ${isAcc ? '#bbf7d0' : '#fecaca'}`,
+                                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                                }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155' }}>Caso #{i + 1}</span>
+                                                        <span style={{
+                                                            fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px', borderRadius: '100px',
+                                                            background: isAcc ? '#dcfce7' : '#fee2e2', color: isAcc ? '#16a34a' : '#ef4444'
+                                                        }}>
+                                                            {isAcc ? 'ACEPTADO' : 'FALLIDO'}
+                                                        </span>
+                                                    </div>
+                                                    {!isAcc && (r.error_message || r.ErrorMessage || r.errorMessage) && (
+                                                        <div style={{ fontSize: '0.75rem', color: '#ef4444', background: '#fef2f2', padding: '0.5rem', borderRadius: '4px', marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>
+                                                            {r.error_message || r.ErrorMessage || r.errorMessage}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

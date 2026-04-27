@@ -229,8 +229,8 @@ const CourseStudents = () => {
 
                     {/* Auto CSV */}
                     <div className="admin-actions-card" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
-                        <h3>Carga Automática CSV</h3>
-                        <p>Inscribe múltiples estudiantes. Típicamente los correos separados por comas o por líneas.</p>
+                        <h3>Importar desde CSV</h3>
+                        <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: '1.4' }}>Sube un archivo .csv con los correos de los estudiantes. El archivo debe contener las direcciones de correo electrónico (separadas por comas o saltos de línea). Los estudiantes serán inscritos automáticamente al curso.</p>
                         <div style={{ marginTop: 'auto', paddingTop: '1rem', display: 'flex', gap: '10px' }}>
                             <input 
                                 type="file" 

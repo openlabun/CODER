@@ -32,7 +32,10 @@ const CreateExam = () => {
         endTime: getTodayISO('23:59'),
         timeLimit: 60, // En minutos para el front, convertiremos a segundos
         tryLimit: 1,
-        allowLateSubmissions: false
+        allowLateSubmissions: false,
+        isTimeUnlimited: false,
+        isTryUnlimited: false,
+        resultsVisibility: 'after_mine'
     });
 
     const [loading, setLoading] = useState(false);
@@ -98,9 +101,11 @@ const CreateExam = () => {
                 visibility: formData.visibility,
                 start_time: new Date(formData.startTime).toISOString(),
                 end_time: formData.endTime ? new Date(formData.endTime).toISOString() : null,
-                time_limit: parseInt(formData.timeLimit) * 60, // A segundos
-                try_limit: parseInt(formData.tryLimit),
+                time_limit: formData.isTimeUnlimited ? -1 : parseInt(formData.timeLimit) * 60,
+                try_limit: formData.isTryUnlimited ? -1 : parseInt(formData.tryLimit),
                 allow_late_submissions: formData.allowLateSubmissions,
+                course_id: formData.visibility === 'private' ? null : (courseId || null),
+                // resultsVisibility is currently UI-only as requested
                 professor_id: user.id || user.ID || ''
             };
 
@@ -153,7 +158,7 @@ const CreateExam = () => {
                         </div>
                         
                         <div className="form-group">
-                            <label>Título del Examen *</label>
+                            <label>Título del Examen <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                             <input
                                 type="text"
                                 name="title"
@@ -184,7 +189,7 @@ const CreateExam = () => {
 
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Fecha y Hora de Inicio *</label>
+                                <label>Fecha y Hora de Inicio <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                                 <input
                                     type="datetime-local"
                                     name="startTime"
@@ -214,29 +219,59 @@ const CreateExam = () => {
 
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Duración (minutos) *</label>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <label>Duración (minutos) <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
+                                    <label className="checkbox-label" style={{ margin: 0, fontSize: '0.85rem' }}>
+                                        <input type="checkbox" name="isTimeUnlimited" checked={formData.isTimeUnlimited} onChange={handleChange} />
+                                        <span>Sin límite</span>
+                                    </label>
+                                </div>
                                 <input
                                     type="number"
                                     name="timeLimit"
                                     value={formData.timeLimit}
                                     onChange={handleChange}
                                     min="1"
-                                    required
+                                    disabled={formData.isTimeUnlimited}
+                                    required={!formData.isTimeUnlimited}
+                                    style={{ opacity: formData.isTimeUnlimited ? 0.5 : 1 }}
                                 />
                                 <small>Tiempo máximo para completar el examen</small>
                             </div>
 
                             <div className="form-group">
-                                <label>Límite de Intentos *</label>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <label>Límite de Intentos <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
+                                    <label className="checkbox-label" style={{ margin: 0, fontSize: '0.85rem' }}>
+                                        <input type="checkbox" name="isTryUnlimited" checked={formData.isTryUnlimited} onChange={handleChange} />
+                                        <span>Ilimitado</span>
+                                    </label>
+                                </div>
                                 <input
                                     type="number"
                                     name="tryLimit"
                                     value={formData.tryLimit}
                                     onChange={handleChange}
                                     min="1"
-                                    required
+                                    disabled={formData.isTryUnlimited}
+                                    required={!formData.isTryUnlimited}
+                                    style={{ opacity: formData.isTryUnlimited ? 0.5 : 1 }}
                                 />
                             </div>
+                        </div>
+
+                        <div className="form-group" style={{ marginTop: '1rem' }}>
+                            <label>Visibilidad de Resultados para el Estudiante</label>
+                            <select 
+                                name="resultsVisibility" 
+                                value={formData.resultsVisibility} 
+                                onChange={handleChange}
+                            >
+                                <option value="none">No mostrar resultados nunca</option>
+                                <option value="after_mine">Mostrar mis resultados al finalizar mi envío</option>
+                                <option value="after_all">Mostrar resultados cuando finalice la actividad para todos</option>
+                            </select>
+                            <small>Nota: La funcionalidad de esta opción está sujeta a la conexión con el servidor.</small>
                         </div>
 
                         <div className="checkbox-group">
@@ -323,7 +358,7 @@ const CreateExam = () => {
                                         <Lock size={16} className="visibility-icon" />
                                         <span className="radio-title">Privado / Borrador</span>
                                     </div>
-                                    <small>Solo tú puedes verlo y editarlo</small>
+                                    <small>Solo tú puedes verlo. {courseId && <span style={{color: 'var(--primary)'}}>(Se desvinculará del curso)</span>}</small>
                                 </div>
                             </label>
                         </div>

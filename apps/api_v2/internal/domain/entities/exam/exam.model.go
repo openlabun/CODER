@@ -27,3 +27,8 @@ type Exam struct {
 	ProfessorID     string					`json:"professor_id"`
 	CourseID        *string					`json:"course_id"` // Optional
 }
+
+func (e *Exam) IsOpen() bool {
+	now := time.Now()
+	return (e.StartTime.Before(now) && (e.EndTime == nil || e.EndTime.After(now))) || e.AllowLateSubmissions
+}

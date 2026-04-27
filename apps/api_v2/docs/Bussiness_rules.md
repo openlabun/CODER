@@ -62,9 +62,9 @@
   
   - `draft`: permiten modificación, no pueden ser vinculados a un examen.
   
-  - `published`: no permiten modificación, pueden ser vinculados a un examen, y cualquier otro usuario profesor lo puede buscar y hacer copia (*fork*).
+  - `published`: pueden ser vinculados a un examen, y cualquier otro usuario profesor lo puede buscar y hacer copia (*fork*).
   
-  - `private`: no permiten modificación, solo serán visibles en el repositorio para su dueño pero pueden ser vinculados a un examen.
+  - `private`: solo serán visibles en el repositorio para su dueño pero pueden ser vinculados a un examen.
   
   - `archived`: no permiten modificación, tampoco estarán visibles en el examen.
 

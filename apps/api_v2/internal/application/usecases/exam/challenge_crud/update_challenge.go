@@ -8,6 +8,7 @@ import (
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
 	user_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/user"
+	exam_constants "github.com/openlabun/CODER/apps/api_v2/internal/domain/constants/exam"
 	repositories "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	domain_services "github.com/openlabun/CODER/apps/api_v2/internal/domain/services"
 
@@ -67,7 +68,12 @@ func (uc *UpdateChallengeUseCase) Execute(ctx context.Context, input dtos.Update
 		return nil, err
 	}
 
-	// [STEP 5] Save challenge with user provided values
+	// [STEP 5] Verify that challenge can be updated (it's not archived)
+	if existingChallenge.Status == exam_constants.ChallengeStatusArchived {
+		return nil, fmt.Errorf("challenge with id %q is archived and cannot be updated", input.ChallengeID)
+	}
+
+	// [STEP 6] Save challenge with user provided values
 	updatedChallenge, err := domain_services.UpdateChallenge(ctx, challenge, uc.challengeRepository, uc.ioVariableRepository)
 	if err != nil {
 		return nil, err

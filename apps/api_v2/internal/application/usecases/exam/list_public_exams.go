@@ -54,6 +54,21 @@ func (uc *GetPublicExamsUseCase) Execute(ctx context.Context) ([]*Entities.Exam,
 		public_exams = append(public_exams, teacher_exams...)
 	}
 
+	// [STEP 4] If user is a student, filter closed exams
+	if user.Role == user_constants.UserRoleStudent {
+		public_exams = filterOpenExams(public_exams)
+	}
 
 	return public_exams, nil
+}
+
+func filterOpenExams(exams []*Entities.Exam) []*Entities.Exam {
+	var open_exams []*Entities.Exam
+	for _, exam := range exams {
+		if exam.IsOpen() {
+			open_exams = append(open_exams, exam)
+		}
+	}
+
+	return open_exams
 }

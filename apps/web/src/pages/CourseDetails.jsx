@@ -8,7 +8,7 @@ import {
     deleteExam
 } from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
-import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, ChevronRight, Edit, ArrowRight, Users, PlusCircle, BookOpen, Sparkles, Target, BarChart3 } from 'lucide-react';
+import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, ChevronRight, Edit, ArrowRight, Users, PlusCircle, BookOpen, Target, BarChart3, ArrowLeft, Sparkles } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
 import Swal from 'sweetalert2';
 import './Challenges.css';
@@ -254,6 +254,16 @@ const CourseDetails = () => {
         <div className="challenges-page">
             <header className="page-header-compact">
                 <div className="header-info">
+                    <div className="course-details-back-row">
+                        <button
+                            type="button"
+                            className="course-details-back-btn"
+                            onClick={() => navigate('/courses')}
+                        >
+                            <ArrowLeft size={16} />
+                            <span>Volver a Cursos</span>
+                        </button>
+                    </div>
                     <div className="breadcrumb-mini">
                         <BookOpen size={14} />
                         <span>Cursos</span>

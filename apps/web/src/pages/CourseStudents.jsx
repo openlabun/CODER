@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Trash2, Copy, Link as LinkIcon, UploadCloud, FileText, CheckCircle2, Key } from 'lucide-react';
+import { Trash2, Copy, Link as LinkIcon, UploadCloud, FileText, Key, ArrowLeft, Users } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
 import Swal from 'sweetalert2';
 import './Courses.css';
@@ -189,18 +189,18 @@ const CourseStudents = () => {
                     <p className="subtitle">{course?.name} ({course?.code})</p>
                 </div>
                 <button onClick={() => navigate(`/courses/${id}`)} className="btn-back">
-                    ← Volver al Curso
+                    <ArrowLeft size={16} /> Volver al Curso
                 </button>
             </div>
 
             {isTeacher && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', marginBottom: '2rem', alignItems: 'stretch' }}>
+                <div className="course-students-admin-grid">
                     
                     {/* Add Single Student */}
-                    <div className="admin-actions-card" style={{ margin: 0 }}>
+                    <div className="admin-actions-card">
                         <h3>Añadir Estudiante</h3>
                         <p>Agrega un alumno usando su correo.</p>
-                        <form className="add-student-form" onSubmit={handleAddStudent} style={{ marginTop: '1rem' }}>
+                        <form className="add-student-form" onSubmit={handleAddStudent}>
                             <div className="input-with-helper">
                                 <div className="input-group">
                                     <input
@@ -228,10 +228,10 @@ const CourseStudents = () => {
                     </div>
 
                     {/* Auto CSV */}
-                    <div className="admin-actions-card" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
+                    <div className="admin-actions-card admin-actions-card--stacked">
                         <h3>Importar desde CSV</h3>
-                        <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: '1.4' }}>Sube un archivo .csv con los correos de los estudiantes. El archivo debe contener las direcciones de correo electrónico (separadas por comas o saltos de línea). Los estudiantes serán inscritos automáticamente al curso.</p>
-                        <div style={{ marginTop: 'auto', paddingTop: '1rem', display: 'flex', gap: '10px' }}>
+                        <p className="admin-card-copy">Sube un archivo .csv con los correos de los estudiantes. El archivo debe contener las direcciones de correo electrónico (separadas por comas o saltos de línea). Los estudiantes serán inscritos automáticamente al curso.</p>
+                        <div className="csv-actions-row">
                             <input 
                                 type="file" 
                                 accept=".csv" 
@@ -239,16 +239,12 @@ const CourseStudents = () => {
                                 style={{ display: 'none' }}
                                 onChange={(e) => setCsvFile(e.target.files[0])}
                             />
-                            <label htmlFor="csv-upload" style={{ 
-                                flex: 1, border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '10px', 
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                                cursor: 'pointer', color: csvFile ? '#4f46e5' : '#64748b', fontWeight: 600, fontSize: '0.85rem' 
-                            }}>
-                                <FileText size={18} style={{ marginRight: '8px' }} />
+                            <label htmlFor="csv-upload" className={`csv-file-picker ${csvFile ? 'has-file' : ''}`}>
+                                <FileText size={18} />
                                 {csvFile ? csvFile.name : 'Seleccionar .csv'}
                             </label>
                             {csvFile && (
-                                <button className="btn-action-filled" onClick={handleCsvUpload} disabled={isUploadingCsv} style={{ whiteSpace: 'nowrap' }}>
+                                <button className="btn-action-filled" onClick={handleCsvUpload} disabled={isUploadingCsv}>
                                     <UploadCloud size={16} /> {isUploadingCsv ? 'Procesando...' : 'Cargar'}
                                 </button>
                             )}
@@ -256,26 +252,26 @@ const CourseStudents = () => {
                     </div>
 
                     {/* Enrollment Methods Links */}
-                    <div className="admin-actions-card" style={{ margin: 0 }}>
+                    <div className="admin-actions-card">
                         <h3>Comparte el Curso</h3>
                         <p>Invita a estudiantes rápida y masivamente.</p>
                         
-                        <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
-                                <span style={{ flexShrink: 0, background: '#f1f5f9', padding: '6px', borderRadius: '8px', color: '#64748b' }}><LinkIcon size={16} /></span>
-                                <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>
+                        <div className="share-course-stack">
+                            <div className="share-course-row">
+                                <span className="share-course-icon"><LinkIcon size={16} /></span>
+                                <div className="share-course-value" title={`${window.location.origin}/courses/join?code=${course?.enrollment_code}`}>
                                     {window.location.origin}/courses/join?code={course?.enrollment_code}
                                 </div>
-                                <button className="btn-add-student" onClick={() => copyToClipboard(`${window.location.origin}/courses/join?code=${course?.enrollment_code}`, 'enlace')} style={{ padding: '6px 12px', flexShrink: 0 }}>
+                                <button className="btn-add-student btn-share-copy" onClick={() => copyToClipboard(`${window.location.origin}/courses/join?code=${course?.enrollment_code}`, 'enlace')}>
                                     <Copy size={14} /> Link
                                 </button>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
-                                <span style={{ flexShrink: 0, background: '#f1f5f9', padding: '6px', borderRadius: '8px', color: '#64748b' }}><Key size={16} /></span>
-                                <div style={{ flex: 1, minWidth: 0, fontSize: '0.85rem', fontWeight: 600, color: '#334155', letterSpacing: '0.05em' }}>
+                            <div className="share-course-row">
+                                <span className="share-course-icon"><Key size={16} /></span>
+                                <div className="share-course-value share-course-code">
                                     {course?.enrollment_code}
                                 </div>
-                                <button className="btn-add-student" style={{ padding: '6px 12px', background: '#e2e8f0', color: '#475569', flexShrink: 0 }} onClick={() => copyToClipboard(course?.enrollment_code, 'código')}>
+                                <button className="btn-add-student btn-share-copy btn-share-copy--code" onClick={() => copyToClipboard(course?.enrollment_code, 'código')}>
                                     <Copy size={14} /> Código
                                 </button>
                             </div>
@@ -298,7 +294,15 @@ const CourseStudents = () => {
                     </p>
                 </div>
             ) : (
-                <div className="students-grid">
+                <div>
+                    <div className="students-list-header">
+                        <div className="students-list-title">
+                            <Users size={18} />
+                            <span>Estudiantes Inscritos</span>
+                        </div>
+                        <span className="students-count-pill">{students.length}</span>
+                    </div>
+                    <div className="students-grid">
                     {students.map((student, index) => (
                         <div key={student.id} className="student-card">
                             <div className="card-student-main">
@@ -308,6 +312,7 @@ const CourseStudents = () => {
                                 <div className="student-info">
                                     <div className="student-name">{student.username || 'Unknown'}</div>
                                     <div className="student-email">{student.email}</div>
+                                    <div className="student-meta">Inscrito en el curso</div>
                                 </div>
                             </div>
                             {isTeacher && (
@@ -322,6 +327,7 @@ const CourseStudents = () => {
                             )}
                         </div>
                     ))}
+                    </div>
                 </div>
             )}
 

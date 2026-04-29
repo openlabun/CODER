@@ -246,6 +246,7 @@ const PublicExams = () => {
                         const title = exam.title || exam.Title;
                         const desc = exam.description || exam.Description || 'Sin descripción disponible.';
                         const timeLimit = exam.timeLimit || exam.TimeLimit || 3600;
+                        const createdAt = exam.created_at || exam.createdAt || exam.CreatedAt;
                         const startTime = exam.startTime || exam.StartTime || exam.start_time;
                         const endTime = exam.endTime || exam.EndTime || exam.end_time;
                         const tryLimit = exam.try_limit ?? exam.tryLimit ?? exam.TryLimit ?? 1;
@@ -291,6 +292,12 @@ const PublicExams = () => {
                                                 <Calendar size={14} />
                                                 <span>{formattedAvailability}</span>
                                             </div>
+                                            {createdAt && (
+                                                <div className="stat">
+                                                    <ShieldCheck size={14} />
+                                                    <span>Creado: {formatDateTimeExact(createdAt)}</span>
+                                                </div>
+                                            )}
                                             {!isProfessor && (
                                                 <div className="stat" style={{ color: '#4b5563' }}>
                                                     <Target size={14} />

@@ -95,7 +95,6 @@ const CreateExam = () => {
 
         try {
             const payload = {
-                course_id: courseId || null,
                 title: formData.title,
                 description: formData.description,
                 visibility: formData.visibility,
@@ -111,17 +110,17 @@ const CreateExam = () => {
 
             await createExam(payload);
 
-            Swal.fire({
+            await Swal.fire({
                 icon: 'success',
                 title: 'Examen Creado',
                 text: 'El examen se ha configurado correctamente',
-                timer: 2000,
+                timer: 1200,
                 showConfirmButton: false,
                 toast: true,
                 position: 'top-end'
             });
 
-            navigate(courseId ? `/courses/${courseId}` : '/dashboard');
+            navigate('/public-exams');
         } catch (err) {
             console.error(err);
             Swal.fire({
@@ -136,6 +135,11 @@ const CreateExam = () => {
 
     return (
         <div className="create-course-page">
+            {loading && (
+                <div className="rc-submit-overlay">
+                    <PageLoader message="Creando examen..." minHeight="220px" />
+                </div>
+            )}
             <div className="page-header">
                 <div className="header-content">
                     <h1>Crear Nuevo Examen</h1>
@@ -149,7 +153,7 @@ const CreateExam = () => {
                 </button>
             </div>
 
-            <div className="form-container">
+            <div className={`form-container rc-submit-shell ${loading ? 'rc-submit-shell--blocked' : ''}`} aria-busy={loading}>
                 <form onSubmit={handleSubmit} className="course-form">
                     <div className="form-section">
                         <div className="section-header">

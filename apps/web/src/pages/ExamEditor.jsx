@@ -61,6 +61,7 @@ const ExamEditor = () => {
                 const tl = e.timeLimit || e.TimeLimit || e.time_limit || 3600;
                 const st = e.startTime || e.StartTime || e.start_time || '';
                 const et = e.endTime || e.EndTime || e.end_time || '';
+                const allowLateValue = e.allowLateSubmissions ?? e.AllowLateSubmissions ?? e.allow_late_submissions;
                 setFormData({
                     title: e.title || e.Title || '',
                     description: e.description || e.Description || '',
@@ -69,7 +70,7 @@ const ExamEditor = () => {
                     endTime: et ? new Date(et).toISOString().slice(0, 16) : '',
                     timeLimit: tl === -1 ? 60 : Math.floor(tl / 60),
                     tryLimit: (e.tryLimit === -1 || e.TryLimit === -1 || e.try_limit === -1) ? 1 : (e.tryLimit || e.TryLimit || e.try_limit || 1),
-                    allowLateSubmissions: e.allowLateSubmissions || e.AllowLateSubmissions || false,
+                    allowLateSubmissions: typeof allowLateValue === 'boolean' ? allowLateValue : false,
                     isTimeUnlimited: tl === -1,
                     isTryUnlimited: e.tryLimit === -1 || e.TryLimit === -1 || e.try_limit === -1,
                     resultsVisibility: 'after_mine'
@@ -208,7 +209,8 @@ const ExamEditor = () => {
             payload.allow_late_submissions = formData.allowLateSubmissions;
 
             await client.patch(`/exams/${id}`, payload);
-            Swal.fire({ icon: 'success', title: 'Examen Actualizado', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
+            await Swal.fire({ icon: 'success', title: 'Examen Actualizado', timer: 1200, toast: true, position: 'top-end', showConfirmButton: false });
+            navigate('/public-exams');
         } catch (err) {
             console.error(err);
             Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.error || 'No se pudo actualizar el examen.' });
@@ -354,6 +356,11 @@ const ExamEditor = () => {
 
     return (
         <div className="create-course-page">
+            {saving && (
+                <div className="rc-submit-overlay">
+                    <PageLoader message="Actualizando examen..." minHeight="220px" />
+                </div>
+            )}
             <div className="page-header">
                 <div className="header-content">
                     <h1>Editar Examen</h1>
@@ -370,7 +377,7 @@ const ExamEditor = () => {
                 </div>
             </div>
 
-            <div className="form-container">
+            <div className={`form-container rc-submit-shell ${saving ? 'rc-submit-shell--blocked' : ''}`} aria-busy={saving}>
                 {/* --- Información General --- */}
                 <div className="form-section">
                     <div className="section-header"><FileText size={20} /><h2>Información General</h2></div>

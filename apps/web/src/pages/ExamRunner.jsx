@@ -81,6 +81,7 @@ const ExamRunner = () => {
     }); // { challengeId: count }
     const heartbeatRef = useRef(null);
     const timerRef = useRef(null);
+    const consoleRef = useRef(null);
 
     // Professors should use the editor, not the runner
     useEffect(() => {
@@ -128,23 +129,26 @@ const ExamRunner = () => {
             setSessionId(sid);
             setSessionStatus(sessionData?.status || sessionData?.Status || 'active');
             
-            // Usamos directamente el tiempo que provee el backend, para que el 
-            // timer inicie en este valor una vez se muestre la interfaz,
-            // y luego el useEffect del intervalo va a ir descontando visualmente.
-            const tl = sessionData?.time_left ?? sessionData?.TimeLeft ?? sessionData?.timeLeft ?? examData?.time_limit ?? examData?.TimeLimit;
+            // Usamos directamente el tiempo que provee el backend, pero primero verificamos si el examen en sí es ilimitado.
+            const examTl = examData?.time_limit ?? examData?.TimeLimit;
+            const sessionTl = sessionData?.time_left ?? sessionData?.TimeLeft ?? sessionData?.timeLeft;
             
-            if (tl === -1 || tl == null) {
+            if (examTl === -1 || examTl == null) {
                 // Unlimited or no limit
                 setTimeLeft(null);
                 timeLeftRef.current = null;
-            } else if (tl <= 0) {
-                // Already expired
-                setExamFinished(true);
-                setTimeLeft(0);
-                timeLeftRef.current = 0;
             } else {
-                setTimeLeft(tl);
-                timeLeftRef.current = tl;
+                const tl = (sessionTl !== undefined && sessionTl !== null) ? sessionTl : examTl;
+                
+                if (tl <= 0) {
+                    // Already expired
+                    setExamFinished(true);
+                    setTimeLeft(0);
+                    timeLeftRef.current = 0;
+                } else {
+                    setTimeLeft(tl);
+                    timeLeftRef.current = tl;
+                }
             }
         };
 
@@ -257,6 +261,7 @@ const ExamRunner = () => {
                             constraints: ch.constraints || ch.Constraints || '',
                             points: item.points || item.Points || 0,
                             order: item.order || item.Order || 0,
+                            try_limit: item.try_limit ?? item.TryLimit ?? data?.try_limit ?? data?.TryLimit ?? -1,
                             code_templates: cleanTemplates
                         };
                     })
@@ -431,11 +436,13 @@ const ExamRunner = () => {
             return;
         }
 
-        // Enforce 1 attempt per challenge (persisted across refreshes)
+        // Enforce attempt limits dynamically (persisted across refreshes)
         const challengeId = currentChallenge?.id;
         const currentAttempts = attemptMap[challengeId] || 0;
-        if (currentAttempts >= 1) {
-            setOutput('Ya has utilizado tu único intento para este reto.');
+        const maxAttempts = currentChallenge?.try_limit ?? -1;
+        
+        if (maxAttempts !== -1 && currentAttempts >= maxAttempts) {
+            setOutput(`Ya has utilizado tus ${maxAttempts} intento(s) para este reto.`);
             return;
         }
 
@@ -462,6 +469,7 @@ const ExamRunner = () => {
 
         setSubmitting(true);
         setOutput('Enviando solución...');
+        setTimeout(() => consoleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
 
         try {
             // Send heartbeat right before submission to keep session active
@@ -578,6 +586,7 @@ const ExamRunner = () => {
             const activeSessionId = sessionId || localStorage.getItem('session_id');
             if (activeSessionId) {
                 try {
+                    await client.post(`/submissions/sessions/${activeSessionId}/heartbeat`);
                     await client.post(`/submissions/sessions/${activeSessionId}/close`);
                 } catch (err) {
                     console.warn('Failed to close session:', err);
@@ -864,7 +873,8 @@ const ExamRunner = () => {
                                     </select>
                                     {(() => {
                                         const chAttempts = currentChallenge ? (attemptMap[currentChallenge.id] || 0) : 0;
-                                        const limitReached = chAttempts >= 1;
+                                        const maxAttempts = currentChallenge?.try_limit ?? -1;
+                                        const limitReached = maxAttempts !== -1 && chAttempts >= maxAttempts;
                                         const isSubmitDisabled = submitting || examFinished || limitReached;
                                         const isTestDisabled = submitting || examFinished;
 
@@ -879,7 +889,7 @@ const ExamRunner = () => {
                                                     fontSize: '0.75rem', fontWeight: 700, color: limitReached ? '#ef4444' : '#6b7280',
                                                     whiteSpace: 'nowrap'
                                                 }}>
-                                                    {chAttempts}/1 intentos
+                                                    {chAttempts}/{maxAttempts === -1 ? '∞' : maxAttempts} intentos
                                                 </span>
                                                 <button onClick={() => setShowRunModal(true)} disabled={isTestDisabled}
                                                     style={{
@@ -927,7 +937,8 @@ const ExamRunner = () => {
                         </div>
 
                         {/* BOTTOM SECTION: Output panel */}
-                        <div style={{
+                        {/* RESULTS PANEL */}
+                        <div ref={consoleRef} style={{
                             height: output ? '300px' : '50px',
                             flexShrink: 0,
                             background: '#1a1a2e',
@@ -1111,6 +1122,7 @@ const ExamRunner = () => {
                             <button onClick={async () => {
                                 setShowRunModal(false);
                                 setOutput('⏳ Ejecutando prueba local en el servidor...\n\n');
+                                setTimeout(() => consoleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
 
                                 try {
                                     let res;

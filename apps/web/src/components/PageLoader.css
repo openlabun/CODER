@@ -59,6 +59,37 @@
     font-weight: 600;
 }
 
+.rc-submit-shell {
+    position: relative;
+}
+
+.rc-submit-shell--blocked {
+    pointer-events: none;
+}
+
+.rc-submit-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(3px);
+    border-radius: 16px;
+}
+
+.rc-submit-overlay .rc-page-loader {
+    max-width: 320px;
+    min-height: 220px !important;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(200, 16, 46, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+}
+
 @keyframes rc-page-loader-spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }

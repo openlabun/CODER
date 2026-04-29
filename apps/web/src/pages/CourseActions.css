@@ -94,6 +94,132 @@
     transform: translateX(-4px);
 }
 
+.course-students-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+    align-items: start;
+}
+
+.admin-actions-card--stacked {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-card-copy {
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.45;
+}
+
+.csv-actions-row {
+    margin-top: 0.75rem;
+    padding-top: 1rem;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.csv-file-picker {
+    flex: 1;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.85rem;
+    min-height: 42px;
+}
+
+.csv-file-picker.has-file {
+    color: #4f46e5;
+    border-color: #c7d2fe;
+    background: #eef2ff;
+}
+
+.share-course-stack {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.share-course-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.share-course-icon {
+    flex-shrink: 0;
+    background: #f1f5f9;
+    padding: 6px;
+    border-radius: 8px;
+    color: #64748b;
+    display: inline-flex;
+}
+
+.share-course-value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.share-course-code {
+    letter-spacing: 0.05em;
+}
+
+.btn-share-copy {
+    padding: 6px 12px;
+    flex-shrink: 0;
+}
+
+.btn-share-copy--code {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.students-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0.3rem 0 0.9rem;
+}
+
+.students-list-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #1f2937;
+    font-weight: 700;
+}
+
+.students-count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #be123c;
+    font-weight: 800;
+}
+
 .students-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -191,6 +317,12 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.student-meta {
+    margin-top: 0.25rem;
+    color: #94a3b8;
+    font-size: 0.75rem;
 }
 
 .students-stats {
@@ -325,8 +457,9 @@
 }
 
 .add-student-form .input-group {
-    display: flex;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
 }
 
 .helper-link {
@@ -366,6 +499,10 @@
 }
 
 .btn-add-student {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     background: var(--primary-color);
     color: white;
     border: none;
@@ -375,6 +512,10 @@
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+}
+
+.add-student-form .btn-add-student {
+    width: 100%;
 }
 
 .btn-add-student:hover {
@@ -416,6 +557,28 @@
 .exam-admin-group {
     display: flex;
     gap: 6px;
+}
+
+@media (max-width: 900px) {
+    .btn-add-student {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .csv-actions-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .share-course-row {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .btn-share-copy {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 .exam-action-btn {

@@ -23,7 +23,8 @@ const ExamEditor = () => {
     const [formData, setFormData] = useState({
         title: '', description: '', visibility: 'private',
         startTime: '', endTime: '', timeLimit: 60,
-        tryLimit: 1, allowLateSubmissions: false
+        tryLimit: 1, allowLateSubmissions: false,
+        isTimeUnlimited: false, isTryUnlimited: false, resultsVisibility: 'after_mine'
     });
     const [examItems, setExamItems] = useState([]);
     const [challenges, setChallenges] = useState([]);
@@ -60,15 +61,19 @@ const ExamEditor = () => {
                 const tl = e.timeLimit || e.TimeLimit || e.time_limit || 3600;
                 const st = e.startTime || e.StartTime || e.start_time || '';
                 const et = e.endTime || e.EndTime || e.end_time || '';
+                const allowLateValue = e.allowLateSubmissions ?? e.AllowLateSubmissions ?? e.allow_late_submissions;
                 setFormData({
                     title: e.title || e.Title || '',
                     description: e.description || e.Description || '',
                     visibility: e.visibility || e.Visibility || 'private',
                     startTime: st ? new Date(st).toISOString().slice(0, 16) : '',
                     endTime: et ? new Date(et).toISOString().slice(0, 16) : '',
-                    timeLimit: Math.floor(tl / 60),
-                    tryLimit: e.tryLimit || e.TryLimit || e.try_limit || 1,
-                    allowLateSubmissions: e.allowLateSubmissions || e.AllowLateSubmissions || false,
+                    timeLimit: tl === -1 ? 60 : Math.floor(tl / 60),
+                    tryLimit: (e.tryLimit === -1 || e.TryLimit === -1 || e.try_limit === -1) ? 1 : (e.tryLimit || e.TryLimit || e.try_limit || 1),
+                    allowLateSubmissions: typeof allowLateValue === 'boolean' ? allowLateValue : false,
+                    isTimeUnlimited: tl === -1,
+                    isTryUnlimited: e.tryLimit === -1 || e.TryLimit === -1 || e.try_limit === -1,
+                    resultsVisibility: 'after_mine'
                 });
 
                 // Fetch exam items
@@ -199,12 +204,13 @@ const ExamEditor = () => {
             if (formData.visibility) payload.visibility = formData.visibility;
             if (formData.startTime) payload.start_time = new Date(formData.startTime).toISOString();
             if (formData.endTime) payload.end_time = new Date(formData.endTime).toISOString();
-            payload.time_limit = parseInt(formData.timeLimit) * 60;
-            payload.try_limit = parseInt(formData.tryLimit);
+            payload.time_limit = formData.isTimeUnlimited ? -1 : parseInt(formData.timeLimit) * 60;
+            payload.try_limit = formData.isTryUnlimited ? -1 : parseInt(formData.tryLimit);
             payload.allow_late_submissions = formData.allowLateSubmissions;
 
             await client.patch(`/exams/${id}`, payload);
-            Swal.fire({ icon: 'success', title: 'Examen Actualizado', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
+            await Swal.fire({ icon: 'success', title: 'Examen Actualizado', timer: 1200, toast: true, position: 'top-end', showConfirmButton: false });
+            navigate('/public-exams');
         } catch (err) {
             console.error(err);
             Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.error || 'No se pudo actualizar el examen.' });
@@ -350,6 +356,11 @@ const ExamEditor = () => {
 
     return (
         <div className="create-course-page">
+            {saving && (
+                <div className="rc-submit-overlay">
+                    <PageLoader message="Actualizando examen..." minHeight="220px" />
+                </div>
+            )}
             <div className="page-header">
                 <div className="header-content">
                     <h1>Editar Examen</h1>
@@ -366,16 +377,16 @@ const ExamEditor = () => {
                 </div>
             </div>
 
-            <div className="form-container">
+            <div className={`form-container rc-submit-shell ${saving ? 'rc-submit-shell--blocked' : ''}`} aria-busy={saving}>
                 {/* --- Información General --- */}
                 <div className="form-section">
                     <div className="section-header"><FileText size={20} /><h2>Información General</h2></div>
                     <div className="form-group">
-                        <label>Título del Examen *</label>
+                        <label>Título del Examen <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                         <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="ej. Parcial 1: Algoritmos" required />
                     </div>
                     <div className="form-group">
-                        <label>Descripción / Instrucciones</label>
+                        <label>Descripción / Instrucciones *</label>
                         <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Instrucciones para los estudiantes..." rows="4" />
                     </div>
                 </div>
@@ -385,7 +396,7 @@ const ExamEditor = () => {
                     <div className="section-header"><Calendar size={20} /><h2>Programación</h2></div>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Fecha y Hora de Inicio *</label>
+                            <label>Fecha y Hora de Inicio <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                             <input type="datetime-local" name="startTime" value={formData.startTime} onChange={handleChange} required />
                         </div>
                         <div className="form-group">
@@ -400,13 +411,39 @@ const ExamEditor = () => {
                     <div className="section-header"><Clock size={20} /><h2>Restricciones y Límites</h2></div>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Duración (minutos) *</label>
-                            <input type="number" name="timeLimit" value={formData.timeLimit} onChange={handleChange} min="1" required />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label>Duración (minutos) <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
+                                <label className="checkbox-label" style={{ margin: 0, fontSize: '0.85rem' }}>
+                                    <input type="checkbox" name="isTimeUnlimited" checked={formData.isTimeUnlimited} onChange={handleChange} />
+                                    <span>Sin límite</span>
+                                </label>
+                            </div>
+                            <input type="number" name="timeLimit" value={formData.timeLimit} onChange={handleChange} min="1" disabled={formData.isTimeUnlimited} required={!formData.isTimeUnlimited} style={{ opacity: formData.isTimeUnlimited ? 0.5 : 1 }} />
                         </div>
                         <div className="form-group">
-                            <label>Límite de Intentos *</label>
-                            <input type="number" name="tryLimit" value={formData.tryLimit} onChange={handleChange} min="1" required />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label>Límite de Intentos <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
+                                <label className="checkbox-label" style={{ margin: 0, fontSize: '0.85rem' }}>
+                                    <input type="checkbox" name="isTryUnlimited" checked={formData.isTryUnlimited} onChange={handleChange} />
+                                    <span>Ilimitado</span>
+                                </label>
+                            </div>
+                            <input type="number" name="tryLimit" value={formData.tryLimit} onChange={handleChange} min="1" disabled={formData.isTryUnlimited} required={!formData.isTryUnlimited} style={{ opacity: formData.isTryUnlimited ? 0.5 : 1 }} />
                         </div>
+                    </div>
+
+                    <div className="form-group" style={{ marginTop: '1rem' }}>
+                        <label>Visibilidad de Resultados para el Estudiante</label>
+                        <select
+                            name="resultsVisibility"
+                            value={formData.resultsVisibility}
+                            onChange={handleChange}
+                        >
+                            <option value="none">No mostrar resultados nunca</option>
+                            <option value="after_mine">Mostrar mis resultados al finalizar mi envío</option>
+                            <option value="after_all">Mostrar resultados cuando finalice la actividad para todos</option>
+                        </select>
+                        <small>Nota: La funcionalidad de esta opción está sujeta a la conexión con el servidor.</small>
                     </div>
                     <div className="checkbox-group">
                         <label className="checkbox-label">
@@ -510,7 +547,7 @@ const ExamEditor = () => {
                                                                 const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
                                                                 const currentOthers = examItems.reduce((acc, it) => acc + ((it.id || it.ID) === itemId ? 0 : (it.points || it.Points || 0)), 0);
                                                                 if (currentOthers + val > 100) {
-                                                                    Swal.fire({ icon: 'error', title: 'Error', text: `La suma no puede exceder 100. Restan ${100 - currentOthers} pts.`});
+                                                                    Swal.fire({ icon: 'error', title: 'Error', text: `La suma no puede exceder 100. Restan ${100 - currentOthers} pts.` });
                                                                     e.target.value = points;
                                                                     return;
                                                                 }
@@ -605,7 +642,7 @@ const ExamEditor = () => {
                 <div className="info-text">
                     <h3>💡 Gestión de Retos</h3>
                     <p>
-                        Añade retos existentes de tu repositorio a este examen. Cada reto se presenta como un ejercicio 
+                        Añade retos existentes de tu repositorio a este examen. Cada reto se presenta como un ejercicio
                         dentro de la evaluación con su propio sistema de puntuación.
                     </p>
                 </div>

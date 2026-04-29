@@ -11,6 +11,19 @@ import './Challenges.css';
 const CreateChallenge = () => {
     const GLOBAL_INPUT_NAME = 'entrada';
     const GLOBAL_OUTPUT_NAME = 'salida';
+    const STATUS_LABELS = {
+        draft: 'Borrador',
+        published: 'Publicado',
+        private: 'Privado',
+        archived: 'Archivado'
+    };
+    const normalizeStatus = (status) => {
+        const s = String(status || 'draft').toLowerCase();
+        if (s === 'published' || s === 'private' || s === 'archived' || s === 'draft') {
+            return s;
+        }
+        return 'draft';
+    };
     const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -34,7 +47,7 @@ const CreateChallenge = () => {
         inputVariables: [{ name: GLOBAL_INPUT_NAME, type: 'string' }],
         outputVariable: { name: GLOBAL_OUTPUT_NAME, type: 'string' },
         constraints: '',
-        status: 'draft',
+        status: 'published',
         codeTemplates: {},
         courseId: courseIdFromUrl || null,
         examId: queryParams.get('examId') || null
@@ -47,11 +60,12 @@ const CreateChallenge = () => {
     const [fetching, setFetching] = useState(isEditing);
     const [courses, setCourses] = useState([]);
     const [exams, setExams] = useState([]);
+    const [currentStatus, setCurrentStatus] = useState(null);
     const [fetchedDefaultTemplates, setFetchedDefaultTemplates] = useState({});
     const [generatingTemplates, setGeneratingTemplates] = useState(false);
 
     const SUPPORTED_LANGUAGES = [
-        { id: 'python', label: 'Python', defaultTemplate: 'def solve():\n    pass\n' },
+        { id: 'python', label: 'Python', defaultTemplate: '' },
         { id: 'javascript', label: 'JavaScript', defaultTemplate: 'function solve() {\n\n}\n' },
         { id: 'java', label: 'Java', defaultTemplate: 'class Solution {\n    public static void solve() {\n\n    }\n}\n' },
         { id: 'cpp', label: 'C++', defaultTemplate: '#include <iostream>\nusing namespace std;\n\nvoid solve() {\n\n}\n' },
@@ -69,6 +83,9 @@ const CreateChallenge = () => {
                 const normalizedSingleInput = (mappedInputVariables.length > 0 ? [mappedInputVariables[0]] : [{ name: GLOBAL_INPUT_NAME, type: 'string' }])
                     .map(() => ({ name: GLOBAL_INPUT_NAME, type: 'string' }));
                 const normalizedOutput = { ...mappedOutputVariable, name: GLOBAL_OUTPUT_NAME, type: 'string' };
+                const normalizedStatus = normalizeStatus(challenge.status || challenge.Status || 'draft');
+
+                setCurrentStatus(normalizedStatus);
 
                 setFormData({
                     title: challenge.title || challenge.Title || '',
@@ -80,7 +97,7 @@ const CreateChallenge = () => {
                     inputVariables: normalizedSingleInput,
                     outputVariable: normalizedOutput,
                     constraints: challenge.constraints || challenge.Constraints || '',
-                    status: challenge.status || challenge.Status || 'draft',
+                    status: normalizedStatus,
                     codeTemplates: challenge.code_templates || challenge.CodeTemplates || {},
                     courseId: challenge.course_id || challenge.courseId || challenge.CourseID || null,
                     examId: challenge.exam_id || challenge.examId || challenge.ExamID || queryParams.get('examId') || null
@@ -168,6 +185,24 @@ const CreateChallenge = () => {
         fetchExams();
     }, [formData.courseId]);
 
+    const getAllowedEditStatuses = (status) => {
+        const current = normalizeStatus(status);
+        if (current === 'published') return ['published', 'private', 'archived'];
+        if (current === 'private') return ['private', 'published', 'archived'];
+        if (current === 'archived') return ['archived', 'published'];
+        return ['draft', 'published'];
+    };
+
+    const statusOptions = isEditing
+        ? getAllowedEditStatuses(currentStatus || formData.status)
+        : ['published', 'private'];
+
+    useEffect(() => {
+        if (!statusOptions.includes(formData.status)) {
+            setFormData((prev) => ({ ...prev, status: statusOptions[0] }));
+        }
+    }, [formData.status, statusOptions]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -242,8 +277,8 @@ const CreateChallenge = () => {
             Swal.fire({ icon: 'warning', title: 'Campos incompletos', text: 'El título y la descripción son requeridos.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
             return false;
         }
-        if (hiddenTestCases.length < 3) {
-            Swal.fire({ icon: 'warning', title: 'Faltan casos ocultos', text: 'Se requieren al menos 3 casos ocultos.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
+        if (hiddenTestCases.length < 1) {
+            Swal.fire({ icon: 'warning', title: 'Faltan casos ocultos', text: 'Se requiere al menos 1 caso oculto.', timer: 1500, toast: true, position: 'top-end', showConfirmButton: false });
             return false;
         }
         if (!formData.outputVariable.name?.trim()) {
@@ -273,6 +308,7 @@ const CreateChallenge = () => {
 
         setLoading(true);
         try {
+            const targetStatus = normalizeStatus(status || formData.status);
             const payload = {
                 title: formData.title.trim(),
                 description: formData.description.trim(),
@@ -291,7 +327,7 @@ const CreateChallenge = () => {
                     value: '' 
                 },
                 constraints: formData.constraints,
-                status: status || formData.status,
+                status: targetStatus,
                 code_templates: formData.codeTemplates,
                 user_id: user?.id || user?.ID || ''
             };
@@ -340,11 +376,17 @@ const CreateChallenge = () => {
                 await Promise.all(tcRequests);
             }
 
-            Swal.fire({
+            await Swal.fire({
                 icon: 'success',
                 title: isEditing ? '¡Actualizado!' : '¡Creado!',
-                text: `Reto ${isEditing ? 'actualizado' : 'publicado'} exitosamente`,
-                timer: 1000,
+                text: isEditing
+                    ? `Reto actualizado como ${STATUS_LABELS[targetStatus] || targetStatus}.`
+                    : targetStatus === 'published'
+                        ? 'Reto publicado exitosamente.'
+                        : targetStatus === 'private'
+                            ? 'Reto creado como privado.'
+                            : 'Reto guardado como borrador.',
+                timer: 1200,
                 showConfirmButton: false,
                 toast: true,
                 position: 'top-end'
@@ -358,7 +400,7 @@ const CreateChallenge = () => {
                 }
             }
 
-            setTimeout(() => navigate('/challenges'), 1000);
+            navigate('/challenges');
         } catch (err) {
             console.error('Error en handleSubmit:', err.response?.data || err);
             const serverMsg = err.response?.data?.error || err.response?.data?.message;
@@ -393,7 +435,7 @@ const CreateChallenge = () => {
             timeLimit: idea.workerTimeLimit || idea.worker_time_limit || 1000,
             memoryLimit: idea.workerMemoryLimit || idea.worker_memory_limit || 256,
             constraints: idea.constraints || '',
-            status: 'draft'
+            status: 'published'
         }));
         if (idea.publicTestCases || idea.public_test_cases) {
             const arr = idea.publicTestCases || idea.public_test_cases;
@@ -426,6 +468,14 @@ const CreateChallenge = () => {
 
     return (
         <div className="create-challenge-page">
+            {loading && (
+                <div className="rc-submit-overlay">
+                    <PageLoader
+                        message={isEditing ? 'Actualizando reto...' : 'Guardando reto...'}
+                        minHeight="220px"
+                    />
+                </div>
+            )}
             <div className="page-header">
                 <div>
                     <h1>{isEditing ? 'Editar Reto' : 'Crear Nuevo Reto'}</h1>
@@ -457,7 +507,7 @@ const CreateChallenge = () => {
                                 return { name: tc.name, type: 'hidden', inputValues: ivs, outputValue: tc.output?.value || '' };
                             }));
                         }
-                        setFormData(prev => ({ ...prev, status: 'draft' }));
+                        setFormData(prev => ({ ...prev, status: 'published' }));
                         setActiveTab('testcases');
                     }}
                 />
@@ -465,6 +515,7 @@ const CreateChallenge = () => {
 
             {!showPreview ? (
                 <>
+                    <div className={`rc-submit-shell ${loading ? 'rc-submit-shell--blocked' : ''}`} aria-busy={loading}>
                     <div className="tabs">
                         <button className={activeTab === 'basic' ? 'tab active' : 'tab'} onClick={() => setActiveTab('basic')}>📝 Básicos</button>
                         <button className={activeTab === 'templates' ? 'tab active' : 'tab'} onClick={() => setActiveTab('templates')}>💻 Plantillas</button>
@@ -476,16 +527,16 @@ const CreateChallenge = () => {
                         {activeTab === 'basic' && (
                             <div className="form-section">
                                 <div className="form-group">
-                                    <label>Título *</label>
+                                    <label>Título <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                                     <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder="Ej: Suma A+B" required />
                                 </div>
                                 <div className="form-group">
-                                    <label>Descripción *</label>
+                                    <label>Descripción <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                                     <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Enunciado..." rows="8" required />
                                 </div>
                                 <div className="form-row">
                                     <div className="form-group">
-                                        <label>Dificultad</label>
+                                        <label>Dificultad <span style={{ color: 'var(--primary)', marginLeft: '4px' }}>*</span></label>
                                         <select name="difficulty" value={formData.difficulty} onChange={handleChange}>
                                             <option value="easy">Fácil</option>
                                             <option value="medium">Medio</option>
@@ -797,11 +848,11 @@ const CreateChallenge = () => {
                                     </div>
                                 </div>
                                 <div className="form-group">
-                                    <label>Estado Inicial</label>
+                                    <label>{isEditing ? 'Cambiar Estado' : 'Estado Inicial'}</label>
                                     <select name="status" value={formData.status} onChange={handleChange}>
-                                        <option value="draft">Borrador</option>
-                                        <option value="published">Publicado</option>
-                                        <option value="private">Privado</option>
+                                        {statusOptions.map((statusKey) => (
+                                            <option key={statusKey} value={statusKey}>{STATUS_LABELS[statusKey] || statusKey}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -810,8 +861,11 @@ const CreateChallenge = () => {
 
                     <div className="form-actions">
                         <button onClick={() => navigate('/challenges')} className="btn-secondary">Cancelar</button>
-                        <button onClick={() => handleSubmit('draft')} disabled={loading} className="btn-draft">Guardar Borrador</button>
-                        <button onClick={() => handleSubmit('published')} disabled={loading} className="btn-publish">🚀 {isEditing ? 'Actualizar' : 'Publicar'}</button>
+                        {!isEditing && (
+                            <button onClick={() => handleSubmit('draft')} disabled={loading} className="btn-draft">Guardar Borrador</button>
+                        )}
+                        <button onClick={() => handleSubmit(formData.status)} disabled={loading} className="btn-publish">🚀 {isEditing ? 'Actualizar' : (formData.status === 'private' ? 'Crear Privado' : 'Publicar')}</button>
+                    </div>
                     </div>
                 </>
             ) : (

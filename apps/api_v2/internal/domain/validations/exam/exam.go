@@ -32,11 +32,11 @@ func ValidateExam(exam *Entities.Exam) error {
 		return fmt.Errorf("exam end time cannot be before start time")
 	}
 
-	if exam.TimeLimit < 0 {
-		return fmt.Errorf("exam time limit cannot be negative")
+	if exam.TimeLimit < -1 {
+		return fmt.Errorf("exam time limit must be -1 (for unlimited) or non-negative")
 	}
-	if exam.TryLimit < 0 {
-		return fmt.Errorf("exam try limit cannot be negative")
+	if exam.TryLimit < -1 {
+		return fmt.Errorf("exam try limit must be -1 (for unlimited) or non-negative")
 	}
 
 	return nil

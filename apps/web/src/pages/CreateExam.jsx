@@ -89,8 +89,110 @@ const CreateExam = () => {
         });
     };
 
+    const validateForm = () => {
+        // Validar título
+        if (!formData.title || !formData.title.trim()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Título requerido',
+                text: 'Por favor ingresa el título del examen.',
+                timer: 1500,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false
+            });
+            return false;
+        }
+
+        // Validar descripción
+        if (!formData.description || !formData.description.trim()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Descripción requerida',
+                text: 'Por favor ingresa las instrucciones o descripción del examen.',
+                timer: 1500,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false
+            });
+            return false;
+        }
+
+        // Validar fecha de inicio
+        if (!formData.startTime) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Fecha de inicio requerida',
+                text: 'Por favor selecciona cuándo comienza el examen.',
+                timer: 1500,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false
+            });
+            return false;
+        }
+
+        // Validar que endTime sea posterior a startTime si existe
+        if (formData.endTime) {
+            const startDate = new Date(formData.startTime);
+            const endDate = new Date(formData.endTime);
+            if (endDate <= startDate) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Rango de fechas inválido',
+                    text: 'La fecha de cierre debe ser posterior a la de inicio.',
+                    timer: 1500,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false
+                });
+                return false;
+            }
+        }
+
+        // Validar duración si no es ilimitada
+        if (!formData.isTimeUnlimited) {
+            if (!formData.timeLimit || parseInt(formData.timeLimit) < 1) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Duración inválida',
+                    text: 'La duración debe ser mayor a 0 minutos.',
+                    timer: 1500,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false
+                });
+                return false;
+            }
+        }
+
+        // Validar límite de intentos si no es ilimitado
+        if (!formData.isTryUnlimited) {
+            if (!formData.tryLimit || parseInt(formData.tryLimit) < 1) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Límite de intentos inválido',
+                    text: 'El límite de intentos debe ser mayor a 0.',
+                    timer: 1500,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false
+                });
+                return false;
+            }
+        }
+
+        return true;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validar formulario antes de enviar
+        if (!validateForm()) {
+            return;
+        }
+
         setLoading(true);
 
         try {

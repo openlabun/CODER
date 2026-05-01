@@ -742,19 +742,55 @@ Este es un set de pruebas de construye previamente una instancia de la capa de a
   
   - Paso 5: Crear un caso de prueba con valor de 6 puntos (debe ser imposible de cumplir)
   
-  - Paso 5: Crear un punto de examen
+  - Paso 6: Crear un punto de examen
   
-  - Paso 6: Iniciar sesión con usuario de estudiante
+  - Paso 7: Iniciar sesión con usuario de estudiante
   
-  - Paso 7: Crear una revisión
+  - Paso 8: Crear una revisión
   
-  - Paso 8: Obtener el `status` de la revisión hasta que su estado sea `accepted` o `wrong_answer`
+  - Paso 9: Obtener el `status` de la revisión hasta que su estado sea `accepted` o `wrong_answer`
   
-  - Paso 9: Confirmar valor del atributo `Score` de la revisión corresponde a 6
+  - Paso 10: Confirmar valor del atributo `Score` de la revisión corresponde a 6
   
   ```
   go test -v ./test/use_cases/submission -run TestSubmissionScoring
   ```
+
+- **Puntaje del examen:**
+  
+  - Paso 1: Iniciar sesión con usuario de docente
+  
+  - Paso 2: Crear examen público (visibilidad `public` y sin curso)
+  
+  - Paso 3: Crear dos retos
+  
+  - Paso 4: Crear 2 casos de prueba con valor de 3 puntos para el primer reto
+  
+  - Paso 5: Crear un caso de prueba con valor de 6 puntos para el primer reto (debe ser imposible de cumplir)
+  
+  - Paso 6: Crear un punto de examen con valor de 30
+  
+  - Paso 7: Crear 2 casos de prueba con valor de 5 puntos para el segundo reto
+  
+  - Paso 8: Crear un punto de examen con valor de 70
+  
+  - Paso 7: Iniciar sesión con usuario de estudiante
+  
+  - Paso 8: Crear una revisión
+  
+  - Paso 9: Obtener el `status` de la revisión hasta que su estado sea `accepted` o `wrong_answer`
+  
+  - Paso 10: Cerrar sesión del examen
+  
+  - Paso 11: Obtener resultados de su examen como estudiante.
+  
+  - Paso 12: Validar que el resultado del examen sea congruente.
+  
+  - Paso 13:  Obtener resultados de los punto del examen como estudiante.
+  
+  - Paso 14: Obtener los resultados del examen para cada estudiante como profesor.
+  
+  - Paso 15: Obtener los resultados de todos los exámenes del estudiante como profesor.
 
 ### Pruebas de Rendimiento
 

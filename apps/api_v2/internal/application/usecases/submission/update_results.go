@@ -114,11 +114,19 @@ func (uc *UpdateResultUseCase) Execute(ctx context.Context, input dtos.UpdateRes
 			return nil, fmt.Errorf("failed to retrieve submission for result update: %w", err)
 		}
 
-		// [STEP 6.2] Update the submission score
-		submission.Score = submission.Score + testCase.Points
-		_, err = uc.submissionRepository.UpdateSubmission(ctx, submission)
+		// [STEP 6.2] Get total possible points for the submission
+		totalPoints, err := uc.getTotalPointsForChallenge(ctx, testCase.ChallengeID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update submission score: %w", err)
+			return nil, fmt.Errorf("failed to get total points for challenge: %w", err)
+		}
+
+		// [STEP 6.3] Update the submission score if submission is Scorable
+		if submission.Scorable {
+			submission.Score = submission.Score + ((testCase.Points * 100) / totalPoints)
+			_, err = uc.submissionRepository.UpdateSubmission(ctx, submission)
+			if err != nil {
+				return nil, fmt.Errorf("failed to update submission score: %w", err)
+			}
 		}
 	}
 
@@ -129,4 +137,20 @@ func (uc *UpdateResultUseCase) Execute(ctx context.Context, input dtos.UpdateRes
 	}
 
 	return result, nil
+}
+
+func (uc *UpdateResultUseCase) getTotalPointsForChallenge(ctx context.Context, challengeID string) (int, error) {
+	testCases, err := uc.testCaseRepository.GetTestCasesByChallengeID(ctx, challengeID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to retrieve test cases for challenge: %w", err)
+	}
+
+	totalPoints := 0
+	for _, tc := range testCases {
+		if tc != nil && !tc.IsSample && !tc.Custom {
+			totalPoints += tc.Points
+		}
+	}
+
+	return totalPoints, nil
 }

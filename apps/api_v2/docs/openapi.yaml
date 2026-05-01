@@ -50,12 +50,16 @@ info:
     - PATCH /exam-items/{id}
     - DELETE /exam-items/{id}
     - POST /submissions/
-    - POST /submissions/without-score
-    - POST /submissions/custom
+    - POST /submissions/execute
+    - POST /submissions/execute-custom
     - PATCH /submissions/results/{resultId}
     - GET /submissions/user/{userId}
     - GET /submissions/challenge/{challengeId}
     - GET /submissions/{id}
+    - GET /submissions/scores/exam/{examId}/users
+    - GET /submissions/scores/exam/{examId}/user/{userId}
+    - GET /submissions/scores/user/{userId}
+    - GET /submissions/scores/exam-score/{examScoreId}
     - POST /submissions/sessions/
     - GET /submissions/sessions/active
     - POST /submissions/sessions/{id}/heartbeat
@@ -1946,7 +1950,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /submissions/execution:
+  /submissions/execute:
     post:
       tags: [Submissions]
       summary: Create execution without score
@@ -1992,7 +1996,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /submissions/execution-custom:
+  /submissions/execute-custom:
     post:
       tags: [Submissions]
       summary: Create execution with custom test case
@@ -2276,6 +2280,116 @@ paths:
                         error_message: null
         '400':
           description: Invalid id or domain error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /submissions/scores/exam/{examId}/users:
+    get:
+      tags: [Scoring]
+      summary: Get users scores by exam
+      description: Returns aggregated exam scoring grouped by user for a given exam.
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: course_id
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Aggregated users scores for exam returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersExamScoresOutputResponse'
+        '400':
+          description: Invalid request or domain/permission error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /submissions/scores/exam/{examId}/user/{userId}:
+    get:
+      tags: [Scoring]
+      summary: Get scoring for one user in one exam
+      description: Returns all attempts and best score for a user in a specific exam.
+      parameters:
+        - in: path
+          name: examId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User exam scoring returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamScoringResponse'
+        '400':
+          description: Invalid request or domain/permission error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /submissions/scores/user/{userId}:
+    get:
+      tags: [Scoring]
+      summary: Get exam scores by user
+      description: Returns aggregated scoring of a user across exams.
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User exams scores returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserExamsScoresOutputResponse'
+        '400':
+          description: Invalid request or domain/permission error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /submissions/scores/exam-score/{examScoreId}:
+    get:
+      tags: [Scoring]
+      summary: Get item-level scoring for an exam score
+      description: Returns per-item scoring details and related submissions for one exam score.
+      parameters:
+        - in: path
+          name: examScoreId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Exam score detailed item scoring returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamScoreDetailsOutputResponse'
+        '400':
+          description: Invalid request or domain/permission error.
           content:
             application/json:
               schema:
@@ -3522,6 +3636,164 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SubmissionResultResponse'
+
+    ExamScoreEntity:
+      type: object
+      required: [id, exam_id, session_id, score, created_at, updated_at, student_id]
+      properties:
+        id:
+          type: string
+        exam_id:
+          type: string
+        session_id:
+          type: string
+        score:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        student_id:
+          type: string
+
+    ExamItemScoreEntity:
+      type: object
+      required: [id, exam_item_id, exam_score_id, score, tries, created_at, updated_at]
+      properties:
+        id:
+          type: string
+        exam_item_id:
+          type: string
+        exam_score_id:
+          type: string
+        score:
+          type: integer
+        tries:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SubmissionScoringEntity:
+      type: object
+      required:
+        - id
+        - code
+        - language
+        - score
+        - time_ms_total
+        - scorable
+        - created_at
+        - updated_at
+        - challenge_id
+        - session_id
+        - user_id
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        language:
+          type: string
+        score:
+          type: integer
+        time_ms_total:
+          type: integer
+        scorable:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        challenge_id:
+          type: string
+        session_id:
+          type: string
+        user_id:
+          type: string
+        exam_item_score_id:
+          type: string
+          nullable: true
+
+    ExamScoringResponse:
+      type: object
+      required: [exam_id, best_score, exam_scores]
+      properties:
+        exam_id:
+          type: string
+        best_score:
+          type: integer
+        exam_scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExamScoreEntity'
+
+    UserExamScoresOutputResponse:
+      type: object
+      required: [user_id, exam_scores]
+      properties:
+        user_id:
+          type: string
+        exam_scores:
+          $ref: '#/components/schemas/ExamScoringResponse'
+
+    UsersExamScoresOutputResponse:
+      type: object
+      required: [exam_id, users]
+      properties:
+        exam_id:
+          type: string
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserExamScoresOutputResponse'
+
+    UserExamsScoresOutputResponse:
+      type: object
+      required: [user_id, prom_score, exam_scores]
+      properties:
+        user_id:
+          type: string
+        prom_score:
+          type: number
+          format: float
+        exam_scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExamScoringResponse'
+
+    ExamItemScoringResponse:
+      type: object
+      required: [exam_item, exam_item_score, submissions]
+      properties:
+        exam_item:
+          $ref: '#/components/schemas/ExamItemEntityResponse'
+        exam_item_score:
+          $ref: '#/components/schemas/ExamItemScoreEntity'
+        submissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubmissionScoringEntity'
+
+    ExamScoreDetailsOutputResponse:
+      type: object
+      required: [exam_score_id, exam_id, exam_items]
+      properties:
+        exam_score_id:
+          type: string
+        exam_id:
+          type: string
+        exam_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExamItemScoringResponse'
 
     MessageResponse:
       type: object

@@ -20,6 +20,7 @@ import (
 	challenge_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/patch-update"
 	challenge_post_archive "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-archive"
 	challenge_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-create"
+	challenge_post_default_code_templates "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-default-code-templates"
 	challenge_post_fork "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-fork"
 	challenge_post_publish "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-publish"
 	course_delete_course "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/courses/delete-course"
@@ -43,19 +44,25 @@ import (
 	exam_post_change_visibility "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-change-visibility"
 	exam_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-close"
 	exam_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/exams/post-create"
-	challenge_post_default_code_templates "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/challenges/post-default-code-templates"
 	sub_get_by_challenge_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-challenge-id"
 	sub_get_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-id"
 	sub_get_by_user_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/get-by-user-id"
 	sub_patch_update_result "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/patch-update-result"
-	sub_post_create_custom "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create-custom"
 	sub_post_create "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create"
+	sub_post_create_custom "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create-custom"
 	sub_post_create_without_score "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/post-create-without-score"
 	sub_get_active_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/get-active-session"
 	sub_post_block "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-block"
 	sub_post_close "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-close"
 	sub_post_heartbeat "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-heartbeat"
 	sub_post_session "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/session/post-session"
+
+	// Scoring handlers
+	sub_get_exam_scoring "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/scoring/get-exam-scoring"
+	sub_get_exams_scores_by_user "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/scoring/get-exams-scores-by-user"
+	sub_get_item_scoring "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/scoring/get-item-scoring"
+	sub_get_users_scores_by_exam "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/submissions/scoring/get-users-scores-by-exam"
+
 	tc_delete_by_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/delete-by-id"
 	tc_get_by_challenge_id "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/get-by-challenge-id"
 	tc_patch_update "github.com/openlabun/CODER/apps/api_v2/internal/interfaces/http/test-cases/patch-update"
@@ -211,6 +218,12 @@ func registerSubmissionsRoutes(app *fiber.App, appContainer *container.Applicati
 	sessions.Post("/:id/heartbeat", sub_post_heartbeat.Handler(appContainer))
 	sessions.Post("/:id/block", sub_post_block.Handler(appContainer))
 	sessions.Post("/:id/close", sub_post_close.Handler(appContainer))
+
+	// Scoring routes
+	submissions.Get("/scores/exam/:examId/users", sub_get_users_scores_by_exam.Handler(appContainer))
+	submissions.Get("/scores/exam/:examId/user/:userId", sub_get_exam_scoring.Handler(appContainer))
+	submissions.Get("/scores/user/:userId", sub_get_exams_scores_by_user.Handler(appContainer))
+	submissions.Get("/scores/exam-score/:examScoreId", sub_get_item_scoring.Handler(appContainer))
 }
 
 func registerLeaderboardRoutes(app *fiber.App) {

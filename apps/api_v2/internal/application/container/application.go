@@ -16,6 +16,7 @@ import (
 	exam_item_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/exam_item_crud"
 	test_case_crud_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/exam/test_case_crud"
 	submission_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission"
+	scoring_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission/scoring"
 	session_usecases "github.com/openlabun/CODER/apps/api_v2/internal/application/usecases/submission/session"
 )
 
@@ -66,14 +67,14 @@ type ExamItemUseCases struct {
 }
 
 type SubmissionUseCases struct {
-	CreateSubmission        *submission_usecases.CreateSubmissionUseCase
+	CreateSubmission             *submission_usecases.CreateSubmissionUseCase
 	CreateSubmissionWithoutScore *submission_usecases.CreateSubmissionWithoutScoreUseCase
-	CreateCustomSubmission  *submission_usecases.CreateCustomSubmissionUseCase
-	GetSubmissionStatus     *submission_usecases.GetSubmissionStatusUseCase
-	GetChallengeSubmissions *submission_usecases.GetChallengeSubmissionsUseCase
-	GetUserSubmissions      *submission_usecases.GetUserSubmissionsUseCase
-	GetSessionSubmissions   *submission_usecases.GetSessionSubmissionsUseCase
-	UpdateResult            *submission_usecases.UpdateResultUseCase
+	CreateCustomSubmission       *submission_usecases.CreateCustomSubmissionUseCase
+	GetSubmissionStatus          *submission_usecases.GetSubmissionStatusUseCase
+	GetChallengeSubmissions      *submission_usecases.GetChallengeSubmissionsUseCase
+	GetUserSubmissions           *submission_usecases.GetUserSubmissionsUseCase
+	GetSessionSubmissions        *submission_usecases.GetSessionSubmissionsUseCase
+	UpdateResult                 *submission_usecases.UpdateResultUseCase
 }
 
 type SessionUseCases struct {
@@ -82,6 +83,13 @@ type SessionUseCases struct {
 	HeartBeatSession *session_usecases.HeartBeatSessionUseCase
 	BlockSession     *session_usecases.BlockSessionUseCase
 	CloseSession     *session_usecases.CloseSessionUseCase
+}
+
+type ScoringUseCases struct {
+	GetUsersScoresByExam *scoring_usecases.GetUsersScoresByExamUseCase
+	GetExamScoring       *scoring_usecases.GetExamScoringUseCase
+	GetExamsScoresByUser *scoring_usecases.GetExamsScoresByUserUseCase
+	GetItemScoring       *scoring_usecases.GetItemScoringUseCase
 }
 
 type ExamUseCases struct {
@@ -111,6 +119,7 @@ type Application struct {
 	ExamItemModule     ExamItemUseCases
 	SessionModule      SessionUseCases
 	SubmissionUseCases SubmissionUseCases
+	ScoringModule      ScoringUseCases
 	AIModule           AIUseCases
 }
 
@@ -168,14 +177,21 @@ func NewApplication(deps ApplicationDependencies) (*Application, error) {
 	}
 
 	app.SubmissionUseCases = SubmissionUseCases{
-		CreateSubmission:        submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ExamScoreRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.ExamItemRepository, deps.ExamItemScoreRepository, deps.PublisherPort),
+		CreateSubmission:             submission_usecases.NewCreateSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ExamScoreRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.ExamItemRepository, deps.ExamItemScoreRepository, deps.PublisherPort),
 		CreateSubmissionWithoutScore: submission_usecases.NewCreateSubmissionWithoutScoreUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
-		CreateCustomSubmission:  submission_usecases.NewCreateCustomSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
-		GetSubmissionStatus:     submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
-		GetChallengeSubmissions: submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
-		GetSessionSubmissions:   submission_usecases.NewGetSessionSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository, deps.SessionRepository),
-		GetUserSubmissions:      submission_usecases.NewGetUserSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository),
-		UpdateResult:            submission_usecases.NewUpdateResultUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.IOVariableRepository, deps.SubmissionResultRepository, deps.LoginService, deps.PasswordHasher),
+		CreateCustomSubmission:       submission_usecases.NewCreateCustomSubmissionUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ExamRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.SubmissionResultRepository, deps.IOVariableRepository, deps.PublisherPort),
+		GetSubmissionStatus:          submission_usecases.NewGetSubmissionStatusUseCase(deps.UserRepository, deps.SubmissionResultRepository, deps.SubmissionRepository),
+		GetChallengeSubmissions:      submission_usecases.NewGetChallengeSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository),
+		GetSessionSubmissions:        submission_usecases.NewGetSessionSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository, deps.SubmissionResultRepository, deps.SessionRepository),
+		GetUserSubmissions:           submission_usecases.NewGetUserSubmissionsUseCase(deps.UserRepository, deps.ChallengeRepository, deps.ExamRepository, deps.SubmissionRepository),
+		UpdateResult:                 submission_usecases.NewUpdateResultUseCase(deps.UserRepository, deps.SubmissionRepository, deps.SessionRepository, deps.ChallengeRepository, deps.TestCaseRepository, deps.IOVariableRepository, deps.SubmissionResultRepository, deps.LoginService, deps.PasswordHasher),
+	}
+
+	app.ScoringModule = ScoringUseCases{
+		GetUsersScoresByExam: scoring_usecases.NewGetUsersScoresByExamUseCase(deps.UserRepository, deps.ExamScoreRepository, deps.ExamRepository),
+		GetExamScoring:       scoring_usecases.NewGetExamScoringUseCase(deps.UserRepository, deps.ExamScoreRepository),
+		GetExamsScoresByUser: scoring_usecases.NewGetExamsScoresByUserUseCase(deps.UserRepository, deps.ExamScoreRepository, deps.ExamRepository),
+		GetItemScoring:       scoring_usecases.NewGetItemScoringUseCase(deps.UserRepository, deps.ExamItemScoreRepository, deps.SubmissionRepository, deps.ExamItemRepository, deps.ExamScoreRepository),
 	}
 
 	app.UserModule = UserUseCases{

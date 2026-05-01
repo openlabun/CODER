@@ -244,3 +244,24 @@ func PatchSubmissionResult(t *testing.T, app *fiber.App, workerKey, resultID str
 	path := fmt.Sprintf("/submissions/results/%s", resultID)
 	return doJSONRequest(t, app, "PATCH", path, body, headers)
 }
+
+// Scoring endpoints
+func GetExamScoring(t *testing.T, app *fiber.App, access *HTTPAccess, examID, userID string) *HTTPResponse {
+	path := fmt.Sprintf("/submissions/scores/exam/%s/user/%s", examID, userID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func GetExamScoreDetails(t *testing.T, app *fiber.App, access *HTTPAccess, examScoreID string) *HTTPResponse {
+	path := fmt.Sprintf("/submissions/scores/exam-score/%s", examScoreID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func GetUsersScoresByExam(t *testing.T, app *fiber.App, access *HTTPAccess, examID string) *HTTPResponse {
+	path := fmt.Sprintf("/submissions/scores/exam/%s/users", examID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}
+
+func GetExamsScoresByUser(t *testing.T, app *fiber.App, access *HTTPAccess, userID string) *HTTPResponse {
+	path := fmt.Sprintf("/submissions/scores/user/%s", userID)
+	return doJSONRequest(t, app, "GET", path, nil, authHeaders(access))
+}

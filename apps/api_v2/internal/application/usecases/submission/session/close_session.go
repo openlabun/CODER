@@ -53,7 +53,7 @@ func (uc *CloseSessionUseCase) Execute(ctx context.Context, input dtos.CloseSess
 		return nil, fmt.Errorf("user with email %q does not exist", userEmail)
 	}
 	
-	// [STEP 2] Verify existing student session
+	// [STEP 2] Verify existing active student session
 	session, err := uc.sessionRepository.GetSessionByID(ctx, input.SessionID)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,13 @@ func (uc *CloseSessionUseCase) Execute(ctx context.Context, input dtos.CloseSess
 		return nil, fmt.Errorf("user is not the owner of the session")
 	}
 
-	// [STEP 4] Get ExamScore associated with session
+	// [STEP 4] Close Session
+	err = state_machine.ApplyTranstion(session, constants.SessionStatusCompleted)
+	if err != nil {
+		return nil, fmt.Errorf("session is not active and cannot be closed, got error: %w", err)
+	}
+
+	// [STEP 5] Get ExamScore associated with session
 	examScore, err := uc.examScoreRepository.GetExamScoreBySessionID(ctx, session.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve exam score for session: %w", err)
@@ -77,19 +83,13 @@ func (uc *CloseSessionUseCase) Execute(ctx context.Context, input dtos.CloseSess
 		return nil, fmt.Errorf("no exam score found for session")
 	}
 
-	// [STEP 5] Calculate final score for the session
+	// [STEP 6] Calculate final score for the session
 	_, err = domain_services.CalculateExamScore(ctx, examScore, uc.examScoreRepository, uc.examItemRepository, uc.examItemScoreRepository, uc.submissionRepository)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate exam score: %w", err)
 	}
 
-	// [STEP 4] Close Session
-	err = state_machine.ApplyTranstion(session, constants.SessionStatusCompleted)
-	if err != nil {
-		return nil, fmt.Errorf("session is not active and cannot be closed, got error: %w", err)
-	}
-
-	// [STEP 5] Update session in repository
+	// [STEP 7] Update session in repository
 	session, err = uc.sessionRepository.UpdateSession(ctx, session)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update session: %w", err)

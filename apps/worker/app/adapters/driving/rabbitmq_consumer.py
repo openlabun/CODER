@@ -4,9 +4,9 @@ import time
 import pika
 from pika.exceptions import AMQPConnectionError
 
-from config import RABBITMQ_URL, QUEUE_NAME
-from app.domain.mapper import MapSubmissionResult
-from app.domain.errors import RetryableSubmissionUpdateError, PermanentSubmissionUpdateError
+from apps.worker.config import RABBITMQ_URL, QUEUE_NAME
+from apps.worker.app.domain.mapper import MapSubmissionResult
+from apps.worker.app.domain.errors import RetryableSubmissionUpdateError, PermanentSubmissionUpdateError
 
 class RabbitMQConsumer:
 

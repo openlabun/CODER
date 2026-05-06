@@ -34,9 +34,9 @@ services:
         networks:
             - judge_net
 
-    worker-python:
+    worker:
         build:
-            context: ./apps/workers/python
+            context: ./apps/worker
             dockerfile: Dockerfile
         working_dir: /app
         command: python main.py
@@ -47,7 +47,7 @@ services:
             - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
             - QUEUE_NAME=python.queue
         volumes:
-            - ./apps/workers/python:/app
+            - ./apps/worker:/app
             - /var/run/docker.sock:/var/run/docker.sock
         depends_on:
             apiv2:

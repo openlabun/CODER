@@ -1,4 +1,4 @@
-from app.domain.models import SubmissionResult
+from apps.worker.app.domain.models import SubmissionResult
 
 def MapSubmissionResult(data: dict) -> SubmissionResult:
     return SubmissionResult(

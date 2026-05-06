@@ -1,7 +1,7 @@
 import time
-from apps.worker.app.application.ports.executor import Executor
-from apps.worker.app.application.ports.api_client import APIClient
-from apps.worker.app.domain.models import SubmissionResult
+from app.application.ports.executor import Executor
+from app.application.ports.api_client import APIClient
+from app.domain.models import SubmissionResult
 
 
 class ProcessSubmission:

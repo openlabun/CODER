@@ -1,9 +1,9 @@
 import subprocess
 import time
 import textwrap
-from apps.worker.app.application.ports.executor import Executor
-from apps.worker.app.domain.models import SubmissionResult
-from apps.worker.config import DOCKER_IMAGE, EXECUTION_TIMEOUT
+from app.application.ports.executor import Executor
+from app.domain.models import SubmissionResult
+from config import DOCKER_IMAGE, EXECUTION_TIMEOUT
 
 
 class DockerExecutor(Executor):

@@ -9,9 +9,9 @@ WORKER_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if WORKER_ROOT not in sys.path:
 	sys.path.insert(0, WORKER_ROOT)
 
-from apps.worker.app.adapters.driven.docker_executor import DockerExecutor
-from apps.worker.app.application.process_submission import ProcessSubmission
-from apps.worker.app.domain.models import SubmissionResult
+from app.adapters.driven.docker_executor import DockerExecutor
+from app.application.process_submission import ProcessSubmission
+from app.domain.models import SubmissionResult
 
 
 class FakeAPIClient:

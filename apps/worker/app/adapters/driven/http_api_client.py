@@ -1,9 +1,9 @@
 import requests
 import time
-from apps.worker.app.application.ports.api_client import APIClient
-from apps.worker.app.domain.models import SubmissionResult
-from apps.worker.app.domain.errors import RetryableSubmissionUpdateError, PermanentSubmissionUpdateError
-from apps.worker.config import API_BASE_URL, API_TOKEN
+from app.application.ports.api_client import APIClient
+from app.domain.models import SubmissionResult
+from app.domain.errors import RetryableSubmissionUpdateError, PermanentSubmissionUpdateError
+from config import API_BASE_URL, API_TOKEN
 
 
 class HTTPAPIClient(APIClient):

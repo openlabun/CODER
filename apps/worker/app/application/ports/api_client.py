@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from apps.worker.app.domain.models import SubmissionResult
+from app.domain.models import SubmissionResult
 
 
 class APIClient(ABC):

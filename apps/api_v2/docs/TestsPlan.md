@@ -807,6 +807,10 @@ Posterior a la finalización del paso se mostrarán los datos individuales de ca
   - Paso 3: Refrescar token (**crítica**)
   
   - Paso 4: Obtener datos del usuario (**crítica**)
+  
+  ```
+  go test -v ./test/use_cases/performance -run TestLoginPerformance
+  ```
 
 - **Lista de exámenes (`Exam`) públicos:**
   
@@ -817,6 +821,10 @@ Posterior a la finalización del paso se mostrarán los datos individuales de ca
   - Paso 3: Iniciar sesión con usuario de estudiante
   
   - Paso 4: Obtener lista de exámenes públicos (**crítica**)
+  
+  ```
+  go test -v ./test/use_cases/performance -run TestExamListPerformance
+  ```
 
 - **Activación y Heartbeat de sesiones (`Session`):**
   
@@ -833,6 +841,12 @@ Posterior a la finalización del paso se mostrarán los datos individuales de ca
   - Paso 6: Esperar el tiempo de `FREEZE_TIME`
   
   - Paso 7: Cada usuario hará heartbeat a la sesión (**crítica**)
+  
+  - Paso 8: Cada usuario cerrará su sesión (**crítica**)
+  
+  ```
+  go test -v ./test/use_cases/performance -run TestSessionsPerformance
+  ```
 
 - **Revisiones (`Submission`) simultáneas:**
   
@@ -848,6 +862,12 @@ Posterior a la finalización del paso se mostrarán los datos individuales de ca
   
   - Paso 6: Iniciar sesión con usuarios de estudiantes (**crítica**)
   
-  - Paso 7: Cada usuario subirá una revisión (**crítica**)
+  - Paso 7: Cada usuario creará una sesión para el examen (**crítica**)
   
-  - Paso 8: Cada usuario revisará el estado de la revisión hasta obtener `accepted` (**crítica**)F
+  - Paso 8: Cada usuario subirá una revisión (**crítica**)
+  
+  - Paso 9: Cada usuario revisará el estado de la revisión hasta obtener `accepted` (**crítica**)
+  
+  ```
+  go test -v ./test/use_cases/performance -run TestSubmissionPerformance
+  ```

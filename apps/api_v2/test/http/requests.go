@@ -17,6 +17,11 @@ func PostAuthLogin(t *testing.T, app *fiber.App, email, password string) *HTTPRe
 	return doJSONRequest(t, app, "POST", "/auth/login", body, nil)
 }
 
+func PostAuthRefreshToken(t *testing.T, app *fiber.App, refreshToken string) *HTTPResponse {
+	body := map[string]any{"refresh_token": refreshToken}
+	return doJSONRequest(t, app, "POST", "/auth/refresh-token", body, nil)
+}
+
 func GetAuthMe(t *testing.T, app *fiber.App, access *HTTPAccess, userID string) *HTTPResponse {
 	path := "/auth/me"
 	if userID != "" {

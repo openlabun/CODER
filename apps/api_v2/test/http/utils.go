@@ -34,6 +34,13 @@ func StartHTTPTestWithApp(t *testing.T, name string) (test.TestProcess, *fiber.A
 	return process, app
 }
 
+func StartConcurrentHTTPTestWithApp(t *testing.T, name string) (test.TestConcurrentProcess, *fiber.App) {
+	process := test.StartConcurrentTestWithApp(t, name)
+	app := fiber.New()
+	http_interfaces.RegisterRoutes(app, process.Application)
+	return process, app
+}
+
 func EnsureAuthUserAccess(t *testing.T, app *fiber.App, email, password, name string) *HTTPAccess {
 	t.Helper()
 

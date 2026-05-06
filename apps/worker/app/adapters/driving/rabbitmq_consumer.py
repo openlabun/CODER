@@ -1,66 +1,46 @@
+import asyncio
 import json
-import time
 
-import pika
-from pika.exceptions import AMQPConnectionError
+import aio_pika
 
-from config import RABBITMQ_URL, QUEUE_NAME
+from config import RABBITMQ_URL, QUEUE_NAME, CONCURRENCY
 from app.domain.mapper import MapSubmissionResult
 from app.domain.errors import RetryableSubmissionUpdateError, PermanentSubmissionUpdateError
+
 
 class RabbitMQConsumer:
 
     def __init__(self, handler):
         self.handler = handler
 
-    def _connect_with_retry(self, max_attempts=20, delay_seconds=2):
-        last_error = None
+    async def start(self):
+        connection = await aio_pika.connect_robust(RABBITMQ_URL)
+        channel = await connection.channel()
 
-        for attempt in range(1, max_attempts + 1):
-            try:
-                print(f"[RabbitMQ] Connecting to {RABBITMQ_URL} (attempt {attempt}/{max_attempts})", flush=True)
-                return pika.BlockingConnection(pika.URLParameters(RABBITMQ_URL))
-            except AMQPConnectionError as err:
-                last_error = err
-                if attempt < max_attempts:
-                    time.sleep(delay_seconds)
+        await channel.set_qos(prefetch_count=CONCURRENCY)
+        queue = await channel.declare_queue(QUEUE_NAME, durable=True)
 
-        raise AMQPConnectionError(
-            f"Could not connect to RabbitMQ after {max_attempts} attempts: {last_error}"
-        )
+        print(f"[Worker] Started. Listening on queue: {QUEUE_NAME} (concurrency={CONCURRENCY})", flush=True)
 
-    def start(self):
-        connection = self._connect_with_retry()
-        channel = connection.channel()
+        async with queue.iterator() as queue_iter:
+            async for message in queue_iter:
+                task = asyncio.create_task(self._handle_message(message))
+                task.add_done_callback(self._on_task_done)
 
-        channel.queue_declare(queue=QUEUE_NAME, durable=True)
+    async def _handle_message(self, message: aio_pika.IncomingMessage):
+        try:
+            print(f"Received message: {message.body}", flush=True)
+            data = json.loads(message.body)
+            submission = MapSubmissionResult(data)
+            await self.handler(submission)
+            await message.ack()
+        except PermanentSubmissionUpdateError as e:
+            print(f"Permanent error processing message: {e}. Dropping message.", flush=True)
+            await message.ack()
+        except Exception as e:
+            print(f"Error processing message: {e}. Requeueing.", flush=True)
+            await message.nack(requeue=True)
 
-        channel.basic_qos(prefetch_count=1)
-
-        def callback(ch, method, properties, body):
-            try:
-                print(f"Received message: {body}", flush=True)
-                data = json.loads(body)
-
-                submission = MapSubmissionResult(data)
-        
-                self.handler(submission)
-
-                ch.basic_ack(delivery_tag=method.delivery_tag)
-
-            except PermanentSubmissionUpdateError as e:
-                print(f"Permanent error processing message: {e}. Dropping message.", flush=True)
-                ch.basic_ack(delivery_tag=method.delivery_tag)
-
-            except RetryableSubmissionUpdateError as e:
-                print(f"Retryable error processing message: {e}. Requeueing message.", flush=True)
-                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
-
-            except Exception as e:
-                print(f"Error: {e}", flush=True)
-                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
-
-        channel.basic_consume(queue=QUEUE_NAME, on_message_callback=callback)
-
-        print(f"Worker started. Listening queue: {QUEUE_NAME}", flush=True)
-        channel.start_consuming()
+    def _on_task_done(self, task: asyncio.Task):
+        if not task.cancelled() and task.exception():
+            print(f"[Worker] Unhandled task error: {task.exception()}", flush=True)

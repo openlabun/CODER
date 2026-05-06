@@ -8,3 +8,4 @@ API_TOKEN = os.getenv("WORKER_KEY", "secret-token")
 
 DOCKER_IMAGE = "python:3.11"
 EXECUTION_TIMEOUT = 5  # seconds
+CONCURRENCY = int(os.getenv("WORKER_CONCURRENCY", "8"))

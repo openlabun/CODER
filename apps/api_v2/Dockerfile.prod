@@ -1,16 +1,14 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-ENV GO111MODULE=off \
-    GOPATH=/go \
-    CGO_ENABLED=0
+ENV CGO_ENABLED=0
+
+COPY go.mod ./
+RUN go mod download
 
 COPY . .
 
-# Fetch runtime dependency in GOPATH mode because this project currently uses relative imports.
-RUN go get github.com/gofiber/fiber/v2
-RUN go test ./...
 RUN go build -o /out/api ./cmd/app
 
 FROM alpine:3.20
@@ -21,7 +19,7 @@ RUN adduser -D -u 10001 appuser
 
 COPY --from=builder /out/api /usr/local/bin/api
 
-EXPOSE 8080
+EXPOSE 4000
 
 USER appuser
 

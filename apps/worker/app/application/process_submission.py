@@ -10,14 +10,14 @@ class ProcessSubmission:
         self.executor = executor
         self.api_client = api_client
 
-    def execute(self, submission: SubmissionResult):
+    async def execute(self, submission: SubmissionResult):
         submission.status = "running"
-        self.api_client.update_submission(submission)
+        await self.api_client.update_submission(submission)
 
         start = time.time()
 
-        result = self.executor.execute(submission)
+        result = await self.executor.execute(submission)
 
         result.execution_time_ms = int((time.time() - start) * 1000)
 
-        self.api_client.update_submission(result)
+        await self.api_client.update_submission(result)

@@ -119,61 +119,48 @@ services:
     runner-python:
         profiles: [ "judge" ]
         build:
-            context: ./apps/api/src/runners/python
-        image: juez_runner_python:prod
-        restart: "no"
-
-    runner-node:
-        profiles: [ "judge" ]
-        build:
-            context: ./apps/api/src/runners/node
-        image: juez_runner_node:prod
-        restart: "no"
+            context: ./apps/worker/runners/python
+        image: coder-runner-python
 
     runner-cpp:
         profiles: [ "judge" ]
         build:
-            context: ./apps/api/src/runners/cpp
-        image: juez_runner_cpp:prod
-        restart: "no"
+            context: ./apps/worker/runners/cpp
+        image: coder-runner-cpp
 
     runner-java:
         profiles: [ "judge" ]
         build:
-            context: ./apps/api/src/runners/java
-        image: juez_runner_java:prod
-        restart: "no"
+            context: ./apps/worker/runners/java
+        image: coder-runner-java
 
     worker:
         profiles: [ "judge" ]
         build:
-            context: ./apps/api
-            dockerfile: Dockerfile.worker
-            args:
-                - NODE_ENV=production
-        command: npm run worker
+            context: ./apps/worker
+        command: python main.py
         restart: always
         volumes:
-            - /var/run/docker.sock:/var/run/docker.sock:ro
-            - submissions_data:/usr/src/app/data
+            - /var/run/docker.sock:/var/run/docker.sock
         depends_on:
             - runner-python
-            - runner-node
             - runner-cpp
             - runner-java
-            - postgres
-            - redis
         environment:
-            - NODE_ENV=${NODE_ENV}
-            - POSTGRES_HOST=${POSTGRES_HOST}
-            - POSTGRES_PORT=${POSTGRES_PORT}
-            - POSTGRES_USER=${POSTGRES_USER}
-            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-            - POSTGRES_DB=${POSTGRES_DB}
-            - REDIS_HOST=${REDIS_HOST}
-            - REDIS_PORT=${REDIS_PORT}
-            - REDIS_PASSWORD=${REDIS_PASSWORD}
-            - HOST_SUBMISSIONS_DIR=${HOST_SUBMISSIONS_DIR}
+            - RABBITMQ_URL=${RABBITMQ_URL}
+            - APIV2_BASE_URL=${APIV2_BASE_URL}
+            - WORKER_KEY=${WORKER_KEY}
+            - PYTHON_QUEUE=${PYTHON_QUEUE:-python.queue}
+            - RUNNER_NETWORK=judge_net
+            - PYTHON_RUNNER_IMAGE=coder-runner-python
+            - CPP_RUNNER_IMAGE=coder-runner-cpp
+            - JAVA_RUNNER_IMAGE=coder-runner-java
+            - PYTHON_RUNNERS=${PYTHON_RUNNERS:-3}
+            - CPP_RUNNERS=${CPP_RUNNERS:-3}
+            - JAVA_RUNNERS=${JAVA_RUNNERS:-3}
+            - RUNNER_HEALTH_CHECK_TIMEOUT=${RUNNER_HEALTH_CHECK_TIMEOUT:-2.0}
+            - RUNNER_RESTART_TIMEOUT=${RUNNER_RESTART_TIMEOUT:-120.0}
+            - RUNNER_REPAIR_INTERVAL=${RUNNER_REPAIR_INTERVAL:-30.0}
         networks:
             - judge_net
         deploy:
@@ -190,3 +177,4 @@ volumes:
 networks:
     judge_net:
         driver: bridge
+        name: judge_net

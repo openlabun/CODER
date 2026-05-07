@@ -43,9 +43,19 @@ services:
         env_file:
             - .env.dev
         environment:
-            - API_BASE_URL=http://apiv2:4000
             - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-            - QUEUE_NAME=python.queue
+            - APIV2_BASE_URL=http://apiv2:4000
+            - PYTHON_QUEUE=python.queue
+            - RUNNER_NETWORK=judge_net
+            - PYTHON_RUNNER_IMAGE=coder-runner-python
+            - CPP_RUNNER_IMAGE=coder-runner-cpp
+            - JAVA_RUNNER_IMAGE=coder-runner-java
+            - PYTHON_RUNNERS=${PYTHON_RUNNERS:-3}
+            - CPP_RUNNERS=${CPP_RUNNERS:-3}
+            - JAVA_RUNNERS=${JAVA_RUNNERS:-3}
+            - RUNNER_HEALTH_CHECK_TIMEOUT=${RUNNER_HEALTH_CHECK_TIMEOUT:-2.0}
+            - RUNNER_RESTART_TIMEOUT=${RUNNER_RESTART_TIMEOUT:-120.0}
+            - RUNNER_REPAIR_INTERVAL=${RUNNER_REPAIR_INTERVAL:-30.0}
         volumes:
             - ./apps/worker:/app
             - /var/run/docker.sock:/var/run/docker.sock
@@ -56,6 +66,24 @@ services:
                 condition: service_healthy
         networks:
             - judge_net
+
+    runner-python:
+        profiles: ["runners"]
+        build:
+            context: ./apps/worker/runners/python
+        image: coder-runner-python
+
+    runner-cpp:
+        profiles: ["runners"]
+        build:
+            context: ./apps/worker/runners/cpp
+        image: coder-runner-cpp
+
+    runner-java:
+        profiles: ["runners"]
+        build:
+            context: ./apps/worker/runners/java
+        image: coder-runner-java
 
     web:
         build:
@@ -80,3 +108,4 @@ volumes:
 networks:
     judge_net:
         driver: bridge
+        name: judge_net

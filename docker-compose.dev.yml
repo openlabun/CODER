@@ -18,6 +18,25 @@ services:
         depends_on:
             rabbitmq:
                 condition: service_healthy
+            cache_db:
+                condition: service_healthy
+        networks:
+            - judge_net
+
+    cache_db:
+        image: mariadb:11
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: coder_cache
+            MYSQL_USER: cache_user
+            MYSQL_PASSWORD: cache_pass
+        ports:
+            - "3306:3306"
+        healthcheck:
+            test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
         networks:
             - judge_net
 

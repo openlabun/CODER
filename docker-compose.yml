@@ -10,11 +10,19 @@ services:
         restart: always
         expose:
             - "${APIV2_PORT:-4000}"
-        env_file:
-            - .env.production
         environment:
             - APIV2_PORT=${APIV2_PORT:-4000}
+            - APIV2_CORS_ALLOW_ORIGINS=${APIV2_CORS_ALLOW_ORIGINS:-*}
             - RABBITMQ_URL=${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}
+            - ROBLE_PROJECT=${ROBLE_PROJECT}
+            - ROBLE_BASE_URL=${ROBLE_BASE_URL:-https://roble-api.openlab.uninorte.edu.co}
+            - ROBLE_ACCESS_TOKEN=${ROBLE_ACCESS_TOKEN}
+            - GEMINI_API_KEY=${GEMINI_API_KEY}
+            - SESSION_FREEZE_TIME=${SESSION_FREEZE_TIME:-60}
+            - WORKER_KEY=${WORKER_KEY}
+            - INTERNAL_USER_EMAIL=${INTERNAL_USER_EMAIL}
+            - INTERNAL_USER_PASSWORD=${INTERNAL_USER_PASSWORD}
+            - PASSWORD_HASH_PEPPER=${PASSWORD_HASH_PEPPER}
         depends_on:
             rabbitmq:
                 condition: service_healthy
@@ -42,17 +50,22 @@ services:
         working_dir: /app
         command: python main.py
         restart: always
-        env_file:
-            - .env.production
         environment:
             - APIV2_BASE_URL=http://apiv2:${APIV2_PORT:-4000}
             - RABBITMQ_URL=${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}
-            - PYTHON_QUEUE=${PYTHON_QUEUE:-python.queue}
             - WORKER_KEY=${WORKER_KEY}
-            - RUNNER_NETWORK=${RUNNER_NETWORK:-judge_net}
-            - RUNNER_NAME_PREFIX=${RUNNER_NAME_PREFIX:-coder-runner}
-            - PYTHON_RUNNER_IMAGE=${PYTHON_RUNNER_IMAGE:-coder-runner-python}
+            - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-10}
+            - PYTHON_QUEUE=${PYTHON_QUEUE:-python.queue}
+            - JAVA_QUEUE=${JAVA_QUEUE:-java.queue}
+            - CPP_QUEUE=${CPP_QUEUE:-cpp.queue}
             - PYTHON_RUNNERS=${PYTHON_RUNNERS:-3}
+            - JAVA_RUNNERS=${JAVA_RUNNERS:-3}
+            - CPP_RUNNERS=${CPP_RUNNERS:-3}
+            - PYTHON_RUNNER_IMAGE=${PYTHON_RUNNER_IMAGE:-coder-runner-python}
+            - JAVA_RUNNER_IMAGE=${JAVA_RUNNER_IMAGE:-coder-runner-java}
+            - CPP_RUNNER_IMAGE=${CPP_RUNNER_IMAGE:-coder-runner-cpp}
+            - RUNNER_NETWORK=${RUNNER_NETWORK:-judge_net}
+            - RUNNER_NAME_PREFIX=${RUNNER_NAME_PREFIX:-coder_runner_}
             - RUNNER_HEALTH_CHECK_TIMEOUT=${RUNNER_HEALTH_CHECK_TIMEOUT:-2.0}
             - RUNNER_RESTART_TIMEOUT=${RUNNER_RESTART_TIMEOUT:-120.0}
             - RUNNER_REPAIR_INTERVAL=${RUNNER_REPAIR_INTERVAL:-30.0}

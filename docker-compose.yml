@@ -85,22 +85,25 @@ services:
                     memory: 2G
 
     runner-python:
-        profiles: ["judge"]
         build:
             context: ./apps/worker/runners/python
         image: coder-runner-python
+        command: tail -f /dev/null
+        restart: unless-stopped
 
     runner-cpp:
-        profiles: ["judge"]
         build:
             context: ./apps/worker/runners/cpp
-        image: coder-runner-cpp
+        image: coder-runner-python
+        command: tail -f /dev/null
+        restart: unless-stopped
 
     runner-java:
-        profiles: ["judge"]
         build:
             context: ./apps/worker/runners/java
-        image: coder-runner-java
+        image: coder-runner-python
+        command: tail -f /dev/null
+        restart: unless-stopped
 
     web:
         build:

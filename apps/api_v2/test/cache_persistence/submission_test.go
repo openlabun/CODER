@@ -21,6 +21,7 @@ import (
 	cache_exam "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble/exam"
 	cache_submission "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble/submission"
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
+	roble_course_infra "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
 	roble_exam_infra "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 	roble_submission_infra "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
@@ -55,21 +56,28 @@ func TestCacheSubmissionCRUD(t *testing.T) {
 	robleAdapter := roble_infrastructure.NewRobleDatabaseAdapter(robleClient)
 	userRepository := roble_user_infrastructure.NewUserRepository(robleAdapter)
 	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
-	courseRepository := cache_course.NewCourseRepository(robleAdapter, cacheAdapter)
-	examRepository := cache_exam.NewExamRepository(robleAdapter, cacheAdapter)
-	examItemRepository := cache_exam.NewExamItemRepository(robleAdapter, cacheAdapter)
-	examScoreRepository := cache_exam.NewExamScoreRepository(robleAdapter, cacheAdapter)
-	examItemScoreRepository := cache_exam.NewExamItemScoreRepository(robleAdapter, cacheAdapter)
-	ioVariableRepository := cache_exam.NewIOVariableRepository(robleAdapter, cacheAdapter)
-	challengeRepository := cache_exam.NewChallengeRepository(robleAdapter, cacheAdapter)
-	testCaseRepository := cache_exam.NewTestCaseRepository(robleAdapter, cacheAdapter)
-	sessionRepository := cache_submission.NewSessionRepository(robleAdapter, cacheAdapter)
-	submissionRepository := cache_submission.NewSubmissionRepository(robleAdapter, cacheAdapter)
-	resultRepository := cache_submission.NewSubmissionResultRepository(robleAdapter, cacheAdapter)
 	robleSubIoVarRepo := roble_exam_infra.NewIOVariableRepository(robleAdapter)
 	robleDirectSession := roble_submission_infra.NewSessionRepository(robleAdapter)
 	robleDirectSubmission := roble_submission_infra.NewSubmissionRepository(robleAdapter)
 	robleDirectResult := roble_submission_infra.NewSubmissionResultRepository(robleAdapter, robleSubIoVarRepo)
+	robleDirectCourse := roble_course_infra.NewCourseRepository(robleAdapter)
+	robleDirectExam := roble_exam_infra.NewExamRepository(robleAdapter)
+	robleDirectExamItem := roble_exam_infra.NewExamItemRepository(robleAdapter)
+	robleDirectExamScore := roble_exam_infra.NewExamScoreRepository(robleAdapter)
+	robleDirectExamItemScore := roble_exam_infra.NewExamItemScoreRepository(robleAdapter)
+	robleDirectChallenge := roble_exam_infra.NewChallengeRepository(robleAdapter, robleSubIoVarRepo)
+	robleDirectTestCase := roble_exam_infra.NewTestCaseRepository(robleAdapter, robleSubIoVarRepo)
+	courseRepository := cache_course.NewCourseRepository(robleDirectCourse, cacheAdapter)
+	examRepository := cache_exam.NewExamRepository(robleDirectExam, cacheAdapter)
+	examItemRepository := cache_exam.NewExamItemRepository(robleDirectExamItem, cacheAdapter)
+	examScoreRepository := cache_exam.NewExamScoreRepository(robleDirectExamScore, cacheAdapter)
+	examItemScoreRepository := cache_exam.NewExamItemScoreRepository(robleDirectExamItemScore, cacheAdapter)
+	ioVariableRepository := cache_exam.NewIOVariableRepository(robleSubIoVarRepo, cacheAdapter)
+	challengeRepository := cache_exam.NewChallengeRepository(robleDirectChallenge, cacheAdapter)
+	testCaseRepository := cache_exam.NewTestCaseRepository(robleDirectTestCase, cacheAdapter)
+	sessionRepository := cache_submission.NewSessionRepository(robleDirectSession, cacheAdapter)
+	submissionRepository := cache_submission.NewSubmissionRepository(robleDirectSubmission, cacheAdapter)
+	resultRepository := cache_submission.NewSubmissionResultRepository(robleDirectResult, cacheAdapter)
 	process.Log("Clientes y repositories inicializados")
 	process.EndStep()
 

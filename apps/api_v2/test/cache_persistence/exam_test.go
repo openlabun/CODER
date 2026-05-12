@@ -18,6 +18,7 @@ import (
 	cache_course "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble/course"
 	cache_exam "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble/exam"
 	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
+	roble_course_infra "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
 	roble_exam_infra "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 	roble_user_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/user"
 	hasher "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/security"
@@ -53,16 +54,18 @@ func TestCacheExamCRUD(t *testing.T) {
 	robleAdapter := roble_infrastructure.NewRobleDatabaseAdapter(robleClient)
 	userRepository := roble_user_infrastructure.NewUserRepository(robleAdapter)
 	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
-	courseRepository := cache_course.NewCourseRepository(robleAdapter, cacheAdapter)
-	examRepository := cache_exam.NewExamRepository(robleAdapter, cacheAdapter)
-	examItemRepository := cache_exam.NewExamItemRepository(robleAdapter, cacheAdapter)
-	ioVariableRepository := cache_exam.NewIOVariableRepository(robleAdapter, cacheAdapter)
-	challengeRepository := cache_exam.NewChallengeRepository(robleAdapter, cacheAdapter)
-	testCaseRepository := cache_exam.NewTestCaseRepository(robleAdapter, cacheAdapter)
 	robleIoVarRepo := roble_exam_infra.NewIOVariableRepository(robleAdapter)
 	robleDirectExam := roble_exam_infra.NewExamRepository(robleAdapter)
 	robleDirectChallenge := roble_exam_infra.NewChallengeRepository(robleAdapter, robleIoVarRepo)
 	robleDirectTestCase := roble_exam_infra.NewTestCaseRepository(robleAdapter, robleIoVarRepo)
+	robleDirectCourse := roble_course_infra.NewCourseRepository(robleAdapter)
+	robleDirectExamItem := roble_exam_infra.NewExamItemRepository(robleAdapter)
+	courseRepository := cache_course.NewCourseRepository(robleDirectCourse, cacheAdapter)
+	examRepository := cache_exam.NewExamRepository(robleDirectExam, cacheAdapter)
+	examItemRepository := cache_exam.NewExamItemRepository(robleDirectExamItem, cacheAdapter)
+	ioVariableRepository := cache_exam.NewIOVariableRepository(robleIoVarRepo, cacheAdapter)
+	challengeRepository := cache_exam.NewChallengeRepository(robleDirectChallenge, cacheAdapter)
+	testCaseRepository := cache_exam.NewTestCaseRepository(robleDirectTestCase, cacheAdapter)
 	process.Log("Clientes y repositories inicializados")
 	process.EndStep()
 

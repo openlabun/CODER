@@ -49,8 +49,8 @@ func TestCacheCourseCRUD(t *testing.T) {
 	robleAdapter := roble_infrastructure.NewRobleDatabaseAdapter(robleClient)
 	userRepository := roble_user_infrastructure.NewUserRepository(robleAdapter)
 	authAdapter := roble_user_infrastructure.NewRobleAuthAdapter(robleAdapter, userRepository)
-	courseRepository := cache_course.NewCourseRepository(robleAdapter, cacheAdapter)
 	robleDirectCourse := roble_course_infra.NewCourseRepository(robleAdapter)
+	courseRepository := cache_course.NewCourseRepository(robleDirectCourse, cacheAdapter)
 	process.Log("Clientes y repositories inicializados")
 	process.EndStep()
 

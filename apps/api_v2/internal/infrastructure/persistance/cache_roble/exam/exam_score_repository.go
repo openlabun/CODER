@@ -5,27 +5,24 @@ import (
 	"strings"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	Repository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	cache "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 )
 
-
-
 type ExamScoreRepository struct {
-	robleRepository *repository.ExamScoreRepository
-	cacheAdapter    *cache.CacheAdapter
+	repository   Repository.ExamScoreRepository
+	cacheAdapter *cache.CacheAdapter
 }
 
-func NewExamScoreRepository(robleAdapter *roble_infrastructure.RobleDatabaseAdapter, cacheAdapter *cache.CacheAdapter) *ExamScoreRepository {
+func NewExamScoreRepository(repository Repository.ExamScoreRepository, cacheAdapter *cache.CacheAdapter) *ExamScoreRepository {
 	return &ExamScoreRepository{
-		robleRepository: repository.NewExamScoreRepository(robleAdapter),
-		cacheAdapter:    cacheAdapter,
+		repository:   repository,
+		cacheAdapter: cacheAdapter,
 	}
 }
 
 func (r *ExamScoreRepository) CreateExamScore(ctx context.Context, s *Entities.ExamScore) (*Entities.ExamScore, error) {
-	result, err := r.robleRepository.CreateExamScore(ctx, s)
+	result, err := r.repository.CreateExamScore(ctx, s)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +33,7 @@ func (r *ExamScoreRepository) CreateExamScore(ctx context.Context, s *Entities.E
 }
 
 func (r *ExamScoreRepository) UpdateExamScore(ctx context.Context, s *Entities.ExamScore) (*Entities.ExamScore, error) {
-	result, err := r.robleRepository.UpdateExamScore(ctx, s)
+	result, err := r.repository.UpdateExamScore(ctx, s)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +44,7 @@ func (r *ExamScoreRepository) UpdateExamScore(ctx context.Context, s *Entities.E
 }
 
 func (r *ExamScoreRepository) DeleteExamScore(ctx context.Context, examScoreID string) error {
-	if err := r.robleRepository.DeleteExamScore(ctx, examScoreID); err != nil {
+	if err := r.repository.DeleteExamScore(ctx, examScoreID); err != nil {
 		return err
 	}
 	r.cacheAdapter.DeleteByID(cache.CacheExamScoreTable, strings.TrimSpace(examScoreID))
@@ -61,7 +58,7 @@ func (r *ExamScoreRepository) GetExamScoreByID(ctx context.Context, examScoreID 
 			return s, nil
 		}
 	}
-	s, err := r.robleRepository.GetExamScoreByID(ctx, examScoreID)
+	s, err := r.repository.GetExamScoreByID(ctx, examScoreID)
 	if err != nil || s == nil {
 		return s, err
 	}
@@ -78,7 +75,7 @@ func (r *ExamScoreRepository) GetExamScoreBySessionID(ctx context.Context, sessi
 			return s, nil
 		}
 	}
-	s, err := r.robleRepository.GetExamScoreBySessionID(ctx, sessionID)
+	s, err := r.repository.GetExamScoreBySessionID(ctx, sessionID)
 	if err != nil || s == nil {
 		return s, err
 	}
@@ -101,7 +98,7 @@ func (r *ExamScoreRepository) GetExamScores(ctx context.Context, examID, student
 			return examScoresFromRecords(recs), nil
 		}
 	}
-	scores, err := r.robleRepository.GetExamScores(ctx, examID, studentID)
+	scores, err := r.repository.GetExamScores(ctx, examID, studentID)
 	if err != nil {
 		return nil, err
 	}

@@ -5,25 +5,24 @@ import (
 	"strings"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	Repository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	cache "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 )
 
 type SessionRepository struct {
-	robleRepository *repository.SessionRepository
-	cacheAdapter    *cache.CacheAdapter
+	repository   Repository.SessionRepository
+	cacheAdapter *cache.CacheAdapter
 }
 
-func NewSessionRepository(robleAdapter *roble_infrastructure.RobleDatabaseAdapter, cacheAdapter *cache.CacheAdapter) *SessionRepository {
+func NewSessionRepository(repository Repository.SessionRepository, cacheAdapter *cache.CacheAdapter) *SessionRepository {
 	return &SessionRepository{
-		robleRepository: repository.NewSessionRepository(robleAdapter),
-		cacheAdapter:    cacheAdapter,
+		repository:   repository,
+		cacheAdapter: cacheAdapter,
 	}
 }
 
 func (r *SessionRepository) CreateSession(ctx context.Context, session *Entities.Session) (*Entities.Session, error) {
-	result, err := r.robleRepository.CreateSession(ctx, session)
+	result, err := r.repository.CreateSession(ctx, session)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +33,7 @@ func (r *SessionRepository) CreateSession(ctx context.Context, session *Entities
 }
 
 func (r *SessionRepository) UpdateSession(ctx context.Context, session *Entities.Session) (*Entities.Session, error) {
-	result, err := r.robleRepository.UpdateSession(ctx, session)
+	result, err := r.repository.UpdateSession(ctx, session)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +44,7 @@ func (r *SessionRepository) UpdateSession(ctx context.Context, session *Entities
 }
 
 func (r *SessionRepository) DeleteSession(ctx context.Context, sessionID string) error {
-	if err := r.robleRepository.DeleteSession(ctx, sessionID); err != nil {
+	if err := r.repository.DeleteSession(ctx, sessionID); err != nil {
 		return err
 	}
 	r.cacheAdapter.DeleteByID(cache.CacheSessionTable, strings.TrimSpace(sessionID))
@@ -59,7 +58,7 @@ func (r *SessionRepository) GetSessionByID(ctx context.Context, sessionID string
 			return s, nil
 		}
 	}
-	s, err := r.robleRepository.GetSessionByID(ctx, sessionID)
+	s, err := r.repository.GetSessionByID(ctx, sessionID)
 	if err != nil || s == nil {
 		return s, err
 	}
@@ -74,7 +73,7 @@ func (r *SessionRepository) GetSessionsByExamID(ctx context.Context, examID stri
 	if recs, err := r.cacheAdapter.FindBy(cache.CacheSessionTable, map[string]string{"exam_id": id}); err == nil && recs != nil {
 		return sessionsFromRecords(recs), nil
 	}
-	sessions, err := r.robleRepository.GetSessionsByExamID(ctx, examID)
+	sessions, err := r.repository.GetSessionsByExamID(ctx, examID)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +90,7 @@ func (r *SessionRepository) GetSessionsByStudentID(ctx context.Context, studentI
 	if recs, err := r.cacheAdapter.FindBy(cache.CacheSessionTable, map[string]string{"user_id": id}); err == nil && recs != nil {
 		return sessionsFromRecords(recs), nil
 	}
-	sessions, err := r.robleRepository.GetSessionsByStudentID(ctx, studentID)
+	sessions, err := r.repository.GetSessionsByStudentID(ctx, studentID)
 	if err != nil {
 		return nil, err
 	}

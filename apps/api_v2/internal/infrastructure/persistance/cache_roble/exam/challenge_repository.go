@@ -5,26 +5,24 @@ import (
 	"strings"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	Repository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	cache "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 )
 
 type ChallengeRepository struct {
-	robleRepository *repository.ChallengeRepository
-	cacheAdapter    *cache.CacheAdapter
+	repository   Repository.ChallengeRepository
+	cacheAdapter *cache.CacheAdapter
 }
 
-func NewChallengeRepository(robleAdapter *roble_infrastructure.RobleDatabaseAdapter, cacheAdapter *cache.CacheAdapter) *ChallengeRepository {
-	ioVariableRepository := repository.NewIOVariableRepository(robleAdapter)
+func NewChallengeRepository(repository Repository.ChallengeRepository, cacheAdapter *cache.CacheAdapter) *ChallengeRepository {
 	return &ChallengeRepository{
-		robleRepository: repository.NewChallengeRepository(robleAdapter, ioVariableRepository),
-		cacheAdapter:    cacheAdapter,
+		repository:   repository,
+		cacheAdapter: cacheAdapter,
 	}
 }
 
 func (r *ChallengeRepository) CreateChallenge(ctx context.Context, challenge *Entities.Challenge) (*Entities.Challenge, error) {
-	result, err := r.robleRepository.CreateChallenge(ctx, challenge)
+	result, err := r.repository.CreateChallenge(ctx, challenge)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +33,7 @@ func (r *ChallengeRepository) CreateChallenge(ctx context.Context, challenge *En
 }
 
 func (r *ChallengeRepository) UpdateChallenge(ctx context.Context, challenge *Entities.Challenge) (*Entities.Challenge, error) {
-	result, err := r.robleRepository.UpdateChallenge(ctx, challenge)
+	result, err := r.repository.UpdateChallenge(ctx, challenge)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +44,7 @@ func (r *ChallengeRepository) UpdateChallenge(ctx context.Context, challenge *En
 }
 
 func (r *ChallengeRepository) DeleteChallenge(ctx context.Context, challengeID string) error {
-	if err := r.robleRepository.DeleteChallenge(ctx, challengeID); err != nil {
+	if err := r.repository.DeleteChallenge(ctx, challengeID); err != nil {
 		return err
 	}
 	r.cacheAdapter.DeleteByID(cache.CacheChallengeTable, strings.TrimSpace(challengeID))
@@ -60,7 +58,7 @@ func (r *ChallengeRepository) GetChallengeByID(ctx context.Context, challengeID 
 			return c, nil
 		}
 	}
-	c, err := r.robleRepository.GetChallengeByID(ctx, challengeID)
+	c, err := r.repository.GetChallengeByID(ctx, challengeID)
 	if err != nil || c == nil {
 		return c, err
 	}
@@ -71,7 +69,7 @@ func (r *ChallengeRepository) GetChallengeByID(ctx context.Context, challengeID 
 }
 
 func (r *ChallengeRepository) GetChallenges(ctx context.Context, status, tag, difficulty *string) ([]*Entities.Challenge, error) {
-	challenges, err := r.robleRepository.GetChallenges(ctx, status, tag, difficulty)
+	challenges, err := r.repository.GetChallenges(ctx, status, tag, difficulty)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +88,7 @@ func (r *ChallengeRepository) GetChallengesByUserID(ctx context.Context, userID 
 			return challengesFromRecords(recs), nil
 		}
 	}
-	challenges, err := r.robleRepository.GetChallengesByUserID(ctx, userID, examID)
+	challenges, err := r.repository.GetChallengesByUserID(ctx, userID, examID)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +101,7 @@ func (r *ChallengeRepository) GetChallengesByUserID(ctx context.Context, userID 
 }
 
 func (r *ChallengeRepository) GetChallengesByExamID(ctx context.Context, examID string) ([]*Entities.Challenge, error) {
-	challenges, err := r.robleRepository.GetChallengesByExamID(ctx, examID)
+	challenges, err := r.repository.GetChallengesByExamID(ctx, examID)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +114,7 @@ func (r *ChallengeRepository) GetChallengesByExamID(ctx context.Context, examID 
 }
 
 func (r *ChallengeRepository) GetChallengesByTag(ctx context.Context, tag string) ([]*Entities.Challenge, error) {
-	challenges, err := r.robleRepository.GetChallengesByTag(ctx, tag)
+	challenges, err := r.repository.GetChallengesByTag(ctx, tag)
 	if err != nil {
 		return nil, err
 	}

@@ -5,26 +5,24 @@ import (
 	"strings"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	Repository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	cache "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 )
 
 type TestCaseRepository struct {
-	robleRepository *repository.TestCaseRepository
-	cacheAdapter    *cache.CacheAdapter
+	repository   Repository.TestCaseRepository
+	cacheAdapter *cache.CacheAdapter
 }
 
-func NewTestCaseRepository(robleAdapter *roble_infrastructure.RobleDatabaseAdapter, cacheAdapter *cache.CacheAdapter) *TestCaseRepository {
-	ioVariableRepository := repository.NewIOVariableRepository(robleAdapter)
+func NewTestCaseRepository(repository Repository.TestCaseRepository, cacheAdapter *cache.CacheAdapter) *TestCaseRepository {
 	return &TestCaseRepository{
-		robleRepository: repository.NewTestCaseRepository(robleAdapter, ioVariableRepository),
-		cacheAdapter:    cacheAdapter,
+		repository:   repository,
+		cacheAdapter: cacheAdapter,
 	}
 }
 
 func (r *TestCaseRepository) CreateTestCase(ctx context.Context, testCase *Entities.TestCase) (*Entities.TestCase, error) {
-	result, err := r.robleRepository.CreateTestCase(ctx, testCase)
+	result, err := r.repository.CreateTestCase(ctx, testCase)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +33,7 @@ func (r *TestCaseRepository) CreateTestCase(ctx context.Context, testCase *Entit
 }
 
 func (r *TestCaseRepository) UpdateTestCase(ctx context.Context, testCase *Entities.TestCase) (*Entities.TestCase, error) {
-	result, err := r.robleRepository.UpdateTestCase(ctx, testCase)
+	result, err := r.repository.UpdateTestCase(ctx, testCase)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +44,7 @@ func (r *TestCaseRepository) UpdateTestCase(ctx context.Context, testCase *Entit
 }
 
 func (r *TestCaseRepository) DeleteTestCase(ctx context.Context, testCaseID string) error {
-	if err := r.robleRepository.DeleteTestCase(ctx, testCaseID); err != nil {
+	if err := r.repository.DeleteTestCase(ctx, testCaseID); err != nil {
 		return err
 	}
 	r.cacheAdapter.DeleteByID(cache.CacheTestCaseTable, strings.TrimSpace(testCaseID))
@@ -61,7 +59,7 @@ func (r *TestCaseRepository) GetTestCaseByID(ctx context.Context, testCaseID str
 			return t, nil
 		}
 	}
-	t, err := r.robleRepository.GetTestCaseByID(ctx, testCaseID)
+	t, err := r.repository.GetTestCaseByID(ctx, testCaseID)
 	if err != nil || t == nil {
 		return t, err
 	}
@@ -76,7 +74,7 @@ func (r *TestCaseRepository) GetTestCasesByChallengeID(ctx context.Context, chal
 	if recs, err := r.cacheAdapter.FindBy(cache.CacheTestCaseTable, map[string]string{"challenge_id": id}); err == nil && recs != nil {
 		return testCasesFromRecords(recs), nil
 	}
-	testCases, err := r.robleRepository.GetTestCasesByChallengeID(ctx, challengeID)
+	testCases, err := r.repository.GetTestCasesByChallengeID(ctx, challengeID)
 	if err != nil {
 		return nil, err
 	}

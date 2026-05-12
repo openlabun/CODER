@@ -5,25 +5,24 @@ import (
 	"strings"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	Repository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	cache "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 )
 
 type ExamItemRepository struct {
-	robleRepository *repository.ExamItemRepository
-	cacheAdapter    *cache.CacheAdapter
+	repository   Repository.ExamItemRepository
+	cacheAdapter *cache.CacheAdapter
 }
 
-func NewExamItemRepository(robleAdapter *roble_infrastructure.RobleDatabaseAdapter, cacheAdapter *cache.CacheAdapter) *ExamItemRepository {
+func NewExamItemRepository(repository Repository.ExamItemRepository, cacheAdapter *cache.CacheAdapter) *ExamItemRepository {
 	return &ExamItemRepository{
-		robleRepository: repository.NewExamItemRepository(robleAdapter),
-		cacheAdapter:    cacheAdapter,
+		repository:   repository,
+		cacheAdapter: cacheAdapter,
 	}
 }
 
 func (r *ExamItemRepository) CreateExamItem(ctx context.Context, item *Entities.ExamItem) (*Entities.ExamItem, error) {
-	result, err := r.robleRepository.CreateExamItem(ctx, item)
+	result, err := r.repository.CreateExamItem(ctx, item)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +33,7 @@ func (r *ExamItemRepository) CreateExamItem(ctx context.Context, item *Entities.
 }
 
 func (r *ExamItemRepository) UpdateExamItem(ctx context.Context, item *Entities.ExamItem) (*Entities.ExamItem, error) {
-	result, err := r.robleRepository.UpdateExamItem(ctx, item)
+	result, err := r.repository.UpdateExamItem(ctx, item)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +44,7 @@ func (r *ExamItemRepository) UpdateExamItem(ctx context.Context, item *Entities.
 }
 
 func (r *ExamItemRepository) DeleteExamItem(ctx context.Context, examItemID string) error {
-	if err := r.robleRepository.DeleteExamItem(ctx, examItemID); err != nil {
+	if err := r.repository.DeleteExamItem(ctx, examItemID); err != nil {
 		return err
 	}
 	r.cacheAdapter.DeleteByID(cache.CacheExamItemTable, strings.TrimSpace(examItemID))
@@ -59,7 +58,7 @@ func (r *ExamItemRepository) GetExamItemByID(ctx context.Context, examItemID str
 			return item, nil
 		}
 	}
-	item, err := r.robleRepository.GetExamItemByID(ctx, examItemID)
+	item, err := r.repository.GetExamItemByID(ctx, examItemID)
 	if err != nil || item == nil {
 		return item, err
 	}
@@ -82,7 +81,7 @@ func (r *ExamItemRepository) GetExamItem(ctx context.Context, examID *string, ch
 			return examItemsFromRecords(recs), nil
 		}
 	}
-	items, err := r.robleRepository.GetExamItem(ctx, examID, challengeID)
+	items, err := r.repository.GetExamItem(ctx, examID, challengeID)
 	if err != nil {
 		return nil, err
 	}

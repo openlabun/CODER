@@ -5,20 +5,19 @@ import (
 	"strings"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/exam"
+	Repository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/exam"
 	cache "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 )
 
 type IOVariableRepository struct {
-	robleRepository *repository.IOVariableRepository
-	cacheAdapter    *cache.CacheAdapter
+	repository   Repository.IOVariableRepository
+	cacheAdapter *cache.CacheAdapter
 }
 
-func NewIOVariableRepository(robleAdapter *roble_infrastructure.RobleDatabaseAdapter, cacheAdapter *cache.CacheAdapter) *IOVariableRepository {
+func NewIOVariableRepository(repository Repository.IOVariableRepository, cacheAdapter *cache.CacheAdapter) *IOVariableRepository {
 	return &IOVariableRepository{
-		robleRepository: repository.NewIOVariableRepository(robleAdapter),
-		cacheAdapter:    cacheAdapter,
+		repository:   repository,
+		cacheAdapter: cacheAdapter,
 	}
 }
 
@@ -29,7 +28,7 @@ func (r *IOVariableRepository) GetIOVariableByID(ctx context.Context, variableID
 			return v, nil
 		}
 	}
-	v, err := r.robleRepository.GetIOVariableByID(ctx, variableID)
+	v, err := r.repository.GetIOVariableByID(ctx, variableID)
 	if err != nil || v == nil {
 		return v, err
 	}
@@ -40,7 +39,7 @@ func (r *IOVariableRepository) GetIOVariableByID(ctx context.Context, variableID
 }
 
 func (r *IOVariableRepository) CreateIOVariable(ctx context.Context, variable *Entities.IOVariable) (*Entities.IOVariable, error) {
-	result, err := r.robleRepository.CreateIOVariable(ctx, variable)
+	result, err := r.repository.CreateIOVariable(ctx, variable)
 	if err != nil {
 		return nil, err
 	}
@@ -50,8 +49,19 @@ func (r *IOVariableRepository) CreateIOVariable(ctx context.Context, variable *E
 	return result, nil
 }
 
+func (r *IOVariableRepository) UpdateIOVariable(ctx context.Context, variable *Entities.IOVariable) (*Entities.IOVariable, error) {
+	result, err := r.repository.UpdateIOVariable(ctx, variable)
+	if err != nil {
+		return nil, err
+	}
+	if rec, e := cache.EntityToMap(result); e == nil {
+		r.cacheAdapter.Save(cache.CacheIOVariableTable, cache.UpdateOperation, rec)
+	}
+	return result, nil
+}
+
 func (r *IOVariableRepository) DeleteIOVariable(ctx context.Context, variableID string) error {
-	if err := r.robleRepository.DeleteIOVariable(ctx, variableID); err != nil {
+	if err := r.repository.DeleteIOVariable(ctx, variableID); err != nil {
 		return err
 	}
 	r.cacheAdapter.DeleteByID(cache.CacheIOVariableTable, strings.TrimSpace(variableID))

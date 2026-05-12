@@ -6,26 +6,26 @@ import (
 
 	UserEntities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/user"
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/course"
+	Repository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/course"
 
 	cache "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
 )
 
+
 type CourseRepository struct {
-	robleRepository *repository.CourseRepository
+	repository 		Repository.CourseRepository
 	cacheAdapter    *cache.CacheAdapter
 }
 
-func NewCourseRepository(robleAdapter *roble_infrastructure.RobleDatabaseAdapter, cacheAdapter *cache.CacheAdapter) *CourseRepository {
+func NewCourseRepository(repository Repository.CourseRepository, cacheAdapter *cache.CacheAdapter) *CourseRepository {
 	return &CourseRepository{
-		robleRepository: repository.NewCourseRepository(robleAdapter),
-		cacheAdapter:    cacheAdapter,
+		repository: 	repository,
+		cacheAdapter:   cacheAdapter,
 	}
 }
 
 func (r *CourseRepository) CreateCourse(ctx context.Context, course *Entities.Course) (*Entities.Course, error) {
-	result, err := r.robleRepository.CreateCourse(ctx, course)
+	result, err := r.repository.CreateCourse(ctx, course)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (r *CourseRepository) CreateCourse(ctx context.Context, course *Entities.Co
 }
 
 func (r *CourseRepository) UpdateCourse(ctx context.Context, course *Entities.Course) (*Entities.Course, error) {
-	result, err := r.robleRepository.UpdateCourse(ctx, course)
+	result, err := r.repository.UpdateCourse(ctx, course)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (r *CourseRepository) UpdateCourse(ctx context.Context, course *Entities.Co
 }
 
 func (r *CourseRepository) DeleteCourse(ctx context.Context, courseID string) error {
-	if err := r.robleRepository.DeleteCourse(ctx, courseID); err != nil {
+	if err := r.repository.DeleteCourse(ctx, courseID); err != nil {
 		return err
 	}
 	r.cacheAdapter.DeleteByID(cache.CacheCourseTable, strings.TrimSpace(courseID))
@@ -55,11 +55,11 @@ func (r *CourseRepository) DeleteCourse(ctx context.Context, courseID string) er
 }
 
 func (r *CourseRepository) AddStudentToCourse(ctx context.Context, courseID string, studentID string) error {
-	return r.robleRepository.AddStudentToCourse(ctx, courseID, studentID)
+	return r.repository.AddStudentToCourse(ctx, courseID, studentID)
 }
 
 func (r *CourseRepository) RemoveStudentFromCourse(ctx context.Context, courseID string, studentID string) error {
-	return r.robleRepository.RemoveStudentFromCourse(ctx, courseID, studentID)
+	return r.repository.RemoveStudentFromCourse(ctx, courseID, studentID)
 }
 
 func (r *CourseRepository) GetCourseByID(ctx context.Context, courseID string) (*Entities.Course, error) {
@@ -69,7 +69,7 @@ func (r *CourseRepository) GetCourseByID(ctx context.Context, courseID string) (
 			return c, nil
 		}
 	}
-	c, err := r.robleRepository.GetCourseByID(ctx, courseID)
+	c, err := r.repository.GetCourseByID(ctx, courseID)
 	if err != nil || c == nil {
 		return c, err
 	}
@@ -86,7 +86,7 @@ func (r *CourseRepository) GetCoursesByEnrollmentCode(ctx context.Context, enrol
 			return c, nil
 		}
 	}
-	c, err := r.robleRepository.GetCourseByEnrollmentCode(ctx, enrollmentCode)
+	c, err := r.repository.GetCourseByEnrollmentCode(ctx, enrollmentCode)
 	if err != nil || c == nil {
 		return c, err
 	}
@@ -101,7 +101,7 @@ func (r *CourseRepository) GetCoursesByStudentID(ctx context.Context, studentID 
 	if recs, err := r.cacheAdapter.FindBy(cache.CacheCourseTable, map[string]string{"student_id": id}); err == nil && recs != nil {
 		return coursesFromRecords(recs), nil
 	}
-	courses, err := r.robleRepository.GetCoursesByStudentID(ctx, studentID)
+	courses, err := r.repository.GetCoursesByStudentID(ctx, studentID)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (r *CourseRepository) GetCoursesByTeacherID(ctx context.Context, teacherID 
 	if recs, err := r.cacheAdapter.FindBy(cache.CacheCourseTable, map[string]string{"teacher_id": id}); err == nil && recs != nil {
 		return coursesFromRecords(recs), nil
 	}
-	courses, err := r.robleRepository.GetCoursesByTeacherID(ctx, teacherID)
+	courses, err := r.repository.GetCoursesByTeacherID(ctx, teacherID)
 	if err != nil {
 		return nil, err
 	}
@@ -131,5 +131,5 @@ func (r *CourseRepository) GetCoursesByTeacherID(ctx context.Context, teacherID 
 }
 
 func (r *CourseRepository) GetStudentsByCourseID(ctx context.Context, courseID string) ([]*UserEntities.User, error) {
-	return r.robleRepository.GetStudentsByCourseID(ctx, courseID)
+	return r.repository.GetStudentsByCourseID(ctx, courseID)
 }

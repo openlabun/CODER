@@ -5,27 +5,24 @@ import (
 	"strings"
 
 	Entities "github.com/openlabun/CODER/apps/api_v2/internal/domain/entities/submission"
+	Repository "github.com/openlabun/CODER/apps/api_v2/internal/domain/repositories/submission"
 	cache "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/cache_roble"
-	roble_infrastructure "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble"
-	examRepository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
-	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 )
 
 type SubmissionResultRepository struct {
-	robleRepository *repository.SubmissionResultRepository
-	cacheAdapter    *cache.CacheAdapter
+	repository   Repository.SubmissionResultRepository
+	cacheAdapter *cache.CacheAdapter
 }
 
-func NewSubmissionResultRepository(robleAdapter *roble_infrastructure.RobleDatabaseAdapter, cacheAdapter *cache.CacheAdapter) *SubmissionResultRepository {
-	ioVariableRepository := examRepository.NewIOVariableRepository(robleAdapter)
+func NewSubmissionResultRepository(repository Repository.SubmissionResultRepository, cacheAdapter *cache.CacheAdapter) *SubmissionResultRepository {
 	return &SubmissionResultRepository{
-		robleRepository: repository.NewSubmissionResultRepository(robleAdapter, ioVariableRepository),
-		cacheAdapter:    cacheAdapter,
+		repository:   repository,
+		cacheAdapter: cacheAdapter,
 	}
 }
 
 func (r *SubmissionResultRepository) CreateResult(ctx context.Context, result *Entities.SubmissionResult) (*Entities.SubmissionResult, error) {
-	res, err := r.robleRepository.CreateResult(ctx, result)
+	res, err := r.repository.CreateResult(ctx, result)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +33,7 @@ func (r *SubmissionResultRepository) CreateResult(ctx context.Context, result *E
 }
 
 func (r *SubmissionResultRepository) UpdateResult(ctx context.Context, result *Entities.SubmissionResult) (*Entities.SubmissionResult, error) {
-	res, err := r.robleRepository.UpdateResult(ctx, result)
+	res, err := r.repository.UpdateResult(ctx, result)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +44,7 @@ func (r *SubmissionResultRepository) UpdateResult(ctx context.Context, result *E
 }
 
 func (r *SubmissionResultRepository) DeleteResult(ctx context.Context, resultID string) error {
-	if err := r.robleRepository.DeleteResult(ctx, resultID); err != nil {
+	if err := r.repository.DeleteResult(ctx, resultID); err != nil {
 		return err
 	}
 	r.cacheAdapter.DeleteByID(cache.CacheSubmissionResultTable, strings.TrimSpace(resultID))
@@ -61,7 +58,7 @@ func (r *SubmissionResultRepository) GetResultByID(ctx context.Context, resultID
 			return res, nil
 		}
 	}
-	res, err := r.robleRepository.GetResultByID(ctx, resultID)
+	res, err := r.repository.GetResultByID(ctx, resultID)
 	if err != nil || res == nil {
 		return res, err
 	}
@@ -76,7 +73,7 @@ func (r *SubmissionResultRepository) GetResultsBySubmissionID(ctx context.Contex
 	if recs, err := r.cacheAdapter.FindBy(cache.CacheSubmissionResultTable, map[string]string{"submission_id": id}); err == nil && recs != nil {
 		return resultsFromRecords(recs), nil
 	}
-	results, err := r.robleRepository.GetResultsBySubmissionID(ctx, submissionID)
+	results, err := r.repository.GetResultsBySubmissionID(ctx, submissionID)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +90,7 @@ func (r *SubmissionResultRepository) GetResultByTestCase(ctx context.Context, te
 	if recs, err := r.cacheAdapter.FindBy(cache.CacheSubmissionResultTable, map[string]string{"test_case_id": id}); err == nil && recs != nil {
 		return resultsFromRecords(recs), nil
 	}
-	results, err := r.robleRepository.GetResultByTestCase(ctx, testCaseID)
+	results, err := r.repository.GetResultByTestCase(ctx, testCaseID)
 	if err != nil {
 		return nil, err
 	}

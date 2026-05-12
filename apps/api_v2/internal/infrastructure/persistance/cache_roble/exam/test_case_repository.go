@@ -10,8 +10,6 @@ import (
 	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 )
 
-const cacheTestCaseTable = "cache_test_case"
-
 type TestCaseRepository struct {
 	robleRepository *repository.TestCaseRepository
 	cacheAdapter    *cache.CacheAdapter
@@ -31,7 +29,7 @@ func (r *TestCaseRepository) CreateTestCase(ctx context.Context, testCase *Entit
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheTestCaseTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheTestCaseTable, cache.InsertOperation, rec)
 	}
 	return result, nil
 }
@@ -42,7 +40,7 @@ func (r *TestCaseRepository) UpdateTestCase(ctx context.Context, testCase *Entit
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheTestCaseTable, "update", rec)
+		r.cacheAdapter.Save(cache.CacheTestCaseTable, cache.UpdateOperation, rec)
 	}
 	return result, nil
 }
@@ -51,13 +49,13 @@ func (r *TestCaseRepository) DeleteTestCase(ctx context.Context, testCaseID stri
 	if err := r.robleRepository.DeleteTestCase(ctx, testCaseID); err != nil {
 		return err
 	}
-	r.cacheAdapter.DeleteByID(cacheTestCaseTable, strings.TrimSpace(testCaseID))
+	r.cacheAdapter.DeleteByID(cache.CacheTestCaseTable, strings.TrimSpace(testCaseID))
 	return nil
 }
 
 func (r *TestCaseRepository) GetTestCaseByID(ctx context.Context, testCaseID string) (*Entities.TestCase, error) {
 	id := strings.TrimSpace(testCaseID)
-	if rec, err := r.cacheAdapter.FindByID(cacheTestCaseTable, id); err == nil && rec != nil {
+	if rec, err := r.cacheAdapter.FindByID(cache.CacheTestCaseTable, id); err == nil && rec != nil {
 		cache.NormalizeBools(rec, "is_sample", "custom")
 		if t, e := cache.MapToEntity[Entities.TestCase](rec); e == nil {
 			return t, nil
@@ -68,14 +66,14 @@ func (r *TestCaseRepository) GetTestCaseByID(ctx context.Context, testCaseID str
 		return t, err
 	}
 	if rec, e := cache.EntityToMap(t); e == nil {
-		r.cacheAdapter.Save(cacheTestCaseTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheTestCaseTable, cache.InsertOperation, rec)
 	}
 	return t, nil
 }
 
 func (r *TestCaseRepository) GetTestCasesByChallengeID(ctx context.Context, challengeID string) ([]*Entities.TestCase, error) {
 	id := strings.TrimSpace(challengeID)
-	if recs, err := r.cacheAdapter.FindBy(cacheTestCaseTable, map[string]string{"challenge_id": id}); err == nil && recs != nil {
+	if recs, err := r.cacheAdapter.FindBy(cache.CacheTestCaseTable, map[string]string{"challenge_id": id}); err == nil && recs != nil {
 		return testCasesFromRecords(recs), nil
 	}
 	testCases, err := r.robleRepository.GetTestCasesByChallengeID(ctx, challengeID)
@@ -84,7 +82,7 @@ func (r *TestCaseRepository) GetTestCasesByChallengeID(ctx context.Context, chal
 	}
 	for _, t := range testCases {
 		if rec, e := cache.EntityToMap(t); e == nil {
-			r.cacheAdapter.Save(cacheTestCaseTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheTestCaseTable, cache.InsertOperation, rec)
 		}
 	}
 	return testCases, nil

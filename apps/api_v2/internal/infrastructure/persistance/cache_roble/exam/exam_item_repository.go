@@ -10,8 +10,6 @@ import (
 	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 )
 
-const cacheExamItemTable = "cache_exam_item"
-
 type ExamItemRepository struct {
 	robleRepository *repository.ExamItemRepository
 	cacheAdapter    *cache.CacheAdapter
@@ -30,7 +28,7 @@ func (r *ExamItemRepository) CreateExamItem(ctx context.Context, item *Entities.
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheExamItemTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheExamItemTable, cache.InsertOperation, rec)
 	}
 	return result, nil
 }
@@ -41,7 +39,7 @@ func (r *ExamItemRepository) UpdateExamItem(ctx context.Context, item *Entities.
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheExamItemTable, "update", rec)
+		r.cacheAdapter.Save(cache.CacheExamItemTable, cache.UpdateOperation, rec)
 	}
 	return result, nil
 }
@@ -50,13 +48,13 @@ func (r *ExamItemRepository) DeleteExamItem(ctx context.Context, examItemID stri
 	if err := r.robleRepository.DeleteExamItem(ctx, examItemID); err != nil {
 		return err
 	}
-	r.cacheAdapter.DeleteByID(cacheExamItemTable, strings.TrimSpace(examItemID))
+	r.cacheAdapter.DeleteByID(cache.CacheExamItemTable, strings.TrimSpace(examItemID))
 	return nil
 }
 
 func (r *ExamItemRepository) GetExamItemByID(ctx context.Context, examItemID string) (*Entities.ExamItem, error) {
 	id := strings.TrimSpace(examItemID)
-	if rec, err := r.cacheAdapter.FindByID(cacheExamItemTable, id); err == nil && rec != nil {
+	if rec, err := r.cacheAdapter.FindByID(cache.CacheExamItemTable, id); err == nil && rec != nil {
 		if item, e := cache.MapToEntity[Entities.ExamItem](rec); e == nil {
 			return item, nil
 		}
@@ -66,7 +64,7 @@ func (r *ExamItemRepository) GetExamItemByID(ctx context.Context, examItemID str
 		return item, err
 	}
 	if rec, e := cache.EntityToMap(item); e == nil {
-		r.cacheAdapter.Save(cacheExamItemTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheExamItemTable, cache.InsertOperation, rec)
 	}
 	return item, nil
 }
@@ -80,7 +78,7 @@ func (r *ExamItemRepository) GetExamItem(ctx context.Context, examID *string, ch
 		conditions["challenge_id"] = strings.TrimSpace(*challengeID)
 	}
 	if len(conditions) > 0 {
-		if recs, err := r.cacheAdapter.FindBy(cacheExamItemTable, conditions); err == nil && recs != nil {
+		if recs, err := r.cacheAdapter.FindBy(cache.CacheExamItemTable, conditions); err == nil && recs != nil {
 			return examItemsFromRecords(recs), nil
 		}
 	}
@@ -90,7 +88,7 @@ func (r *ExamItemRepository) GetExamItem(ctx context.Context, examID *string, ch
 	}
 	for _, item := range items {
 		if rec, e := cache.EntityToMap(item); e == nil {
-			r.cacheAdapter.Save(cacheExamItemTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheExamItemTable, cache.InsertOperation, rec)
 		}
 	}
 	return items, nil

@@ -12,8 +12,6 @@ import (
 	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/course"
 )
 
-const cacheCourseTable = "cache_course"
-
 type CourseRepository struct {
 	robleRepository *repository.CourseRepository
 	cacheAdapter    *cache.CacheAdapter
@@ -32,7 +30,7 @@ func (r *CourseRepository) CreateCourse(ctx context.Context, course *Entities.Co
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheCourseTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheCourseTable, cache.InsertOperation, rec)
 	}
 	return result, nil
 }
@@ -43,7 +41,7 @@ func (r *CourseRepository) UpdateCourse(ctx context.Context, course *Entities.Co
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheCourseTable, "update", rec)
+		r.cacheAdapter.Save(cache.CacheCourseTable, cache.UpdateOperation, rec)
 	}
 	return result, nil
 }
@@ -52,7 +50,7 @@ func (r *CourseRepository) DeleteCourse(ctx context.Context, courseID string) er
 	if err := r.robleRepository.DeleteCourse(ctx, courseID); err != nil {
 		return err
 	}
-	r.cacheAdapter.DeleteByID(cacheCourseTable, strings.TrimSpace(courseID))
+	r.cacheAdapter.DeleteByID(cache.CacheCourseTable, strings.TrimSpace(courseID))
 	return nil
 }
 
@@ -66,7 +64,7 @@ func (r *CourseRepository) RemoveStudentFromCourse(ctx context.Context, courseID
 
 func (r *CourseRepository) GetCourseByID(ctx context.Context, courseID string) (*Entities.Course, error) {
 	id := strings.TrimSpace(courseID)
-	if rec, err := r.cacheAdapter.FindByID(cacheCourseTable, id); err == nil && rec != nil {
+	if rec, err := r.cacheAdapter.FindByID(cache.CacheCourseTable, id); err == nil && rec != nil {
 		if c, e := cache.MapToEntity[Entities.Course](rec); e == nil {
 			return c, nil
 		}
@@ -76,14 +74,14 @@ func (r *CourseRepository) GetCourseByID(ctx context.Context, courseID string) (
 		return c, err
 	}
 	if rec, e := cache.EntityToMap(c); e == nil {
-		r.cacheAdapter.Save(cacheCourseTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheCourseTable, cache.InsertOperation, rec)
 	}
 	return c, nil
 }
 
 func (r *CourseRepository) GetCoursesByEnrollmentCode(ctx context.Context, enrollmentCode string) (*Entities.Course, error) {
 	code := strings.TrimSpace(enrollmentCode)
-	if recs, err := r.cacheAdapter.FindBy(cacheCourseTable, map[string]string{"enrollment_code": code}); err == nil && len(recs) > 0 {
+	if recs, err := r.cacheAdapter.FindBy(cache.CacheCourseTable, map[string]string{"enrollment_code": code}); err == nil && len(recs) > 0 {
 		if c, e := cache.MapToEntity[Entities.Course](recs[0]); e == nil {
 			return c, nil
 		}
@@ -93,14 +91,14 @@ func (r *CourseRepository) GetCoursesByEnrollmentCode(ctx context.Context, enrol
 		return c, err
 	}
 	if rec, e := cache.EntityToMap(c); e == nil {
-		r.cacheAdapter.Save(cacheCourseTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheCourseTable, cache.InsertOperation, rec)
 	}
 	return c, nil
 }
 
 func (r *CourseRepository) GetCoursesByStudentID(ctx context.Context, studentID string) ([]*Entities.Course, error) {
 	id := strings.TrimSpace(studentID)
-	if recs, err := r.cacheAdapter.FindBy(cacheCourseTable, map[string]string{"student_id": id}); err == nil && recs != nil {
+	if recs, err := r.cacheAdapter.FindBy(cache.CacheCourseTable, map[string]string{"student_id": id}); err == nil && recs != nil {
 		return coursesFromRecords(recs), nil
 	}
 	courses, err := r.robleRepository.GetCoursesByStudentID(ctx, studentID)
@@ -109,7 +107,7 @@ func (r *CourseRepository) GetCoursesByStudentID(ctx context.Context, studentID 
 	}
 	for _, c := range courses {
 		if rec, e := cache.EntityToMap(c); e == nil {
-			r.cacheAdapter.Save(cacheCourseTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheCourseTable, cache.InsertOperation, rec)
 		}
 	}
 	return courses, nil
@@ -117,7 +115,7 @@ func (r *CourseRepository) GetCoursesByStudentID(ctx context.Context, studentID 
 
 func (r *CourseRepository) GetCoursesByTeacherID(ctx context.Context, teacherID string) ([]*Entities.Course, error) {
 	id := strings.TrimSpace(teacherID)
-	if recs, err := r.cacheAdapter.FindBy(cacheCourseTable, map[string]string{"teacher_id": id}); err == nil && recs != nil {
+	if recs, err := r.cacheAdapter.FindBy(cache.CacheCourseTable, map[string]string{"teacher_id": id}); err == nil && recs != nil {
 		return coursesFromRecords(recs), nil
 	}
 	courses, err := r.robleRepository.GetCoursesByTeacherID(ctx, teacherID)
@@ -126,7 +124,7 @@ func (r *CourseRepository) GetCoursesByTeacherID(ctx context.Context, teacherID 
 	}
 	for _, c := range courses {
 		if rec, e := cache.EntityToMap(c); e == nil {
-			r.cacheAdapter.Save(cacheCourseTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheCourseTable, cache.InsertOperation, rec)
 		}
 	}
 	return courses, nil

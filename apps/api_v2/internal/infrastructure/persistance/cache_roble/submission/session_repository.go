@@ -10,8 +10,6 @@ import (
 	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 )
 
-const cacheSessionTable = "cache_session"
-
 type SessionRepository struct {
 	robleRepository *repository.SessionRepository
 	cacheAdapter    *cache.CacheAdapter
@@ -30,7 +28,7 @@ func (r *SessionRepository) CreateSession(ctx context.Context, session *Entities
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheSessionTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheSessionTable,  cache.InsertOperation, rec)
 	}
 	return result, nil
 }
@@ -41,7 +39,7 @@ func (r *SessionRepository) UpdateSession(ctx context.Context, session *Entities
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheSessionTable, "update", rec)
+		r.cacheAdapter.Save(cache.CacheSessionTable, cache.UpdateOperation, rec)
 	}
 	return result, nil
 }
@@ -50,13 +48,13 @@ func (r *SessionRepository) DeleteSession(ctx context.Context, sessionID string)
 	if err := r.robleRepository.DeleteSession(ctx, sessionID); err != nil {
 		return err
 	}
-	r.cacheAdapter.DeleteByID(cacheSessionTable, strings.TrimSpace(sessionID))
+	r.cacheAdapter.DeleteByID(cache.CacheSessionTable, strings.TrimSpace(sessionID))
 	return nil
 }
 
 func (r *SessionRepository) GetSessionByID(ctx context.Context, sessionID string) (*Entities.Session, error) {
 	id := strings.TrimSpace(sessionID)
-	if rec, err := r.cacheAdapter.FindByID(cacheSessionTable, id); err == nil && rec != nil {
+	if rec, err := r.cacheAdapter.FindByID(cache.CacheSessionTable, id); err == nil && rec != nil {
 		if s, e := cache.MapToEntity[Entities.Session](rec); e == nil {
 			return s, nil
 		}
@@ -66,14 +64,14 @@ func (r *SessionRepository) GetSessionByID(ctx context.Context, sessionID string
 		return s, err
 	}
 	if rec, e := cache.EntityToMap(s); e == nil {
-		r.cacheAdapter.Save(cacheSessionTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheSessionTable,  cache.InsertOperation, rec)
 	}
 	return s, nil
 }
 
 func (r *SessionRepository) GetSessionsByExamID(ctx context.Context, examID string) ([]*Entities.Session, error) {
 	id := strings.TrimSpace(examID)
-	if recs, err := r.cacheAdapter.FindBy(cacheSessionTable, map[string]string{"exam_id": id}); err == nil && recs != nil {
+	if recs, err := r.cacheAdapter.FindBy(cache.CacheSessionTable, map[string]string{"exam_id": id}); err == nil && recs != nil {
 		return sessionsFromRecords(recs), nil
 	}
 	sessions, err := r.robleRepository.GetSessionsByExamID(ctx, examID)
@@ -82,7 +80,7 @@ func (r *SessionRepository) GetSessionsByExamID(ctx context.Context, examID stri
 	}
 	for _, s := range sessions {
 		if rec, e := cache.EntityToMap(s); e == nil {
-			r.cacheAdapter.Save(cacheSessionTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheSessionTable,  cache.InsertOperation, rec)
 		}
 	}
 	return sessions, nil
@@ -90,7 +88,7 @@ func (r *SessionRepository) GetSessionsByExamID(ctx context.Context, examID stri
 
 func (r *SessionRepository) GetSessionsByStudentID(ctx context.Context, studentID string) ([]*Entities.Session, error) {
 	id := strings.TrimSpace(studentID)
-	if recs, err := r.cacheAdapter.FindBy(cacheSessionTable, map[string]string{"user_id": id}); err == nil && recs != nil {
+	if recs, err := r.cacheAdapter.FindBy(cache.CacheSessionTable, map[string]string{"user_id": id}); err == nil && recs != nil {
 		return sessionsFromRecords(recs), nil
 	}
 	sessions, err := r.robleRepository.GetSessionsByStudentID(ctx, studentID)
@@ -99,7 +97,7 @@ func (r *SessionRepository) GetSessionsByStudentID(ctx context.Context, studentI
 	}
 	for _, s := range sessions {
 		if rec, e := cache.EntityToMap(s); e == nil {
-			r.cacheAdapter.Save(cacheSessionTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheSessionTable,  cache.InsertOperation, rec)
 		}
 	}
 	return sessions, nil

@@ -11,8 +11,6 @@ import (
 	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/submission"
 )
 
-const cacheSubmissionResultTable = "cache_submission_result"
-
 type SubmissionResultRepository struct {
 	robleRepository *repository.SubmissionResultRepository
 	cacheAdapter    *cache.CacheAdapter
@@ -32,7 +30,7 @@ func (r *SubmissionResultRepository) CreateResult(ctx context.Context, result *E
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(res); e == nil {
-		r.cacheAdapter.Save(cacheSubmissionResultTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheSubmissionResultTable,  cache.InsertOperation, rec)
 	}
 	return res, nil
 }
@@ -43,7 +41,7 @@ func (r *SubmissionResultRepository) UpdateResult(ctx context.Context, result *E
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(res); e == nil {
-		r.cacheAdapter.Save(cacheSubmissionResultTable, "update", rec)
+		r.cacheAdapter.Save(cache.CacheSubmissionResultTable, cache.UpdateOperation, rec)
 	}
 	return res, nil
 }
@@ -52,13 +50,13 @@ func (r *SubmissionResultRepository) DeleteResult(ctx context.Context, resultID 
 	if err := r.robleRepository.DeleteResult(ctx, resultID); err != nil {
 		return err
 	}
-	r.cacheAdapter.DeleteByID(cacheSubmissionResultTable, strings.TrimSpace(resultID))
+	r.cacheAdapter.DeleteByID(cache.CacheSubmissionResultTable, strings.TrimSpace(resultID))
 	return nil
 }
 
 func (r *SubmissionResultRepository) GetResultByID(ctx context.Context, resultID string) (*Entities.SubmissionResult, error) {
 	id := strings.TrimSpace(resultID)
-	if rec, err := r.cacheAdapter.FindByID(cacheSubmissionResultTable, id); err == nil && rec != nil {
+	if rec, err := r.cacheAdapter.FindByID(cache.CacheSubmissionResultTable, id); err == nil && rec != nil {
 		if res, e := cache.MapToEntity[Entities.SubmissionResult](rec); e == nil {
 			return res, nil
 		}
@@ -68,14 +66,14 @@ func (r *SubmissionResultRepository) GetResultByID(ctx context.Context, resultID
 		return res, err
 	}
 	if rec, e := cache.EntityToMap(res); e == nil {
-		r.cacheAdapter.Save(cacheSubmissionResultTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheSubmissionResultTable, cache.InsertOperation, rec)
 	}
 	return res, nil
 }
 
 func (r *SubmissionResultRepository) GetResultsBySubmissionID(ctx context.Context, submissionID string) ([]*Entities.SubmissionResult, error) {
 	id := strings.TrimSpace(submissionID)
-	if recs, err := r.cacheAdapter.FindBy(cacheSubmissionResultTable, map[string]string{"submission_id": id}); err == nil && recs != nil {
+	if recs, err := r.cacheAdapter.FindBy(cache.CacheSubmissionResultTable, map[string]string{"submission_id": id}); err == nil && recs != nil {
 		return resultsFromRecords(recs), nil
 	}
 	results, err := r.robleRepository.GetResultsBySubmissionID(ctx, submissionID)
@@ -84,7 +82,7 @@ func (r *SubmissionResultRepository) GetResultsBySubmissionID(ctx context.Contex
 	}
 	for _, res := range results {
 		if rec, e := cache.EntityToMap(res); e == nil {
-			r.cacheAdapter.Save(cacheSubmissionResultTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheSubmissionResultTable,  cache.InsertOperation, rec)
 		}
 	}
 	return results, nil
@@ -92,7 +90,7 @@ func (r *SubmissionResultRepository) GetResultsBySubmissionID(ctx context.Contex
 
 func (r *SubmissionResultRepository) GetResultByTestCase(ctx context.Context, testCaseID string) ([]*Entities.SubmissionResult, error) {
 	id := strings.TrimSpace(testCaseID)
-	if recs, err := r.cacheAdapter.FindBy(cacheSubmissionResultTable, map[string]string{"test_case_id": id}); err == nil && recs != nil {
+	if recs, err := r.cacheAdapter.FindBy(cache.CacheSubmissionResultTable, map[string]string{"test_case_id": id}); err == nil && recs != nil {
 		return resultsFromRecords(recs), nil
 	}
 	results, err := r.robleRepository.GetResultByTestCase(ctx, testCaseID)
@@ -101,7 +99,7 @@ func (r *SubmissionResultRepository) GetResultByTestCase(ctx context.Context, te
 	}
 	for _, res := range results {
 		if rec, e := cache.EntityToMap(res); e == nil {
-			r.cacheAdapter.Save(cacheSubmissionResultTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheSubmissionResultTable,  cache.InsertOperation, rec)
 		}
 	}
 	return results, nil

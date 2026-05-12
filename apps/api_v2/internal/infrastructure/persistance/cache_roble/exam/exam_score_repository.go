@@ -10,7 +10,7 @@ import (
 	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 )
 
-const cacheExamScoreTable = "cache_exam_score"
+
 
 type ExamScoreRepository struct {
 	robleRepository *repository.ExamScoreRepository
@@ -30,7 +30,7 @@ func (r *ExamScoreRepository) CreateExamScore(ctx context.Context, s *Entities.E
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheExamScoreTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheExamScoreTable, cache.InsertOperation, rec)
 	}
 	return result, nil
 }
@@ -41,7 +41,7 @@ func (r *ExamScoreRepository) UpdateExamScore(ctx context.Context, s *Entities.E
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheExamScoreTable, "update", rec)
+		r.cacheAdapter.Save(cache.CacheExamScoreTable, cache.UpdateOperation, rec)
 	}
 	return result, nil
 }
@@ -50,13 +50,13 @@ func (r *ExamScoreRepository) DeleteExamScore(ctx context.Context, examScoreID s
 	if err := r.robleRepository.DeleteExamScore(ctx, examScoreID); err != nil {
 		return err
 	}
-	r.cacheAdapter.DeleteByID(cacheExamScoreTable, strings.TrimSpace(examScoreID))
+	r.cacheAdapter.DeleteByID(cache.CacheExamScoreTable, strings.TrimSpace(examScoreID))
 	return nil
 }
 
 func (r *ExamScoreRepository) GetExamScoreByID(ctx context.Context, examScoreID string) (*Entities.ExamScore, error) {
 	id := strings.TrimSpace(examScoreID)
-	if rec, err := r.cacheAdapter.FindByID(cacheExamScoreTable, id); err == nil && rec != nil {
+	if rec, err := r.cacheAdapter.FindByID(cache.CacheExamScoreTable, id); err == nil && rec != nil {
 		if s, e := cache.MapToEntity[Entities.ExamScore](rec); e == nil {
 			return s, nil
 		}
@@ -66,14 +66,14 @@ func (r *ExamScoreRepository) GetExamScoreByID(ctx context.Context, examScoreID 
 		return s, err
 	}
 	if rec, e := cache.EntityToMap(s); e == nil {
-		r.cacheAdapter.Save(cacheExamScoreTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheExamScoreTable, cache.InsertOperation, rec)
 	}
 	return s, nil
 }
 
 func (r *ExamScoreRepository) GetExamScoreBySessionID(ctx context.Context, sessionID string) (*Entities.ExamScore, error) {
 	id := strings.TrimSpace(sessionID)
-	if recs, err := r.cacheAdapter.FindBy(cacheExamScoreTable, map[string]string{"session_id": id}); err == nil && len(recs) > 0 {
+	if recs, err := r.cacheAdapter.FindBy(cache.CacheExamScoreTable, map[string]string{"session_id": id}); err == nil && len(recs) > 0 {
 		if s, e := cache.MapToEntity[Entities.ExamScore](recs[0]); e == nil {
 			return s, nil
 		}
@@ -83,7 +83,7 @@ func (r *ExamScoreRepository) GetExamScoreBySessionID(ctx context.Context, sessi
 		return s, err
 	}
 	if rec, e := cache.EntityToMap(s); e == nil {
-		r.cacheAdapter.Save(cacheExamScoreTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheExamScoreTable, cache.InsertOperation, rec)
 	}
 	return s, nil
 }
@@ -97,7 +97,7 @@ func (r *ExamScoreRepository) GetExamScores(ctx context.Context, examID, student
 		conditions["student_id"] = strings.TrimSpace(*studentID)
 	}
 	if len(conditions) > 0 {
-		if recs, err := r.cacheAdapter.FindBy(cacheExamScoreTable, conditions); err == nil && recs != nil {
+		if recs, err := r.cacheAdapter.FindBy(cache.CacheExamScoreTable, conditions); err == nil && recs != nil {
 			return examScoresFromRecords(recs), nil
 		}
 	}
@@ -107,7 +107,7 @@ func (r *ExamScoreRepository) GetExamScores(ctx context.Context, examID, student
 	}
 	for _, s := range scores {
 		if rec, e := cache.EntityToMap(s); e == nil {
-			r.cacheAdapter.Save(cacheExamScoreTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheExamScoreTable, cache.InsertOperation, rec)
 		}
 	}
 	return scores, nil

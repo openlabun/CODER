@@ -10,8 +10,6 @@ import (
 	repository "github.com/openlabun/CODER/apps/api_v2/internal/infrastructure/persistance/roble/exam"
 )
 
-const cacheChallengeTable = "cache_challenge"
-
 type ChallengeRepository struct {
 	robleRepository *repository.ChallengeRepository
 	cacheAdapter    *cache.CacheAdapter
@@ -31,7 +29,7 @@ func (r *ChallengeRepository) CreateChallenge(ctx context.Context, challenge *En
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheChallengeTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheChallengeTable, cache.InsertOperation, rec)
 	}
 	return result, nil
 }
@@ -42,7 +40,7 @@ func (r *ChallengeRepository) UpdateChallenge(ctx context.Context, challenge *En
 		return nil, err
 	}
 	if rec, e := cache.EntityToMap(result); e == nil {
-		r.cacheAdapter.Save(cacheChallengeTable, "update", rec)
+		r.cacheAdapter.Save(cache.CacheChallengeTable, cache.UpdateOperation, rec)
 	}
 	return result, nil
 }
@@ -51,13 +49,13 @@ func (r *ChallengeRepository) DeleteChallenge(ctx context.Context, challengeID s
 	if err := r.robleRepository.DeleteChallenge(ctx, challengeID); err != nil {
 		return err
 	}
-	r.cacheAdapter.DeleteByID(cacheChallengeTable, strings.TrimSpace(challengeID))
+	r.cacheAdapter.DeleteByID(cache.CacheChallengeTable, strings.TrimSpace(challengeID))
 	return nil
 }
 
 func (r *ChallengeRepository) GetChallengeByID(ctx context.Context, challengeID string) (*Entities.Challenge, error) {
 	id := strings.TrimSpace(challengeID)
-	if rec, err := r.cacheAdapter.FindByID(cacheChallengeTable, id); err == nil && rec != nil {
+	if rec, err := r.cacheAdapter.FindByID(cache.CacheChallengeTable, id); err == nil && rec != nil {
 		if c, e := cache.MapToEntity[Entities.Challenge](rec); e == nil {
 			return c, nil
 		}
@@ -67,7 +65,7 @@ func (r *ChallengeRepository) GetChallengeByID(ctx context.Context, challengeID 
 		return c, err
 	}
 	if rec, e := cache.EntityToMap(c); e == nil {
-		r.cacheAdapter.Save(cacheChallengeTable, "insert", rec)
+		r.cacheAdapter.Save(cache.CacheChallengeTable, cache.InsertOperation, rec)
 	}
 	return c, nil
 }
@@ -79,7 +77,7 @@ func (r *ChallengeRepository) GetChallenges(ctx context.Context, status, tag, di
 	}
 	for _, c := range challenges {
 		if rec, e := cache.EntityToMap(c); e == nil {
-			r.cacheAdapter.Save(cacheChallengeTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheChallengeTable, cache.InsertOperation, rec)
 		}
 	}
 	return challenges, nil
@@ -88,7 +86,7 @@ func (r *ChallengeRepository) GetChallenges(ctx context.Context, status, tag, di
 func (r *ChallengeRepository) GetChallengesByUserID(ctx context.Context, userID string, examID *string) ([]*Entities.Challenge, error) {
 	id := strings.TrimSpace(userID)
 	if examID == nil {
-		if recs, err := r.cacheAdapter.FindBy(cacheChallengeTable, map[string]string{"user_id": id}); err == nil && recs != nil {
+		if recs, err := r.cacheAdapter.FindBy(cache.CacheChallengeTable, map[string]string{"user_id": id}); err == nil && recs != nil {
 			return challengesFromRecords(recs), nil
 		}
 	}
@@ -98,7 +96,7 @@ func (r *ChallengeRepository) GetChallengesByUserID(ctx context.Context, userID 
 	}
 	for _, c := range challenges {
 		if rec, e := cache.EntityToMap(c); e == nil {
-			r.cacheAdapter.Save(cacheChallengeTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheChallengeTable, cache.InsertOperation, rec)
 		}
 	}
 	return challenges, nil
@@ -111,7 +109,7 @@ func (r *ChallengeRepository) GetChallengesByExamID(ctx context.Context, examID 
 	}
 	for _, c := range challenges {
 		if rec, e := cache.EntityToMap(c); e == nil {
-			r.cacheAdapter.Save(cacheChallengeTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheChallengeTable, cache.InsertOperation, rec)
 		}
 	}
 	return challenges, nil
@@ -124,7 +122,7 @@ func (r *ChallengeRepository) GetChallengesByTag(ctx context.Context, tag string
 	}
 	for _, c := range challenges {
 		if rec, e := cache.EntityToMap(c); e == nil {
-			r.cacheAdapter.Save(cacheChallengeTable, "insert", rec)
+			r.cacheAdapter.Save(cache.CacheChallengeTable, cache.InsertOperation, rec)
 		}
 	}
 	return challenges, nil

@@ -25,6 +25,7 @@ import {
     ArrowRight
 } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
+import ExamScoresPanel from '../components/ExamScoresPanel';
 import './Challenges.css';
 
 const PublicExams = () => {
@@ -351,6 +352,15 @@ const PublicExams = () => {
                                                 )
                                             )}
                                         </div>
+                                        {user && (
+                                            <ExamScoresPanel
+                                                examId={examId}
+                                                userId={currentUserId}
+                                                isProfessor={isProfessor}
+                                                showClassScores={Boolean(isProfessor && canEditExam)}
+                                                compact
+                                            />
+                                        )}
                                     </div>
                                 </div>
                             </div>

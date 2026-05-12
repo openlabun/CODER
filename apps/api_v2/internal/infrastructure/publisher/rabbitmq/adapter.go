@@ -107,6 +107,18 @@ func (a *RabbitMQAdapter) PublishSubmission(dto dtos.SubmissionResultPublishedDT
 	return nil
 }
 
+func (a *RabbitMQAdapter) ConsumeFromQueue(queue string) (<-chan amqp.Delivery, error) {
+	_, err := a.channel.QueueDeclare(queue, true, false, false, false, nil)
+	if err != nil {
+		return nil, fmt.Errorf("declare queue %q: %w", queue, err)
+	}
+	msgs, err := a.channel.Consume(queue, "", false, false, false, false, nil)
+	if err != nil {
+		return nil, fmt.Errorf("consume from queue %q: %w", queue, err)
+	}
+	return msgs, nil
+}
+
 func getEnvOrDefault(key string, fallback string) string {
 	value := os.Getenv(key)
 	if value == "" {

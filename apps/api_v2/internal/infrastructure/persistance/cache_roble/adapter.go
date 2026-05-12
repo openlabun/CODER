@@ -12,10 +12,23 @@ import (
 
 type CacheAdapter struct {
 	db *sql.DB
+	initializer *SchemaInitializer
 }
 
 func NewCacheAdapter(client *MariaDBClient) *CacheAdapter {
-	return &CacheAdapter{db: client.DB()}
+	initializer := NewSchemaInitializer(client, DefaultEntityConfigs())
+	if err := initializer.Initialize(); err != nil {
+		panic(fmt.Sprintf("[cache-adapter] failed create cache schema initializer: %v", err))
+	}
+
+	if err := initializer.Initialize(); err != nil {
+		panic(fmt.Sprintf("[cache-adapter] failed to initialize cache schema: %v", err))
+	}
+
+	return &CacheAdapter{
+		db: client.DB(), 
+		initializer: initializer,
+	}
 }
 
 func (a *CacheAdapter) Save(tableName, operation string, record map[string]any) error {

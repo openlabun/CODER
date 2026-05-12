@@ -59,6 +59,14 @@ func (a *CacheAdapter) Save(tableName, operation string, record map[string]any) 
 	return err
 }
 
+func (a *CacheAdapter) MarkSynced(tableName, id string) error {
+	_, err := a.db.Exec(
+		"UPDATE `"+tableName+"` SET `synced` = TRUE WHERE `id` = ?",
+		id,
+	)
+	return err
+}
+
 func (a *CacheAdapter) FindByID(tableName, id string) (map[string]any, error) {
 	rows, err := a.db.Query("SELECT * FROM `"+tableName+"` WHERE `id` = ?", id)
 	if err != nil {

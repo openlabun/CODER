@@ -68,6 +68,9 @@ func (uc *GetUsersScoresByExamUseCase) Execute(ctx context.Context, input dtos.G
 	if err != nil {
 		return nil, err
 	}
+	if len(examScores) == 0 {
+		return nil, fmt.Errorf("no exam scores found for examID %q", input.ExamID)
+	}
 
 	// [STEP 5] Aggregate scores by user
 	aggregatedScores := services.AggregateScoresByUser(examScores)

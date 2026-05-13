@@ -78,11 +78,17 @@ func (uc *GetItemScoringUseCase) Execute(ctx context.Context, input dtos.GetItem
 		if err != nil {
 			return nil, err
 		}
+		if examItem == nil {
+			continue
+		}
 
 		// [STEP 5.2] Get submissions by exam item score ID
 		submissions, err := uc.submissionRepository.GetSubmissionsByExamItemScoreID(ctx, examItem.ID)
 		if err != nil {
 			return nil, err
+		}
+		if submissions == nil {
+			continue
 		}
 
 		// [STEP 5.3] Map exam item score and submissions to ExamItemScoringDTO

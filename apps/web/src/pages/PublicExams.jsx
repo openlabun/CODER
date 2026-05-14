@@ -22,7 +22,8 @@ import {
     Layout,
     PlusCircle,
     Target,
-    ArrowRight
+    ArrowRight,
+    BarChart3
 } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
 import ExamScoresPanel from '../components/ExamScoresPanel';
@@ -330,26 +331,36 @@ const PublicExams = () => {
                                         
                                         <div className="actions-wrapper">
                                             {isProfessor ? (
-                                                canEditExam ? (
-                                                    <Link to={`/exam/${examId}/edit`} className="btn-action-mini primary">
-                                                        Editar Actividad <ChevronRight size={16} />
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    {canEditExam ? (
+                                                        <Link to={`/exam/${examId}/edit`} className="btn-action-mini primary">
+                                                            Editar Actividad <ChevronRight size={16} />
+                                                        </Link>
+                                                    ) : (
+                                                        <Link to={`/exam/${examId}`} className="btn-action-mini">
+                                                            Abrir Actividad <ArrowRight size={16} />
+                                                        </Link>
+                                                    )}
+                                                    <Link to={`/exam/${examId}/results`} className="btn-action-mini" title="Ver Resultados">
+                                                        <BarChart3 size={14} /> Resultados
                                                     </Link>
-                                                ) : (
-                                                    <Link to={`/exam/${examId}`} className="btn-action-mini">
-                                                        Abrir Actividad <ArrowRight size={16} />
-                                                    </Link>
-                                                )
+                                                </div>
                                             ) : (
-                                                studentCanStart ? (
-                                                    <Link to={`/exam/${examId}`} className="btn-action-mini primary">
-                                                        Iniciar Actividad <ArrowRight size={16} />
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    {studentCanStart ? (
+                                                        <Link to={`/exam/${examId}`} className="btn-action-mini primary">
+                                                            Iniciar Actividad <ArrowRight size={16} />
+                                                        </Link>
+                                                    ) : (
+                                                        <button type="button" className="btn-action-mini" disabled>
+                                                            <Lock size={14} />
+                                                            <span>Examen Cerrado</span>
+                                                        </button>
+                                                    )}
+                                                    <Link to={`/exam/${examId}/results`} className="btn-action-mini" title="Ver Resultados">
+                                                        <BarChart3 size={14} />
                                                     </Link>
-                                                ) : (
-                                                    <button type="button" className="btn-action-mini" disabled>
-                                                        <Lock size={14} />
-                                                        <span>Examen Cerrado</span>
-                                                    </button>
-                                                )
+                                                </div>
                                             )}
                                         </div>
                                         {user && (

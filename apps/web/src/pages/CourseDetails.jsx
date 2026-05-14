@@ -8,7 +8,7 @@ import {
     deleteExam
 } from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
-import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, ChevronRight, Edit, ArrowRight, Users, PlusCircle, BookOpen, Target, ArrowLeft, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, ChevronRight, Edit, ArrowRight, Users, PlusCircle, BookOpen, Sparkles, Target, BarChart3, ArrowLeft } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
 import ExamScoresPanel from '../components/ExamScoresPanel';
 import Swal from 'sweetalert2';
@@ -317,6 +317,9 @@ const CourseDetails = () => {
                                                             <Edit size={14} /> Editar
                                                         </button>
                                                     )}
+                                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/exam/${examId}/results`); }} className="btn-action-mini" title="Ver Resultados">
+                                                        <BarChart3 size={14} /> Resultados
+                                                    </button>
                                                     <button onClick={(e) => { e.stopPropagation(); handleToggleVisibility(examId); }} className="btn-action-mini" disabled={processingId === examId} title="Visibilidad">
                                                         {isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
                                                     </button>
@@ -330,11 +333,16 @@ const CourseDetails = () => {
                                                     </button>
                                                 </div>
                                             ) : (
-                                                !isClosed && isStudentVisible && (
-                                                    <Link to={`/exam/${examId}`} className="btn-action-mini primary">
-                                                        Iniciar Examen <ArrowRight size={16} />
-                                                    </Link>
-                                                )
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    {!isClosed && isStudentVisible && (
+                                                        <Link to={`/exam/${examId}`} className="btn-action-mini primary">
+                                                            Iniciar Examen <ArrowRight size={16} />
+                                                        </Link>
+                                                    )}
+                                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/exam/${examId}/results`); }} className="btn-action-mini" title="Ver Resultados">
+                                                        <BarChart3 size={14} />
+                                                    </button>
+                                                </div>
                                             )}
                                     </div>
                                 </div>

@@ -94,14 +94,14 @@ services:
     runner-cpp:
         build:
             context: ./apps/worker/runners/cpp
-        image: coder-runner-python
+        image: coder-runner-cpp
         command: tail -f /dev/null
         restart: unless-stopped
 
     runner-java:
         build:
             context: ./apps/worker/runners/java
-        image: coder-runner-python
+        image: coder-runner-java
         command: tail -f /dev/null
         restart: unless-stopped
 
@@ -109,8 +109,8 @@ services:
         build:
             context: ./apps/web
             dockerfile: Dockerfile.prod
-        ports:
-            - "${WEB_PORT:-5173}:5173"
+        expose:
+            - 5173
         environment:
             - VITE_API_URL=${VITE_API_URL:-http://localhost:4000}
             - WEB_PORT=${WEB_PORT:-5173}

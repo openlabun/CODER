@@ -281,49 +281,61 @@ Anticheat - refines -> CalificacionAutomatica
 ## Cronograma de Prototipos
 
 ### Fase 1: Análisis y Diagnóstico (Semana 7)
-*   *Actividades:* Auditoría detallada del sistema actual, identificación de vacíos funcionales y priorización de requisitos para los módulos de IA y Antifraude.
-*   *Hito:* Entrega del Plan de Mejoras Estratégico.
+
+* *Actividades:* Auditoría detallada del sistema actual, identificación de vacíos funcionales y priorización de requisitos para los módulos de IA y Antifraude.
+* *Hito:* Entrega del Plan de Mejoras Estratégico.
 
 ### Fase 2: Diseño Arquitectónico (Semana 8)
-*   *Actividades:* Extensión del esquema de base de datos en PostgreSQL, definición de objetos de transferencia de datos (DTOs) en NestJS y diseño detallado de la comunicación entre microservicios.
-*   *Hito:* Documento de Diseño Técnico de Arquitectura.
+
+* *Actividades:* Extensión del esquema de base de datos en PostgreSQL, definición de objetos de transferencia de datos (DTOs) en NestJS y diseño detallado de la comunicación entre microservicios.
+* *Hito:* Documento de Diseño Técnico de Arquitectura.
 
 ### Fase 3: Módulo de Gestión de Exámenes (Semanas 9 – 10)
-*   *Actividades:* Desarrollo del sistema de evaluaciones, incluyendo agrupación lógica de problemas, implementación de temporizadores de sesión y controles de acceso por cohortes académicas.
-*   *Hito:* Entrega del Prototipo I: Sistema de Evaluaciones.
+
+* *Actividades:* Desarrollo del sistema de evaluaciones, incluyendo agrupación lógica de problemas, implementación de temporizadores de sesión y controles de acceso por cohortes académicas.
+* *Hito:* Entrega del Prototipo I: Sistema de Evaluaciones.
 
 ### Fase 4: Engine de Integridad Académica (Semanas 11 – 12)
-*   *Actividades:* Construcción de telemetría para detección de cambios de pestañas, análisis avanzado de tiempos de envío y algoritmos de similitud estructural de código.
-*   *Hito:* Entrega del Prototipo II: Motor de Detección Antifraude.
+
+* *Actividades:* Construcción de telemetría para detección de cambios de pestañas, análisis avanzado de tiempos de envío y algoritmos de similitud estructural de código.
+* *Hito:* Entrega del Prototipo II: Motor de Detección Antifraude.
 
 ### Fase 5: Inteligencia Artificial Local (Semanas 13 – 14)
-*   *Actividades:* Integración de un modelo de lenguaje (LLM) de ejecución local para análisis predictivo de errores de compilación y generación de retroalimentación pedagógica.
-*   *Hito:* Entrega del Prototipo III: Asistente Inteligente.
+
+* *Actividades:* Integración de un modelo de lenguaje (LLM) de ejecución local para análisis predictivo de errores de compilación y generación de retroalimentación pedagógica.
+* *Hito:* Entrega del Prototipo III: Asistente Inteligente.
 
 ### Fase 6: Aseguramiento de Calidad e Integración (Semana 15)
-*   *Actividades:* Ejecución de pruebas de carga sobre contenedores Docker, optimización de latencia en procesos de ejecución y validación de estabilidad integral (end-to-end).
-*   *Hito:* Validación del Sistema Integrado.
+
+* *Actividades:* Ejecución de pruebas de carga sobre contenedores Docker, optimización de latencia en procesos de ejecución y validación de estabilidad integral (end-to-end).
+* *Hito:* Validación del Sistema Integrado.
 
 ### Fase 7: Cierre y Despliegue Final (Semana 16)
-*   *Actividades:* Refactorización final de código, consolidación de la documentación técnica exhaustiva (API Docs) y despliegue oficial de la versión estable optimizada.
-*   *Hito:* Lanzamiento de la Versión V2.0.
 
-## Diagramas 
+* *Actividades:* Refactorización final de código, consolidación de la documentación técnica exhaustiva (API Docs) y despliegue oficial de la versión estable optimizada.
+* *Hito:* Lanzamiento de la Versión V2.0.
+
+## Diagramas
+
 ### Diagrama de arquitectura
+
 <img width="1310" height="807" alt="RLDDRjiy4Dth50EllY08lXiKiHsta96cRbmWcsn6uYHcGf4AVuoqHG_J0tJL8_XY7P6MAIdPMEJZUs-6pyDBvz7wqAZ2Iwy8vlObI4-r3nP1a8AjT9uQX0lOAFJuO2nlre5-m1UjfAQYmDeR2oldWv2eFHs1ZJKFv8mj2ijsg1_PVVRH6cPeCOEV1K1jcjPeqXvcTrJ1l6tlzN-tnFgp6 (1)" src="https://github.com/user-attachments/assets/8cf34131-bcc9-4299-b6ce-6870602be87b" />
 
 ### Diagrama de Interacción entre Módulos
+
 <img width="1321" height="726" alt="Interaccion" src="https://github.com/user-attachments/assets/62a461fc-52f4-4692-8b61-0cb1230f077d" />
 
 ### Diagrama de Secuencia — Envío y Evaluación de Código
+
 <img width="1224" height="627" alt="image" src="https://github.com/user-attachments/assets/a1502c67-3b8d-4fd3-9399-28704bdfaf3a" />
 
 ### Diagrama de Secuencia — Creación de un Examen
+
 <img width="831" height="569" alt="image" src="https://github.com/user-attachments/assets/cc15f5e5-9fa7-4c47-b533-e12d6051bb83" />
 
 ### Diagrama de despliegue
-<img width="1015" height="882" alt="image" src="https://github.com/user-attachments/assets/bf860f1b-7700-47aa-8d3f-a15c2415208f" />
 
+<img width="1015" height="882" alt="image" src="https://github.com/user-attachments/assets/bf860f1b-7700-47aa-8d3f-a15c2415208f" />
 
 ## Referencias
 

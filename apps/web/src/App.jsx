@@ -11,6 +11,7 @@ import CourseDetails from './pages/CourseDetails';
 import CourseStudents from './pages/CourseStudents';
 import ExamRunner from './pages/ExamRunner';
 import ExamEditor from './pages/ExamEditor';
+import ExamResults from './pages/ExamResults';
 import Dashboard from './pages/Dashboard';
 import CreateChallenge from './pages/CreateChallenge';
 import CreateExam from './pages/CreateExam';
@@ -44,6 +45,7 @@ function App() {
           <Route path="courses/:id" element={<ProtectedRoute><CourseDetails /></ProtectedRoute>} />
           <Route path="courses/:id/students" element={<ProtectedRoute><CourseStudents /></ProtectedRoute>} />
           <Route path="exam/:id/edit" element={<ProtectedRoute><ExamEditor /></ProtectedRoute>} />
+          <Route path="exam/:id/results" element={<ProtectedRoute><ExamResults /></ProtectedRoute>} />
           <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="challenges/create" element={<ProtectedRoute><CreateChallenge /></ProtectedRoute>} />
           <Route path="challenges/edit/:id" element={<ProtectedRoute><CreateChallenge /></ProtectedRoute>} />

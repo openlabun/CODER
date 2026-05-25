@@ -1,0 +1,166 @@
+.exam-scores-panel {
+  margin-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.5rem;
+}
+
+.exam-scores-panel.compact {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+}
+
+.exam-scores-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+}
+
+.exam-scores-trigger:hover {
+  background: #e5e7eb;
+}
+
+.exam-scores-body {
+  margin-top: 0.65rem;
+  padding: 0.5rem 0;
+}
+
+.exam-scores-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.exam-scores-tabs button {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  color: #4b5563;
+}
+
+.exam-scores-tabs button.active {
+  background: #111827;
+  color: #fff;
+  border-color: #111827;
+}
+
+.exam-scores-muted {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.exam-scores-err {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: #b91c1c;
+}
+
+.exam-scores-user-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.exam-scores-user-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+}
+
+.exam-scores-user-head {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #1f2937;
+  margin-bottom: 0.35rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exam-scores-best {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #4b5563;
+  margin-bottom: 0.35rem;
+}
+
+.exam-scores-attempts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.exam-scores-attempt {
+  border-top: 1px solid #e5e7eb;
+}
+
+.exam-scores-attempt:first-child {
+  border-top: none;
+}
+
+.exam-scores-attempt-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: #374151;
+  text-align: left;
+}
+
+.exam-scores-attempt-body {
+  padding: 0 0 0.5rem 1.25rem;
+}
+
+.exam-scores-items {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.exam-scores-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  color: #4b5563;
+}
+
+.exam-scores-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exam-scores-item-pts {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #111827;
+}

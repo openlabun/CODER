@@ -533,44 +533,85 @@ Cualquier funcionalidad nueva, ajuste de reglas o cambio mayor debe reflejarse e
 
 Documente errores comunes, limitaciones conocidas, deuda técnica o advertencias importantes para futuros equipos.
 
-### 11.1 Problemas frecuentes
+### 10.1 Problemas frecuentes
 
-Ejemplo:
+Durante el desarrollo, los dos problemas que más recurrentemente bloquean al equipo son los relacionados con la **política de CORS** y con la **configuración de los runners**.
 
-- errores de puertos;
-- variables de entorno faltantes;
-- problemas de conexión a la base de datos;
-- conflictos entre versiones;
-- errores de permisos.
+#### Errores de CORS Policy
 
-### 11.2 Deuda técnica conocida
+El navegador rechaza las peticiones del frontend al backend con un mensaje del tipo `blocked by CORS policy` cuando el origen desde el que se sirve la SPA no está incluido en los orígenes permitidos por la API.
 
-Liste componentes incompletos, decisiones provisionales, refactors pendientes o limitaciones actuales del sistema.
+- **Causa típica:** la variable `APIV2_CORS_ALLOW_ORIGINS` no incluye el origen real desde el que se carga el frontend (por ejemplo, `http://localhost:5173` en desarrollo o el dominio público en producción), o quedó en `*` mientras el cliente envía cabeceras autenticadas (combinación inválida según la spec de CORS).
+- **Cómo verificarlo:** abrir la consola del navegador (`F12 → Network`), revisar la respuesta de la petición fallida y validar las cabeceras `Access-Control-Allow-Origin` y `Access-Control-Allow-Credentials` devueltas por la API.
+- **Solución:** ajustar `APIV2_CORS_ALLOW_ORIGINS` en el `.env.*` correspondiente al origen exacto del frontend y reiniciar `apiv2`. En producción, evitar `*` y listar explícitamente los dominios autorizados.
 
-### 11.3 Recomendaciones para continuidad
+#### Configuración de los runners
 
-Indique sugerencias concretas para futuros grupos que deban continuar el proyecto.
+El worker no logra ejecutar submissions porque los runners no están disponibles o no pueden ser lanzados por Docker.
 
-## 12. Historial de decisiones técnicas relevantes
+- **Imágenes no construidas:** las imágenes `coder-runner-python`, `coder-runner-java` y `coder-runner-cpp` viven bajo el perfil `runners` (dev) o `judge` (prod) y **no se construyen automáticamente** con `docker compose build`. Solución: ejecutar `docker compose -f docker-compose.dev.yml --profile runners build` (o `--profile judge` en producción).
+- **Variables desalineadas con las imágenes:** si los nombres de imagen en `PYTHON_RUNNER_IMAGE`, `JAVA_RUNNER_IMAGE` o `CPP_RUNNER_IMAGE` no coinciden con los nombres construidos por Docker, el worker falla al lanzar el contenedor. Solución: verificar que las variables del `.env` coincidan exactamente con las imágenes listadas por `docker images | grep coder-runner`.
+- **Red `judge_net` ausente:** los runners se lanzan en la red declarada por `RUNNER_NETWORK`; si esa red no existe (o se eliminó con `docker compose down -v`), el worker no puede conectarlos. Solución: volver a levantar el stack con `docker compose up -d` o crear la red manualmente con `docker network create judge_net`.
+- **Acceso al socket Docker:** el worker requiere `/var/run/docker.sock` montado para crear los runners; en Windows/macOS con Docker Desktop, ese montaje funciona transparentemente, pero en hosts Linux endurecidos puede requerir permisos adicionales. Solución: confirmar que el contenedor `worker` tenga el volumen `/var/run/docker.sock:/var/run/docker.sock` y que el usuario que ejecuta Docker pertenezca al grupo `docker`.
+- **Timeouts demasiado bajos:** valores agresivos en `RUNNER_HEALTH_CHECK_TIMEOUT`, `RUNNER_RESTART_TIMEOUT` o `RUNNER_REPAIR_INTERVAL` provocan que el worker considere muertos a runners que solo están bajo carga. Solución: ajustar estos valores en el `.env` cuando se observen reinicios continuos en los logs del worker.
 
-Documente decisiones importantes tomadas durante el desarrollo y la razón detrás de ellas.
+#### Inicio lento de RabbitMQ
 
-Ejemplo:
+Al levantar el stack, RabbitMQ puede tardar más de lo previsto en estar listo, lo que hace que `apiv2` y `worker` —que esperan al broker mediante `depends_on: condition: service_healthy`— fallen al arrancar y reporten errores de conexión AMQP.
 
-- elección de framework;
-- cambio de base de datos;
-- adopción o descarte de contenedores;
-- reestructuración de módulos;
-- cambio en estrategia de autenticación.
+- **Causa típica:** el `healthcheck` del servicio `rabbitmq` tiene un `interval`/`timeout` demasiado corto para la máquina donde se está desplegando; el contenedor de RabbitMQ alcanza a iniciar el proceso Erlang pero aún no responde a `rabbitmq-diagnostics -q ping` cuando el healthcheck se evalúa, por lo que Docker lo marca como `unhealthy` y los demás contenedores no arrancan.
+- **Cómo verificarlo:** ejecutar `docker compose ps` y observar el estado `unhealthy` del contenedor `rabbitmq`; revisar `docker compose logs rabbitmq` para confirmar que el proceso terminó de inicializar.
+- **Solución:** subir el `timeout` (y, si es necesario, el `interval` y `retries`) del `healthcheck` de `rabbitmq` en `docker-compose.yml` / `docker-compose.dev.yml` a valores holgados (por ejemplo, `timeout: 60s`, `interval: 60s`, `retries: 20`) para darle tiempo al servicio a estar realmente listo antes de que se valide su estado. Sin este ajuste, el despliegue falla de forma intermitente y los contenedores dependientes no llegan a iniciarse.
+
+### 10.2 Deuda técnica conocida
+
+- **Rehacer el frontend desde cero.** La SPA actual no cumple con los estándares de calidad ni con las buenas prácticas esperadas: presenta un fuerte acoplamiento entre componentes, lógica de negocio embebida y reglas hardcodeadas que **duplican —y a veces contradicen— las que ya existen en la API**. Se recomienda reescribirlo completamente, manteniendo a la API como única fuente de verdad para reglas de negocio y limitando el frontend a responsabilidades de UI y consumo HTTP.
+- **Migrar o aliviar la persistencia.** Roble se está volviendo un cuello de botella: cada consulta es una llamada HTTP externa, lo que limita el rendimiento bajo carga. Existen dos caminos:
+  - **Migrar a un servicio de base de datos más eficiente** (PostgreSQL gestionado, por ejemplo) con acceso directo desde la API.
+  - **Implementar una capa de caché local** que reduzca el número de llamadas a Roble manteniéndolo como sistema de registro. Hay un avance significativo de esta infraestructura de caché en la rama [`feature/cache-infrastructure`](https://github.com/openlabun/CODER/tree/feature/cache-infrastructure), que define el adaptador, las TTL por tabla (`CACHE_*_TABLE_TTL`) y la cola de sincronización (`CACHE_SYNC_QUEUE_NAME`); falta integrar y validar este trabajo con el resto del sistema.
+
+### 10.3 Recomendaciones para continuidad
+
+Para los siguientes equipos que tomen el proyecto, se sugieren las siguientes líneas de trabajo:
+
+- **Mejorar los tiempos de respuesta de la API.** Optimizar el camino crítico de las operaciones más frecuentes (login, carga de examen, envío de submission y consulta de resultados), apoyándose en las pruebas de rendimiento existentes (`./test/performance/...`) para medir el impacto de cada cambio. La capa de caché de [`feature/cache-infrastructure`](https://github.com/openlabun/CODER/tree/feature/cache-infrastructure) es un buen punto de partida.
+- **Reconstruir completamente el frontend.** Tomar como base el manual de desarrollo y la documentación de la API (`/docs`) para producir una nueva SPA limpia, sin lógica de negocio hardcodeada y con un acoplamiento bajo entre componentes (ver [10.2](#102-deuda-técnica-conocida)).
+- **Implementar runners para Java y C++.** La infraestructura ya contempla las imágenes y las variables (`JAVA_RUNNER_IMAGE`, `CPP_RUNNER_IMAGE`, `JAVA_RUNNERS`, `CPP_RUNNERS`); falta completar la ejecución, parsing de salida y manejo de errores de compilación dentro del worker para cada lenguaje.
+- **Implementar detección de plagio por comparación de código.** Diseñar un módulo que compare las submissions de un mismo `ExamItem` mediante técnicas como tokenización con n-grams (estilo Moss/JPlag) o comparación estructural por AST, y exponer alertas para revisión manual por parte del docente. El informe principal ya describe el enfoque sugerido.
+- **Migrar el flujo del examen de HTTP request a WebSocket.** El modelo actual basado en *heartbeats* HTTP y `polling` introduce latencia y carga innecesaria sobre la API; migrar la sesión de examen a una conexión WebSocket permitiría notificaciones en tiempo real (bloqueo manual del docente, expiración de la sesión, resultados de submission), reducir el tráfico HTTP y mejorar la experiencia del estudiante.
+
+## 11. Historial de decisiones técnicas relevantes
+
+- **Reconstrucción total del backend en Go.** Se descartó el backend original en NestJS/TypeScript (`apps/api`) y se reescribió desde cero en Go con Fiber v2 bajo arquitectura hexagonal (`apps/api_v2`), buscando mayor rendimiento bajo carga, una separación más estricta de capas y un binario autocontenido más sencillo de desplegar.
+- **Persistencia y autenticación delegadas a Roble.** Se eliminó la dependencia directa de PostgreSQL en el backend y se integró Roble como única fuente de verdad para persistencia y autenticación (JWT emitido por Roble), reduciendo la infraestructura propia a mantener y aprovechando el servicio institucional.
+- **Worker en Python con runners on-demand.** Se introdujo un worker dedicado en Python que orquesta contenedores runner por lenguaje, aislando la ejecución del código del estudiante del proceso de la API y permitiendo evolucionar la lógica de ejecución sin tocar el backend.
+- **Adopción de RabbitMQ como Message Broker.** Se incorporó RabbitMQ entre la API y el worker para desacoplar la publicación de las submissions de su ejecución, manejar concurrencia de forma natural y absorber picos de carga durante evaluaciones masivas.
+- **Infraestructura de comunicación con la API de Gemini.** Se diseñó una capa de adaptadores (`internal/infrastructure/generative-ai/cloud/gemini`) para integrar Gemini como proveedor de IA generativa, dejando el contrato listo para soportar otros proveedores (Ollama local) sin tocar los casos de uso.
+- **Migración de runners on-demand a *pool* precargado.** Para alcanzar el objetivo de **25 solicitudes concurrentes**, se reemplazó el esquema de crear un runner por submission por una *pool* de runners precargados (`PYTHON_RUNNERS`, `JAVA_RUNNERS`, `CPP_RUNNERS`) que el worker mantiene vivos y reutiliza, eliminando el costo de arranque de un contenedor por cada ejecución y permitiendo procesar solicitudes en paralelo.
 
 ## 13. Referencias relacionadas
 
-Incluya enlaces o referencias útiles para continuar el desarrollo.
+**Documentación interna:**
 
-Ejemplo:
+- [`apps/api_v2/docs/Bussiness_rules.md`](apps/api_v2/docs/Bussiness_rules.md) — reglas de negocio del sistema, entidades y estados por módulo.
+- [`apps/api_v2/docs/TestsPlan.md`](apps/api_v2/docs/TestsPlan.md) — plan de pruebas con descripción y comandos `go test` por caso.
+- [`apps/api_v2/docs/openapi.yaml`](apps/api_v2/docs/openapi.yaml) — especificación OpenAPI de la API (UI servida en `/docs` con Scalar).
+- [`apps/api_v2/docs/informs/Worker-changes.md`](apps/api_v2/docs/informs/Worker-changes.md) — informe de la migración del worker a *pool* de runners precargados.
+- [`README.md`](README.md) — informe principal del proyecto.
+- [`Instalacion.md`](Instalacion.md) — guía de instalación y despliegue.
+- [`FichaProyecto.md`](FichaProyecto.md) — ficha académica del proyecto.
 
-- documentación oficial de tecnologías usadas;
-- enlaces a servicios externos;
-- documentación de arquitectura;
-- instalación del proyecto;
-- informe principal.
+**Servicios externos:**
+
+- [Roble — Documentación oficial](https://roble.openlab.uninorte.edu.co/docs).
+- [Google Gemini API](https://ai.google.dev/gemini-api/docs).
+
+**Tecnologías del stack:**
+
+- [Fiber v2 — Documentación oficial](https://docs.gofiber.io/) — framework HTTP usado por el backend.
+- [RabbitMQ — Documentación oficial](https://www.rabbitmq.com/docs) — broker AMQP usado entre la API y el worker.
+
+**Repositorios y ramas relacionadas:**
+
+- [juez-online — Repositorio base](https://github.com/DerekPz/juez-online) — proyecto del que se partió originalmente.
+- [`feature/cache-infrastructure`](https://github.com/openlabun/CODER/tree/feature/cache-infrastructure) — rama con el avance de la capa de caché sobre Roble.

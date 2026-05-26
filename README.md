@@ -2,40 +2,11 @@
 
 ## Resumen ejecutivo
 
-### Contexto y problemática
+CODER es una plataforma web tipo online judge desarrollada para el Departamento de Ingenieria de Sistemas y Computacion de la Universidad del Norte, que surge como respuesta a la necesidad de mejorar los procesos de evaluacion de programacion en contextos con alta carga academica. En el esquema tradicional, la revision manual del codigo incrementa la carga operativa del docente, retrasa la retroalimentacion al estudiante y dificulta la realizacion de evaluaciones frecuentes y formativas en grupos numerosos; esta situacion impacta la oportunidad del aprendizaje y la consistencia de los criterios de calificacion.
 
-En un contexto institucional, la evaluación de algoritmos es un componente esencial en la formación de ingenieros de sistemas. Sin embargo, los procesos tradicionales dependen en gran medida de la revisión manual del código por parte del docente, lo que genera **sobrecarga operativa significativa**, **retroalimentación lenta** a los estudiantes y **dificultades para realizar evaluaciones frecuentes y masivas**. En contextos de educación digital y grupos numerosos, estas limitaciones se acentúan, impactando negativamente la calidad del aprendizaje y la posibilidad de llevar a cabo evaluaciones formativas de manera oportuna.
+La solucion propuesta automatiza la creacion, ejecucion y calificacion de ejercicios, talleres y examenes de programacion mediante una arquitectura desacoplada y escalable: frontend web para docentes y estudiantes, backend en Go con arquitectura hexagonal, cola de mensajeria con RabbitMQ, worker de ejecucion en Python y runners aislados por lenguaje para ejecutar codigo en entornos controlados. La plataforma permite gestionar cursos, retos, casos de prueba, sesiones e intentos de evaluacion, y entregar resultados de forma automatica y trazable.
 
-### Solución propuesta
-
-**CODER** es una plataforma web tipo *online judge* desarrollada específicamente para el Departamento de Ingeniería de Sistemas y Computación de la Universidad del Norte. La solución **automatiza la creación, ejecución y calificación de ejercicios, talleres y exámenes de programación**, permitiendo a docentes definir retos con casos de prueba predefinidos y a estudiantes enviar soluciones que se evalúan automáticamente en tiempo real.
-
-### Arquitectura y escalabilidad
-
-La plataforma está construida bajo una **arquitectura desacoplada y escalable**:
-- **Backend robusto** en Go (Fiber) que implementa lógica de negocio bajo arquitectura hexagonal
-- **Cola de tareas** con RabbitMQ que desacopla el procesamiento de evaluaciones
-- **Pool de runners aislados** por lenguaje (Python, Java, C++) que ejecutan código en sandboxes seguros
-- Capacidad de procesar **hasta 25 envíos concurrentes** sin degradación del servicio
-- **Persistencia externa** mediante Roble, garantizando integridad de datos
-- **Integración de IA generativa** (Google Gemini) para asistir a docentes en la creación de contenido
-
-### Alcance y características
-
-La plataforma cubre el ciclo completo de evaluación:
-- **Para docentes:** Crear y administrar cursos, diseñar retos y exámenes, configurar límites de tiempo e intentos, visualizar resultados agregados por estudiante y por ejercicio
-- **Para estudiantes:** Resolver retos de forma autónoma, enviar soluciones a exámenes con retroalimentación automática, consultar históricos de intentos y métricas de desempeño
-- **Funcionalidades transversales:** Autenticación segura con JWT, control granular de permisos, análisis educativo mediante dashboards y leaderboards, auditoría completa de actividades
-
-### Valor y beneficios
-
-El proyecto habilita **evaluaciones frecuentes y formativas a gran escala** manteniendo:
-- ✅ **Retroalimentación inmediata** — Los estudiantes reciben resultados al instante
-- ✅ **Escalabilidad horizontal** — Soporta picos de carga durante evaluaciones masivas
-- ✅ **Seguridad y aislamiento** — Código ejecutado en entornos contenedorizados sin riesgo para el servidor
-- ✅ **Integridad académica** — Registro completo de intentos, tiempos y resultados
-- ✅ **Reducción de carga docente** — Libera al docente de revisión manual y permite enfocarse en análisis de conceptos débiles
-- ✅ **Experiencia de usuario fluida** — Interfaz intuitiva con editor de código integrado (Monaco Editor)
+Su alcance cubre el ciclo principal de evaluacion academica, desde la definicion de actividades por parte del docente hasta el envio de soluciones y consulta de resultados por parte del estudiante, incluyendo mecanismos de autenticacion, control de permisos y analitica de desempeno. El valor del proyecto radica en habilitar evaluaciones a mayor escala con retroalimentacion mas oportuna, reduciendo la carga manual docente y fortaleciendo la calidad del proceso de ensenanza y aprendizaje en asignaturas de programacion.
 
 ## Documentación del repositorio
 

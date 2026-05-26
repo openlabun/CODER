@@ -8,8 +8,9 @@ import {
     deleteExam
 } from '../api/exams';
 import { AuthContext } from '../context/AuthContext';
-import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, ChevronRight, Edit, ArrowRight, Users, PlusCircle, BookOpen, Target, BarChart3, ArrowLeft, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Lock, Trash2, Calendar, Clock, Trophy, ChevronRight, Edit, ArrowRight, Users, PlusCircle, BookOpen, Sparkles, Target, BarChart3, ArrowLeft } from 'lucide-react';
 import PageLoader from '../components/PageLoader';
+import ExamScoresPanel from '../components/ExamScoresPanel';
 import Swal from 'sweetalert2';
 import './Challenges.css';
 
@@ -21,8 +22,6 @@ const CourseDetails = () => {
     const [exams, setExams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState(null);
-    const [expandedResultsExamId, setExpandedResultsExamId] = useState(null);
-    const [examResultsMap, setExamResultsMap] = useState({});
     const currentUserId = String(user?.id || user?.ID || '');
     const [studentNameById, setStudentNameById] = useState({});
 
@@ -150,86 +149,6 @@ const CourseDetails = () => {
         } finally {
             setProcessingId(null);
         }
-    };
-
-    const loadExamResults = async (examId) => {
-        if (examResultsMap[examId]?.loaded || examResultsMap[examId]?.loading) return;
-        setExamResultsMap(prev => ({ ...prev, [examId]: { ...prev[examId], loading: true } }));
-        try {
-            const itemsRes = await client.get(`/exams/${examId}/items`);
-            const items = Array.isArray(itemsRes.data) ? itemsRes.data : (itemsRes.data?.items || []);
-            const allSubmissions = [];
-
-            for (const item of items) {
-                const challengeId = item.challenge?.id || item.challenge?.ID || item.challenge_id || item.challengeID;
-                if (!challengeId) continue;
-                try {
-                    const subRes = await client.get(`/submissions/challenge/${challengeId}`);
-                    const subs = Array.isArray(subRes.data) ? subRes.data : (subRes.data?.items || []);
-                    subs.forEach(sub => {
-                        const submission = sub?.Submission || sub?.submission || sub;
-                        const score = submission?.score || submission?.Score || 0;
-                        const userId = submission?.user_id || submission?.UserID || submission?.userId || 'desconocido';
-                        allSubmissions.push({ userId, challengeId, score, createdAt: submission?.created_at || submission?.CreatedAt || null });
-                    });
-                } catch (subErr) {
-                    console.warn(`No submissions for challenge ${challengeId}:`, subErr);
-                }
-            }
-
-            const byStudent = {};
-            allSubmissions.forEach(s => {
-                if (!byStudent[s.userId]) byStudent[s.userId] = { submissions: [], bestByChallenge: {} };
-                byStudent[s.userId].submissions.push(s);
-                const prevBest = byStudent[s.userId].bestByChallenge[s.challengeId] || 0;
-                byStudent[s.userId].bestByChallenge[s.challengeId] = Math.max(prevBest, s.score);
-            });
-
-            const studentRows = Object.entries(byStudent).map(([userId, data]) => {
-                let totalMax = 0;
-                let totalEarned = 0;
-                let solved = 0;
-                items.forEach(item => {
-                    const challengeId = item.challenge?.id || item.challenge?.ID || item.challenge_id || item.challengeID;
-                    const points = item.points || item.Points || 0;
-                    const bestScore = data.bestByChallenge[challengeId] || 0;
-                    totalMax += points;
-                    totalEarned += Math.round((bestScore / 100) * points);
-                    if (bestScore === 100) solved += 1;
-                });
-                const latest = data.submissions
-                    .map(s => s.createdAt)
-                    .filter(Boolean)
-                    .sort((a, b) => new Date(b) - new Date(a))[0];
-                return {
-                    userId,
-                    submissionsCount: data.submissions.length,
-                    solved,
-                    totalChallenges: items.length,
-                    totalEarned,
-                    totalMax,
-                    scorePct: totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : 0,
-                    latest
-                };
-            }).sort((a, b) => b.scorePct - a.scorePct);
-
-            setExamResultsMap(prev => ({
-                ...prev,
-                [examId]: { loading: false, loaded: true, studentRows }
-            }));
-        } catch (err) {
-            console.error('Error loading exam results:', err);
-            setExamResultsMap(prev => ({
-                ...prev,
-                [examId]: { loading: false, loaded: false, error: 'No se pudieron cargar los resultados.' }
-            }));
-        }
-    };
-
-    const toggleExamResults = async (examId) => {
-        const nextId = expandedResultsExamId === examId ? null : examId;
-        setExpandedResultsExamId(nextId);
-        if (nextId) await loadExamResults(examId);
     };
 
     if (loading) return (
@@ -398,8 +317,8 @@ const CourseDetails = () => {
                                                             <Edit size={14} /> Editar
                                                         </button>
                                                     )}
-                                                    <button onClick={(e) => { e.stopPropagation(); toggleExamResults(examId); }} className="btn-action-mini" title="Resultados">
-                                                        <BarChart3 size={14} />
+                                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/exam/${examId}/results`); }} className="btn-action-mini" title="Ver Resultados">
+                                                        <BarChart3 size={14} /> Resultados
                                                     </button>
                                                     <button onClick={(e) => { e.stopPropagation(); handleToggleVisibility(examId); }} className="btn-action-mini" disabled={processingId === examId} title="Visibilidad">
                                                         {isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -414,56 +333,29 @@ const CourseDetails = () => {
                                                     </button>
                                                 </div>
                                             ) : (
-                                                !isClosed && isStudentVisible && (
-                                                    <Link to={`/exam/${examId}`} className="btn-action-mini primary">
-                                                        Iniciar Examen <ArrowRight size={16} />
-                                                    </Link>
-                                                )
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    {!isClosed && isStudentVisible && (
+                                                        <Link to={`/exam/${examId}`} className="btn-action-mini primary">
+                                                            Iniciar Examen <ArrowRight size={16} />
+                                                        </Link>
+                                                    )}
+                                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/exam/${examId}/results`); }} className="btn-action-mini" title="Ver Resultados">
+                                                        <BarChart3 size={14} />
+                                                    </button>
+                                                </div>
                                             )}
                                     </div>
                                 </div>
 
-                                {isProfessor && expandedResultsExamId === examId && (
-                                    <div style={{ marginTop: '0.5rem', borderTop: '1px solid #e5e7eb', paddingTop: '0.75rem' }}>
-                                        {examResultsMap[examId]?.loading && (
-                                            <div className="rc-results-loading-shell">
-                                                <PageLoader
-                                                    message="Cargando resultados del examen..."
-                                                    compact
-                                                    minHeight="0"
-                                                    size={16}
-                                                />
-                                                <div className="rc-results-skeleton" aria-hidden="true">
-                                                    <div className="rc-results-skeleton-row"></div>
-                                                    <div className="rc-results-skeleton-row"></div>
-                                                    <div className="rc-results-skeleton-row"></div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {examResultsMap[examId]?.error && (
-                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#b91c1c' }}>{examResultsMap[examId].error}</p>
-                                        )}
-                                        {examResultsMap[examId]?.loaded && examResultsMap[examId].studentRows?.length === 0 && (
-                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>Aún no hay envíos para este examen.</p>
-                                        )}
-                                        {examResultsMap[examId]?.loaded && examResultsMap[examId].studentRows?.length > 0 && (
-                                            <div style={{ display: 'grid', gap: '0.4rem' }}>
-                                                {examResultsMap[examId].studentRows.map(row => (
-                                                    <div key={row.userId} style={{ display: 'grid', gridTemplateColumns: '1.3fr .6fr .8fr .8fr .9fr', gap: '0.6rem', alignItems: 'center', fontSize: '0.8rem', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '0.5rem 0.65rem' }}>
-                                                        <span style={{ fontWeight: 700, color: '#1f2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={studentNameById[row.userId] || row.userId}>
-                                                            {studentNameById[row.userId] || row.userId}
-                                                        </span>
-                                                        <span style={{ color: '#4b5563' }}>{row.submissionsCount} env.</span>
-                                                        <span style={{ color: '#4b5563' }}>{row.solved}/{row.totalChallenges}</span>
-                                                        <span style={{ fontWeight: 700, color: row.scorePct >= 70 ? '#15803d' : row.scorePct >= 40 ? '#b45309' : '#b91c1c' }}>
-                                                            {row.totalEarned}/{row.totalMax} ({row.scorePct}%)
-                                                        </span>
-                                                        <span style={{ color: '#6b7280' }}>{row.latest ? new Date(row.latest).toLocaleDateString() : '—'}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
+                                {user && (
+                                    <ExamScoresPanel
+                                        examId={examId}
+                                        courseId={id}
+                                        userId={currentUserId}
+                                        isProfessor={isProfessor}
+                                        showClassScores={Boolean(isProfessor && canEditExam)}
+                                        displayNames={studentNameById}
+                                    />
                                 )}
                             </div>
                         );

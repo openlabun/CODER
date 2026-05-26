@@ -8,7 +8,7 @@
 | ------------------------- | ------------------- | ------------------------------------------------------------------- |
 | Frontend Web              | JavaScript          | React 19 + Vite 7, react-router-dom v7, Monaco Editor, Axios        |
 | Backend API               | Go 1.25             | Fiber v2, JWT, bcrypt                                               |
-| Worker (orquestador)      | Python 3            | Pika (AMQP), Docker SDK                                             |
+| Worker (orquestador)      | Python 3            | aio-pika (AMQP), Docker SDK                                         |
 | Runners de ejecución      | Python / Java / C++ | Imágenes Docker aisladas (`coder-runner-python`, `-java`, `-cpp`)   |
 | Broker de mensajería      | —                   | RabbitMQ 3.13                                                       |
 | Base de datos             | —                   | Roble (API REST `roble-api.openlab.uninorte.edu.co`)                |
@@ -300,6 +300,8 @@ cd apps/web
 npm run dev -- --host
 ```
 
+> Se usa `--host` para exponer el servidor de Vite en la red local (no solo en `localhost`) y facilitar pruebas desde otros dispositivos o desde servicios externos al proceso actual.
+
 Una vez los tres servicios estén arriba:
 
 - Frontend: `http://localhost:5173`
@@ -445,6 +447,8 @@ El workflow realiza las siguientes acciones sobre el servidor:
 3. Reconstruye las imágenes principales (`apiv2`, `worker`, `web`) usando las variables de `.env.production` y la optimización `COMPOSE_BAKE=true`.
 4. Detiene los contenedores existentes (`docker compose down`) y reconstruye las imágenes de los runners (`runner-python`, `runner-cpp`, `runner-java`) bajo el perfil `judge`.
 5. Levanta el stack actualizado en segundo plano con `docker compose up -d`.
+
+> **Sobre `COMPOSE_BAKE=true`:** habilita Docker Buildx Bake en `docker compose build`, permitiendo optimizar la construcción (incluido paralelismo) y reducir tiempos de despliegue en pipelines CI/CD.
 
 > **Nota:** Actualmente el pipeline contempla un único entorno de despliegue (producción). Para mejorar la gestión del ciclo de vida del software sería conveniente disponer de **dos despliegues separados**, uno de **desarrollo** (por ejemplo, disparado por `push` a `main` o a una rama `develop`) y otro de **producción** (disparado por `push` a `release`), de modo que los cambios puedan validarse en un entorno equivalente antes de llegar a los usuarios finales. A favor de esta separación, el proyecto ya cuenta con **bases de datos independientes** para cada entorno en Roble (`coder_tests_*` para desarrollo y un proyecto distinto para producción), por lo que únicamente faltaría replicar el job de despliegue con su propio `.env`, sus propios secretos SSH y su propio host de destino.
 

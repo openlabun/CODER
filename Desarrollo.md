@@ -44,7 +44,6 @@ CODER/
 │   │   │   ├── infrastructure/        # Adaptadores (Roble, RabbitMQ, Gemini)
 │   │   │   └── interfaces/http/       # Handlers Fiber por ruta
 │   │   ├── docs/                      # OpenAPI / Scalar
-│   │   ├── scripts/                   # Utilidades de soporte
 │   │   ├── test/                      # Tests use_cases / http / performance
 │   │   ├── Dockerfile.dev | .prod
 │   │   └── go.mod, go.sum
@@ -95,6 +94,8 @@ CODER/
 - **`apps/api_v2/internal/interfaces/http/`**: handlers Fiber organizados por ruta.
 - **`apps/api_v2/docs/`**: especificación OpenAPI publicada en `/docs` con Scalar.
 - **`apps/api_v2/test/`**: pruebas de casos de uso, integración HTTP y rendimiento.
+- **`apps/api/scripts/`**: scripts auxiliares del backend legado (NestJS), útiles como referencia operativa y pruebas rápidas.
+- **`apps/api/migrations/`**: migraciones SQL históricas del backend legado.
 - **`apps/web/`**: frontend SPA en React 19 + Vite 7.
 - **`apps/web/src/api/`**: cliente Axios y configuración de endpoints.
 - **`apps/web/src/components/`**: componentes UI reutilizables.
@@ -230,11 +231,46 @@ Todos los servicios comparten la red bridge `judge_net`, lo que les permite reso
 - **No exponer puertos innecesarios en producción.** Usar `expose:` en lugar de `ports:` cuando un servicio solo requiere comunicación interna —como ya se hace con `apiv2` y `rabbitmq` en `docker-compose.yml`— reduce la superficie de ataque sin perder funcionalidad.
 - **Las variables siempre vía archivos `.env`.** No incrustar valores en el `docker-compose.yml`: cualquier secreto hardcodeado allí queda en el historial de Git, y la sustitución por entorno permite reutilizar el mismo Compose en distintos despliegues sin tocar el repositorio.
 
-## 6. Variables de entorno
+## 6. Scripts y automatizaciones
 
-Documente las variables de entorno necesarias para el funcionamiento del sistema.
+Esta sección resume los comandos y scripts más usados en desarrollo, validación y soporte.
 
-### 6.1 Variables requeridas
+### 6.1 Scripts principales
+
+- **Frontend (`apps/web/package.json`):**
+   - `npm run dev`: inicia Vite en modo desarrollo.
+   - `npm run build`: genera el build de producción del frontend.
+   - `npm run lint`: ejecuta ESLint sobre el código del frontend.
+   - `npm run preview`: sirve localmente el build generado para validación rápida.
+
+- **Backend API v2 (Go):**
+   - `go test ./test/...`: ejecuta toda la suite de pruebas del backend Go.
+   - `go test -v ./test/use_cases/...`: ejecuta pruebas de casos de uso con salida detallada.
+   - `go test -bench=. ./test/performance/...`: ejecuta benchmarks de rendimiento.
+
+- **Backend legado (`apps/api/package.json`, referencia):**
+   - `npm run dev`: levanta la API legada con recarga en caliente.
+   - `npm run worker:submissions`: levanta el worker legado de submissions.
+   - `npm run test`: ejecuta pruebas del backend legado.
+
+### 6.2 Ubicación de scripts auxiliares
+
+- **`apps/api/scripts/`**: scripts de soporte del backend legado (por ejemplo, `fix-enrollment-codes.ts`, pruebas de colas y worker en `.ps1` y `.sh`).
+- **`apps/api/migrations/`**: scripts SQL de migración histórica.
+- **`apps/api_v2/test/`**: comandos de prueba automatizada del backend actual (vía `go test`).
+
+### 6.3 Consideraciones para su uso
+
+- Los scripts en PowerShell (`.ps1`) están orientados a Windows; los scripts `.sh` a Linux/macOS.
+- Los scripts de `apps/api/scripts/` pertenecen al backend legado y no sustituyen los flujos principales de `apps/api_v2`.
+- Para pruebas del backend actual se recomienda ejecutar dentro del contenedor `apiv2` para asegurar dependencias y red consistentes.
+- Antes de ejecutar scripts que interactúan con colas o runners, validar variables de entorno críticas: `RABBITMQ_URL`, `WORKER_KEY`, `RUNNER_NETWORK` y `*_RUNNER_IMAGE`.
+
+## 7. Variables de entorno
+
+Esta sección documenta las variables de entorno necesarias para el funcionamiento del sistema.
+
+### 7.1 Variables requeridas
 
 A continuación se listan únicamente las variables consumidas por el código vigente, agrupadas por componente.
 
@@ -271,7 +307,7 @@ A continuación se listan únicamente las variables consumidas por el código vi
 - `RUNNER_RESTART_TIMEOUT`: timeout (s) para reiniciar un runner caído.
 - `RUNNER_REPAIR_INTERVAL`: intervalo (s) entre ciclos de reparación de la pool.
 
-### 6.2 Variables por ambiente
+### 7.2 Variables por ambiente
 
 Las mismas variables aplican en desarrollo y producción; lo que cambia son los valores concretos. Las diferencias observadas entre `.env.dev` y `.env.production` son:
 
@@ -287,7 +323,7 @@ Las mismas variables aplican en desarrollo y producción; lo que cambia son los 
 
 **Variables comunes a ambos ambientes** (mismo valor en `.env.dev` y `.env.production`): `APIV2_PORT`, `APIV2_BASE_URL`, `ROBLE_BASE_URL`, `PYTHON_QUEUE`, `PYTHON_RUNNERS` / `JAVA_RUNNERS` / `CPP_RUNNERS`, `*_RUNNER_IMAGE`, `RUNNER_NETWORK`, `RUNNER_NAME_PREFIX`, los tres timeouts de runners, `RABBITMQ_URL`, `SESSION_FREEZE_TIME` e `INTERNAL_USER_EMAIL`.
 
-### 6.3 Archivos de configuración
+### 7.3 Archivos de configuración
 
 Todos los archivos de entorno residen en la **raíz del repositorio**:
 
@@ -295,7 +331,7 @@ Todos los archivos de entorno residen en la **raíz del repositorio**:
 - `./.env.production` — variables para el ambiente de producción.
 - `./example.env` — plantilla pública con los nombres de variable (sin valores reales) versionada en Git.
 
-### 6.4 Manejo seguro de secretos
+### 7.4 Manejo seguro de secretos
 
 Los secretos de desarrollo (`WORKER_KEY`, `INTERNAL_USER_PASSWORD`, `GEMINI_API_KEY`, credenciales de Roble) se gestionan en el `.env.dev` local de cada desarrollador, que está incluido en `.gitignore` y nunca debe subirse al repositorio. La referencia compartida es `example.env`: un archivo plantilla con los nombres de variable y valores marcadores (`CHANGE_THIS_…`) que cada miembro del equipo copia a `.env.dev` y completa con sus propias credenciales. Cualquier rotación de un secreto se comunica por canal seguro (no por commits ni issues) y se reemplaza únicamente en el `.env.dev` local. El despliegue —con su propio juego de secretos en `.env.production` y en los *Actions secrets* del repositorio— se documenta en [`Instalacion.md` § 4.4.3](Instalacion.md#443-variables-de-entorno-y-secretos).
 
@@ -308,13 +344,13 @@ Los siguientes secretos deben definirse manualmente por cada desarrollador (no u
 | `GEMINI_API_KEY`         | API key de Google Gemini        | Google AI Studio (cuenta personal o del proyecto)                      |
 | `ROBLE_PROJECT`          | Identificador de proyecto Roble | Panel de Roble (proyecto de desarrollo asignado al equipo)             |
 
-> Para el funcionamiento de las variables `INTERNAL_USER_EMAIL` y `INTERNAL_USER_PASSWORD` se deberá crear un usuario administrador en Roble con esas mismas credenciales
+> Para el funcionamiento de las variables `INTERNAL_USER_EMAIL` y `INTERNAL_USER_PASSWORD` debe crearse un usuario administrador en Roble con esas mismas credenciales.
 
-## 7. Flujo de trabajo de desarrollo
+## 8. Flujo de trabajo de desarrollo
 
-Describa el proceso recomendado para trabajar sobre el proyecto.
+Esta sección describe el proceso recomendado para trabajar sobre el proyecto.
 
-### 7.1 Preparación del entorno
+### 8.1 Preparación del entorno
 
 1. **Clonar el repositorio.**
    
@@ -323,7 +359,7 @@ Describa el proceso recomendado para trabajar sobre el proyecto.
    cd CODER
    ```
 
-2. **Configurar variables de entorno.** Copiar la plantilla a la raíz del repositorio y completar los valores locales (ver [6.4](#64-manejo-seguro-de-secretos)).
+2. **Configurar variables de entorno.** Copiar la plantilla a la raíz del repositorio y completar los valores locales (ver [7.4](#74-manejo-seguro-de-secretos)).
    
    ```bash
    cp example.env .env.dev
@@ -351,7 +387,7 @@ Describa el proceso recomendado para trabajar sobre el proyecto.
 
 6. **Verificar los servicios disponibles:** `http://localhost:5173` (frontend), `http://localhost:4000/docs` (API + Scalar) y `http://localhost:15672` (consola de RabbitMQ).
 
-### 7.2 Desarrollo de nuevas funcionalidades
+### 8.2 Desarrollo de nuevas funcionalidades
 
 Para incorporar una nueva funcionalidad se debe seguir el siguiente orden de trabajo:
 
@@ -375,7 +411,7 @@ Para incorporar una nueva funcionalidad se debe seguir el siguiente orden de tra
 
 6. **Actualizar la interfaz.** Una vez verificado el backend, ajustar el frontend en `apps/web/src/` (cliente Axios en `src/api/`, componentes en `src/components/` y vistas en `src/pages/`) para consumir la nueva funcionalidad.
 
-### 7.3 Ejecución de pruebas y validaciones
+### 8.3 Ejecución de pruebas y validaciones
 
 Las pruebas de la API se ejecutan **dentro del contenedor `apiv2`**, que ya tiene el toolchain de Go y el acceso a la red `judge_net` necesarios para alcanzar RabbitMQ y Roble.
 
@@ -410,33 +446,33 @@ El catálogo completo de pruebas disponibles, junto con la descripción paso a p
 - **Pruebas Funcionales** — autenticación, cursos, exámenes y revisiones a nivel de casos de uso (`./test/use_cases/...`).
 - **Pruebas de Rendimiento** — benchmarks con `testing.B` y goroutines paralelas (`./test/performance/...`).
 
-### 7.4 Integración de cambios
+### 8.4 Integración de cambios
 
 - **Publicación de la rama:** se publica la rama `feature/...` dividiendo cada commit por **acciones específicas**, usando la nomenclatura estándar de tipo de cambio: `feat/FEATURE` para nuevas funcionalidades, `fix/FIX` para correcciones, `docs/DOCUMENTATION` para documentación, `refactor/REFACTOR` para reestructuración interna, `test/TEST` para pruebas, etc. Cada commit debe representar una acción atómica y trazable.
 - **Creación del Pull Request:** se abre un PR contra la rama de integración describiendo los cambios principales, las decisiones técnicas tomadas y adjuntando **imágenes de la ejecución de las pruebas** (capturas del `go test`, screenshots del frontend, etc.) que evidencien el correcto funcionamiento.
 - **Manejo de correcciones:** las **correcciones del trabajo** se hacen sobre el propio PR (nuevos commits o ajustes a los existentes), mientras que las **correcciones a una *issue*** se gestionan en la página de la issue. En ambos casos, las observaciones deben acompañarse de **outputs, logs o capturas** que demuestren el funcionamiento incorrecto reportado o la solución aplicada.
 - **Criterios mínimos para integrar:**
-  - Funcionamiento correcto de la nueva funcionalidad, demostrado mediante los tests añadidos en [7.2](#72-desarrollo-de-nuevas-funcionalidades).
+   - Funcionamiento correcto de la nueva funcionalidad, demostrado mediante los tests añadidos en [8.2](#82-desarrollo-de-nuevas-funcionalidades).
   - Evidencia de que `docker-compose.dev.yml` sigue levantando el stack sin errores tras los cambios.
   - El resto de la batería de pruebas de funcionalidad (`./test/use_cases/...`, `./test/http/...`) sigue pasando sin regresiones.
 
-## 8. Dependencias y servicios externos
+## 9. Dependencias y servicios externos
 
 Documente las dependencias técnicas y servicios de terceros utilizados por el proyecto.
 
-### 8.1 Servicios externos integrados
+### 9.1 Servicios externos integrados
 
 - **Roble (Openlab, Universidad del Norte):** servicio institucional accedido por API REST que provee tanto la autenticación de usuarios como la persistencia de todas las entidades del sistema (cursos, retos, exámenes, sesiones, submissions y resultados).
 - **API de Google Gemini:** modelo de lenguaje en la nube usado por el backend para asistir al docente en la generación de enunciados, casos de prueba y demás contenido académico.
 
-### 8.2 Requisitos de acceso
+### 9.2 Requisitos de acceso
 
 Un equipo nuevo solo requiere dos accesos para empezar a trabajar:
 
 - **Repositorio del proyecto** en GitHub (`openlabun/CODER`), con permisos de colaborador.
 - **Proyectos de Roble** correspondientes a las bases de datos de **desarrollo** y **producción**, asignados por el administrador de Openlab.
 
-### 8.3 Consideraciones de desarrollo y pruebas
+### 9.3 Consideraciones de desarrollo y pruebas
 
 - **Helpers de pruebas:** todas las pruebas de la API deben apoyarse en las funciones definidas en [`apps/api_v2/test/http/utils.go`](apps/api_v2/test/http/utils.go), particularmente para la **medición de tiempos** de ejecución de los casos de uso. Esto garantiza coherencia entre todas las pruebas y permite comparar tiempos de respuesta de forma consistente.
 
@@ -449,9 +485,9 @@ Un equipo nuevo solo requiere dos accesos para empezar a trabajar:
   
   Estas cuentas deben crearse en el proyecto de Roble antes de ejecutar las pruebas, tal como lo indica [`apps/api_v2/docs/TestsPlan.md`](apps/api_v2/docs/TestsPlan.md).
 
-## 9. Convenciones del proyecto
+## 10. Convenciones del proyecto
 
-### 9.1 Convenciones de código
+### 10.1 Convenciones de código
 
 La nomenclatura del dominio se mantiene en **PascalCase en inglés** y debe respetarse en cualquier nueva entidad o atributo. El detalle completo de cada entidad y sus reglas vive en [`apps/api_v2/docs/Bussiness_rules.md`](apps/api_v2/docs/Bussiness_rules.md); aquí se resume la nomenclatura por módulo:
 
@@ -487,7 +523,7 @@ La nomenclatura del dominio se mantiene en **PascalCase en inglés** y debe resp
 
 Adicionalmente, los archivos de handlers HTTP siguen la convención `<verbo>-<recurso>` para el nombre del paquete (ej. `post-create`, `get-by-id`, `delete-exam`), y cada paquete expone `route.go`, `dtos.go` y `mapper.go` por separado.
 
-### 9.2 Convenciones de repositorio
+### 10.2 Convenciones de repositorio
 
 #### Nombres de ramas
 
@@ -518,7 +554,7 @@ Las issues se clasifican en tres categorías según su propósito:
 - **Pruebas:** documentan los archivos o la **secuencia a seguir** para probar una funcionalidad, incluyendo precondiciones, comandos y resultados esperables.
 - **Errores:** registran un bug con el **paso a paso de cómo se consiguió**, el **resultado esperado** y el **resultado obtenido**, acompañados de logs, capturas o trazas que evidencien el comportamiento incorrecto.
 
-### 9.3 Convenciones de documentación
+### 10.3 Convenciones de documentación
 
 La documentación técnica del proyecto se concentra en cuatro ubicaciones, que deben mantenerse actualizadas a medida que el código evoluciona:
 
@@ -529,11 +565,11 @@ La documentación técnica del proyecto se concentra en cuatro ubicaciones, que 
 
 Cualquier funcionalidad nueva, ajuste de reglas o cambio mayor debe reflejarse en el archivo correspondiente como parte del mismo PR.
 
-## 10. Problemas frecuentes y recomendaciones
+## 11. Problemas frecuentes y recomendaciones
 
 Documente errores comunes, limitaciones conocidas, deuda técnica o advertencias importantes para futuros equipos.
 
-### 10.1 Problemas frecuentes
+### 11.1 Problemas frecuentes
 
 Durante el desarrollo, los dos problemas que más recurrentemente bloquean al equipo son los relacionados con la **política de CORS** y con la **configuración de los runners**.
 
@@ -563,24 +599,24 @@ Al levantar el stack, RabbitMQ puede tardar más de lo previsto en estar listo, 
 - **Cómo verificarlo:** ejecutar `docker compose ps` y observar el estado `unhealthy` del contenedor `rabbitmq`; revisar `docker compose logs rabbitmq` para confirmar que el proceso terminó de inicializar.
 - **Solución:** subir el `timeout` (y, si es necesario, el `interval` y `retries`) del `healthcheck` de `rabbitmq` en `docker-compose.yml` / `docker-compose.dev.yml` a valores holgados (por ejemplo, `timeout: 60s`, `interval: 60s`, `retries: 20`) para darle tiempo al servicio a estar realmente listo antes de que se valide su estado. Sin este ajuste, el despliegue falla de forma intermitente y los contenedores dependientes no llegan a iniciarse.
 
-### 10.2 Deuda técnica conocida
+### 11.2 Deuda técnica conocida
 
 - **Rehacer el frontend desde cero.** La SPA actual no cumple con los estándares de calidad ni con las buenas prácticas esperadas: presenta un fuerte acoplamiento entre componentes, lógica de negocio embebida y reglas hardcodeadas que **duplican —y a veces contradicen— las que ya existen en la API**. Se recomienda reescribirlo completamente, manteniendo a la API como única fuente de verdad para reglas de negocio y limitando el frontend a responsabilidades de UI y consumo HTTP.
 - **Migrar o aliviar la persistencia.** Roble se está volviendo un cuello de botella: cada consulta es una llamada HTTP externa, lo que limita el rendimiento bajo carga. Existen dos caminos:
   - **Migrar a un servicio de base de datos más eficiente** (PostgreSQL gestionado, por ejemplo) con acceso directo desde la API.
   - **Implementar una capa de caché local** que reduzca el número de llamadas a Roble manteniéndolo como sistema de registro. Hay un avance significativo de esta infraestructura de caché en la rama [`feature/cache-infrastructure`](https://github.com/openlabun/CODER/tree/feature/cache-infrastructure), que define el adaptador, las TTL por tabla (`CACHE_*_TABLE_TTL`) y la cola de sincronización (`CACHE_SYNC_QUEUE_NAME`); falta integrar y validar este trabajo con el resto del sistema.
 
-### 10.3 Recomendaciones para continuidad
+### 11.3 Recomendaciones para continuidad
 
 Para los siguientes equipos que tomen el proyecto, se sugieren las siguientes líneas de trabajo:
 
 - **Mejorar los tiempos de respuesta de la API.** Optimizar el camino crítico de las operaciones más frecuentes (login, carga de examen, envío de submission y consulta de resultados), apoyándose en las pruebas de rendimiento existentes (`./test/performance/...`) para medir el impacto de cada cambio. La capa de caché de [`feature/cache-infrastructure`](https://github.com/openlabun/CODER/tree/feature/cache-infrastructure) es un buen punto de partida.
-- **Reconstruir completamente el frontend.** Tomar como base el manual de desarrollo y la documentación de la API (`/docs`) para producir una nueva SPA limpia, sin lógica de negocio hardcodeada y con un acoplamiento bajo entre componentes (ver [10.2](#102-deuda-técnica-conocida)).
+- **Reconstruir completamente el frontend.** Tomar como base el manual de desarrollo y la documentación de la API (`/docs`) para producir una nueva SPA limpia, sin lógica de negocio hardcodeada y con un acoplamiento bajo entre componentes (ver [11.2](#112-deuda-técnica-conocida)).
 - **Implementar runners para Java y C++.** La infraestructura ya contempla las imágenes y las variables (`JAVA_RUNNER_IMAGE`, `CPP_RUNNER_IMAGE`, `JAVA_RUNNERS`, `CPP_RUNNERS`); falta completar la ejecución, parsing de salida y manejo de errores de compilación dentro del worker para cada lenguaje.
 - **Implementar detección de plagio por comparación de código.** Diseñar un módulo que compare las submissions de un mismo `ExamItem` mediante técnicas como tokenización con n-grams (estilo Moss/JPlag) o comparación estructural por AST, y exponer alertas para revisión manual por parte del docente. El informe principal ya describe el enfoque sugerido.
 - **Migrar el flujo del examen de HTTP request a WebSocket.** El modelo actual basado en *heartbeats* HTTP y `polling` introduce latencia y carga innecesaria sobre la API; migrar la sesión de examen a una conexión WebSocket permitiría notificaciones en tiempo real (bloqueo manual del docente, expiración de la sesión, resultados de submission), reducir el tráfico HTTP y mejorar la experiencia del estudiante.
 
-## 11. Historial de decisiones técnicas relevantes
+## 12. Historial de decisiones técnicas relevantes
 
 - **Reconstrucción total del backend en Go.** Se descartó el backend original en NestJS/TypeScript (`apps/api`) y se reescribió desde cero en Go con Fiber v2 bajo arquitectura hexagonal (`apps/api_v2`), buscando mayor rendimiento bajo carga, una separación más estricta de capas y un binario autocontenido más sencillo de desplegar.
 - **Persistencia y autenticación delegadas a Roble.** Se eliminó la dependencia directa de PostgreSQL en el backend y se integró Roble como única fuente de verdad para persistencia y autenticación (JWT emitido por Roble), reduciendo la infraestructura propia a mantener y aprovechando el servicio institucional.

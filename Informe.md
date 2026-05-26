@@ -2,47 +2,104 @@
 
 ## 1. Introducción
 
-En un contexto institucional la evaluación de algoritmos es un componente esencial en la formación de los ingenieros de sistemas, pero su implementación manual presenta limitaciones de escalabilidad, objetividad y rapidez en la retroalimentación. En contextos de educación digital y grupos numerosos, estas dificultades se acentúan, afectando la calidad del proceso evaluativo. Este proyecto propone el diseño y desarrollo de **CODER**, una plataforma web de evaluación automática de algoritmos que integra ejecución segura de código, retroalimentación inmediata, calificación de pruebas e integridad académica para fortalecer los procesos de enseñanza y evaluación.
+En la formación de ingenieros de sistemas, la resolución de problemas algorítmicos y la programación práctica constituyen un eje central del aprendizaje. Sin embargo, en escenarios institucionales con cursos numerosos y alta demanda de actividades evaluativas, los procesos tradicionales de revisión manual de código generan cuellos de botella que afectan simultáneamente al docente y al estudiante. Para el docente, la evaluación manual incrementa la carga operativa, reduce la frecuencia de actividades formativas y dificulta la aplicación homogénea de criterios de calificación. Para el estudiante, la retroalimentación tardía limita la posibilidad de corregir errores de forma iterativa, debilitando el aprendizaje oportuno.
+
+La situación actual de muchas asignaturas de programación evidencia una brecha entre el volumen de entregas y la capacidad de evaluación oportuna. A medida que aumenta el número de estudiantes, también crece la necesidad de contar con mecanismos que permitan procesar múltiples envíos de manera concurrente, mantener trazabilidad de los intentos y preservar condiciones de integridad académica. En este contexto, emerge una oportunidad clara: diseñar una solución tecnológica que automatice la evaluación de código, reduzca tiempos de respuesta y brinde información útil para la toma de decisiones pedagógicas.
+
+Como respuesta a esta necesidad, el presente proyecto desarrolla CODER, una plataforma web tipo online judge orientada al entorno académico de la Universidad del Norte. La solución integra una arquitectura de evaluación asíncrona basada en colas de mensajería y workers, ejecución aislada de código en contenedores por lenguaje, retroalimentación automática por casos de prueba y capacidades de analítica de desempeño. A nivel de implementación, CODER articula frontend web, API backend en Go, broker RabbitMQ, worker en Python y persistencia institucional mediante Roble, conformando un ecosistema modular que prioriza escalabilidad, mantenibilidad y continuidad.
+
+El valor del proyecto no se limita a la automatización técnica del proceso evaluativo. Su aporte principal consiste en habilitar evaluaciones frecuentes y formativas a mayor escala, con menor fricción operativa para el docente y con mejor experiencia de aprendizaje para el estudiante. En consecuencia, CODER se plantea como una infraestructura académica de apoyo a la enseñanza de programación, con una hoja de ruta de evolución que incluye mejoras en integridad académica, experiencia de usuario y despliegue de capacidades inteligentes especializadas para educación.
 
 ## 2. Marco conceptual
 
-Un **online judge** es un sistema que recibe soluciones de programación de los usuarios, las compila o interpreta y las evalúa automáticamente comparando su salida contra un conjunto de **casos de prueba** previamente definidos. La calificación se produce en el momento, lo que permite **retroalimentación inmediata** al estudiante y libera al docente de la revisión manual.
+El marco conceptual de este proyecto se sustenta en cuatro ejes: evaluación automática de código, ejecución segura en entornos aislados, procesamiento asíncrono de cargas concurrentes e instrumentación académica para seguimiento del desempeño.
 
-La evaluación se apoya en **entornos de ejecución aislados** (*sandboxes*) que ejecutan el código del usuario en condiciones controladas, con **límites estrictos de CPU, memoria y tiempo de ejecución**, evitando que un programa erróneo o malicioso afecte al servidor que lo hospeda. Cada ejecución se considera efímera y desechable, de modo que el estado del sistema permanece estable independientemente del código que se envíe.
+Un online judge es un sistema que recibe soluciones de programación, las compila o interpreta y contrasta su salida contra casos de prueba definidos previamente. Desde una perspectiva pedagógica, este enfoque permite transformar la evaluación en un proceso continuo y formativo, ya que el estudiante recibe veredictos y retroalimentación en ciclos cortos. Desde una perspectiva operativa, reduce el costo de revisión manual y facilita la estandarización de criterios de calificación.
 
-Para soportar **múltiples envíos concurrentes** sin degradar el servicio, los *online judges* modernos se apoyan en **colas de tareas** y **procesadores de trabajos** (*workers*) que desacoplan la recepción de la solución de su ejecución. La API encola los envíos en un broker de mensajería, mientras que uno o varios workers consumen la cola, ejecutan el código en un *sandbox* y devuelven el veredicto. Este patrón asíncrono permite escalar horizontalmente la capacidad de ejecución y absorber picos de carga durante evaluaciones masivas, manteniendo tiempos de respuesta consistentes y una experiencia fluida para el usuario.
+La unidad básica de evaluación en este tipo de plataformas es el caso de prueba. Cada caso define entradas, salidas esperadas y reglas de validación. La calificación de una solución se obtiene al agregar los resultados individuales de ejecución por caso. Este principio requiere definir con claridad la diferencia entre casos visibles para el estudiante y casos ocultos para evaluación final, con el fin de equilibrar aprendizaje guiado y validez de la medición.
+
+Para garantizar seguridad y estabilidad, la ejecución del código del usuario se realiza en sandboxes. Un sandbox es un entorno controlado y aislado que impone límites de tiempo de CPU, memoria y duración de ejecución, evitando que errores lógicos o comportamientos maliciosos comprometan el host principal. El aislamiento por contenedores aporta reproducibilidad, encapsulamiento de dependencias y separación entre lenguajes de programación, condiciones críticas para un sistema de evaluación confiable.
+
+En contextos de alta concurrencia, los online judges modernos adoptan arquitecturas asíncronas basadas en colas de mensajes y workers. En este patrón, la API no ejecuta directamente el código: publica cada submission en una cola y responde rápidamente al cliente con acuse de recepción. Posteriormente, los workers consumen mensajes, ejecutan las pruebas en runners aislados y reportan resultados a la API. Esta separación temporal entre recepción y procesamiento permite absorber picos de demanda, escalar de forma horizontal y evitar bloqueos en los endpoints transaccionales.
+
+Dentro de este marco, es clave diferenciar componentes y responsabilidades:
+
+- API: valida reglas de negocio, controla sesiones, persiste estados y orquesta el flujo de evaluación.
+- Broker de mensajería: desacopla productores y consumidores, permitiendo elasticidad del sistema.
+- Worker: coordina la ejecución y transforma una tarea en veredictos verificables.
+- Runner: entorno especializado por lenguaje donde se compila o interpreta el código.
+- Capa de persistencia: conserva usuarios, cursos, exámenes, submissions y puntajes para trazabilidad académica.
+
+Además de la ejecución técnica, la evaluación académica exige conceptos de gobernanza del proceso: control de intentos, ventanas temporales de examen, sesiones activas, telemetría de actividad y mecanismos de integridad académica. Estas dimensiones permiten no solo calificar, sino también auditar y analizar el comportamiento de aprendizaje a nivel individual y grupal.
+
+Finalmente, el proyecto incorpora el concepto de asistencia generativa al docente. En este contexto, la inteligencia artificial no reemplaza la evaluación humana ni la autoría pedagógica, sino que funciona como apoyo para proponer enunciados, casos de prueba y material base que debe ser validado por el profesor antes de su uso. Este principio de validación humana preserva calidad académica, pertinencia curricular y control institucional del contenido.
+
+En síntesis, el marco conceptual adoptado articula fundamentos de ingeniería de software distribuida, seguridad de ejecución, procesamiento concurrente y evaluación educativa. Esta convergencia sustenta las decisiones de arquitectura y explica por qué CODER puede operar como una plataforma académica escalable para enseñanza y evaluación de programación.
 
 ## 3. Planteamiento del problema
 
 ### 3.1 Descripción del problema
 
-Los procesos tradicionales de evaluación de algoritmos dependen en gran medida de la revisión manual del código por parte del docente, lo que dificulta la aplicación de criterios claros, incrementa la carga operativa para el docente y retrasa la retroalimentación al estudiante. En cursos donde hay una gran cantidad de estudiantes, esta situación impacta negativamente la calidad del aprendizaje y limita la posibilidad de realizar evaluaciones frecuentes y formativas, dado que la alta carga de trabajo para el docente lo lleva a reducir la cantidad de evaluaciones o en su defecto, entregar de manera retrasada los resultados y retroalimentación.
+El problema central abordado por este proyecto es la baja escalabilidad y oportunidad de los procesos de evaluación de programación cuando se gestionan de forma manual. En su estado tradicional, el flujo de evaluación depende de que el docente revise individualmente cada entrega, ejecute pruebas de manera artesanal, detecte errores y asigne una calificación con base en criterios que no siempre se aplican de forma homogénea entre todos los estudiantes.
+
+Esta problemática tiene causas técnicas y operativas. Entre las causas técnicas se encuentran la ausencia de una infraestructura de ejecución automática y segura, la falta de mecanismos estandarizados para validar soluciones con casos de prueba y la inexistencia de una capa de procesamiento concurrente para absorber picos de entregas. Entre las causas operativas destacan la alta relación estudiante-docente en asignaturas de programación, los tiempos académicos acotados para retroalimentar actividades y la dificultad de sostener evaluaciones frecuentes sin comprometer calidad ni consistencia.
+
+Los principales afectados son, en primer lugar, los estudiantes, quienes reciben retroalimentación tardía y con menor capacidad de iteración sobre sus errores; en segundo lugar, los docentes, quienes enfrentan sobrecarga operativa y menor disponibilidad para actividades pedagógicas de mayor valor; y, en tercer lugar, los cursos y programas académicos, que ven limitada su capacidad de implementar evaluación continua basada en evidencia.
+
+Las consecuencias más relevantes son: incremento en tiempos de entrega de resultados, reducción de la frecuencia de actividades formativas, heterogeneidad en los criterios de evaluación y menor trazabilidad del desempeño individual y grupal. En conjunto, estas consecuencias afectan la calidad del proceso de enseñanza-aprendizaje y justifican la necesidad de una solución tecnológica que automatice la evaluación, preserve la integridad del proceso y permita escalar el servicio bajo demanda.
 
 ### 3.2 Restricciones y supuestos de diseño
 
 #### Escalabilidad y Despliegue
 
-- La plataforma deberá ejecutarse sobre una infraestructura de contenedores que permitan su rápida escalabilidad
-
-- El sistema deberá tolerar picos de carga durante evaluaciones masivas.
-
-- El sandbox de ejecución tendrá límites estrictos de CPU, memoria y tiempo.
-
-- El modelo de IA para generación de contenido académico se ejecutará de forma local. Deberá usarse un modelo en versión reducida.
+- La solución debe ejecutarse sobre una arquitectura contenedorizada para facilitar despliegue reproducible y escalamiento operativo.
+- El sistema debe tolerar picos de concurrencia durante ventanas de evaluación masiva sin degradación severa del servicio.
+- La ejecución de código debe realizarse en entornos aislados con límites explícitos de CPU, memoria y tiempo.
+- El diseño contempla soporte para múltiples lenguajes, pero la operación efectiva depende de la disponibilidad de runners por lenguaje y su configuración en el entorno.
+- La integración de inteligencia artificial debe operar con validación humana obligatoria antes de publicar contenido académico generado.
 
 #### Restricciones de Usuario
 
-- Se asumirá conectividad a internet estable en los entornos institucionales de evaluación.
+- Se asume conectividad a internet estable en el entorno institucional durante las sesiones de evaluación.
+- El acceso al sistema está restringido por autenticación y control de roles (docente/estudiante).
+- La experiencia de evaluación depende de que el usuario utilice un navegador compatible con la SPA y mantenga una sesión activa.
 
-- El sistema deberá soportar múltiples lenguajes de programación definidos previamente.
+#### Restricciones de entorno y proyecto
 
-- El acceso al sistema estará controlado mediante autenticación y roles.
+- Persistencia y autenticación dependen de un servicio externo institucional (Roble), por lo que su disponibilidad impacta directamente la plataforma.
+- La mensajería depende de RabbitMQ y su estado de salud para procesar submissions.
+- El proyecto se desarrolla bajo restricciones de tiempo académico, lo que obliga a priorizar el núcleo funcional sobre módulos complementarios.
+- El despliegue productivo se apoya en infraestructura Docker y flujo CI/CD por SSH, lo que condiciona ciertas decisiones de operación y mantenimiento.
+
+#### Supuestos de diseño
+
+- Se asume que los docentes definirán casos de prueba representativos y válidos para medir los objetivos de aprendizaje del reto.
+- Se asume que la calificación automática se basa en comportamiento observable de entrada/salida y no en análisis semántico profundo del algoritmo.
+- Se asume que la validación institucional del contenido generado por IA será realizada por un docente antes de su publicación.
+- Se asume que la infraestructura de ejecución (worker + runners) será administrada por personal técnico con acceso a variables de entorno y monitoreo básico.
 
 ### 3.3 Alcance
 
-El proyecto comprende el diseño, desarrollo, integración y despliegue en producción de la plataforma web **CODER**, orientada a la evaluación automática de algoritmos en cursos de Ingeniería de Sistemas. La solución permitirá a los docentes crear y administrar retos de programación, definir casos de prueba, configurar parciales y gestionar cursos académicos, mientras que los estudiantes podrán enviar soluciones, recibir retroalimentación automática y consultar resultados y métricas de desempeño.
+El alcance de este proyecto comprende el diseño, implementación, integración y despliegue de una plataforma web de evaluación automática de algoritmos para cursos de Ingeniería de Sistemas. El producto resultante habilita un flujo académico completo para creación de retos/exámenes, envío de soluciones, ejecución automatizada por casos de prueba, calificación y consulta de resultados.
 
-La plataforma incluirá un motor de evaluación basado en colas de tareas y *workers* especializados por lenguaje, con capacidad de escalamiento dinámico. Asimismo, integrará control de intentos, ventanas temporales de evaluación y auditoría completa de actividades. Adicionalmente, se incorporará un componente de inteligencia artificial para asistir a los docentes en la generación de contenido académico, sujeto siempre a validación humana.
+Incluye, específicamente:
+
+- Gestión de usuarios, autenticación y control por roles.
+- Gestión de cursos, inscripción de estudiantes y organización académica básica.
+- Gestión de retos, casos de prueba y configuración de exámenes.
+- Ejecución asíncrona de submissions mediante broker, worker y runners aislados por lenguaje.
+- Cálculo automático de resultados y puntajes por intento, ítem y evaluación.
+- Consultas de desempeño y resultados para soporte a decisiones docentes.
+- Integración de asistencia generativa para apoyo en creación de contenido, con validación humana.
+
+No incluye, en el estado actual del proyecto:
+
+- Implementación completa de un motor anticheat de similitud de código en producción.
+- Validación formal de usabilidad con estudios extensivos de usuarios reales en operación institucional continua.
+- Migración productiva de la infraestructura de ejecución a Kubernetes.
+- Sustitución total del modelo de IA en nube por un stack local plenamente operativo y validado.
+
+En términos de frontera de trabajo, el proyecto se concentra en el núcleo funcional y arquitectónico del online judge, dejando como línea de continuidad las mejoras avanzadas de integridad académica, madurez de experiencia de usuario y evolución de infraestructura.
 
 ## 4. Objetivos
 
@@ -60,52 +117,65 @@ Diseñar, desarrollar y desplegar una plataforma de evaluación automática de a
 
 ## 5. Estado del arte / soluciones relacionadas
 
-Las plataformas de evaluación automática de algoritmos, comúnmente conocidas como *online judges*, se han convertido en herramientas fundamentales en la enseñanza de la programación y la evaluación de competencias algorítmicas. Estos sistemas permiten a los estudiantes enviar soluciones a problemas computacionales que son evaluadas automáticamente mediante la compilación y ejecución del código contra un conjunto de casos de prueba predefinidos. Este enfoque facilita la retroalimentación inmediata, promueve la práctica autónoma y permite gestionar evaluaciones de programación a gran escala de manera eficiente.
+Los sistemas de evaluación automática de programación, comúnmente denominados online judges, han evolucionado desde plataformas orientadas a competencia algorítmica hacia ecosistemas más amplios que incluyen entrenamiento técnico, certificación de habilidades y apoyo académico. En todos los casos, el principio operativo es similar: recibir código, ejecutarlo contra casos de prueba en entornos controlados y devolver un veredicto con retroalimentación.
 
-Diversas plataformas ampliamente conocidas, como Codeforces, HackerRank y LeetCode, han demostrado la efectividad de estos sistemas tanto en entornos académicos como en contextos de entrenamiento competitivo y preparación para entrevistas técnicas. Estas plataformas implementan mecanismos de evaluación automática basados en la ejecución controlada de código, sistemas de clasificación entre usuarios y repositorios extensos de problemas algorítmicos.
+En el mercado y en la academia existen referencias consolidadas que sirven para contrastar enfoques y delimitar la propuesta de valor de CODER.
 
-Una de las referencias tomadas para el desarrollo del presente proyecto es **juez-online** [[1]](https://github.com/DerekPz/juez-online.git), una plataforma desarrollada el semestre 2025-03 en el marco del curso de Backend dictado en la **Universidad del Norte**. En el estado actual de este proyecto cuenta con un **backend** sistema desarrollado utilizando **NestJS**, un framework progresivo basado en **Node.js** y escrito en **TypeScript**. NestJS se utiliza para implementar varios módulos esenciales como autenticación, retos, envíos de soluciones (submissions), ejecución de código (runners), cursos, calificación, clasificación (leaderboard), observabilidad y asistencia creativa (LLM en cloud a través de API). La gestión de datos se realiza mediante **PostgreSQL**, una base de datos relacional que almacena información como usuarios, retos, resultados de evaluaciones y estadísticas del sistema. Para el manejo de tareas asíncronas y colas de procesamiento se utiliza **Redis**, que permite distribuir las evaluaciones de código entre distintos workers de forma eficiente. La autenticación y autorización de los usuarios se implementa mediante JSON Web Token.
+| Plataforma | Enfoque principal | Ventajas relevantes | Limitaciones para contexto universitario local |
+| ---------- | ----------------- | ------------------- | --------------------------------------------- |
+| HackerRank | Evaluación técnica y capacitación corporativa | Banco amplio de ejercicios, reportes, soporte multi-lenguaje, flujos de assessment | Modelo comercial, baja personalización institucional profunda, dependencia de proveedor externo |
+| LeetCode | Práctica individual e interviews | Catálogo muy extenso, comunidad activa, progresión por dificultad | No está centrado en gestión académica de cursos, integración curricular limitada |
+| Codeforces | Competencia algorítmica | Alto nivel técnico, dinamiza práctica competitiva, ranking robusto | Menor orientación a evaluación formal de cursos y a gestión docente |
+| DOMjudge / Kattis (entorno académico) | Juez para concursos y cursos | Arquitecturas probadas en evaluación automática, enfoque técnico sólido | Requieren adaptación operativa y funcional para procesos institucionales específicos |
 
-| Capa                | Tecnología                                  |
-| ------------------- | ------------------------------------------- |
-| Runtime             | Node.js                                     |
-| Framework HTTP      | **NestJS** (TypeScript)                     |
-| Base de datos       | **PostgreSQL                                |
-| Caché / Cola        | **Redis** (cliente `ioredis`)               |
-| Autenticación       | JWT (`jsonwebtoken` + `bcrypt`)             |
-| Documentación API   | **Swagger UI** (`@nestjs/swagger`)          |
-| IA Generativa       | **Google Gemini** (`@google/generative-ai`) |
-| Ejecución de código | Contenedores **Docker** aislados            |
+A nivel académico, estas plataformas demuestran que la evaluación automática mejora la oportunidad de retroalimentación y la escalabilidad del proceso docente. No obstante, en contextos universitarios institucionales surgen necesidades adicionales: integración con modelos de autenticación internos, trazabilidad por curso y cohorte, reglas de evaluación alineadas al currículo, control de sesiones de examen y capacidad de operación bajo restricciones locales de infraestructura.
 
-**Tabla 1**: Stack tecnológico utilizado en el backend del proyecto base
+Bajo ese criterio, una referencia directa para este proyecto fue juez-online [[1]](https://github.com/DerekPz/juez-online.git), desarrollado previamente en el contexto de la Universidad del Norte. Esta base confirmó la viabilidad funcional del dominio (retos, submissions, runners, cursos y leaderboard), pero también evidenció oportunidades de mejora en separación arquitectónica, rendimiento y adaptación a la infraestructura institucional.
 
-| Capa             | Tecnología                             |
-| ---------------- | -------------------------------------- |
-| Framework UI     | **React 19** (JSX)                     |
-| Bundler          | **Vite 7**                             |
-| Enrutamiento     | `react-router-dom` v7                  |
+| Capa | Tecnología |
+| ---- | ---------- |
+| Runtime | Node.js |
+| Framework HTTP | NestJS (TypeScript) |
+| Base de datos | PostgreSQL |
+| Caché / Cola | Redis (`ioredis`) |
+| Autenticación | JWT (`jsonwebtoken` + `bcrypt`) |
+| Documentación API | Swagger UI (`@nestjs/swagger`) |
+| IA Generativa | Google Gemini (`@google/generative-ai`) |
+| Ejecución de código | Contenedores Docker aislados |
+
+**Tabla 1**: Stack tecnológico del proyecto base juez-online
+
+| Capa | Tecnología |
+| ---- | ---------- |
+| Framework UI | React 19 (JSX) |
+| Bundler | Vite 7 |
+| Enrutamiento | `react-router-dom` v7 |
 | Editor de código | Monaco Editor (`@monaco-editor/react`) |
-| HTTP Client      | Axios                                  |
+| HTTP Client | Axios |
 
-**Tabla 2:** Stack tecnológico utilizado en el frontend del proyecto base
+**Tabla 2**: Stack tecnológico del frontend del proyecto base
 
-Por su parte, con respecto a la detección del plagio se plantean distintas soluciones que permitirán reconocer patrones similares y alertas de riesgo para los envíos realizados en la plataforma.
+Con base en este estado del arte, CODER adopta y adapta los elementos más efectivos del paradigma online judge (ejecución automática, aislamiento, colas y retroalimentación rápida), pero orientándolos al contexto académico institucional. Esta orientación implica priorizar la integración con Roble (persistencia y autenticación institucional), la trazabilidad por curso/examen/sesión, y la capacidad de evolución hacia analítica educativa e integridad académica.
 
-- **Tokenización y n-grams**: El código se tokeniza (keywords, operadores, identificadores) y se generan ventanas de n-grams (secuencias de ~5-10 tkens). Se compara el porcentaje de n-grams compartidos entre pares de envíos del mismo reto. Si supera un umbral configurable, se marca para revisión humana. Se inspira en el enfoque de Moss/JPlag.
-- **Normalización previa**: Antes de tokenizar, se normaliza el código (quitar comentarios, formateo, nombres de variables genéricos) para reducir falsos positivos por cambios cosméticos.
-- **Comparación estructural (AST)**: Se parsea el código a árbl de sintaxis abstracta (AST) y se compara la estructura entre envíos. Permite detectar copias con variables o nombres distintos. Se usará tree-sitter o parsers por lenguaje (Python: ast, JS: acorn, etc.).
+En relación con integridad académica, la literatura y la práctica industrial muestran tres líneas principales de detección de similitud de código que se consideran para evolución del sistema:
 
-Mientras que con respecto a la generación de ejercicios se propone el reemplazo del actual sistema soportado a través de una llave de API contectada a un modelo en la Nube, a un modelo de despliegue local utilizando Ollama. Para ello se plantean diversos modelos que sirvan a esta solución.
+- Tokenización y n-grams: análisis de secuencias léxicas para detectar coincidencias estructurales.
+- Normalización previa: eliminación de variaciones cosméticas (comentarios, formato, nombres) para reducir falsos negativos.
+- Comparación estructural por AST: contraste de árboles de sintaxis para identificar similitud semántica más allá de renombramientos.
 
-| Modelo                  | Parámetros | Contexto (tokens) | RAM aprox (Q4) | Fortaleza principal              |
-| ----------------------- | ---------- | ----------------- | -------------- | -------------------------------- |
-| **DeepSeek Coder 6.7B** | 6.7B       | ~16K              | 6–8 GB         | Excelente en código estructurado |
-| **Qwen2.5-Coder 7B**    | 7B         | ~32K              | 8–10 GB        | Mejor razonamiento largo         |
-| **Code Llama 7B**       | 7B         | ~16K              | 8–10 GB        | Generación limpia de código      |
-| **Mistral 7B Instruct** | 7B         | ~8K               | 7–9 GB         | Buen razonamiento general        |
-| **Phi-3 Mini**          | ~3.8B      | ~8K–16K           | 4–6 GB         | Muy eficiente                    |
+En cuanto a generación de contenido con IA, el ecosistema actual ofrece dos rutas: consumo de API cloud (rápida adopción, menor costo operativo inicial) y despliegue local de modelos (mayor control, potencial reducción de dependencia externa). CODER opera actualmente con Gemini cloud e incorpora como línea de mejora el despliegue local progresivo con modelos abiertos vía Ollama, evaluando costo de inferencia, memoria disponible, calidad de salida y mantenibilidad operativa.
 
-**Tabla 3:** Lista de LLM que se consideran para desliegue del proyecto
+| Modelo | Parámetros | Contexto (tokens) | RAM aprox (Q4) | Fortaleza principal |
+| ------ | ---------- | ----------------- | -------------- | ------------------- |
+| DeepSeek Coder 6.7B | 6.7B | ~16K | 6-8 GB | Excelente en código estructurado |
+| Qwen2.5-Coder 7B | 7B | ~32K | 8-10 GB | Mejor razonamiento largo |
+| Code Llama 7B | 7B | ~16K | 8-10 GB | Generación limpia de código |
+| Mistral 7B Instruct | 7B | ~8K | 7-9 GB | Buen razonamiento general |
+| Phi-3 Mini | ~3.8B | ~8K-16K | 4-6 GB | Alta eficiencia computacional |
+
+**Tabla 3**: Modelos considerados para despliegue local en la hoja de ruta del proyecto
+
+En síntesis, el análisis comparativo muestra que las plataformas existentes validan técnicamente el enfoque, pero también evidencian una brecha entre soluciones genéricas y necesidades universitarias locales. CODER se posiciona en esa brecha: no busca replicar un portal de práctica global, sino consolidar una plataforma institucional de evaluación automática con enfoque curricular, control operativo y escalabilidad progresiva.
 
 ## 6. Requerimientos
 

@@ -121,37 +121,37 @@ Los sistemas de evaluación automática de programación, comúnmente denominado
 
 En el mercado y en la academia existen referencias consolidadas que sirven para contrastar enfoques y delimitar la propuesta de valor de CODER.
 
-| Plataforma | Enfoque principal | Ventajas relevantes | Limitaciones para contexto universitario local |
-| ---------- | ----------------- | ------------------- | --------------------------------------------- |
-| HackerRank | Evaluación técnica y capacitación corporativa | Banco amplio de ejercicios, reportes, soporte multi-lenguaje, flujos de assessment | Modelo comercial, baja personalización institucional profunda, dependencia de proveedor externo |
-| LeetCode | Práctica individual e interviews | Catálogo muy extenso, comunidad activa, progresión por dificultad | No está centrado en gestión académica de cursos, integración curricular limitada |
-| Codeforces | Competencia algorítmica | Alto nivel técnico, dinamiza práctica competitiva, ranking robusto | Menor orientación a evaluación formal de cursos y a gestión docente |
-| DOMjudge / Kattis (entorno académico) | Juez para concursos y cursos | Arquitecturas probadas en evaluación automática, enfoque técnico sólido | Requieren adaptación operativa y funcional para procesos institucionales específicos |
+| Plataforma                            | Enfoque principal                             | Ventajas relevantes                                                                | Limitaciones para contexto universitario local                                                  |
+| ------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| HackerRank                            | Evaluación técnica y capacitación corporativa | Banco amplio de ejercicios, reportes, soporte multi-lenguaje, flujos de assessment | Modelo comercial, baja personalización institucional profunda, dependencia de proveedor externo |
+| LeetCode                              | Práctica individual e interviews              | Catálogo muy extenso, comunidad activa, progresión por dificultad                  | No está centrado en gestión académica de cursos, integración curricular limitada                |
+| Codeforces                            | Competencia algorítmica                       | Alto nivel técnico, dinamiza práctica competitiva, ranking robusto                 | Menor orientación a evaluación formal de cursos y a gestión docente                             |
+| DOMjudge / Kattis (entorno académico) | Juez para concursos y cursos                  | Arquitecturas probadas en evaluación automática, enfoque técnico sólido            | Requieren adaptación operativa y funcional para procesos institucionales específicos            |
 
 A nivel académico, estas plataformas demuestran que la evaluación automática mejora la oportunidad de retroalimentación y la escalabilidad del proceso docente. No obstante, en contextos universitarios institucionales surgen necesidades adicionales: integración con modelos de autenticación internos, trazabilidad por curso y cohorte, reglas de evaluación alineadas al currículo, control de sesiones de examen y capacidad de operación bajo restricciones locales de infraestructura.
 
 Bajo ese criterio, una referencia directa para este proyecto fue juez-online [[1]](https://github.com/DerekPz/juez-online.git), desarrollado previamente en el contexto de la Universidad del Norte. Esta base confirmó la viabilidad funcional del dominio (retos, submissions, runners, cursos y leaderboard), pero también evidenció oportunidades de mejora en separación arquitectónica, rendimiento y adaptación a la infraestructura institucional.
 
-| Capa | Tecnología |
-| ---- | ---------- |
-| Runtime | Node.js |
-| Framework HTTP | NestJS (TypeScript) |
-| Base de datos | PostgreSQL |
-| Caché / Cola | Redis (`ioredis`) |
-| Autenticación | JWT (`jsonwebtoken` + `bcrypt`) |
-| Documentación API | Swagger UI (`@nestjs/swagger`) |
-| IA Generativa | Google Gemini (`@google/generative-ai`) |
-| Ejecución de código | Contenedores Docker aislados |
+| Capa                | Tecnología                              |
+| ------------------- | --------------------------------------- |
+| Runtime             | Node.js                                 |
+| Framework HTTP      | NestJS (TypeScript)                     |
+| Base de datos       | PostgreSQL                              |
+| Caché / Cola        | Redis (`ioredis`)                       |
+| Autenticación       | JWT (`jsonwebtoken` + `bcrypt`)         |
+| Documentación API   | Swagger UI (`@nestjs/swagger`)          |
+| IA Generativa       | Google Gemini (`@google/generative-ai`) |
+| Ejecución de código | Contenedores Docker aislados            |
 
 **Tabla 1**: Stack tecnológico del proyecto base juez-online
 
-| Capa | Tecnología |
-| ---- | ---------- |
-| Framework UI | React 19 (JSX) |
-| Bundler | Vite 7 |
-| Enrutamiento | `react-router-dom` v7 |
+| Capa             | Tecnología                             |
+| ---------------- | -------------------------------------- |
+| Framework UI     | React 19 (JSX)                         |
+| Bundler          | Vite 7                                 |
+| Enrutamiento     | `react-router-dom` v7                  |
 | Editor de código | Monaco Editor (`@monaco-editor/react`) |
-| HTTP Client | Axios |
+| HTTP Client      | Axios                                  |
 
 **Tabla 2**: Stack tecnológico del frontend del proyecto base
 
@@ -165,13 +165,13 @@ En relación con integridad académica, la literatura y la práctica industrial 
 
 En cuanto a generación de contenido con IA, el ecosistema actual ofrece dos rutas: consumo de API cloud (rápida adopción, menor costo operativo inicial) y despliegue local de modelos (mayor control, potencial reducción de dependencia externa). CODER opera actualmente con Gemini cloud e incorpora como línea de mejora el despliegue local progresivo con modelos abiertos vía Ollama, evaluando costo de inferencia, memoria disponible, calidad de salida y mantenibilidad operativa.
 
-| Modelo | Parámetros | Contexto (tokens) | RAM aprox (Q4) | Fortaleza principal |
-| ------ | ---------- | ----------------- | -------------- | ------------------- |
-| DeepSeek Coder 6.7B | 6.7B | ~16K | 6-8 GB | Excelente en código estructurado |
-| Qwen2.5-Coder 7B | 7B | ~32K | 8-10 GB | Mejor razonamiento largo |
-| Code Llama 7B | 7B | ~16K | 8-10 GB | Generación limpia de código |
-| Mistral 7B Instruct | 7B | ~8K | 7-9 GB | Buen razonamiento general |
-| Phi-3 Mini | ~3.8B | ~8K-16K | 4-6 GB | Alta eficiencia computacional |
+| Modelo              | Parámetros | Contexto (tokens) | RAM aprox (Q4) | Fortaleza principal              |
+| ------------------- | ---------- | ----------------- | -------------- | -------------------------------- |
+| DeepSeek Coder 6.7B | 6.7B       | ~16K              | 6-8 GB         | Excelente en código estructurado |
+| Qwen2.5-Coder 7B    | 7B         | ~32K              | 8-10 GB        | Mejor razonamiento largo         |
+| Code Llama 7B       | 7B         | ~16K              | 8-10 GB        | Generación limpia de código      |
+| Mistral 7B Instruct | 7B         | ~8K               | 7-9 GB         | Buen razonamiento general        |
+| Phi-3 Mini          | ~3.8B      | ~8K-16K           | 4-6 GB         | Alta eficiencia computacional    |
 
 **Tabla 3**: Modelos considerados para despliegue local en la hoja de ruta del proyecto
 
@@ -762,6 +762,7 @@ El proyecto alcanzó alrededor de un **70 % de los objetivos planteados**, con l
 - [`FichaProyecto.md`](FichaProyecto.md) — Ficha académica del proyecto.
 - [`apps/api_v2/docs/Bussiness_rules.md`](apps/api_v2/docs/Bussiness_rules.md) — Reglas de negocio del sistema.
 - [`apps/api_v2/docs/TestsPlan.md`](apps/api_v2/docs/TestsPlan.md) — Plan de pruebas con descripción y comandos por caso.
+- [`apps/api_v2/docs/informs/TestsInform.md`](apps/api_v2/docs/TestsPlan.md) — Plan de pruebas con descripción y comandos por caso.
 - [`apps/api_v2/docs/openapi.yaml`](apps/api_v2/docs/openapi.yaml) — Especificación OpenAPI de la API.
 - [`apps/api_v2/docs/informs/Worker-changes.md`](apps/api_v2/docs/informs/Worker-changes.md) — Informe de la migración del worker a *pool* de runners.
 - [`diseno/AntiCheat/README.md`](diseno/AntiCheat/README.md) — Diseño del sistema anti-cheat (tokenización, n-grams, AST, detección de IA).
